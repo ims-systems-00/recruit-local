@@ -1,0 +1,49 @@
+<%- include('./includes/head'); %>
+<%- include('./includes/content-start'); %>
+
+
+<%- include('./includes/paragraph-start'); %>
+  An admin placed a job request to conduct an audit in the interface NRM portal for you. Let's take a look at the details.
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Audit Details:
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/list-start'); %>
+  <%- include('./includes/listitem-start'); %>
+    Title: <%= payload.title %>
+  <%- include('./includes/listitem-end'); %>
+  <%- include('./includes/listitem-start'); %>
+    Description: <%= payload.description %>
+  <%- include('./includes/listitem-end'); %>
+<%- include('./includes/list-end'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Link to audit: <%- include("./includes/link", { link: payload.link, text: payload.title }) %>
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  If you have any questions or need assistance, please don't hesitate to reach out to our support team at info@interface-nrm.co.uk.
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Kind regards,
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Interface NRM Team
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/disclaimer'); %>
+
+<%- include('./includes/content-end'); %>
+<%- include('./includes/foot'); %>

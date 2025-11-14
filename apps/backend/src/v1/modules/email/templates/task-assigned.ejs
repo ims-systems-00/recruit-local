@@ -1,0 +1,50 @@
+<%- include('./includes/head'); %>
+<%- include('./includes/content-start'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  A new task has been assigned to you by <%= payload.assignerName %>! Let's take a look at what needs to be done.
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Task Details:
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/list-start'); %>
+  <%- include('./includes/listitem-start'); %>
+    Task ID: <%= payload.reference %>
+  <%- include('./includes/listitem-end'); %>
+  <%- include('./includes/listitem-start'); %>
+    Task Title: <%- include("./includes/link", { link: payload.taskLink, text: payload.taskTitle }) %>
+  <%- include('./includes/listitem-end'); %>
+<%- include('./includes/list-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Click on the task title above to view the complete task details and get started.
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  If you have any questions about this task, please reach out to <%= payload.assignerName %> directly or contact our support team.
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Best regards,
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Interface NRM Team
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/disclaimer'); %>
+
+<%- include('./includes/content-end'); %>
+<%- include('./includes/foot'); %>

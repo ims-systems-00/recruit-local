@@ -1,0 +1,62 @@
+<%- include('./includes/head'); %>
+<%- include('./includes/content-start'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Hello [User's First Name],
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  We received a request to reset your password for your account on Interface NRM. If you made this request, please follow the instructions below to reset your password.
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  To reset your password:
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/list-start'); %>
+  <%- include('./includes/listitem-start'); %>
+    Click the link below to reset your password: &nbsp; <%- include("./includes/link", { link: payload.link }) %>
+  <%- include('./includes/listitem-end'); %>
+  <%- include('./includes/listitem-start'); %>
+    Follow the on-screen instructions to set a new password.
+  <%- include('./includes/listitem-end'); %>
+<%- include('./includes/list-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  If you did not request a password reset, please ignore this email or reach out to our support team at [support email address] if you have concerns.
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  For security reasons, this link will expire in [link expiration time, e.g., "24 hours"]. Be sure to reset your password before then.
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Thank you for helping keep your account secure.
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Kind regards,&nbsp;
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Interface NRM Team
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/disclaimer'); %>
+
+<%- include('./includes/content-end'); %>
+<%- include('./includes/foot'); %>

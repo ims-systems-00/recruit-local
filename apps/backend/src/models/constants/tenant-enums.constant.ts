@@ -1,0 +1,18 @@
+export enum PORTFOLIO_TYPE {
+  INTERFACE = "INTERFACE",
+  VIREO = "VIREO",
+  SBG = "SBG",
+  CATG = "CATG",
+}
+
+export enum CERTIFICATION_TYPE {
+  SINGLE = "SINGLE",
+  MULTISITE = "MULTISITE",
+  GROUP = "GROUP",
+  PROJECT = "PROJECT",
+}
+
+export enum PRODUCER_TRADER_TYPE {
+  PRODUCER = "PRODUCER",
+  TRADER = "TRADER",
+}

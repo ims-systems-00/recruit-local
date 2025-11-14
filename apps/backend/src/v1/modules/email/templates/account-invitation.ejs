@@ -1,0 +1,89 @@
+<%- include('./includes/head'); %>
+<%- include('./includes/content-start'); %>
+
+<% if(payload.userType === 'platform-admin') { %>
+
+  <%- include('./includes/paragraph-start'); %>
+    We're thrilled to have you as part of the Core team on Interface NRM!
+  <%- include('./includes/paragraph-end'); %>
+
+  <%- include('./includes/spacer'); %>
+
+  <%- include('./includes/paragraph-start'); %>
+    As a platform-admin user, you'll have access to the tools and resources to manage and oversee data, users, and workflows securely and efficiently. Our platform is designed to support your management needs, providing a centralised system to streamline and oversee our audit and certification processes.
+  <%- include('./includes/paragraph-end'); %>
+
+<% } %>
+
+<% if(payload.userType === 'auditor') { %>
+
+  <%- include('./includes/paragraph-start'); %>
+    We're excited to invite you to join Interface NRM!
+  <%- include('./includes/paragraph-end'); %>
+
+  <%- include('./includes/spacer'); %>
+
+  <%- include('./includes/paragraph-start'); %>
+    Our platform is designed to support your work as an independent auditor, providing a seamless, digital experience for managing audits and certifications. You'll have access to tools that enable you to review, assess, and manage audit data efficiently and securely.
+  <%- include('./includes/paragraph-end'); %>
+
+<% } %>
+
+<% if(payload.userType === 'customer') { %>
+
+  <%- include('./includes/paragraph-start'); %>
+    We're excited to invite you to join [Company Name] on Interface NRM!
+  <%- include('./includes/paragraph-end'); %>
+
+  <%- include('./includes/spacer'); %>
+
+  <%- include('./includes/paragraph-start'); %>
+    Our platform is designed to help organisations manage their audits and certifications digitally. As part of the [Company Name] team, you'll have access to the tools and resources needed to manage your data effectively and securely with Interface NRM.
+  <%- include('./includes/paragraph-end'); %>
+
+<% } %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Here's how to get started:
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/list-start'); %>
+  <%- include('./includes/listitem-start'); %>
+    Accept the invitation by clicking the link below: &nbsp; <%- include("./includes/link", { link: payload.link }) %>
+  <%- include('./includes/listitem-end'); %>
+
+  <%- include('./includes/listitem-start'); %>
+    Set up your account: After joining, you'll be prompted to complete your profile and explore our key features.
+  <%- include('./includes/listitem-end'); %>
+<%- include('./includes/list-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  If you have any questions or need assistance, please don't hesitate to reach out to our support team at [support email address].
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  We look forward to seeing you on our portal!
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Kind regards,
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Interface NRM Team
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/disclaimer'); %>
+
+<%- include('./includes/content-end'); %>
+<%- include('./includes/foot'); %>

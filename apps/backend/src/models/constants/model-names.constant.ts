@@ -1,0 +1,17 @@
+export const modelNames = {
+  COMMENT_ACTIVITY: "commentactivities",
+  DOCUMENT_FOLDER: "documentfolders",
+  FILE_MEDIA: "filemedias",
+  FORM_ELEMENT: "formelements",
+  FORM_RESPONSE: "formresponses",
+  FORM_SUBMISSION: "formsubmissions",
+  FORM: "forms",
+  NOTIFICATION: "notifications",
+  SPECIALIZED_USER_PROFILE: "specializeduserprofiles",
+  TASK: "tasks",
+  TENANT: "tenants",
+  TOKEN_PAIR: "tokenpairs",
+  USER: "users",
+  VERIFICATION_TOKEN: "verificationtokens",
+  RESPONSE_TEMPLATE: "responsetemplates",
+};

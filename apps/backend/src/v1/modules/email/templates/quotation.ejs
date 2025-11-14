@@ -1,0 +1,51 @@
+<%- include('./includes/head'); %>
+<%- include('./includes/content-start'); %>
+
+
+<%- include('./includes/paragraph-start'); %>
+  A new quotation has been created for you by <%= payload.senderName %>! Let's take a look at the details.
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Quotation Details:
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/list-start'); %>
+  <%- include('./includes/listitem-start'); %>
+    Quotation ID: <%= payload.quotationId %>
+  <%- include('./includes/listitem-end'); %>
+  <%- include('./includes/listitem-start'); %>
+    Quotation Title: <%- include("./includes/link", { link: payload.quotationLink, text: payload.quotationTitle }) %>
+  <%- include('./includes/listitem-end'); %>
+<%- include('./includes/list-end'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Click on the quotation title above to view the complete quotation details and get started.
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  If you have any questions or need assistance, please don't hesitate to reach out to our support team at info@interface-nrm.co.uk.
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Kind regards,
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/paragraph-start'); %>
+  Interface NRM Team
+<%- include('./includes/paragraph-end'); %>
+
+<%- include('./includes/spacer'); %>
+
+<%- include('./includes/disclaimer'); %>
+
+<%- include('./includes/content-end'); %>
+<%- include('./includes/foot'); %>
