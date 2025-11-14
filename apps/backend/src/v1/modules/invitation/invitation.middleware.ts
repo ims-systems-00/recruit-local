@@ -3,7 +3,7 @@ import { catchAsync, BadRequestException } from "../../../common/helper";
 import * as userService from "../user/user.service";
 import * as verificationTokenService from "../verification-token";
 import { MEMBERSHIP_ROLE_ENUMS, USER_TYPE_ENUMS } from "../../../models/constants";
-import { Membership } from "../../../models";
+// import { Membership } from "../../../models";
 
 export const preInviteValidation = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const invitations = req.body;
@@ -22,14 +22,14 @@ export const preInviteValidation = catchAsync(async (req: Request, res: Response
 
       if (userType === USER_TYPE_ENUMS.PLATFORM_ADMIN) return;
 
-      const isMembership = await Membership.findOne({
-        userId: req.session.user?._id,
-        tenantId,
-        role: MEMBERSHIP_ROLE_ENUMS.ADMIN,
-      });
-      if (!isMembership) {
-        throw new BadRequestException(`You are not a member of the organization with id ${tenantId}.`);
-      }
+      // const isMembership = await Membership.findOne({
+      //   userId: req.session.user?._id,
+      //   tenantId,
+      //   role: MEMBERSHIP_ROLE_ENUMS.ADMIN,
+      // });
+      // if (!isMembership) {
+      //   throw new BadRequestException(`You are not a member of the organization with id ${tenantId}.`);
+      // }
     })
   );
 
