@@ -20,10 +20,10 @@ const populates = [
     path: "tenantId",
     select: "name industry size phone officeEmail",
   },
-  {
-    path: "auditId",
-    select: "title",
-  },
+  // {
+  //   path: "auditId",
+  //   select: "title",
+  // },
   {
     path: "assignedTo",
     select: "fullName email profileImageSrc",
@@ -36,26 +36,26 @@ const populates = [
     path: "relatedTask",
     select: "title",
   },
-  {
-    path: "relatedAudit",
-    select: "title",
-  },
+  // {
+  //   path: "relatedAudit",
+  //   select: "title",
+  // },
   {
     path: "relatedOrganisation",
     select: "name",
   },
-  {
-    path: "relatedQuotation",
-    select: "title",
-  },
+  // {
+  //   path: "relatedQuotation",
+  //   select: "title",
+  // },
   {
     path: "createdBy",
     select: "fullName email profileImageSrc",
   },
-  {
-    path: "category",
-    select: "labelText description color",
-  },
+  // {
+  //   path: "category",
+  //   select: "labelText description color",
+  // },
 ];
 
 const isTaskCompleted = (status: string) => {

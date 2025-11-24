@@ -71,7 +71,8 @@ export const idParamsSchema = Joi.object({
 export const subResourceCreateParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("ID"),
   subResource: Joi.string()
-    .valid("duplicatedTask", "relatedTask", "assignedTo", "relatedAudit", "relatedOrganisation", "relatedQuotation")
+    // .valid("duplicatedTask", "relatedTask", "assignedTo", "relatedAudit", "relatedOrganisation", "relatedQuotation")
+    .valid("duplicatedTask", "relatedTask", "assignedTo")
     .required()
     .label("Sub Resource"),
 });
@@ -83,7 +84,8 @@ export const subResourceBodySchema = Joi.object({
 export const subResourceRemoveParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("ID"),
   subResource: Joi.string()
-    .valid("duplicatedTask", "relatedTask", "assignedTo", "relatedAudit", "relatedOrganisation", "relatedQuotation")
+    // .valid("duplicatedTask", "relatedTask", "assignedTo", "relatedAudit", "relatedOrganisation", "relatedQuotation")
+    .valid("duplicatedTask", "relatedTask", "assignedTo")
     .required()
     .label("Sub Resource"),
   subResourceId: Joi.string().custom(objectIdValidation).required().label("Sub Resource ID"),
