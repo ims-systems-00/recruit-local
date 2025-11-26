@@ -30,16 +30,19 @@ const validateParams = validate("params");
 router.get("/", handleController(listTenant));
 router.get("/:id", validateParams(idParamsSchema), handleController(getTenant));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(updateTenant));
+
+router.post("/", validateBody(createBodySchema), handleController(createTenant));
+router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemoveTenant));
+router.delete("/:id/hard", validateParams(idParamsSchema), handleController(hardRemoveTenant));
+router.put("/:id/restore", validateParams(idParamsSchema), handleController(restoreTenant));
+
 router.put(
   "/:id/:logoStorage",
   validateParams(logoUpdateParamsSchema),
   validateBody(logoUpdateBodySchema),
   handleController(updateTenantLogo)
 );
-router.post("/", validateBody(createBodySchema), handleController(createTenant));
-router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemoveTenant));
-router.delete("/:id/hard", validateParams(idParamsSchema), handleController(hardRemoveTenant));
-router.put("/:id/restore", validateParams(idParamsSchema), handleController(restoreTenant));
+
 router.post("/bulk-delete-ops/", validateBody(bulkDeleteBodySchema), handleController(bulkRemoveTenants));
 router.get("/:id/users", validateParams(idParamsSchema), handleController(getAllUsersByTenantId));
 
