@@ -32,6 +32,8 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-title: var(--title);
+  --color-body: var(--body);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -51,6 +53,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
+  --title: #152536;
+  --body: #6c757d;
   --primary: #e50d7e;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
@@ -85,6 +89,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
+  --title: #152536;
+  --body: #6c757d;
   --primary: #e50d7e;
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
@@ -118,5 +124,25 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  h1 {
+    @apply text-5xl leading-[58px] text-title;
+  }
+
+  h2 {
+    @apply text-[32px] leading-[38.8px] text-title;
+  }
+
+  h3 {
+    @apply text-2xl leading-7 font-medium text-title;
+  }
+
+  h4 {
+    @apply text-xl leading-6 font-medium text-title;
+  }
+
+  p {
+    @apply text-base text-body;
   }
 }
