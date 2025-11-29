@@ -49,7 +49,7 @@
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
+  --card: #f8f8f9;
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
@@ -85,7 +85,7 @@
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: #f8f8f9;
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
@@ -118,6 +118,11 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+@theme {
+  --shadow-regular: 0px 4px 12px 0px #00000014;
+  --shadow-light: 0px 1px 4px 0px #0000001a;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -143,6 +148,6 @@
   }
 
   p {
-    @apply text-base text-body;
+    @apply text-base leading-[100%] text-body;
   }
 }
