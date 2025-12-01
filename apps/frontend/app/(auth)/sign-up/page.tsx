@@ -23,7 +23,7 @@ export default function SignUp() {
   };
   return (
     <div className=" min-h-screen flex justify-center items-center bg-card">
-      <div className=" shadow-regular w-[692px] h-[700px] bg-card rounded-lg flex flex-col gap-y-8 p-8">
+      <div className=" shadow-regular w-[692px] min-h-[735px] bg-card rounded-lg flex flex-col gap-y-8 p-8">
         <div className=" flex gap-4">
           <div className="min-w-[114px]">
             <Image
