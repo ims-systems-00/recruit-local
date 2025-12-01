@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 
-export default function Login() {
+export default function SignUp() {
   const onFormSubmit = (e: any) => {
     e.preventDefault();
     alert('sss');
@@ -93,7 +93,7 @@ export default function Login() {
             <div className=" flex justify-center">
               <p className="text-base text-body">
                 Don’t you have account?{' '}
-                <Link href={'/sign-up'} className="text-primary">
+                <Link href={'/register'} className="text-primary">
                   Create Account
                 </Link>{' '}
               </p>
