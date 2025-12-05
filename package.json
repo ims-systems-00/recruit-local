@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "start:dev": "concurrently --kill-others \"pnpm --filter @inrm/backend start:dev\""
+    "backend:dev": "pnpm --filter @inrm/backend start:dev",
+    "start:dev": "concurrently --kill-others \"pnpm backend:dev\""
   },
   "keywords": [],
   "author": "",
