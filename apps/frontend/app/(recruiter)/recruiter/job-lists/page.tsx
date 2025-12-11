@@ -3,7 +3,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { Ellipsis, Search, X } from 'lucide-react';
+import { ChevronRight, Ellipsis, Search, X } from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 import JobSearchIcon from '@/public/images/jobSearch.svg';
@@ -226,10 +226,51 @@ export default function JobLists() {
                 ))}
               </div>
             </TabsContent>
-            <TabsContent value="archived-jobs">archived-jobs</TabsContent>
+            <TabsContent value="archived-jobs"></TabsContent>
           </Tabs>
         </div>
-        <div></div>
+        <div className="bg-white rounded-xl p-6 space-y-6 border border-border h-fit">
+          <div className="space-y-3">
+            <h4>Profile Updated Applicants</h4>
+            <p className="text-sm">See who recently updated their profile</p>
+          </div>
+          <div className=" flex justify-between items-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className=" flex py-0.5 px-2.5 rounded-[6px] bg-white text-sm text-body">
+                All
+              </span>
+              <span className=" flex py-0.5 px-2.5 rounded-[6px] bg-card text-sm text-primary">
+                Recent
+              </span>
+            </div>
+            <span className="text-sm text-title">See all</span>
+          </div>
+          <div className=" space-y-2">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
+              <div
+                key={item}
+                className=" flex justify-between items-center gap-4 p-4 border-b-[0.5px] border-border-dark last:border-b-0"
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar className=" size-8">
+                    <AvatarImage
+                      src="https://github.com/shadcn.png"
+                      alt="@shadcn"
+                    />
+                    <AvatarFallback>CN</AvatarFallback>
+                  </Avatar>
+                  <div className=" space-y-2">
+                    <p className="text-title">Annette Black</p>
+                    <p className="text-sm">Applied on 15 May 2020 9:30 am</p>
+                  </div>
+                </div>
+                <span className=" flex items-center justify-center border border-border h-6 w-6 rounded-lg bg-card">
+                  <ChevronRight className="w-5 h-5 text-body" />
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
