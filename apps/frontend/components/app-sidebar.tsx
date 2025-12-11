@@ -191,7 +191,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               height={24}
             />
           </div>
-          <div className="flex flex-col gap-1 flex-1 text-left text-sm leading-tight">
+          <div className="flex flex-col gap-1 flex-1 text-left text-sm leading-tight  text-title">
             <span className="truncate font-medium">Recruit Local</span>
             <span className="truncate text-xs">Free Plan</span>
           </div>
