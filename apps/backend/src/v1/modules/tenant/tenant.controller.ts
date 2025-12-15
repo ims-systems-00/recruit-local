@@ -20,7 +20,7 @@ export const listTenant = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(
       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} tenants.`
     );
-  if (req.session.user.type === USER_TYPE_ENUMS.CUSTOMER) {
+  if (req.session.user.type === USER_TYPE_ENUMS.ADMIN) {
     query = { ...query, _id: new mongoose.Types.ObjectId(req.session.tenantId) };
   }
   console.log("query", query);

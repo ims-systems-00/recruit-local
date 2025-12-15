@@ -5,14 +5,6 @@ export const registerBodySchema = Joi.object({
   lastName: Joi.string().max(20).required().label("Last Name"),
   email: Joi.string().max(50).email().required().label("Email"),
   password: Joi.string().min(8).max(50).required().label("Password"),
-  invitationToken: Joi.string().optional().label("Invitation Token"),
-  voIPNumber: Joi.string()
-    .optional()
-    .pattern(/^\+44\d{11}$/)
-    .label("VoIP Number")
-    .messages({
-      "string.pattern.base": "VoIP Number must be a valid UK phone number",
-    }),
 });
 
 export const verifyRegistrationQuerySchema = Joi.object({
