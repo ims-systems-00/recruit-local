@@ -15,15 +15,15 @@ export const listTenant = async ({ req }: ControllerParams) => {
   let query = filter.getFilterQuery();
   const options = filter.getQueryOptions();
 
-  const ability = new TenantAbilityBuilder(req.session);
-  if (!ability.getAbility().can(AbilityAction.Read, TenantAuthZEntity))
-    throw new UnauthorizedException(
-      `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} tenants.`
-    );
-  if (req.session.user.type === USER_TYPE_ENUMS.ADMIN) {
-    query = { ...query, _id: new mongoose.Types.ObjectId(req.session.tenantId) };
-  }
-  console.log("query", query);
+  // const ability = new TenantAbilityBuilder(req.session);
+  // if (!ability.getAbility().can(AbilityAction.Read, TenantAuthZEntity))
+  //   throw new UnauthorizedException(
+  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} tenants.`
+  //   );
+  // if (req.session.user.type === USER_TYPE_ENUMS.ADMIN) {
+  //   query = { ...query, _id: new mongoose.Types.ObjectId(req.session.tenantId) };
+  // }
+  // console.log("query", query);
   const results = await tenantService.listTenant({ query, options });
   const { data, pagination } = formatListResponse(results);
 
@@ -39,11 +39,11 @@ export const listTenant = async ({ req }: ControllerParams) => {
 export const getTenant = async ({ req }: ControllerParams) => {
   const tenant = await tenantService.getTenant(req.params.id);
 
-  const ability = new TenantAbilityBuilder(req.session);
-  if (!ability.getAbility().can(AbilityAction.Read, TenantAuthZEntity))
-    throw new UnauthorizedException(
-      `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} tenants.`
-    );
+  // const ability = new TenantAbilityBuilder(req.session);
+  // if (!ability.getAbility().can(AbilityAction.Read, TenantAuthZEntity))
+  //   throw new UnauthorizedException(
+  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} tenants.`
+  //   );
 
   return new ApiResponse({
     message: "Organisation retrieved.",
@@ -58,20 +58,20 @@ export const updateTenant = async ({ req }: ControllerParams) => {
     throw new Error("Tenant ID is required");
   }
 
-  const existingTenant = await tenantService.getTenant(req.params.id);
-  const ability = new TenantAbilityBuilder(req.session);
+  // const existingTenant = await tenantService.getTenant(req.params.id);
+  // const ability = new TenantAbilityBuilder(req.session);
 
-  if (
-    !ability.getAbility().can(
-      AbilityAction.Update,
-      new TenantAuthZEntity({
-        _id: existingTenant?._id as string,
-      })
-    )
-  )
-    throw new UnauthorizedException(
-      `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} tenants.`
-    );
+  // if (
+  //   !ability.getAbility().can(
+  //     AbilityAction.Update,
+  //     new TenantAuthZEntity({
+  //       _id: existingTenant?._id as string,
+  //     })
+  //   )
+  // )
+  //   throw new UnauthorizedException(
+  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} tenants.`
+  //   );
 
   const tenant = await tenantService.updateTenant(req.params.id, req.body);
 
@@ -90,20 +90,20 @@ export const updateTenantLogo = async ({ req }: ControllerParams) => {
     throw new Error("Tenant ID is required");
   }
 
-  const existingTenant = await tenantService.getTenant(req.params.id);
-  const ability = new TenantAbilityBuilder(req.session);
+  // const existingTenant = await tenantService.getTenant(req.params.id);
+  // const ability = new TenantAbilityBuilder(req.session);
 
-  if (
-    !ability.getAbility().can(
-      AbilityAction.Update,
-      new TenantAuthZEntity({
-        _id: existingTenant?._id as string,
-      })
-    )
-  )
-    throw new UnauthorizedException(
-      `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} tenants.`
-    );
+  // if (
+  //   !ability.getAbility().can(
+  //     AbilityAction.Update,
+  //     new TenantAuthZEntity({
+  //       _id: existingTenant?._id as string,
+  //     })
+  //   )
+  // )
+  //   throw new UnauthorizedException(
+  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} tenants.`
+  //   );
 
   const tenant = await tenantService.updateTenantLogo(req.params.id, logoStorage, req.body);
 
@@ -116,11 +116,11 @@ export const updateTenantLogo = async ({ req }: ControllerParams) => {
 };
 
 export const createTenant = async ({ req }: ControllerParams) => {
-  const ability = new TenantAbilityBuilder(req.session);
-  if (!ability.getAbility().can(AbilityAction.Create, TenantAuthZEntity))
-    throw new UnauthorizedException(
-      `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} tenants.`
-    );
+  // const ability = new TenantAbilityBuilder(req.session);
+  // if (!ability.getAbility().can(AbilityAction.Create, TenantAuthZEntity))
+  //   throw new UnauthorizedException(
+  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} tenants.`
+  //   );
 
   const tenant = await tenantService.createTenant(req.body);
 
@@ -133,11 +133,11 @@ export const createTenant = async ({ req }: ControllerParams) => {
 };
 
 export const softRemoveTenant = async ({ req }: ControllerParams) => {
-  const ability = new TenantAbilityBuilder(req.session);
-  if (!ability.getAbility().can(AbilityAction.Delete, TenantAuthZEntity))
-    throw new UnauthorizedException(
-      `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} tenants.`
-    );
+  // const ability = new TenantAbilityBuilder(req.session);
+  // if (!ability.getAbility().can(AbilityAction.Delete, TenantAuthZEntity))
+  //   throw new UnauthorizedException(
+  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} tenants.`
+  //   );
 
   const { tenant, deleted } = await tenantService.softRemoveTenant(req.params.id);
 
@@ -150,11 +150,11 @@ export const softRemoveTenant = async ({ req }: ControllerParams) => {
 };
 
 export const hardRemoveTenant = async ({ req }: ControllerParams) => {
-  const ability = new TenantAbilityBuilder(req.session);
-  if (!ability.getAbility().can(AbilityAction.Delete, TenantAuthZEntity))
-    throw new UnauthorizedException(
-      `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} tenants.`
-    );
+  // const ability = new TenantAbilityBuilder(req.session);
+  // if (!ability.getAbility().can(AbilityAction.Delete, TenantAuthZEntity))
+  //   throw new UnauthorizedException(
+  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} tenants.`
+  //   );
 
   const tenant = await tenantService.hardRemoveTenant(req.params.id);
 

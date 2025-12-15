@@ -42,7 +42,7 @@ export const login = async ({ req }: ControllerParams): Promise<ApiResponse> => 
   const { accessToken: accessTokenRes, refreshToken: refreshTokenRes } = await tokenService.getTokenPairForUser(user);
 
   const responseData = {
-    ...pick(user, ["_id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
+    ...pick(user, ["id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type", "role"]),
     accessToken: accessTokenRes,
     refreshToken: refreshTokenRes,
   };

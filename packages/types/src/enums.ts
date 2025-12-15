@@ -74,7 +74,7 @@ export enum MEMBERSHIP_ROLE_ENUMS {
 
 export enum USER_ROLE_ENUMS {
   PLATFORM_ADMIN = 'platform-admin',
-  TENANT = 'organization',
+  TENANT = 'tenant',
   CANDIDATE = 'candidate',
 }
 

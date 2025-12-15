@@ -1,6 +1,6 @@
 import express, { Express } from "express";
 import authRoutes from "../modules/authentication/auth.route";
-// import tenantRoutes from "../modules/tenant/tenant.route";
+import tenantRoutes from "../modules/tenant/tenant.route";
 // import commentActivityRoutes from "../modules/comment-activity/comment-activity.route";
 
 // import fileMediaRoutes from "../modules/file-media/file-media.route";
@@ -21,7 +21,7 @@ const router = express.Router();
 const getApiRoutes = () => {
   router.use("/auth", authRoutes);
   // router.use(deserializeUser);
-  // router.use("/tenants", tenantRoutes);
+  router.use("/tenants", tenantRoutes);
   // router.use("/comment-activities", commentActivityRoutes);
   // router.use("/file-medias", fileMediaRoutes);
   // router.use("/file-storage", fileStorageRoutes);
