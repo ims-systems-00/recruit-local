@@ -28,7 +28,7 @@ export const registration = async ({ req }: ControllerParams): Promise<ApiRespon
   return new ApiResponse({
     message: responseMessage,
     statusCode: StatusCodes.CREATED,
-    data: pick(user, ["_id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
+    data: pick(user, ["id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
     fieldName: "user",
   });
 };

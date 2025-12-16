@@ -59,7 +59,7 @@ const handleDirectRegistration = async (payload: UserPayload): Promise<IUserDoc>
   if (isExists) throw new BadRequestException("Email already exists.");
 
   const user = await userService.createUser(payload);
-  // await _generateSendAndStoreRegistrationToken({ userId: user._id.toString(), receiver: user.email });
+  await _generateSendAndStoreRegistrationToken({ userId: user.id.toString(), receiver: user.email });
 
   return user;
 };
