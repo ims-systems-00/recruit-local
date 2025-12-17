@@ -1,6 +1,6 @@
 import Joi, { CustomHelpers } from "joi";
 import mongoose from "mongoose";
-import { USER_TYPE_ENUMS, USER_ROLE_ENUMS } from "@inrm/types";
+import { ACCOUNT_TYPE_ENUMS, USER_ROLE_ENUMS } from "@inrm/types";
 
 // Custom validation for MongoDB ObjectId
 const objectIdValidation = (value: string, helpers: CustomHelpers) => {
@@ -18,7 +18,7 @@ export const updateBodySchema = Joi.object({
   firstName: Joi.string().optional().label("First Name"),
   lastName: Joi.string().optional().label("Last Name"),
   type: Joi.string()
-    .valid(...Object.values(USER_TYPE_ENUMS))
+    .valid(...Object.values(ACCOUNT_TYPE_ENUMS))
     .optional()
     .label("Type"),
   role: Joi.string()

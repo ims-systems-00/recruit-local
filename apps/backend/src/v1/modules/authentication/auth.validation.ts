@@ -1,10 +1,15 @@
 import Joi from "joi";
+import { ACCOUNT_TYPE_ENUMS } from "@inrm/types";
 
 export const registerBodySchema = Joi.object({
   firstName: Joi.string().max(20).required().label("First Name"),
   lastName: Joi.string().max(20).required().label("Last Name"),
   email: Joi.string().max(50).email().required().label("Email"),
   password: Joi.string().min(8).max(50).required().label("Password"),
+  type: Joi.string()
+    .valid(...Object.values(ACCOUNT_TYPE_ENUMS))
+    .required()
+    .label("Type"),
 });
 
 export const verifyRegistrationQuerySchema = Joi.object({

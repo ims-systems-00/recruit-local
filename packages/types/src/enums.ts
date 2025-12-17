@@ -73,20 +73,14 @@ export enum MEMBERSHIP_ROLE_ENUMS {
 }
 
 export enum USER_ROLE_ENUMS {
+  ADMIN = 'admin',
+  MEMBER = 'member',
+}
+
+export enum ACCOUNT_TYPE_ENUMS {
   PLATFORM_ADMIN = 'platform-admin',
-  TENANT = 'tenant',
+  EMPLOYER = 'employer',
   CANDIDATE = 'candidate',
-}
-
-export enum TENANT_ROLE_ENUMS {
-  ADMIN = 'admin',
-  MEMBER = 'member',
-}
-
-// todo: replace it with TENANT_ROLE_ENUMS in future
-export enum USER_TYPE_ENUMS {
-  ADMIN = 'admin',
-  MEMBER = 'member',
 }
 
 export enum NONCONFORMITY_STATUS_ENUMS {

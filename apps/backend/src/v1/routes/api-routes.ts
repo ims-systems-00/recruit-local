@@ -14,13 +14,13 @@ import userRoutes from "../modules/user/user.route";
 
 // import formBuilderRoutes from "../modules/forms/forms.routes";
 
-// import { deserializeUser } from "../../common/middlewares";
+import { deserializeUser } from "../../common/middlewares";
 // import responseTemplateRoutes from "../modules/response-template/response-template.route";
 const router = express.Router();
 
 const getApiRoutes = () => {
   router.use("/auth", authRoutes);
-  // router.use(deserializeUser);
+  router.use(deserializeUser);
   router.use("/tenants", tenantRoutes);
   // router.use("/comment-activities", commentActivityRoutes);
   // router.use("/file-medias", fileMediaRoutes);

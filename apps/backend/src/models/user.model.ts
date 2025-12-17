@@ -6,7 +6,7 @@ import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/so
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { EMAIL_VERIFICATION_STATUS_ENUMS, modelNames } from "./constants";
-import { USER_ROLE_ENUMS, USER_TYPE_ENUMS } from "@inrm/types";
+import { USER_ROLE_ENUMS, ACCOUNT_TYPE_ENUMS } from "@inrm/types";
 
 // Define an interface for User input
 /*
@@ -22,7 +22,7 @@ export interface UserInput extends PasswordHashInput, TenantInput {
   profileImageSrc?: string;
   profileImageStorage?: AwsStorageTemplate;
   role?: USER_ROLE_ENUMS;
-  type?: USER_TYPE_ENUMS;
+  type?: ACCOUNT_TYPE_ENUMS;
 }
 
 // Define an interface for User document
@@ -67,8 +67,8 @@ const userSchema = new Schema<IUserDoc>(
     },
     type: {
       type: String,
-      enum: Object.values(USER_TYPE_ENUMS),
-      default: USER_TYPE_ENUMS.MEMBER,
+      enum: Object.values(ACCOUNT_TYPE_ENUMS),
+      default: null,
     },
     emailVerificationStatus: {
       type: String,

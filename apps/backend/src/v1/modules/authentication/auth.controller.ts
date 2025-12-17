@@ -17,7 +17,6 @@ export const registration = async ({ req }: ControllerParams): Promise<ApiRespon
     ...pick(req.body, ["firstName", "lastName", "email", "password", "invitationToken"]),
     tenantId: req.body.tenantId ?? null,
   };
-  payload.fullName = `${payload.firstName} ${payload.lastName}`;
 
   const user = await authService.register(payload);
 
@@ -87,7 +86,7 @@ export const verifyRegistration = async ({ req }: ControllerParams): Promise<Api
   const { accessToken, refreshToken } = await tokenService.getTokenPairForUser(user);
 
   const responseData = {
-    ...pick(user, ["_id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
+    ...pick(user, ["id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
     accessToken,
     refreshToken,
   };
@@ -151,7 +150,7 @@ export const verifyRecovery = async ({ req }: ControllerParams): Promise<ApiResp
   const { accessToken: accessTokenRes, refreshToken: refreshTokenRes } = await tokenService.getTokenPairForUser(user);
 
   const responseData = {
-    ...pick(user, ["_id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
+    ...pick(user, ["id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
     accessToken: accessTokenRes,
     refreshToken: refreshTokenRes,
   };

@@ -19,6 +19,9 @@ export const _generateSendAndStoreRegistrationToken = async ({
   userId,
   receiver,
 }: GenerateSendAndStoreRegistrationTokenInput): Promise<void> => {
+  // delete any existing tokens for the user
+  // await verificationTokenService.removeMany({ type: VERIFICATION_TOKEN_TYPE_ENUMS.USER_EMAIL, _id: userId });
+
   const registrationToken = tokenService.generateToken({
     payload: { id: userId },
     options: { expiresIn: process.env.REGISTRATION_TOKEN_EXPIRY },
@@ -65,6 +68,7 @@ const handleDirectRegistration = async (payload: UserPayload): Promise<IUserDoc>
 };
 
 export const register = async (payload: UserPayload): Promise<IUserDoc> => {
+  // todo: if role is system-admin, need to do some checking.
   if (!payload.invitationToken) return handleDirectRegistration(payload);
 
   return handleInvitationRegistration(payload);
