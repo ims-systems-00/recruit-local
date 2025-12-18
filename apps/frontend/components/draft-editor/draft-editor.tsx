@@ -44,6 +44,13 @@ const styleMap = {
   },
 };
 
+function blockStyleFn(contentBlock: any) {
+  const type = contentBlock.getType();
+  if (type === 'blockquote') {
+    return ' border-l-[5px] border-border py-1.5 px-3 my-2 italic ';
+  }
+}
+
 // ---------------------------------------------
 // LINK DECORATOR
 // ---------------------------------------------
@@ -145,6 +152,7 @@ export default function DraftEditor() {
           handleKeyCommand={handleKeyCommand}
           customStyleMap={styleMap}
           placeholder="Write your content here..."
+          blockStyleFn={blockStyleFn}
         />
       </div>
       {/* Toolbar */}
