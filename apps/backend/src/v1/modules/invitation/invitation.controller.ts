@@ -6,7 +6,7 @@ import { USER_TYPE_ENUMS } from "../../../models/constants";
 import { USER_ROLE_ENUMS } from "@inrm/types";
 
 type InvitationPayload = {
-  userType: USER_TYPE_ENUMS;
+  type: USER_TYPE_ENUMS;
   email: string;
   role: USER_ROLE_ENUMS;
   tenantId: string;

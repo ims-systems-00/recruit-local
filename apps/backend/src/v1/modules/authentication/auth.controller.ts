@@ -14,7 +14,7 @@ const cookieOptions = {
 
 export const registration = async ({ req }: ControllerParams): Promise<ApiResponse> => {
   const payload: UserPayload = {
-    ...pick(req.body, ["firstName", "lastName", "email", "password", "invitationToken"]),
+    ...pick(req.body, ["firstName", "lastName", "email", "password", "invitationToken", "type"]),
     tenantId: req.body.tenantId ?? null,
   };
 

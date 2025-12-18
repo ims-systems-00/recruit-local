@@ -23,7 +23,7 @@ export interface CustomJwtPayload extends JwtPayload {
   firstName?: string;
   lastName?: string;
   role?: USER_ROLE_ENUMS;
-  userType?: ACCOUNT_TYPE_ENUMS;
+  type?: ACCOUNT_TYPE_ENUMS;
 }
 
 export interface QuotationTokenPayload extends JwtPayload {

@@ -1,10 +1,11 @@
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { TenantAbilityBuilder, TenantAuthZEntity } from "@inrm/authz";
-import { AbilityAction, ACCOUNT_TYPE_ENUMS } from "@inrm/types";
+import { AbilityAction, USER_ROLE_ENUMS } from "@inrm/types";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
 import * as tenantService from "./tenant.service";
+import { updateUser } from "../user/user.service";
 
 export const listTenant = async ({ req }: ControllerParams) => {
   const filter = new MongoQuery(req.query, {
@@ -123,6 +124,13 @@ export const createTenant = async ({ req }: ControllerParams) => {
   //   );
 
   const tenant = await tenantService.createTenant(req.body);
+
+  const user = req.session.user!;
+
+  await updateUser(user._id.toString(), {
+    tenantId: tenant.id,
+    role: USER_ROLE_ENUMS.ADMIN,
+  });
 
   return new ApiResponse({
     message: "Organisation created.",

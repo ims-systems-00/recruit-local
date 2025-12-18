@@ -34,6 +34,7 @@ export interface TenantInput {
 
 // Define an interface for Tenant document
 export interface ITenantDoc extends TenantInput, ISoftDeleteDoc, Document {
+  id: string;
   addressInMapLat?: number;
   addressInMapLng?: number;
   createdAt?: Date;
@@ -125,6 +126,14 @@ const tenantSchema = new Schema<ITenantDoc>(
   },
   {
     timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (_doc, ret) => {
+        ret.id = ret._id;
+        delete ret._id;
+        return ret;
+      },
+    },
   }
 );
 

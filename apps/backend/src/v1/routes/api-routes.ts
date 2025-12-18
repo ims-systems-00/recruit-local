@@ -7,7 +7,7 @@ import tenantRoutes from "../modules/tenant/tenant.route";
 // import fileStorageRoutes from "../modules/file-storage/file-storage.route";
 // import notificationRoutes from "../modules/notification/notification.route";
 
-// import invitationRoutes from "../modules/invitation/invitation.route";
+import invitationRoutes from "../modules/invitation/invitation.route";
 // import documentFolderRoutes from "../modules/document-folder/document-folder.route";
 import userRoutes from "../modules/user/user.route";
 // import taskRoutes from "../modules/task/task.route";
@@ -26,7 +26,7 @@ const getApiRoutes = () => {
   // router.use("/file-medias", fileMediaRoutes);
   // router.use("/file-storage", fileStorageRoutes);
   // router.use("/notifications", notificationRoutes);
-  // router.use("/invitations", invitationRoutes);
+  router.use("/invitations", invitationRoutes);
   // router.use("/document-folders", documentFolderRoutes);
   router.use("/users", userRoutes);
   // router.use("/tasks", taskRoutes);

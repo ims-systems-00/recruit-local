@@ -10,6 +10,7 @@ export const registerBodySchema = Joi.object({
     .valid(...Object.values(ACCOUNT_TYPE_ENUMS))
     .required()
     .label("Type"),
+  invitationToken: Joi.string().optional().label("Invitation Token"),
 });
 
 export const verifyRegistrationQuerySchema = Joi.object({

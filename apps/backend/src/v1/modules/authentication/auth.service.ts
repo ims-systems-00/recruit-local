@@ -42,7 +42,7 @@ const handleInvitationRegistration = async (payload: UserPayload): Promise<IUser
   // Replace the email and type from the invitation token
   const decoded = (await tokenService.verifyToken(payload.invitationToken)) as CustomJwtPayload;
   payload.email = decoded.email;
-  payload.type = decoded.userType;
+  payload.type = decoded.type;
   payload.tenantId = decoded.tenantId as any;
   payload.role = decoded.role;
 
