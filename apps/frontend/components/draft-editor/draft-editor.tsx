@@ -49,6 +49,7 @@ function blockStyleFn(contentBlock: any) {
   if (type === 'blockquote') {
     return ' border-l-[5px] border-border py-1.5 px-3 my-2 italic ';
   }
+  return '';
 }
 
 // ---------------------------------------------
