@@ -13,3 +13,4 @@ export * from "./form-element.model";
 export * from "./form-submission.model";
 export * from "./form-response.model";
 export * from "./response-template.model";
+export * from "./job-profile.model";

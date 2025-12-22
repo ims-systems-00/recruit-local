@@ -3,19 +3,14 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { VISIBILITY, Experience, Education, Certification, Skill, language } from "@inrm/types";
+import { VISIBILITY, language } from "@inrm/types";
 
 export interface JobProfileInput {
   userId: Schema.Types.ObjectId;
   headline?: string;
   summary?: string;
-  experiences?: Experience[];
-  educations?: Education[];
-  skills?: Skill[];
-  certifications?: Certification[];
-  languages?: language[];
-  interests?: string[];
   keywords?: string[];
+  languages?: language[];
 }
 
 export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, Document {
@@ -31,6 +26,24 @@ interface IJobProfileModel
     PaginateModel<IJobProfileDoc>,
     AggregatePaginateModel<IJobProfileDoc> {}
 
+// 1. Define the sub-schema
+const languageSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    proficiencyLevel: { type: String, required: true },
+  },
+  {
+    toJSON: {
+      virtuals: false,
+      transform: (_doc, ret) => {
+        ret.id = ret._id;
+        delete ret._id;
+        return ret;
+      },
+    },
+  }
+);
+
 const jobProfileSchema = new Schema<IJobProfileDoc>(
   {
     userId: {
@@ -44,59 +57,17 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
     summary: {
       type: String,
     },
-    experiences: [
-      {
-        company: String,
-        position: String,
-        location: String,
-        workMode: String,
-        employmentType: String,
-        startDate: Date,
-        endDate: Date,
-        description: String,
-      },
-    ],
-    educations: [
-      {
-        institution: String,
-        degree: String,
-        fieldOfStudy: String,
-        startDate: Date,
-        endDate: Date,
-        description: String,
-        gpa: String,
-      },
-    ],
-    skills: [
-      {
-        name: String,
-        proficiencyLevel: String,
-        description: String,
-      },
-    ],
-    certifications: [
-      {
-        name: String,
-        issuingOrganization: String,
-        issueDate: Date,
-      },
-    ],
-    languages: [
-      {
-        name: String,
-        proficiencyLevel: String,
-      },
-    ],
-    interests: [
-      {
-        type: String,
-      },
-    ],
     keywords: [
       {
         type: String,
       },
     ],
+    languages: [languageSchema],
+    visibility: {
+      type: String,
+      enum: Object.values(VISIBILITY),
+      default: VISIBILITY.PRIVATE,
+    },
   },
   {
     timestamps: true,
@@ -117,4 +88,4 @@ jobProfileSchema.plugin(mongoosePaginate);
 jobProfileSchema.plugin(aggregatePaginate);
 
 // Create and export the model
-export const JobProfileModel = model<IJobProfileDoc, IJobProfileModel>(modelNames.JOB_PROFILE, jobProfileSchema);
+export const JobProfile = model<IJobProfileDoc, IJobProfileModel>(modelNames.JOB_PROFILE, jobProfileSchema);

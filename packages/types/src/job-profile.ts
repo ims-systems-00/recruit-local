@@ -1,4 +1,4 @@
-import { WORK_MODE, EMPLOYMENT_TYPE } from './enums';
+import { WORK_MODE, EMPLOYMENT_TYPE, PROFICIENCY } from './enums';
 
 export interface Experience {
   company: string;
@@ -34,5 +34,5 @@ export interface Certification {
 
 export interface language {
   name: string;
-  proficiencyLevel: string;
+  proficiencyLevel: PROFICIENCY;
 }

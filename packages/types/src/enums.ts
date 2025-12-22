@@ -410,3 +410,10 @@ export enum EMPLOYMENT_TYPE {
   FREELANCE = 'freelance',
   INTERN = 'intern',
 }
+
+export enum PROFICIENCY {
+  BEGINNER = 'beginner',
+  INTERMEDIATE = 'intermediate',
+  ADVANCED = 'advanced',
+  NATIVE = 'native',
+}
