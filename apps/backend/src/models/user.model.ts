@@ -5,27 +5,33 @@ import { passwordHashPlugin, PasswordHashInput, IPasswordHashDoc } from "./plugi
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
-import { USER_TYPE_ENUMS, EMAIL_VERIFICATION_STATUS_ENUMS, modelNames } from "./constants";
-import { YES_NO_ENUM, USER_ROLE_ENUMS } from "@inrm/types";
+import { EMAIL_VERIFICATION_STATUS_ENUMS, modelNames } from "./constants";
+import { USER_ROLE_ENUMS, ACCOUNT_TYPE_ENUMS } from "@inrm/types";
 
 // Define an interface for User input
+/*
+@description UserInput interface
+@fields
+- role: system role of the user
+- type: tenant role of the user
+*/
 export interface UserInput extends PasswordHashInput, TenantInput {
   firstName: string;
   lastName: string;
   email: string;
   profileImageSrc?: string;
   profileImageStorage?: AwsStorageTemplate;
-  type?: USER_TYPE_ENUMS;
-  voIPNumber?: string;
   role?: USER_ROLE_ENUMS;
-  isConsultant?: YES_NO_ENUM;
-  isPrimaryUser?: YES_NO_ENUM;
+  type?: ACCOUNT_TYPE_ENUMS;
 }
 
 // Define an interface for User document
 export interface IUserDoc extends UserInput, IPasswordHashDoc, ITenantDoc, ISoftDeleteDoc, Document {
+  id: string;
   fullName: string;
   emailVerificationStatus: EMAIL_VERIFICATION_STATUS_ENUMS;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Define an interface for User model with static methods
@@ -47,10 +53,6 @@ const userSchema = new Schema<IUserDoc>(
       type: String,
       required: true,
     },
-    fullName: {
-      type: String,
-      required: true,
-    },
     email: {
       type: String,
       unique: true,
@@ -65,39 +67,39 @@ const userSchema = new Schema<IUserDoc>(
     },
     type: {
       type: String,
-      enum: Object.values(USER_TYPE_ENUMS),
-      default: USER_TYPE_ENUMS.CUSTOMER,
+      enum: Object.values(ACCOUNT_TYPE_ENUMS),
+      default: null,
     },
     emailVerificationStatus: {
       type: String,
       enum: Object.values(EMAIL_VERIFICATION_STATUS_ENUMS),
       default: EMAIL_VERIFICATION_STATUS_ENUMS.UNVERIFIED,
     },
-    voIPNumber: {
-      type: String,
-    },
     role: {
       type: String,
       enum: Object.values(USER_ROLE_ENUMS),
       default: null,
     },
-    isConsultant: {
-      type: String,
-      enum: Object.values(YES_NO_ENUM),
-      default: YES_NO_ENUM.NO,
-    },
-    isPrimaryUser: {
-      type: String,
-      enum: Object.values(YES_NO_ENUM),
-      default: YES_NO_ENUM.NO,
-    },
   },
   {
     timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (_doc, ret) => {
+        ret.id = ret._id;
+        delete ret._id;
+        return ret;
+      },
+    },
   }
 );
 
-// Apply the password hash plugin
+// Define a virtual property for full name
+userSchema.virtual("fullName").get(function (this: IUserDoc) {
+  return `${this.firstName} ${this.lastName}`;
+});
+
+// Apply plugins
 userSchema.plugin(tenantDataPlugin);
 userSchema.plugin(passwordHashPlugin);
 userSchema.plugin(softDeletePlugin);

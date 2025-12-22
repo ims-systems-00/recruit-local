@@ -74,7 +74,13 @@ export enum MEMBERSHIP_ROLE_ENUMS {
 
 export enum USER_ROLE_ENUMS {
   ADMIN = 'admin',
-  STANDARD = 'standard',
+  MEMBER = 'member',
+}
+
+export enum ACCOUNT_TYPE_ENUMS {
+  PLATFORM_ADMIN = 'platform-admin',
+  EMPLOYER = 'employer',
+  CANDIDATE = 'candidate',
 }
 
 export enum NONCONFORMITY_STATUS_ENUMS {
@@ -103,12 +109,6 @@ export enum FINDING_TYPE_ENUM {
   RISK = 'risk',
   NON_CONFORMITY = 'non-conformity',
   OFI = 'ofi',
-}
-
-export enum USER_TYPE_ENUMS {
-  PLATFORM_ADMIN = 'platform-admin',
-  CUSTOMER = 'customer',
-  AUDITOR = 'auditor',
 }
 
 export enum EMAIL_VERIFICATION_STATUS_ENUMS {

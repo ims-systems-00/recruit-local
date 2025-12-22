@@ -14,8 +14,8 @@ export const listInvitation = async ({ query = {}, options }: IListInvitationPar
 };
 
 export const createInvitation = async (payload: IPayload) => {
-  const { userType, email, role, tenantId, createdBy } = payload;
-  const tokenPayload = { userType, email, role, tenantId };
+  const { type, email, role, tenantId, createdBy } = payload;
+  const tokenPayload = { type, email, role, tenantId };
 
   // checkValidationInInvitation(userType);
 
@@ -29,7 +29,7 @@ export const createInvitation = async (payload: IPayload) => {
   await verificationTokenService.create({
     token: invitationToken,
     email,
-    type: getVerificationTokenType(userType),
+    type: getVerificationTokenType(type),
     createdBy,
     tenantId: tenantId as any,
   });
@@ -39,7 +39,7 @@ export const createInvitation = async (payload: IPayload) => {
 
   logger.debug("Invitation Link: ", { invitationLink });
 
-  const invitationEmail = new AccountInvitaionEmail({ link: invitationLink, userType });
+  const invitationEmail = new AccountInvitaionEmail({ link: invitationLink, userType: type });
   invitationEmail.to(email).send();
 };
 
@@ -62,7 +62,7 @@ export const resendInvitation = async (id: string) => {
   const invitationLink = `${process.env.CLIENT_URL}/create-account?invitation_token=${invitationToken}`;
   const invitationEmail = new AccountInvitaionEmail({
     link: invitationLink,
-    userType,
+    userType: userType,
   });
   invitationEmail.to(email).send();
 };

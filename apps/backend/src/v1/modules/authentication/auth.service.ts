@@ -19,6 +19,9 @@ export const _generateSendAndStoreRegistrationToken = async ({
   userId,
   receiver,
 }: GenerateSendAndStoreRegistrationTokenInput): Promise<void> => {
+  // delete any existing tokens for the user
+  // await verificationTokenService.removeMany({ type: VERIFICATION_TOKEN_TYPE_ENUMS.USER_EMAIL, _id: userId });
+
   const registrationToken = tokenService.generateToken({
     payload: { id: userId },
     options: { expiresIn: process.env.REGISTRATION_TOKEN_EXPIRY },
@@ -39,7 +42,7 @@ const handleInvitationRegistration = async (payload: UserPayload): Promise<IUser
   // Replace the email and type from the invitation token
   const decoded = (await tokenService.verifyToken(payload.invitationToken)) as CustomJwtPayload;
   payload.email = decoded.email;
-  payload.type = decoded.userType;
+  payload.type = decoded.type;
   payload.tenantId = decoded.tenantId as any;
   payload.role = decoded.role;
 
@@ -59,12 +62,13 @@ const handleDirectRegistration = async (payload: UserPayload): Promise<IUserDoc>
   if (isExists) throw new BadRequestException("Email already exists.");
 
   const user = await userService.createUser(payload);
-  await _generateSendAndStoreRegistrationToken({ userId: user._id.toString(), receiver: user.email });
+  await _generateSendAndStoreRegistrationToken({ userId: user.id.toString(), receiver: user.email });
 
   return user;
 };
 
 export const register = async (payload: UserPayload): Promise<IUserDoc> => {
+  // todo: if role is system-admin, need to do some checking.
   if (!payload.invitationToken) return handleDirectRegistration(payload);
 
   return handleInvitationRegistration(payload);

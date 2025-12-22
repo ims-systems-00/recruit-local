@@ -1,13 +1,11 @@
 import { BadRequestException } from "../../../common/helper";
-import { USER_TYPE_ENUMS, VERIFICATION_TOKEN_TYPE_ENUMS } from "../../../models/constants";
+import { ACCOUNT_TYPE_ENUMS, VERIFICATION_TOKEN_TYPE_ENUMS } from "@inrm/types";
 
-export const getVerificationTokenType = (userType: USER_TYPE_ENUMS) => {
+export const getVerificationTokenType = (userType: ACCOUNT_TYPE_ENUMS) => {
   switch (userType) {
-    case USER_TYPE_ENUMS.CUSTOMER:
+    case ACCOUNT_TYPE_ENUMS.EMPLOYER:
       return VERIFICATION_TOKEN_TYPE_ENUMS.INVITATION_IN_CLIENT_ORG;
-    case USER_TYPE_ENUMS.AUDITOR:
-      return VERIFICATION_TOKEN_TYPE_ENUMS.INVITATION_IN_AUDIT;
-    case USER_TYPE_ENUMS.PLATFORM_ADMIN:
+    case ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN:
       return VERIFICATION_TOKEN_TYPE_ENUMS.INVITATION_IN_INTERFACE_NRM;
     default:
       throw new Error("Invalid user type");
@@ -17,18 +15,10 @@ export const getVerificationTokenType = (userType: USER_TYPE_ENUMS) => {
 export const getUserTypeFromVerificationTokenType = (type: VERIFICATION_TOKEN_TYPE_ENUMS) => {
   switch (type) {
     case VERIFICATION_TOKEN_TYPE_ENUMS.INVITATION_IN_CLIENT_ORG:
-      return USER_TYPE_ENUMS.CUSTOMER;
-    case VERIFICATION_TOKEN_TYPE_ENUMS.INVITATION_IN_AUDIT:
-      return USER_TYPE_ENUMS.AUDITOR;
+      return ACCOUNT_TYPE_ENUMS.EMPLOYER;
     case VERIFICATION_TOKEN_TYPE_ENUMS.INVITATION_IN_INTERFACE_NRM:
-      return USER_TYPE_ENUMS.PLATFORM_ADMIN;
+      return ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN;
     default:
       throw new Error("Invalid verification token type");
-  }
-};
-
-export const checkValidationInInvitation = (userType: USER_TYPE_ENUMS) => {
-  if (userType === USER_TYPE_ENUMS.AUDITOR && process.env.NODE_ENV === "production") {
-    throw new BadRequestException("Invitation is not allowed for customer and auditor in production environment.");
   }
 };

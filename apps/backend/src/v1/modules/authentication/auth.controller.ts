@@ -14,10 +14,9 @@ const cookieOptions = {
 
 export const registration = async ({ req }: ControllerParams): Promise<ApiResponse> => {
   const payload: UserPayload = {
-    ...pick(req.body, ["firstName", "lastName", "email", "password", "invitationToken"]),
+    ...pick(req.body, ["firstName", "lastName", "email", "password", "invitationToken", "type"]),
     tenantId: req.body.tenantId ?? null,
   };
-  payload.fullName = `${payload.firstName} ${payload.lastName}`;
 
   const user = await authService.register(payload);
 
@@ -28,7 +27,7 @@ export const registration = async ({ req }: ControllerParams): Promise<ApiRespon
   return new ApiResponse({
     message: responseMessage,
     statusCode: StatusCodes.CREATED,
-    data: pick(user, ["_id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
+    data: pick(user, ["id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
     fieldName: "user",
   });
 };
@@ -42,7 +41,7 @@ export const login = async ({ req }: ControllerParams): Promise<ApiResponse> => 
   const { accessToken: accessTokenRes, refreshToken: refreshTokenRes } = await tokenService.getTokenPairForUser(user);
 
   const responseData = {
-    ...pick(user, ["_id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
+    ...pick(user, ["id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type", "role"]),
     accessToken: accessTokenRes,
     refreshToken: refreshTokenRes,
   };
@@ -87,7 +86,7 @@ export const verifyRegistration = async ({ req }: ControllerParams): Promise<Api
   const { accessToken, refreshToken } = await tokenService.getTokenPairForUser(user);
 
   const responseData = {
-    ...pick(user, ["_id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
+    ...pick(user, ["id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
     accessToken,
     refreshToken,
   };
@@ -151,7 +150,7 @@ export const verifyRecovery = async ({ req }: ControllerParams): Promise<ApiResp
   const { accessToken: accessTokenRes, refreshToken: refreshTokenRes } = await tokenService.getTokenPairForUser(user);
 
   const responseData = {
-    ...pick(user, ["_id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
+    ...pick(user, ["id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
     accessToken: accessTokenRes,
     refreshToken: refreshTokenRes,
   };

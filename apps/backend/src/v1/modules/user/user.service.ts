@@ -75,24 +75,20 @@ export const restoreUser = async (id: string) => {
 };
 
 export const updateUserProfileImage = async (id: string, payload: AwsStorageTemplate) => {
-  try {
-    const user = await getUser(id);
-    const fileManager = new FileManager(s3Client);
-    const previousProfileImageStorage = user.profileImageStorage;
+  const user = await getUser(id);
+  const fileManager = new FileManager(s3Client);
+  const previousProfileImageStorage = user.profileImageStorage;
 
-    const logoSrc = process.env.PUBLIC_MEDIA_BASE_URL + "/" + payload.Key;
-    user.profileImageSrc = logoSrc;
-    user.profileImageStorage = payload;
-    await user.save();
+  const logoSrc = process.env.PUBLIC_MEDIA_BASE_URL + "/" + payload.Key;
+  user.profileImageSrc = logoSrc;
+  user.profileImageStorage = payload;
+  await user.save();
 
-    // delete the previous file from s3
-    if (typeof previousProfileImageStorage?.Key === "string") {
-      const { Bucket, Key } = previousProfileImageStorage;
-      fileManager.deleteFile({ Bucket, Key });
-    }
-
-    return user;
-  } catch (err) {
-    throw err;
+  // delete the previous file from s3
+  if (typeof previousProfileImageStorage?.Key === "string") {
+    const { Bucket, Key } = previousProfileImageStorage;
+    fileManager.deleteFile({ Bucket, Key });
   }
+
+  return user;
 };

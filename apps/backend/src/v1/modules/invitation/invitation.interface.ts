@@ -14,7 +14,7 @@ export interface IListInvitationParams {
 }
 
 export interface IPayload {
-  userType: USER_TYPE_ENUMS;
+  type: USER_TYPE_ENUMS;
   email: string;
   role: USER_ROLE_ENUMS;
   tenantId: string;
