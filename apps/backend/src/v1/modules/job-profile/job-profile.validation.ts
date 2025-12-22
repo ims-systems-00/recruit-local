@@ -1,5 +1,5 @@
-import Joi, { CustomHelpers } from "joi";
-import mongoose from "mongoose";
+import Joi from "joi";
+
 import { objectIdValidation } from "../../../common/helper/validate";
 import { PROFICIENCY, VISIBILITY } from "@inrm/types";
 
