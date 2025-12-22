@@ -391,3 +391,22 @@ export enum AUDIT_TYPE_ENUMS {
   MAIN_ASSESSMENT = 'Main Assessment',
   SURVEILLANCE = 'Surveillance',
 }
+
+export enum VISIBILITY {
+  PUBLIC = 'public',
+  PRIVATE = 'private',
+}
+
+export enum WORK_MODE {
+  REMOTE = 'remote',
+  ONSITE = 'onsite',
+  HYBRID = 'hybrid',
+}
+
+export enum EMPLOYMENT_TYPE {
+  FULL_TIME = 'full-time',
+  PART_TIME = 'part-time',
+  CONTRACT = 'contract',
+  FREELANCE = 'freelance',
+  INTERN = 'intern',
+}
