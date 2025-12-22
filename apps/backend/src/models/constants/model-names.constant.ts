@@ -15,4 +15,9 @@ export const modelNames = {
   VERIFICATION_TOKEN: "verificationtokens",
   RESPONSE_TEMPLATE: "responsetemplates",
   JOB_PROFILE: "jobprofiles",
+  EXPERIENCE: "experiences",
+  EDUCATION: "educations",
+  SKILL: "skills",
+  CERTIFICATION: "certifications",
+  INTEREST: "interests",
 };

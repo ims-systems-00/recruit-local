@@ -4,9 +4,9 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { VISIBILITY, language } from "@inrm/types";
+import { userOwnedPlugin, IUserOwned } from "./plugins/userOwned.plugin";
 
-export interface JobProfileInput {
-  userId: Schema.Types.ObjectId;
+export interface JobProfileInput extends IUserOwned {
   headline?: string;
   summary?: string;
   keywords?: string[];
@@ -86,6 +86,7 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
 jobProfileSchema.plugin(softDeletePlugin);
 jobProfileSchema.plugin(mongoosePaginate);
 jobProfileSchema.plugin(aggregatePaginate);
+jobProfileSchema.plugin(userOwnedPlugin);
 
 // Create and export the model
 export const JobProfile = model<IJobProfileDoc, IJobProfileModel>(modelNames.JOB_PROFILE, jobProfileSchema);
