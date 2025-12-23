@@ -17,6 +17,8 @@ import userRoutes from "../modules/user/user.route";
 import { deserializeUser } from "../../common/middlewares";
 // import responseTemplateRoutes from "../modules/response-template/response-template.route";
 import jobProfileRoutes from "../modules/job-profile/job-profile.route";
+import educationRoutes from "../modules/education/education.route";
+
 const router = express.Router();
 
 const getApiRoutes = () => {
@@ -34,6 +36,7 @@ const getApiRoutes = () => {
   // router.use("/forms", formBuilderRoutes);
   // router.use("/response-templates", responseTemplateRoutes);
   router.use("/job-profiles", jobProfileRoutes);
+  router.use("/educations", educationRoutes);
 
   return router;
 };

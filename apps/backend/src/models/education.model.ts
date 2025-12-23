@@ -12,7 +12,7 @@ export interface EducationInput extends IUserOwned {
   startDate: Date;
   endDate?: Date;
   description?: string;
-  gpa?: string;
+  grade?: string;
 }
 export interface IEducationDoc extends EducationInput, ISoftDeleteDoc, Document {
   id: string;
@@ -34,7 +34,7 @@ const educationSchema = new Schema<IEducationDoc>(
     startDate: { type: Date, required: true },
     endDate: { type: Date },
     description: { type: String },
-    gpa: { type: String },
+    grade: { type: String },
   },
   {
     timestamps: true,
@@ -54,4 +54,4 @@ educationSchema.plugin(mongoosePaginate);
 educationSchema.plugin(aggregatePaginate);
 educationSchema.plugin(userOwnedPlugin);
 
-export const EducationModel = model<IEducationDoc, IEducationModel>(modelNames.EDUCATION, educationSchema);
+export const Education = model<IEducationDoc, IEducationModel>(modelNames.EDUCATION, educationSchema);

@@ -14,3 +14,7 @@ export * from "./form-submission.model";
 export * from "./form-response.model";
 export * from "./response-template.model";
 export * from "./job-profile.model";
+export * from "./education.model";
+export * from "./certification.model";
+export * from "./experience.model";
+export * from "./skill.model";
