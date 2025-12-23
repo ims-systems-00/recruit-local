@@ -4,15 +4,18 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwned } from "./plugins/userOwned.plugin";
+import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 
 export interface CertificationInput extends IUserOwned {
-  name: string;
+  title: string;
   issuingOrganization: string;
   issueDate: Date;
 }
 
 export interface ICertificationDoc extends CertificationInput, ISoftDeleteDoc, Document {
   id: string;
+  imageSrc?: string;
+  imageStorage?: AwsStorageTemplate;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,9 +28,11 @@ interface ICertificationModel
 
 const certificationSchema = new Schema<ICertificationDoc>(
   {
-    name: { type: String, required: true },
+    title: { type: String, required: true },
     issuingOrganization: { type: String, required: true },
     issueDate: { type: Date, required: true },
+    imageSrc: { type: String, required: false },
+    imageStorage: { type: Schema.Types.Mixed, default: awsStorageTemplateMongooseDefinition },
   },
   {
     timestamps: true,
@@ -47,7 +52,7 @@ certificationSchema.plugin(mongoosePaginate);
 certificationSchema.plugin(aggregatePaginate);
 certificationSchema.plugin(userOwnedPlugin);
 
-export const CertificationModel = model<ICertificationDoc, ICertificationModel>(
+export const Certification = model<ICertificationDoc, ICertificationModel>(
   modelNames.CERTIFICATION,
   certificationSchema
 );
