@@ -14,13 +14,11 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+import { redirect, useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 export default function Login() {
-  const onFormSubmit = (e: any) => {
-    e.preventDefault();
-    alert('sss');
-    console.log('e', e);
-  };
+  const router = useRouter();
   return (
     <div className=" min-h-screen flex justify-center items-center bg-card">
       <div className=" shadow-regular w-[692px] h-[700px] bg-card rounded-lg flex flex-col gap-y-8 p-8">
@@ -35,7 +33,23 @@ export default function Login() {
         </div>
 
         <form
-          onSubmit={onFormSubmit}
+          onSubmit={async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.currentTarget);
+
+            const res = await signIn('credentials', {
+              email: formData.get('email'),
+              password: formData.get('password'),
+              redirect: false,
+            });
+
+            console.log('res', res);
+
+            if (!res?.error) {
+              router.push('/recruiter');
+            }
+          }}
           className=" flex flex-col gap-y-10 flex-1"
         >
           <div className="space-y-6">
@@ -48,6 +62,8 @@ export default function Login() {
                 <InputGroup className="h-10 rounded-lg shadow-light">
                   <InputGroupInput
                     type="email"
+                    name="email"
+                    required
                     placeholder="Enter your email"
                   />
                   <InputGroupAddon className="group-has-[[data-slot=input-group-control]:focus-visible]/input-group:text-primary">
@@ -55,7 +71,12 @@ export default function Login() {
                   </InputGroupAddon>
                 </InputGroup>
                 <InputGroup className="h-10 rounded-lg shadow-light">
-                  <InputGroupInput type="password" placeholder="*********" />
+                  <InputGroupInput
+                    type="password"
+                    name="password"
+                    required
+                    placeholder="*********"
+                  />
                   <InputGroupAddon className="group-has-[[data-slot=input-group-control]:focus-visible]/input-group:text-primary">
                     <LockKeyholeOpen />
                   </InputGroupAddon>
