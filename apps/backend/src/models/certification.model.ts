@@ -1,10 +1,12 @@
-import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwned } from "./plugins/userOwned.plugin";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
+import { baseSchemaOptions } from "./options/schema.options";
+import { IBaseDoc } from "./interfaces/base.interface";
 
 export interface CertificationInput extends IUserOwned {
   title: string;
@@ -12,12 +14,9 @@ export interface CertificationInput extends IUserOwned {
   issueDate: Date;
 }
 
-export interface ICertificationDoc extends CertificationInput, ISoftDeleteDoc, Document {
-  id: string;
+export interface ICertificationDoc extends CertificationInput, IBaseDoc, ISoftDeleteDoc {
   imageSrc?: string;
   imageStorage?: AwsStorageTemplate;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 interface ICertificationModel
@@ -35,15 +34,7 @@ const certificationSchema = new Schema<ICertificationDoc>(
     imageStorage: { type: Schema.Types.Mixed, default: awsStorageTemplateMongooseDefinition },
   },
   {
-    timestamps: true,
-    toJSON: {
-      virtuals: false,
-      transform: (_doc, ret) => {
-        ret.id = ret._id;
-        delete ret._id;
-        return ret;
-      },
-    },
+    ...baseSchemaOptions,
   }
 );
 

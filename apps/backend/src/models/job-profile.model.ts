@@ -1,10 +1,12 @@
-import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { VISIBILITY, language } from "@inrm/types";
 import { userOwnedPlugin, IUserOwned } from "./plugins/userOwned.plugin";
+import { baseSchemaOptions } from "./options/schema.options";
+import { IBaseDoc } from "./interfaces/base.interface";
 
 export interface JobProfileInput extends IUserOwned {
   headline?: string;
@@ -13,11 +15,8 @@ export interface JobProfileInput extends IUserOwned {
   languages?: language[];
 }
 
-export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, Document {
-  id: string;
+export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, IBaseDoc {
   visibility: VISIBILITY;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 interface IJobProfileModel
@@ -33,14 +32,7 @@ const languageSchema = new Schema(
     proficiencyLevel: { type: String, required: true },
   },
   {
-    toJSON: {
-      virtuals: false,
-      transform: (_doc, ret) => {
-        ret.id = ret._id;
-        delete ret._id;
-        return ret;
-      },
-    },
+    ...baseSchemaOptions,
   }
 );
 

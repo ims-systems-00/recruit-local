@@ -1,9 +1,11 @@
-import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwned } from "./plugins/userOwned.plugin";
+import { baseSchemaOptions } from "./options/schema.options";
+import { IBaseDoc } from "./interfaces/base.interface";
 
 export interface EducationInput extends IUserOwned {
   institution: string;
@@ -14,11 +16,7 @@ export interface EducationInput extends IUserOwned {
   description?: string;
   grade?: string;
 }
-export interface IEducationDoc extends EducationInput, ISoftDeleteDoc, Document {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export interface IEducationDoc extends EducationInput, IBaseDoc, ISoftDeleteDoc {}
 
 interface IEducationModel
   extends Model<IEducationDoc>,
@@ -37,15 +35,7 @@ const educationSchema = new Schema<IEducationDoc>(
     grade: { type: String },
   },
   {
-    timestamps: true,
-    toJSON: {
-      virtuals: false,
-      transform: (_doc, ret) => {
-        ret.id = ret._id;
-        delete ret._id;
-        return ret;
-      },
-    },
+    ...baseSchemaOptions,
   }
 );
 

@@ -1,20 +1,18 @@
-import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwned } from "./plugins/userOwned.plugin";
+import { baseSchemaOptions } from "./options/schema.options";
+import { IBaseDoc } from "./interfaces/base.interface";
 
 export interface InterestInput extends IUserOwned {
   name: string;
   description?: string;
 }
 
-export interface IInterestDoc extends InterestInput, ISoftDeleteDoc, Document {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export interface IInterestDoc extends InterestInput, ISoftDeleteDoc, IBaseDoc {}
 
 interface IInterestModel
   extends Model<IInterestDoc>,
@@ -28,15 +26,7 @@ const interestSchema = new Schema<IInterestDoc>(
     description: { type: String },
   },
   {
-    timestamps: true,
-    toJSON: {
-      virtuals: false,
-      transform: (_doc, ret) => {
-        ret.id = ret._id;
-        delete ret._id;
-        return ret;
-      },
-    },
+    ...baseSchemaOptions,
   }
 );
 

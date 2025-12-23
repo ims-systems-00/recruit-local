@@ -1,9 +1,11 @@
-import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwned } from "./plugins/userOwned.plugin";
+import { baseSchemaOptions } from "./options/schema.options";
+import { IBaseDoc } from "./interfaces/base.interface";
 
 export interface ExperienceInput extends IUserOwned {
   company: string;
@@ -16,11 +18,7 @@ export interface ExperienceInput extends IUserOwned {
   description?: string;
 }
 
-export interface IExperienceDoc extends ExperienceInput, ISoftDeleteDoc, Document {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export interface IExperienceDoc extends ExperienceInput, ISoftDeleteDoc, IBaseDoc {}
 
 interface IExperienceModel
   extends Model<IExperienceDoc>,
@@ -40,15 +38,7 @@ const experienceSchema = new Schema<IExperienceDoc>(
     description: { type: String },
   },
   {
-    timestamps: true,
-    toJSON: {
-      virtuals: false,
-      transform: (_doc, ret) => {
-        ret.id = ret._id;
-        delete ret._id;
-        return ret;
-      },
-    },
+    ...baseSchemaOptions,
   }
 );
 
