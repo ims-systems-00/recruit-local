@@ -45,4 +45,4 @@ interestSchema.plugin(mongoosePaginate);
 interestSchema.plugin(aggregatePaginate);
 interestSchema.plugin(userOwnedPlugin);
 
-export const InterestModel = model<IInterestDoc, IInterestModel>(modelNames.INTEREST, interestSchema);
+export const Interest = model<IInterestDoc, IInterestModel>(modelNames.INTEREST, interestSchema);

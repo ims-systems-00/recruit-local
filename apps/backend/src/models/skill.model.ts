@@ -47,4 +47,4 @@ skillSchema.plugin(mongoosePaginate);
 skillSchema.plugin(aggregatePaginate);
 skillSchema.plugin(userOwnedPlugin);
 
-export const SkillModel = model<ISkillDoc, ISkillModel>(modelNames.SKILL, skillSchema);
+export const Skill = model<ISkillDoc, ISkillModel>(modelNames.SKILL, skillSchema);
