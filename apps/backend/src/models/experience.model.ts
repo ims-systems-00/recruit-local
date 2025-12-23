@@ -57,4 +57,4 @@ experienceSchema.plugin(mongoosePaginate);
 experienceSchema.plugin(aggregatePaginate);
 experienceSchema.plugin(userOwnedPlugin);
 
-export const ExperienceModel = model<IExperienceDoc, IExperienceModel>(modelNames.EXPERIENCE, experienceSchema);
+export const Experience = model<IExperienceDoc, IExperienceModel>(modelNames.EXPERIENCE, experienceSchema);

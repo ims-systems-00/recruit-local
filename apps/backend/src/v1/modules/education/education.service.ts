@@ -1,6 +1,8 @@
-import { IListEducationProfileParams } from "./education.interface";
 import { Education, EducationInput } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
+import { IListParams } from "@inrm/types";
+
+type IListEducationProfileParams = IListParams<EducationInput>;
 
 export const list = ({ query = {}, options }: IListEducationProfileParams) => {
   return Education.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });

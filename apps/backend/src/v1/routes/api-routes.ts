@@ -18,6 +18,7 @@ import { deserializeUser } from "../../common/middlewares";
 // import responseTemplateRoutes from "../modules/response-template/response-template.route";
 import jobProfileRoutes from "../modules/job-profile/job-profile.route";
 import educationRoutes from "../modules/education/education.route";
+import experienceRoutes from "../modules/experience/experience.route";
 
 const router = express.Router();
 
@@ -37,6 +38,7 @@ const getApiRoutes = () => {
   // router.use("/response-templates", responseTemplateRoutes);
   router.use("/job-profiles", jobProfileRoutes);
   router.use("/educations", educationRoutes);
+  router.use("/experiences", experienceRoutes);
 
   return router;
 };
