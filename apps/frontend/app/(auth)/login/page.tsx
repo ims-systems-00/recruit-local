@@ -3,9 +3,7 @@ import Image from 'next/image';
 import React from 'react';
 import Logo from '@/public/images/logo.svg';
 import { Button } from '@/components/ui/button';
-
 import { EyeClosed, LockKeyholeOpen, MailIcon } from 'lucide-react';
-
 import {
   InputGroup,
   InputGroupAddon,
@@ -14,11 +12,18 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import { redirect, useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { useLogin } from './useLogin';
 
 export default function Login() {
-  const router = useRouter();
+  const {
+    register,
+    onSubmit,
+    isLoading,
+    togglePassword,
+    showPassword,
+    errors,
+  } = useLogin();
+
   return (
     <div className=" min-h-screen flex justify-center items-center bg-card">
       <div className=" shadow-regular w-[692px] h-[700px] bg-card rounded-lg flex flex-col gap-y-8 p-8">
@@ -32,26 +37,7 @@ export default function Login() {
           />
         </div>
 
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-
-            const formData = new FormData(e.currentTarget);
-
-            const res = await signIn('credentials', {
-              email: formData.get('email'),
-              password: formData.get('password'),
-              redirect: false,
-            });
-
-            console.log('res', res);
-
-            if (!res?.error) {
-              router.push('/recruiter');
-            }
-          }}
-          className=" flex flex-col gap-y-10 flex-1"
-        >
+        <form onSubmit={onSubmit} className=" flex flex-col gap-y-10 flex-1">
           <div className="space-y-6">
             <div className="space-y-3">
               <h4>Welcome Back !!</h4>
@@ -59,64 +45,77 @@ export default function Login() {
             </div>
             <div className="space-y-6">
               <div className="space-y-4">
-                <InputGroup className="h-10 rounded-lg shadow-light">
-                  <InputGroupInput
-                    type="email"
-                    name="email"
-                    required
-                    placeholder="Enter your email"
-                  />
-                  <InputGroupAddon className="group-has-[[data-slot=input-group-control]:focus-visible]/input-group:text-primary">
-                    <MailIcon />
-                  </InputGroupAddon>
-                </InputGroup>
-                <InputGroup className="h-10 rounded-lg shadow-light">
-                  <InputGroupInput
-                    type="password"
-                    name="password"
-                    required
-                    placeholder="*********"
-                  />
-                  <InputGroupAddon className="group-has-[[data-slot=input-group-control]:focus-visible]/input-group:text-primary">
-                    <LockKeyholeOpen />
-                  </InputGroupAddon>
-                  <InputGroupAddon align="inline-end">
-                    <EyeClosed />
-                  </InputGroupAddon>
-                </InputGroup>
+                <div className=" space-y-2">
+                  <InputGroup className="h-10 rounded-lg shadow-light">
+                    <InputGroupInput
+                      type="email"
+                      placeholder="Enter your email"
+                      {...register('email', { required: true })}
+                    />
+                    <InputGroupAddon>
+                      <MailIcon />
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {errors.email && (
+                    <p className="text-sm text-red-500">
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className=" space-y-2">
+                  <InputGroup className="h-10 rounded-lg shadow-light">
+                    <InputGroupInput
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="*********"
+                      {...register('password', { required: true })}
+                    />
+                    <InputGroupAddon>
+                      <LockKeyholeOpen />
+                    </InputGroupAddon>
+                    <InputGroupAddon
+                      className=" cursor-pointer"
+                      align="inline-end"
+                      onClick={togglePassword}
+                    >
+                      <EyeClosed />
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {errors.password && (
+                    <p className="text-sm text-red-500">
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
               </div>
+
               <div className=" flex justify-between items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="remember_me"
-                    className="w-4 h-4 rounded-xs shadow-none border border-border"
-                  />
-                  <Label htmlFor="remember_me" className="text-title text-sm">
-                    Remember me
-                  </Label>
+                  <Checkbox id="remember_me" />
+                  <Label htmlFor="remember_me">Remember me</Label>
                 </div>
-                <Link
-                  href={'/forget-password'}
-                  className=" text-sm text-primary"
-                >
+                <Link href="/forget-password" className="text-primary text-sm">
                   Forget Password?
                 </Link>
               </div>
             </div>
           </div>
+
           <div className=" flex-1 flex justify-between flex-col">
             <Button
               type="submit"
-              className=" w-full text-base bg-primary border-primary text-white rounded-lg h-10"
+              disabled={isLoading}
+              className=" w-full text-base bg-primary text-white h-10 cursor-pointer"
             >
-              Login
+              {isLoading ? 'Logging in...' : 'Login'}
             </Button>
+
             <div className=" flex justify-center">
-              <p className="text-base text-body">
+              <p>
                 Don’t you have account?{' '}
-                <Link href={'/sign-up'} className="text-primary">
+                <Link href="/sign-up" className="text-primary">
                   Create Account
-                </Link>{' '}
+                </Link>
               </p>
             </div>
           </div>
