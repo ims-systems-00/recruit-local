@@ -1,0 +1,38 @@
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import mongoosePaginate from "mongoose-paginate-v2";
+import aggregatePaginate from "mongoose-aggregate-paginate-v2";
+import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
+import { modelNames } from "./constants";
+import { userOwnedPlugin, IUserOwned } from "./plugins/userOwned.plugin";
+import { baseSchemaOptions } from "./options/schema.options";
+import { IBaseDoc } from "./interfaces/base.interface";
+
+export interface InterestInput extends IUserOwned {
+  name: string;
+  description?: string;
+}
+
+export interface IInterestDoc extends InterestInput, ISoftDeleteDoc, IBaseDoc {}
+
+interface IInterestModel
+  extends Model<IInterestDoc>,
+    ISoftDeleteModel<IInterestDoc>,
+    PaginateModel<IInterestDoc>,
+    AggregatePaginateModel<IInterestDoc> {}
+
+const interestSchema = new Schema<IInterestDoc>(
+  {
+    name: { type: String, required: true },
+    description: { type: String },
+  },
+  {
+    ...baseSchemaOptions,
+  }
+);
+
+interestSchema.plugin(softDeletePlugin);
+interestSchema.plugin(mongoosePaginate);
+interestSchema.plugin(aggregatePaginate);
+interestSchema.plugin(userOwnedPlugin);
+
+export const Interest = model<IInterestDoc, IInterestModel>(modelNames.INTEREST, interestSchema);

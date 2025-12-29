@@ -1,16 +1,8 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { s3Client } from "../../../.config/s3.config";
 import { FileManager, NotFoundException } from "../../../common/helper";
 import { IListUserParams } from "./user.interface";
 import { User, UserInput } from "../../../models";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
-
-const s3Client = new S3Client({
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_ACCESS_KEY_SECRET,
-  },
-  region: "eu-west-2",
-});
 
 export const listUser = ({ query = {}, options }: IListUserParams) => {
   return User.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
