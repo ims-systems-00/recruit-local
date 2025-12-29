@@ -422,13 +422,13 @@ export enum PROFICIENCY {
  * Jobs related enums
  */
 export enum WORKING_DAYS_ENUMS {
-  MONDAY = 'Monday',
-  TUESDAY = 'Tuesday',
-  WEDNESDAY = 'Wednesday',
-  THURSDAY = 'Thursday',
-  FRIDAY = 'Friday',
-  SATURDAY = 'Saturday',
-  SUNDAY = 'Sunday',
+  MONDAY = 'monday',
+  TUESDAY = 'tuesday',
+  WEDNESDAY = 'wednesday',
+  THURSDAY = 'thursday',
+  FRIDAY = 'friday',
+  SATURDAY = 'saturday',
+  SUNDAY = 'sunday',
 }
 
 export enum WORKPLACE_ENUMS {
@@ -437,24 +437,23 @@ export enum WORKPLACE_ENUMS {
   HYBRID = 'hybrid',
 }
 
-export enum EMPLOYMENT_TYPE_ENUMS {
-  FULL_TIME = 'full_time',
-  PART_TIME = 'part_time',
-  CONTRACT = 'contract',
-  INTERN = 'intern',
-}
-
 export enum PERIOD_ENUMS {
-  PER_HOUR = 'per_hour',
-  PER_DAY = 'per_day',
-  PER_WEEK = 'per_week',
-  PER_MONTH = 'per_month',
-  PER_YEAR = 'per_year',
+  HOURLY = 'hourly',
+  DAILY = 'daily',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+  YEARLY = 'yearly',
 }
 
 export enum REQUIRED_DOCUMENTS_ENUMS {
-  RESUME = 'Resume',
-  COVER_LETTER = 'Cover Letter',
-  PORTFOLIO = 'Portfolio',
-  CERTIFICATES = 'Certificates',
+  RESUME = 'resume',
+  COVER_LETTER = 'cover_letter',
+  PORTFOLIO = 'portfolio',
+  CERTIFICATES = 'certificates',
+}
+
+export enum JOBS_STATUS_ENUMS {
+  DRAFT = 'draft',
+  POSTED = 'posted',
+  CLOSED = 'closed',
 }

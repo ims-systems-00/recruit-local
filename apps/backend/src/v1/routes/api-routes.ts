@@ -22,6 +22,7 @@ import experienceRoutes from "../modules/experience/experience.route";
 import certificationRoutes from "../modules/certification/certification.route";
 import interestRoutes from "../modules/interest/interest.route";
 import skillRoutes from "../modules/skill/skill.route";
+import jobRoute from "../modules/job/job.route";
 
 const router = express.Router();
 
@@ -45,6 +46,7 @@ const getApiRoutes = () => {
   router.use("/certifications", certificationRoutes);
   router.use("/interests", interestRoutes);
   router.use("/skills", skillRoutes);
+  router.use("/jobs", jobRoute);
 
   return router;
 };

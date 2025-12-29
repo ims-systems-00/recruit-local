@@ -10,7 +10,7 @@ import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugi
 import {
   WORKPLACE_ENUMS,
   WORKING_DAYS_ENUMS,
-  EMPLOYMENT_TYPE_ENUMS,
+  EMPLOYMENT_TYPE,
   CURRENCY_ENUMS,
   PERIOD_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
@@ -20,14 +20,16 @@ import {
   Salary,
 } from "@inrm/types";
 
-export interface IJob extends TenantInput {
+export interface IJobInput extends TenantInput {
   title?: string;
-  banner?: AwsStorageTemplate;
+  bannerSrc?: string;
+  bannerStorage?: AwsStorageTemplate;
   description?: string;
   startDate?: Date;
   endDate?: Date;
   responsibility?: string;
-  attachments?: AwsStorageTemplate[];
+  attachmentsSrc?: string[];
+  attachmentsStorage?: AwsStorageTemplate[];
   category?: string;
   vacancy?: number;
   location?: string;
@@ -35,7 +37,7 @@ export interface IJob extends TenantInput {
   workingDays?: WORKING_DAYS_ENUMS[];
   weekends?: WORKING_DAYS_ENUMS[];
   workingHours?: WorkingHours;
-  employmentType?: EMPLOYMENT_TYPE_ENUMS;
+  employmentType?: EMPLOYMENT_TYPE;
   salary?: Salary;
   currency?: CURRENCY_ENUMS;
   period?: PERIOD_ENUMS;
@@ -44,7 +46,7 @@ export interface IJob extends TenantInput {
   skills?: Skill[];
 }
 
-export interface IJobDoc extends IJob, ITenantDoc, ISoftDeleteDoc, IBaseDoc {
+export interface IJobDoc extends IJobInput, ITenantDoc, ISoftDeleteDoc, IBaseDoc {
   status?: string;
   keywords?: string[]; // todo keywords should be generated
 }
@@ -59,12 +61,14 @@ export interface IJobModel
 const jobSchema = new Schema<IJobDoc>(
   {
     title: { type: String },
-    banner: { type: Schema.Types.Mixed, default: awsStorageTemplateMongooseDefinition },
+    bannerSrc: { type: String },
+    bannerStorage: { type: Schema.Types.Mixed, default: awsStorageTemplateMongooseDefinition },
     description: { type: String },
     startDate: { type: Date },
     endDate: { type: Date },
     responsibility: { type: String },
-    attachments: {
+    attachmentsSrc: { type: [String], default: [] },
+    attachmentsStorage: {
       type: [awsStorageTemplateMongooseDefinition],
       default: [],
     },
@@ -78,7 +82,7 @@ const jobSchema = new Schema<IJobDoc>(
       startTime: { type: String },
       endTime: { type: String },
     },
-    employmentType: { type: String, enum: Object.values(EMPLOYMENT_TYPE_ENUMS) },
+    employmentType: { type: String, enum: Object.values(EMPLOYMENT_TYPE) },
     salary: {
       mode: { type: String, required: true },
       amount: { type: Number },
@@ -105,7 +109,23 @@ const jobSchema = new Schema<IJobDoc>(
     status: { type: String },
     keywords: { type: [String], default: [] },
   },
-  { ...baseSchemaOptions }
+  {
+    ...baseSchemaOptions,
+    toJSON: {
+      virtuals: false,
+      transform: function (doc, ret) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ret.skills?.forEach((skill: any) => {
+          skill.id = skill._id;
+          delete skill._id;
+        });
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+        return ret;
+      },
+    },
+  }
 );
 
 jobSchema.plugin(softDeletePlugin);
