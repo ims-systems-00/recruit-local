@@ -11,6 +11,7 @@ export interface SkillInput extends IUserOwned {
   name: string;
   proficiencyLevel?: string;
   description?: string;
+  // todo add fields like endorsement, yearsOfExperience, etc.
 }
 
 export interface ISkillDoc extends SkillInput, ISoftDeleteDoc, IBaseDoc {}

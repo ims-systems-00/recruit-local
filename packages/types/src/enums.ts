@@ -417,3 +417,44 @@ export enum PROFICIENCY {
   ADVANCED = 'advanced',
   NATIVE = 'native',
 }
+
+/*
+ * Jobs related enums
+ */
+export enum WORKING_DAYS_ENUMS {
+  MONDAY = 'Monday',
+  TUESDAY = 'Tuesday',
+  WEDNESDAY = 'Wednesday',
+  THURSDAY = 'Thursday',
+  FRIDAY = 'Friday',
+  SATURDAY = 'Saturday',
+  SUNDAY = 'Sunday',
+}
+
+export enum WORKPLACE_ENUMS {
+  REMOTE = 'remote',
+  ONSITE = 'onsite',
+  HYBRID = 'hybrid',
+}
+
+export enum EMPLOYMENT_TYPE_ENUMS {
+  FULL_TIME = 'full_time',
+  PART_TIME = 'part_time',
+  CONTRACT = 'contract',
+  INTERN = 'intern',
+}
+
+export enum PERIOD_ENUMS {
+  PER_HOUR = 'per_hour',
+  PER_DAY = 'per_day',
+  PER_WEEK = 'per_week',
+  PER_MONTH = 'per_month',
+  PER_YEAR = 'per_year',
+}
+
+export enum REQUIRED_DOCUMENTS_ENUMS {
+  RESUME = 'Resume',
+  COVER_LETTER = 'Cover Letter',
+  PORTFOLIO = 'Portfolio',
+  CERTIFICATES = 'Certificates',
+}
