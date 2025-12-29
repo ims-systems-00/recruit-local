@@ -12,7 +12,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import { useLogin } from './useLogin';
+import { useLogin } from '@/services/auth/auth.client';
 
 export default function Login() {
   const {
