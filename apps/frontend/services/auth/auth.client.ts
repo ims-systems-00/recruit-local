@@ -7,6 +7,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation } from '@tanstack/react-query';
 import { signIn } from 'next-auth/react';
 import { loginSchema, LoginSchema } from '@/app/(auth)/login/login.schema';
+import { signOut } from 'next-auth/react';
 
 export function useLogin() {
   const router = useRouter();
@@ -52,5 +53,28 @@ export function useLogin() {
     isLoading: mutation.isPending,
     showPassword,
     togglePassword,
+  };
+}
+
+export function useLogout() {
+  const router = useRouter();
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const res = await signOut({
+        redirect: false,
+        callbackUrl: '/login',
+      });
+
+      return res;
+    },
+    onSuccess: () => {
+      router.push('/login');
+    },
+  });
+
+  return {
+    logout: mutation.mutate,
+    isLoading: mutation.isPending,
   };
 }

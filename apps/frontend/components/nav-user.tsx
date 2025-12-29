@@ -11,7 +11,6 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-import { signOut } from 'next-auth/react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +26,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { useLogout } from '@/services/auth/auth.client';
 
 export function NavUser({
   user,
@@ -38,6 +38,8 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+
+  const { logout, isLoading } = useLogout();
 
   return (
     <SidebarMenu>
@@ -100,7 +102,11 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut()}>
+            <DropdownMenuItem
+              className=" cursor-pointer"
+              disabled={isLoading}
+              onClick={logout}
+            >
               <LogOut />
               Log out
             </DropdownMenuItem>
