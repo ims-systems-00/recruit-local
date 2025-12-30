@@ -2,6 +2,7 @@ import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
 
 export const createBodySchema = Joi.object({
+  jobProfileId: Joi.string().custom(objectIdValidation).required().label("Job Profile ID"),
   name: Joi.string().min(2).max(50).required(),
   description: Joi.string().max(500).optional(),
 });

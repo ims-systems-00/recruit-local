@@ -4,14 +4,15 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
+import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 
-export interface SkillInput extends IUserOwnedInput {
+export interface SkillInput extends IUserOwnedInput, JobProfileInput {
   name: string;
   proficiencyLevel?: string;
   description?: string;
-  // todo add fields like endorsement, yearsOfExperience, etc.
+  // todo add fields like maybe endorsement, yearsOfExperience, etc.
 }
 
 export interface ISkillDoc extends SkillInput, ISoftDeleteDoc, IBaseDoc {}
@@ -35,5 +36,6 @@ skillSchema.plugin(softDeletePlugin);
 skillSchema.plugin(mongoosePaginate);
 skillSchema.plugin(aggregatePaginate);
 skillSchema.plugin(userOwnedPlugin);
+skillSchema.plugin(jobProfilePlugin);
 
 export const Skill = model<ISkillDoc, ISkillModel>(modelNames.SKILL, skillSchema);
