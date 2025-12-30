@@ -4,20 +4,37 @@ import * as userService from "./user.service";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
 import { UserAbilityBuilder, UserAuthZEntity } from "@inrm/authz";
 import { AbilityAction } from "@inrm/types";
+import { accessibleBy } from "@casl/mongoose";
+import { mapCaslQueryToMongo } from "../../../common/helper/query-mapper";
 
 export const listUser = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new UserAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  if (!ability.can(AbilityAction.Read, UserAuthZEntity)) {
+    throw new UnauthorizedException(`User ${req.session.user?.id} is not authorized to read users.`);
+  }
+
   const filter = new MongoQuery(req.query, {
     searchFields: ["fullName"],
   }).build();
 
-  const query = filter.getFilterQuery();
+  const userSearchQuery = filter.getFilterQuery();
   const options = filter.getQueryOptions();
 
-  // const ability = new UserAbilityBuilder(req.session);
-  // if (!ability.getAbility().can(AbilityAction.Read, UserAuthZEntity))
-  //   throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} users.`);
+  const rawSecurityQuery = accessibleBy(ability, AbilityAction.Read).ofType(UserAuthZEntity);
+  const securityQuery = mapCaslQueryToMongo(rawSecurityQuery);
+  const finalQuery = {
+    $and: [userSearchQuery, securityQuery],
+  };
 
-  const results = await userService.listUser({ query, options });
+  // console.log("Final Query:", JSON.stringify(finalQuery, null, 2));
+
+  const results = await userService.listUser({
+    query: finalQuery as any,
+    options,
+  });
+
   const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({

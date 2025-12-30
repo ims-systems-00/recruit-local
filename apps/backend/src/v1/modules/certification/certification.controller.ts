@@ -71,7 +71,7 @@ export const create = async ({ req }: ControllerParams) => {
   //     throw new UnauthorizedException(
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} experience.`
   //     );
-  const userId = req.session.user?._id;
+  const userId = req.session.user?.id;
   const experience = await certificationService.create({ ...req.body, userId: userId });
 
   return new ApiResponse({

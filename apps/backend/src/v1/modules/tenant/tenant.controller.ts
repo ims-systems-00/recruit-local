@@ -1,5 +1,5 @@
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import { TenantAbilityBuilder, TenantAuthZEntity } from "@inrm/authz";
+// import { TenantAbilityBuilder, TenantAuthZEntity } from "@inrm/authz";
 import { AbilityAction, USER_ROLE_ENUMS } from "@inrm/types";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
@@ -127,7 +127,7 @@ export const createTenant = async ({ req }: ControllerParams) => {
 
   const user = req.session.user!;
 
-  await updateUser(user._id.toString(), {
+  await updateUser(user.id.toString(), {
     tenantId: tenant.id,
     role: USER_ROLE_ENUMS.ADMIN,
   });
@@ -175,11 +175,11 @@ export const hardRemoveTenant = async ({ req }: ControllerParams) => {
 };
 
 export const bulkRemoveTenants = async ({ req }: ControllerParams) => {
-  const ability = new TenantAbilityBuilder(req.session);
-  if (!ability.getAbility().can(AbilityAction.Delete, TenantAuthZEntity))
-    throw new UnauthorizedException(
-      `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} tenants.`
-    );
+  // const ability = new TenantAbilityBuilder(req.session);
+  // if (!ability.getAbility().can(AbilityAction.Delete, TenantAuthZEntity))
+  //   throw new UnauthorizedException(
+  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} tenants.`
+  //   );
 
   const deleteResponse = await tenantService.bulkRemoveTenants(req.body.ids);
 
@@ -195,11 +195,11 @@ export const bulkRemoveTenants = async ({ req }: ControllerParams) => {
 };
 
 export const restoreTenant = async ({ req }: ControllerParams) => {
-  const ability = new TenantAbilityBuilder(req.session);
-  if (!ability.getAbility().can(AbilityAction.Create, TenantAuthZEntity))
-    throw new UnauthorizedException(
-      `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} tenants.`
-    );
+  // const ability = new TenantAbilityBuilder(req.session);
+  // if (!ability.getAbility().can(AbilityAction.Create, TenantAuthZEntity))
+  //   throw new UnauthorizedException(
+  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} tenants.`
+  //   );
 
   const { tenant, restored } = await tenantService.restoreTenant(req.params.id);
 
@@ -220,11 +220,11 @@ export const getAllUsersByTenantId = async ({ req }: ControllerParams) => {
   const query = filter.getFilterQuery();
   const options = filter.getQueryOptions();
 
-  const ability = new TenantAbilityBuilder(req.session);
-  if (!ability.getAbility().can(AbilityAction.Read, TenantAuthZEntity))
-    throw new UnauthorizedException(
-      `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} tenants.`
-    );
+  // const ability = new TenantAbilityBuilder(req.session);
+  // if (!ability.getAbility().can(AbilityAction.Read, TenantAuthZEntity))
+  //   throw new UnauthorizedException(
+  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} tenants.`
+  //   );
 
   const results = await tenantService.getAllUsersByTenantId({
     query: { ...query, tenantId: new mongoose.Types.ObjectId(req.params.id) },

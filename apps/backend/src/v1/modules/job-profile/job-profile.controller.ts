@@ -71,7 +71,7 @@ export const createJobProfile = async ({ req }: ControllerParams) => {
   //     throw new UnauthorizedException(
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} job profile.`
   //     );
-  const userId = req.session.user?._id;
+  const userId = req.session.user?.id;
   req.body.userId = userId;
   const jobProfile = await jobProfileService.create(req.body);
 

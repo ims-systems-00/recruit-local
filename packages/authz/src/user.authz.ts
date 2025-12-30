@@ -9,7 +9,8 @@ import {
 } from '@casl/ability';
 
 import {
-  USER_TYPE_ENUMS,
+  ACCOUNT_TYPE_ENUMS,
+  USER_ROLE_ENUMS,
   ISession,
   IAbilityBuilder,
   AbilityAction,
@@ -17,16 +18,16 @@ import {
 
 export class UserAuthZEntity {
   public readonly tenantId: string | null;
-  public readonly _id: string | null;
+  public readonly id: string | null;
   constructor({
     tenantId,
-    _id,
+    id,
   }: {
     tenantId?: string | null;
-    _id?: string | null;
+    id?: string | null;
   }) {
     this.tenantId = tenantId ?? null;
-    this._id = _id ?? null;
+    this.id = id ?? null;
   }
 }
 
@@ -48,7 +49,16 @@ export class UserAbilityBuilder implements IAbilityBuilder {
   getAbility(): AnyAbility {
     const builder = this.abilityBuilder;
 
-    if (this.session.user.type === USER_TYPE_ENUMS.CUSTOMER) {
+    // admin can manage all
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
+      builder.can(AbilityAction.Manage, UserAuthZEntity);
+    }
+
+    // tenant admin can manage users within their tenant
+    if (
+      this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER &&
+      this.session.user.role === USER_ROLE_ENUMS.ADMIN
+    ) {
       builder.can(AbilityAction.Read, UserAuthZEntity, {
         tenantId: this.session.tenantId,
       });
@@ -63,14 +73,18 @@ export class UserAbilityBuilder implements IAbilityBuilder {
       });
     }
 
-    if (this.session.user.type === USER_TYPE_ENUMS.PLATFORM_ADMIN) {
-      builder.can(AbilityAction.Manage, UserAuthZEntity);
+    // employer can read only their own user if not admin
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
+      builder.can(AbilityAction.Read, UserAuthZEntity, {
+        tenantId: this.session.tenantId,
+        id: this.session.user.id,
+      });
     }
 
-    if (this.session.user.type === USER_TYPE_ENUMS.AUDITOR) {
-      builder.can(AbilityAction.Read, UserAuthZEntity);
-      builder.can(AbilityAction.Update, UserAuthZEntity, {
-        _id: this.session.user._id,
+    // candidate can read only their own user
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+      builder.can(AbilityAction.Read, UserAuthZEntity, {
+        id: this.session.user.id,
       });
     }
 

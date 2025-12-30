@@ -72,7 +72,7 @@ export const create = async ({ req }: ControllerParams) => {
   //     throw new UnauthorizedException(
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} education.`
   //     );
-  const userId = req.session.user?._id;
+  const userId = req.session.user?.id;
   req.body.userId = userId;
   const education = await educationService.create(req.body);
 

@@ -39,7 +39,7 @@ export const deserializeUser = catchAsync(async (req: Request, res: Response, ne
   // Access protected route
   req.session = {
     user: {
-      _id: currentUser._id.toString(),
+      id: currentUser.id.toString(),
       fullName: currentUser.fullName,
       type: currentUser.type,
       role: currentUser.role,
