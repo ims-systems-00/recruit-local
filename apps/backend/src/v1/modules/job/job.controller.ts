@@ -73,9 +73,9 @@ export const create = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} job.`
   //     );
   const tenantId = req.session.tenantId;
-  if (req.session.user.type !== ACCOUNT_TYPE_ENUMS.EMPLOYER || !tenantId) {
-    throw new UnauthorizedException(`You are not authorized to create a job.`);
-  }
+  // if (req.session.user.type !== ACCOUNT_TYPE_ENUMS.EMPLOYER || !tenantId) {
+  //   throw new UnauthorizedException(`You are not authorized to create a job.`);
+  // }
   req.body.tenantId = tenantId;
   const job = await jobService.create(req.body);
 

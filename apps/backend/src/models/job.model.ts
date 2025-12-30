@@ -11,7 +11,6 @@ import {
   WORKPLACE_ENUMS,
   WORKING_DAYS_ENUMS,
   EMPLOYMENT_TYPE,
-  CURRENCY_ENUMS,
   PERIOD_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
   WorkingHours,
@@ -25,6 +24,9 @@ export interface IJobInput extends TenantInput {
   bannerSrc?: string;
   bannerStorage?: AwsStorageTemplate;
   description?: string;
+  email?: string;
+  number?: string;
+  aboutUs?: string;
   startDate?: Date;
   endDate?: Date;
   responsibility?: string;
@@ -39,7 +41,6 @@ export interface IJobInput extends TenantInput {
   workingHours?: WorkingHours;
   employmentType?: EMPLOYMENT_TYPE;
   salary?: Salary;
-  currency?: CURRENCY_ENUMS;
   period?: PERIOD_ENUMS;
   minEducationalQualification?: Education;
   requiredDocuments?: REQUIRED_DOCUMENTS_ENUMS[];
@@ -64,6 +65,9 @@ const jobSchema = new Schema<IJobDoc>(
     bannerSrc: { type: String },
     bannerStorage: { type: Schema.Types.Mixed, default: awsStorageTemplateMongooseDefinition },
     description: { type: String },
+    email: { type: String },
+    number: { type: String },
+    aboutUs: { type: String },
     startDate: { type: Date },
     endDate: { type: Date },
     responsibility: { type: String },
@@ -89,7 +93,6 @@ const jobSchema = new Schema<IJobDoc>(
       min: { type: Number },
       max: { type: Number },
     },
-    currency: { type: String, enum: Object.values(CURRENCY_ENUMS) },
     period: { type: String, enum: Object.values(PERIOD_ENUMS) },
     minEducationalQualification: {
       degree: { type: String },

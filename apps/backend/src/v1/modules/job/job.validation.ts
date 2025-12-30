@@ -4,7 +4,6 @@ import {
   WORKPLACE_ENUMS,
   WORKING_DAYS_ENUMS,
   EMPLOYMENT_TYPE,
-  CURRENCY_ENUMS,
   PERIOD_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
 } from "@inrm/types";
@@ -56,6 +55,10 @@ export const createBodySchema = Joi.object({
   // Basic Info
   title: Joi.string().required().label("Title"),
   description: Joi.string().optional().label("Description"),
+  email: Joi.string().email().optional().label("Email"),
+  number: Joi.string().optional().label("Contact Number"),
+  aboutUs: Joi.string().optional().label("About Us"),
+  autoFill: Joi.boolean().optional().label("Auto Fill"),
   category: Joi.string().optional().label("Category"),
   vacancy: Joi.number().integer().min(1).optional().label("Vacancy"),
   location: Joi.string().optional().label("Location"),
@@ -89,10 +92,6 @@ export const createBodySchema = Joi.object({
     .valid(...Object.values(EMPLOYMENT_TYPE))
     .optional()
     .label("Employment Type"),
-  currency: Joi.string()
-    .valid(...Object.values(CURRENCY_ENUMS))
-    .optional()
-    .label("Currency"),
   period: Joi.string()
     .valid(...Object.values(PERIOD_ENUMS))
     .optional()
@@ -120,7 +119,10 @@ export const updateBodySchema = Joi.object({
   vacancy: Joi.number().integer().min(0).optional().label("Vacancy"),
   location: Joi.string().optional().label("Location"),
   responsibility: Joi.string().optional().label("Responsibility"),
-
+  email: Joi.string().email().optional().label("Email"),
+  number: Joi.string().optional().label("Contact Number"),
+  aboutUs: Joi.string().optional().label("About Us"),
+  autoFill: Joi.boolean().optional().label("Auto Fill"),
   startDate: Joi.date().iso().optional().label("Start Date"),
   endDate: Joi.date().iso().min(Joi.ref("startDate")).optional().label("End Date"),
 
@@ -146,10 +148,7 @@ export const updateBodySchema = Joi.object({
     .valid(...Object.values(EMPLOYMENT_TYPE))
     .optional()
     .label("Employment Type"),
-  currency: Joi.string()
-    .valid(...Object.values(CURRENCY_ENUMS))
-    .optional()
-    .label("Currency"),
+
   period: Joi.string()
     .valid(...Object.values(PERIOD_ENUMS))
     .optional()
