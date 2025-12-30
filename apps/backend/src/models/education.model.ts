@@ -3,11 +3,12 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { userOwnedPlugin, IUserOwned } from "./plugins/userOwned.plugin";
+import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
+import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 
-export interface EducationInput extends IUserOwned {
+export interface EducationInput extends IUserOwnedInput, JobProfileInput {
   institution: string;
   degree: string;
   fieldOfStudy: string;
@@ -43,5 +44,6 @@ educationSchema.plugin(softDeletePlugin);
 educationSchema.plugin(mongoosePaginate);
 educationSchema.plugin(aggregatePaginate);
 educationSchema.plugin(userOwnedPlugin);
+educationSchema.plugin(jobProfilePlugin);
 
 export const Education = model<IEducationDoc, IEducationModel>(modelNames.EDUCATION, educationSchema);

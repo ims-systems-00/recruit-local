@@ -48,7 +48,7 @@ export interface IJobInput extends TenantInput {
 
 export interface IJobDoc extends IJobInput, ITenantDoc, ISoftDeleteDoc, IBaseDoc {
   status?: string;
-  keywords?: string[]; // todo keywords should be generated
+  keywords?: string[]; // todo: keywords should be generated
 }
 
 export interface IJobModel

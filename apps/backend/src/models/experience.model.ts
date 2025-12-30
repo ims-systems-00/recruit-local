@@ -3,11 +3,11 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { userOwnedPlugin, IUserOwned } from "./plugins/userOwned.plugin";
+import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 
-export interface ExperienceInput extends IUserOwned {
+export interface ExperienceInput extends IUserOwnedInput {
   company: string;
   location?: string;
   workMode?: string;

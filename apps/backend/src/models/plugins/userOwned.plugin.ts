@@ -1,7 +1,7 @@
 import { Schema } from "mongoose";
 import { modelNames } from "../constants";
 
-export interface IUserOwned {
+export interface IUserOwnedInput {
   userId: Schema.Types.ObjectId;
 }
 

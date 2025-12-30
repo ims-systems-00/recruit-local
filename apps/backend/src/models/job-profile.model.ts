@@ -4,11 +4,11 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { VISIBILITY, language } from "@inrm/types";
-import { userOwnedPlugin, IUserOwned } from "./plugins/userOwned.plugin";
+import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 
-export interface JobProfileInput extends IUserOwned {
+export interface JobProfileInput extends IUserOwnedInput {
   headline?: string;
   summary?: string;
   keywords?: string[];
