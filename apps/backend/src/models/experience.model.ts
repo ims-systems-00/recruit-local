@@ -4,10 +4,11 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
+import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 
-export interface ExperienceInput extends IUserOwnedInput {
+export interface ExperienceInput extends IUserOwnedInput, JobProfileInput {
   company: string;
   location?: string;
   workMode?: string;
@@ -46,5 +47,6 @@ experienceSchema.plugin(softDeletePlugin);
 experienceSchema.plugin(mongoosePaginate);
 experienceSchema.plugin(aggregatePaginate);
 experienceSchema.plugin(userOwnedPlugin);
+experienceSchema.plugin(jobProfilePlugin);
 
 export const Experience = model<IExperienceDoc, IExperienceModel>(modelNames.EXPERIENCE, experienceSchema);
