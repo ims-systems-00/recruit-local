@@ -1,4 +1,5 @@
-import { Schema } from "joi";
+import { CustomHelpers, Schema } from "joi";
+import mongoose from "mongoose";
 
 export function validate(schema: Schema, data: any) {
   const options = { abortEarly: false };
@@ -12,3 +13,10 @@ export function validate(schema: Schema, data: any) {
 
   return errors;
 }
+
+export const objectIdValidation = (value: string, helpers: CustomHelpers) => {
+  if (!mongoose.Types.ObjectId.isValid(value)) {
+    return helpers.message({ custom: `"${helpers.state.path.join(".")}" must be a valid ObjectId` });
+  }
+  return value;
+};

@@ -4,3 +4,6 @@ export * from './enums';
 export * from './tenant.enum';
 export * from './ability-builder';
 export * from './ability-action';
+export * from './job-profile';
+export * from './api';
+export * from './job';

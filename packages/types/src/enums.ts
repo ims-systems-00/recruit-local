@@ -74,7 +74,13 @@ export enum MEMBERSHIP_ROLE_ENUMS {
 
 export enum USER_ROLE_ENUMS {
   ADMIN = 'admin',
-  STANDARD = 'standard',
+  MEMBER = 'member',
+}
+
+export enum ACCOUNT_TYPE_ENUMS {
+  PLATFORM_ADMIN = 'platform-admin',
+  EMPLOYER = 'employer',
+  CANDIDATE = 'candidate',
 }
 
 export enum NONCONFORMITY_STATUS_ENUMS {
@@ -103,12 +109,6 @@ export enum FINDING_TYPE_ENUM {
   RISK = 'risk',
   NON_CONFORMITY = 'non-conformity',
   OFI = 'ofi',
-}
-
-export enum USER_TYPE_ENUMS {
-  PLATFORM_ADMIN = 'platform-admin',
-  CUSTOMER = 'customer',
-  AUDITOR = 'auditor',
 }
 
 export enum EMAIL_VERIFICATION_STATUS_ENUMS {
@@ -390,4 +390,70 @@ export enum AUDIT_TYPE_ENUMS {
   INITIAL_SITE_VISIT = 'Initial Site Visit',
   MAIN_ASSESSMENT = 'Main Assessment',
   SURVEILLANCE = 'Surveillance',
+}
+
+export enum VISIBILITY {
+  PUBLIC = 'public',
+  PRIVATE = 'private',
+}
+
+export enum WORK_MODE {
+  REMOTE = 'remote',
+  ONSITE = 'onsite',
+  HYBRID = 'hybrid',
+}
+
+export enum EMPLOYMENT_TYPE {
+  FULL_TIME = 'full-time',
+  PART_TIME = 'part-time',
+  CONTRACT = 'contract',
+  FREELANCE = 'freelance',
+  INTERN = 'intern',
+}
+
+export enum PROFICIENCY {
+  BEGINNER = 'beginner',
+  INTERMEDIATE = 'intermediate',
+  ADVANCED = 'advanced',
+  NATIVE = 'native',
+}
+
+/*
+ * Jobs related enums
+ */
+export enum WORKING_DAYS_ENUMS {
+  MONDAY = 'monday',
+  TUESDAY = 'tuesday',
+  WEDNESDAY = 'wednesday',
+  THURSDAY = 'thursday',
+  FRIDAY = 'friday',
+  SATURDAY = 'saturday',
+  SUNDAY = 'sunday',
+}
+
+export enum WORKPLACE_ENUMS {
+  REMOTE = 'remote',
+  ONSITE = 'onsite',
+  HYBRID = 'hybrid',
+}
+
+export enum PERIOD_ENUMS {
+  HOURLY = 'hourly',
+  DAILY = 'daily',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+  YEARLY = 'yearly',
+}
+
+export enum REQUIRED_DOCUMENTS_ENUMS {
+  RESUME = 'resume',
+  COVER_LETTER = 'cover_letter',
+  PORTFOLIO = 'portfolio',
+  CERTIFICATES = 'certificates',
+}
+
+export enum JOBS_STATUS_ENUMS {
+  DRAFT = 'draft',
+  POSTED = 'posted',
+  CLOSED = 'closed',
 }

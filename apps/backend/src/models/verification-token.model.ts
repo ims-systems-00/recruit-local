@@ -29,6 +29,7 @@ const schema = new Schema<IVerificationTokenDoc>(
       type: String,
       required: true,
     },
+    // todo: token payload can be extended in future
     type: {
       type: String,
       enum: Object.values(VERIFICATION_TOKEN_TYPE_ENUMS),
