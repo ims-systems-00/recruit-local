@@ -1,16 +1,8 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { s3Client } from "../../../.config/s3.config";
 import { FileManager, NotFoundException } from "../../../common/helper";
 import { IListUserParams } from "./user.interface";
 import { User, UserInput } from "../../../models";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
-
-const s3Client = new S3Client({
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_ACCESS_KEY_SECRET,
-  },
-  region: "eu-west-2",
-});
 
 export const listUser = ({ query = {}, options }: IListUserParams) => {
   return User.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
@@ -75,24 +67,20 @@ export const restoreUser = async (id: string) => {
 };
 
 export const updateUserProfileImage = async (id: string, payload: AwsStorageTemplate) => {
-  try {
-    const user = await getUser(id);
-    const fileManager = new FileManager(s3Client);
-    const previousProfileImageStorage = user.profileImageStorage;
+  const user = await getUser(id);
+  const fileManager = new FileManager(s3Client);
+  const previousProfileImageStorage = user.profileImageStorage;
 
-    const logoSrc = process.env.PUBLIC_MEDIA_BASE_URL + "/" + payload.Key;
-    user.profileImageSrc = logoSrc;
-    user.profileImageStorage = payload;
-    await user.save();
+  const logoSrc = process.env.PUBLIC_MEDIA_BASE_URL + "/" + payload.Key;
+  user.profileImageSrc = logoSrc;
+  user.profileImageStorage = payload;
+  await user.save();
 
-    // delete the previous file from s3
-    if (typeof previousProfileImageStorage?.Key === "string") {
-      const { Bucket, Key } = previousProfileImageStorage;
-      fileManager.deleteFile({ Bucket, Key });
-    }
-
-    return user;
-  } catch (err) {
-    throw err;
+  // delete the previous file from s3
+  if (typeof previousProfileImageStorage?.Key === "string") {
+    const { Bucket, Key } = previousProfileImageStorage;
+    fileManager.deleteFile({ Bucket, Key });
   }
+
+  return user;
 };

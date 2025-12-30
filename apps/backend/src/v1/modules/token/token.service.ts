@@ -8,6 +8,7 @@ import {
   FindTokenInput,
   QuotationTokenPayload,
 } from "./token.interface";
+
 export const generateTokensPair = (payload: CustomJwtPayload) => {
   const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET! as string, {
     expiresIn: parseInt(process.env.ACCESS_TOKEN_EXPIRY as string),

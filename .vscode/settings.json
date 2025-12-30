@@ -1,4 +1,23 @@
 {
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "cSpell.words": [
+    "commentactivities",
+    "documentfolders",
+    "filemedias",
+    "formelements",
+    "formresponses",
+    "formsubmissions",
+    "inrm",
+    "jobprofiles",
+    "organisations",
+    "PEFC",
+    "responsetemplates",
+    "specializeduserprofiles",
+    "SSIP",
+    "tokenpairs",
+    "transferregisters",
+    "verificationtokens",
+    "virtuals"
+  ]
 }

@@ -1,8 +1,8 @@
-import { USER_TYPE_ENUMS } from "../../../models/constants";
+import { ACCOUNT_TYPE_ENUMS } from "@inrm/types";
 import { Email } from "./core";
 
 export class AccountInvitaionEmail extends Email {
-  constructor(payload: { link: string; userType: USER_TYPE_ENUMS }) {
+  constructor(payload: { link: string; userType: ACCOUNT_TYPE_ENUMS }) {
     super({
       template: "account-invitation",
       subject: "[Invitation] Join Interface NRM portal",

@@ -27,3 +27,7 @@ export const update = (
 export const remove = (filter: Partial<VerificationInputWithId>) => {
   return VerificationToken.findOneAndDelete(filter);
 };
+
+export const removeMany = (filter: Partial<VerificationInputWithId>) => {
+  return VerificationToken.deleteMany(filter);
+};
