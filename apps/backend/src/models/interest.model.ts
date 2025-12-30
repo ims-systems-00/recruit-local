@@ -4,10 +4,11 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
+import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 
-export interface InterestInput extends IUserOwnedInput {
+export interface InterestInput extends IUserOwnedInput, JobProfileInput {
   name: string;
   description?: string;
 }
@@ -34,5 +35,6 @@ interestSchema.plugin(softDeletePlugin);
 interestSchema.plugin(mongoosePaginate);
 interestSchema.plugin(aggregatePaginate);
 interestSchema.plugin(userOwnedPlugin);
+interestSchema.plugin(jobProfilePlugin);
 
 export const Interest = model<IInterestDoc, IInterestModel>(modelNames.INTEREST, interestSchema);
