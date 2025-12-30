@@ -4,11 +4,12 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
+import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 
-export interface CertificationInput extends IUserOwnedInput {
+export interface CertificationInput extends IUserOwnedInput, JobProfileInput {
   title: string;
   issuingOrganization: string;
   issueDate: Date;
@@ -42,6 +43,7 @@ certificationSchema.plugin(softDeletePlugin);
 certificationSchema.plugin(mongoosePaginate);
 certificationSchema.plugin(aggregatePaginate);
 certificationSchema.plugin(userOwnedPlugin);
+certificationSchema.plugin(jobProfilePlugin);
 
 export const Certification = model<ICertificationDoc, ICertificationModel>(
   modelNames.CERTIFICATION,
