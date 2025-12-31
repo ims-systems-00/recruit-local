@@ -3,7 +3,7 @@ import { Poppins } from 'next/font/google';
 import './globals.css';
 import NextAuthProviders from '@/providers/next-auth-providers';
 import { ReactQueryProvider } from '@/providers/react-query-provider';
-
+import { Toaster } from '@/components/ui/sonner';
 const poppins = Poppins({
   variable: '--font-poppins',
   subsets: ['latin'],
@@ -26,6 +26,7 @@ export default function RootLayout({
         <NextAuthProviders>
           <ReactQueryProvider>{children}</ReactQueryProvider>
         </NextAuthProviders>
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   );

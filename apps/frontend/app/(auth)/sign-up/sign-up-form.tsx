@@ -1,9 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-
+import React from 'react';
+import { Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 
 import {
@@ -15,8 +13,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 
-import { signupSchema, SignupFormValues } from './signup.schema';
-
 import { EyeClosed, Eye } from 'lucide-react';
 import {
   Select,
@@ -26,32 +22,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { registerUser } from '@/services/auth/auth.server';
+import { useSignup } from '@/services/auth/auth.client';
 
 export default function SignUpForm() {
-  const [showPassword, setShowPassword] = useState(false);
-
-  const { register, handleSubmit, setValue } = useForm<SignupFormValues>({
-    resolver: yupResolver(signupSchema),
-  });
-
-  const onFormSubmit = async (data: SignupFormValues) => {
-    const res = await registerUser(data);
-
-    if (!res.success) {
-      console.log('Registered', res.message); // or toast later
-      return;
-    }
-
-    // success case
-    console.log('Registered:', res.data);
-  };
+  const {
+    register,
+    onSubmit,
+    showPassword,
+    togglePassword,
+    isSubmitting,
+    formState: { errors },
+    control,
+  } = useSignup();
 
   return (
-    <form
-      onSubmit={handleSubmit(onFormSubmit)}
-      className=" flex flex-col gap-y-10 flex-1"
-    >
+    <form onSubmit={onSubmit} className=" flex flex-col gap-y-10 flex-1">
       <div className="space-y-6">
         <div className="space-y-3">
           <h4>Welcome to Recruit Local</h4>
@@ -106,17 +91,24 @@ export default function SignUpForm() {
                 User Type
               </Label>
 
-              <Select onValueChange={(v) => setValue('type', v)}>
-                <SelectTrigger className="h-10! w-full">
-                  <SelectValue placeholder="Choose your Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="employer">Employer</SelectItem>
-                    <SelectItem value="candidate">Candidate</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <Controller
+                name="type"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="h-10! w-full">
+                      <SelectValue placeholder="Choose your Role" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="employer">Employer</SelectItem>
+                        <SelectItem value="candidate">Candidate</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             <div className="space-y-3">
@@ -129,10 +121,7 @@ export default function SignUpForm() {
                   placeholder="Set a New Password"
                   {...register('password')}
                 />
-                <InputGroupAddon
-                  align="inline-end"
-                  onClick={() => setShowPassword((p) => !p)}
-                >
+                <InputGroupAddon align="inline-end" onClick={togglePassword}>
                   {showPassword ? <Eye /> : <EyeClosed />}
                 </InputGroupAddon>
               </InputGroup>
@@ -148,10 +137,7 @@ export default function SignUpForm() {
                   placeholder="Rewrite the password"
                   {...register('confirmPassword')}
                 />
-                <InputGroupAddon
-                  align="inline-end"
-                  onClick={() => setShowPassword((p) => !p)}
-                >
+                <InputGroupAddon align="inline-end" onClick={togglePassword}>
                   {showPassword ? <Eye /> : <EyeClosed />}
                 </InputGroupAddon>
               </InputGroup>
@@ -160,10 +146,17 @@ export default function SignUpForm() {
 
           <div className=" flex justify-between items-center gap-4">
             <div className="flex items-center gap-2">
-              <Checkbox
-                id="agreed"
-                className="w-4 h-4 rounded-xs shadow-none border border-border"
-                onCheckedChange={(v) => setValue('agreed', !!v)}
+              <Controller
+                name="agreed"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    id="agreed"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    className="w-4 h-4 rounded-xs shadow-none border border-border"
+                  />
+                )}
               />
               <Label htmlFor="agreed" className="text-title text-sm">
                 I agree to the{' '}
@@ -183,9 +176,10 @@ export default function SignUpForm() {
       <div className=" flex-1 flex justify-between flex-col gap-8">
         <Button
           type="submit"
-          className=" w-full text-base bg-primary border-primary text-white rounded-lg h-10"
+          className=" w-full text-base bg-primary border-primary text-white rounded-lg h-10 cursor-pointer"
+          disabled={isSubmitting}
         >
-          Sign Up
+          {isSubmitting ? 'Loading...' : 'Sign Up'}
         </Button>
 
         <div className=" flex justify-center">
