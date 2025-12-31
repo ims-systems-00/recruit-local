@@ -1,7 +1,13 @@
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import * as userService from "./user.service";
-import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
+import {
+  ApiResponse,
+  ControllerParams,
+  formatListResponse,
+  NotFoundException,
+  UnauthorizedException,
+} from "../../../common/helper";
 import { UserAbilityBuilder, UserAuthZEntity } from "@inrm/authz";
 import { AbilityAction } from "@inrm/types";
 import { accessibleBy } from "@casl/mongoose";
@@ -74,6 +80,10 @@ export const updateUser = async ({ req }: ControllerParams) => {
   const user = await userService.getUser({
     query: { _id: req.params.id },
   });
+
+  if (!user) {
+    throw new NotFoundException(`User ${req.params.id} not found.`);
+  }
 
   const abilityBuilder = new UserAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();

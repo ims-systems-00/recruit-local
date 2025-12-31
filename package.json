@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "build:packages": "pnpm --filter @inrm/types --filter @inrm/authz build",
     "backend:dev": "pnpm --filter @inrm/backend start:dev",
     "start:dev": "concurrently --kill-others \"pnpm backend:dev\""
   },
