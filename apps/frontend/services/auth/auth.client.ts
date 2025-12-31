@@ -8,6 +8,12 @@ import { useMutation } from '@tanstack/react-query';
 import { signIn } from 'next-auth/react';
 import { loginSchema, LoginSchema } from '@/app/(auth)/login/login.schema';
 import { signOut } from 'next-auth/react';
+import { toast } from 'sonner';
+import {
+  SignupFormValues,
+  signupSchema,
+} from '@/app/(auth)/sign-up/signup.schema';
+import { registerUser } from './auth.server';
 
 export function useLogin() {
   const router = useRouter();
@@ -36,7 +42,11 @@ export function useLogin() {
       return res;
     },
     onSuccess: () => {
+      toast.success('Logged in successfully');
       router.push('/recruiter');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Invalid email or password');
     },
   });
 
@@ -69,12 +79,54 @@ export function useLogout() {
       return res;
     },
     onSuccess: () => {
+      toast.success('Logged out successfully');
       router.push('/login');
+    },
+    onError: () => {
+      toast.error('Failed to logout. Please try again.');
     },
   });
 
   return {
     logout: mutation.mutate,
     isLoading: mutation.isPending,
+  };
+}
+
+export function useSignup() {
+  const [showPassword, setShowPassword] = useState(false);
+
+  const form = useForm<SignupFormValues>({
+    resolver: yupResolver(signupSchema),
+  });
+
+  const mutation = useMutation({
+    mutationFn: registerUser,
+    onSuccess: (res) => {
+      if (!res.success) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success(res.data.message);
+      form.reset();
+    },
+    onError: () => {
+      toast.error('Something went wrong. Please try again.');
+    },
+  });
+
+  return {
+    // react-hook-form
+    ...form,
+    onSubmit: form.handleSubmit((data) => mutation.mutate(data)),
+
+    // password toggle
+    showPassword,
+    togglePassword: () => setShowPassword((p) => !p),
+
+    // react-query state
+    isSubmitting: mutation.isPending,
+    isError: mutation.isError,
   };
 }

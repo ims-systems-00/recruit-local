@@ -4,11 +4,6 @@ import Logo from '@/public/images/logo.svg';
 import SignUpForm from './sign-up-form';
 
 export default function SignUp() {
-  const onFormSubmit = (e: any) => {
-    e.preventDefault();
-    alert('sss');
-    console.log('e', e);
-  };
   return (
     <div className=" min-h-screen flex justify-center items-center bg-card py-8">
       <div className=" shadow-regular w-[692px] min-h-[735px] bg-card rounded-lg flex flex-col gap-y-8 p-8">
