@@ -94,6 +94,8 @@ export function useLogout() {
 }
 
 export function useSignup() {
+  const router = useRouter();
+
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<SignupFormValues>({
@@ -110,6 +112,7 @@ export function useSignup() {
 
       toast.success(res.data.message);
       form.reset();
+      router.push('/registration-verification/resend');
     },
     onError: () => {
       toast.error('Something went wrong. Please try again.');
