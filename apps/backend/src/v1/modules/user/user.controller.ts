@@ -53,6 +53,9 @@ export const listUser = async ({ req }: ControllerParams) => {
 
 export const getUser = async ({ req }: ControllerParams) => {
   const user = await userService.getUser({ query: { _id: req.params.id } });
+  if (!user) {
+    throw new NotFoundException(`User ${req.params.id} not found.`);
+  }
   const abilityBuilder = new UserAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
@@ -112,6 +115,9 @@ export const updateUser = async ({ req }: ControllerParams) => {
 
 export const softRemoveUser = async ({ req }: ControllerParams) => {
   const user = await userService.getUser({ query: { _id: req.params.id } });
+  if (!user) {
+    throw new NotFoundException(`User ${req.params.id} not found.`);
+  }
 
   const abilityBuilder = new UserAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
@@ -139,6 +145,10 @@ export const softRemoveUser = async ({ req }: ControllerParams) => {
 
 export const hardRemoveUser = async ({ req }: ControllerParams) => {
   const user = await userService.getUser({ query: { _id: req.params.id } });
+  if (!user) {
+    throw new NotFoundException(`User ${req.params.id} not found.`);
+  }
+
   const abilityBuilder = new UserAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
@@ -166,6 +176,10 @@ export const hardRemoveUser = async ({ req }: ControllerParams) => {
 
 export const restoreUser = async ({ req }: ControllerParams) => {
   const user = await userService.getUser({ query: { _id: req.params.id } });
+  if (!user) {
+    throw new NotFoundException(`User ${req.params.id} not found.`);
+  }
+
   const abilityBuilder = new UserAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
