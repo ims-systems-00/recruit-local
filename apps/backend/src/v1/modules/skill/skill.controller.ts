@@ -69,7 +69,7 @@ export const create = async ({ req }: ControllerParams) => {
   //     throw new UnauthorizedException(
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} skill.`
   //     );
-  const userId = req.session.user?.id;
+  const userId = req.session.user?._id;
 
   const skill = await skillService.create({
     ...req.body,

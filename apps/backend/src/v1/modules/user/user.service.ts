@@ -8,8 +8,8 @@ export const listUser = ({ query = {}, options }: IListUserParams) => {
   return User.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
 };
 
-export const getUser = async (id: string) => {
-  const user = await User.findOneWithExcludeDeleted({ _id: id });
+export const getUser = async ({ query = {} }: IListUserParams) => {
+  const user = await User.findOneWithExcludeDeleted(query);
   if (!user) throw new NotFoundException("User not found.");
 
   return user;
@@ -20,7 +20,7 @@ export const getUserByEmail = (email: string) => {
 };
 
 export const updateUser = async (id: string, payload: Partial<UserInput>) => {
-  await getUser(id);
+  await getUser({ query: { _id: id } });
   const updatedUser = await User.findOneAndUpdate(
     { _id: id },
     {
@@ -40,7 +40,9 @@ export const createUser = async (payload: UserInput) => {
 };
 
 export const softRemoveUser = async (id: string) => {
-  const user = await getUser(id);
+  const user = await getUser({
+    query: { _id: id },
+  });
   const { deleted } = await User.softDelete({ _id: id });
 
   // Update email to avoid duplication
@@ -51,7 +53,9 @@ export const softRemoveUser = async (id: string) => {
 };
 
 export const hardRemoveUser = async (id: string) => {
-  const user = await getUser(id);
+  const user = await getUser({
+    query: { _id: id },
+  });
   await User.findOneAndDelete({ _id: id });
 
   return user;
@@ -61,13 +65,17 @@ export const restoreUser = async (id: string) => {
   const { restored } = await User.restore({ _id: id });
   if (!restored) throw new NotFoundException("User not found in trash.");
 
-  const user = await getUser(id);
+  const user = await getUser({
+    query: { _id: id },
+  });
 
   return { user, restored };
 };
 
 export const updateUserProfileImage = async (id: string, payload: AwsStorageTemplate) => {
-  const user = await getUser(id);
+  const user = await getUser({
+    query: { _id: id },
+  });
   const fileManager = new FileManager(s3Client);
   const previousProfileImageStorage = user.profileImageStorage;
 

@@ -37,7 +37,7 @@ export const createInvitation = async ({ req }: ControllerParams) => {
   const payloads: InvitationPayload[] = req.body;
 
   await Promise.all(
-    payloads.map((payload) => invitationService.createInvitation({ ...payload, createdBy: req.session.user.id }))
+    payloads.map((payload) => invitationService.createInvitation({ ...payload, createdBy: req.session.user._id }))
   );
 
   return new ApiResponse({

@@ -18,16 +18,16 @@ import {
 
 export class UserAuthZEntity {
   public readonly tenantId: string | null;
-  public readonly id: string | null;
+  public readonly _id: string | null;
   constructor({
     tenantId,
-    id,
+    _id,
   }: {
     tenantId?: string | null;
-    id?: string | null;
+    _id?: string | null;
   }) {
     this.tenantId = tenantId ?? null;
-    this.id = id ?? null;
+    this._id = _id ?? null;
   }
 }
 
@@ -77,14 +77,14 @@ export class UserAbilityBuilder implements IAbilityBuilder {
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
       builder.can(AbilityAction.Read, UserAuthZEntity, {
         tenantId: this.session.tenantId,
-        id: this.session.user.id,
+        _id: this.session.user.id,
       });
     }
 
     // candidate can read only their own user
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
       builder.can(AbilityAction.Read, UserAuthZEntity, {
-        id: this.session.user.id,
+        _id: this.session.user.id,
       });
     }
 

@@ -12,7 +12,7 @@ export const listUser = async ({ req }: ControllerParams) => {
   const ability = abilityBuilder.getAbility();
 
   if (!ability.can(AbilityAction.Read, UserAuthZEntity)) {
-    throw new UnauthorizedException(`User ${req.session.user?.id} is not authorized to read users.`);
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read users.`);
   }
 
   const filter = new MongoQuery(req.query, {
@@ -27,8 +27,6 @@ export const listUser = async ({ req }: ControllerParams) => {
   const finalQuery = {
     $and: [userSearchQuery, securityQuery],
   };
-
-  // console.log("Final Query:", JSON.stringify(finalQuery, null, 2));
 
   const results = await userService.listUser({
     query: finalQuery as any,
@@ -47,11 +45,21 @@ export const listUser = async ({ req }: ControllerParams) => {
 };
 
 export const getUser = async ({ req }: ControllerParams) => {
-  const user = await userService.getUser(req.params.id);
+  const user = await userService.getUser({ query: { _id: req.params.id } });
+  const abilityBuilder = new UserAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
 
-  // const ability = new UserAbilityBuilder(req.session);
-  // if (!ability.getAbility().can(AbilityAction.Read, UserAuthZEntity))
-  //   throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} user.`);
+  if (
+    !ability.can(
+      AbilityAction.Read,
+      new UserAuthZEntity({
+        tenantId: user?.tenantId?.toString() || null,
+        id: user?._id.toString() || null,
+      })
+    )
+  ) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read user.`);
+  }
 
   return new ApiResponse({
     message: "User retrieved.",

@@ -127,7 +127,7 @@ export const createTenant = async ({ req }: ControllerParams) => {
 
   const user = req.session.user!;
 
-  await updateUser(user.id.toString(), {
+  await updateUser(user._id.toString(), {
     tenantId: tenant.id,
     role: USER_ROLE_ENUMS.ADMIN,
   });

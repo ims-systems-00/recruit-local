@@ -26,7 +26,9 @@ export const deserializeUser = catchAsync(async (req: Request, res: Response, ne
   // Check if user still exists
   let currentUser: IUserDoc = null;
   try {
-    currentUser = await userService.getUser(decoded.id);
+    currentUser = await userService.getUser({
+      query: { _id: decoded.id },
+    });
   } catch (err) {
     return next(new UnauthorizedException(err.message));
   }
@@ -39,7 +41,7 @@ export const deserializeUser = catchAsync(async (req: Request, res: Response, ne
   // Access protected route
   req.session = {
     user: {
-      id: currentUser.id.toString(),
+      _id: currentUser._id.toString(),
       fullName: currentUser.fullName,
       type: currentUser.type,
       role: currentUser.role,
