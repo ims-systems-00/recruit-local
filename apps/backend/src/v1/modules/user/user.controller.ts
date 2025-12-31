@@ -54,7 +54,7 @@ export const getUser = async ({ req }: ControllerParams) => {
       AbilityAction.Read,
       new UserAuthZEntity({
         tenantId: user?.tenantId?.toString() || null,
-        id: user?._id.toString() || null,
+        _id: user?._id.toString() || null,
       })
     )
   ) {

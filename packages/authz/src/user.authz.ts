@@ -77,14 +77,14 @@ export class UserAbilityBuilder implements IAbilityBuilder {
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
       builder.can(AbilityAction.Read, UserAuthZEntity, {
         tenantId: this.session.tenantId,
-        _id: this.session.user.id,
+        _id: this.session.user._id,
       });
     }
 
     // candidate can read only their own user
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
       builder.can(AbilityAction.Read, UserAuthZEntity, {
-        _id: this.session.user.id,
+        _id: this.session.user._id,
       });
     }
 
