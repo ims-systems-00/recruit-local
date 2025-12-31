@@ -9,7 +9,7 @@ import {
 } from '@casl/ability';
 
 import {
-  USER_TYPE_ENUMS,
+  ACCOUNT_TYPE_ENUMS,
   ISession,
   IAbilityBuilder,
   AbilityAction,
@@ -38,7 +38,7 @@ export class ResponseTemplateAbilityBuilder implements IAbilityBuilder {
     const builder = this.abilityBuilder;
 
     switch (this.session.user.type) {
-      case USER_TYPE_ENUMS.PLATFORM_ADMIN:
+      case ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN:
         builder.can(AbilityAction.Manage, ResponseTemplateAuthZEntity);
         break;
     }

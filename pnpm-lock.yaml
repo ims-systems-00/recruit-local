@@ -56,6 +56,9 @@ importers:
       '@casl/ability':
         specifier: ^6.7.3
         version: 6.7.3
+      '@casl/mongoose':
+        specifier: ^8.0.3
+        version: 8.0.3(@casl/ability@6.7.3)(mongoose@8.14.3(@aws-sdk/credential-providers@3.817.0)(socks@2.8.4))
       '@ims-systems-00/ims-query-builder':
         specifier: ^0.0.11
         version: 0.0.11(@aws-sdk/credential-providers@3.817.0)(socks@2.8.4)
@@ -728,6 +731,12 @@ packages:
 
   '@casl/ability@6.7.3':
     resolution: {integrity: sha512-A4L28Ko+phJAsTDhRjzCOZWECQWN2jzZnJPnROWWHjJpyMq1h7h9ZqjwS2WbIUa3Z474X1ZPSgW0f1PboZGC0A==}
+
+  '@casl/mongoose@8.0.3':
+    resolution: {integrity: sha512-xK04p4mJBhJX3xppUuH2Z4h+QjM3YvfONct6XEpqvzh4aspTYg7Jn2l1l9er4Ih8sPuPbin947tF/TPYsVO35A==}
+    peerDependencies:
+      '@casl/ability': ^6.7.0
+      mongoose: ^6.0.13 || ^7.0.0 || ^8.0.0
 
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -4441,6 +4450,7 @@ packages:
   next@15.5.6:
     resolution: {integrity: sha512-zTxsnI3LQo3c9HSdSf91O1jMNsEzIXDShXd4wVdg9y5shwLqBXi4ZtUUJyB86KGVSJLZx0PFONvO54aheGX8QQ==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
+    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/CVE-2025-66478 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
@@ -5428,6 +5438,7 @@ packages:
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@4.0.0:
     resolution: {integrity: sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==}
@@ -6360,6 +6371,11 @@ snapshots:
   '@casl/ability@6.7.3':
     dependencies:
       '@ucast/mongo2js': 1.4.0
+
+  '@casl/mongoose@8.0.3(@casl/ability@6.7.3)(mongoose@8.14.3(@aws-sdk/credential-providers@3.817.0)(socks@2.8.4))':
+    dependencies:
+      '@casl/ability': 6.7.3
+      mongoose: 8.14.3(@aws-sdk/credential-providers@3.817.0)(socks@2.8.4)
 
   '@colors/colors@1.5.0':
     optional: true

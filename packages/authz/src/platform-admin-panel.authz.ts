@@ -9,7 +9,7 @@ import {
 } from '@casl/ability';
 
 import {
-  USER_TYPE_ENUMS,
+  ACCOUNT_TYPE_ENUMS,
   ISession,
   IAbilityBuilder,
   AbilityAction,
@@ -47,7 +47,7 @@ export class PlatformAdminPanelAbilityBuilder implements IAbilityBuilder {
   getAbility(): AnyAbility {
     const builder = this.abilityBuilder;
 
-    if (this.session.user.type === USER_TYPE_ENUMS.PLATFORM_ADMIN) {
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       builder.can(AbilityAction.Manage, PlatformAdminPanelAuthZEntity, {
         rootDashboardAllowed: true,
         management: true,
