@@ -15,6 +15,20 @@ import {
 } from '@/app/(auth)/sign-up/signup.schema';
 import { registerUser } from './auth.server';
 
+async function loginWithCredentials(email: string, password: string) {
+  const res = await signIn('credentials', {
+    email,
+    password,
+    redirect: false,
+  });
+
+  if (res?.error) {
+    throw new Error(res.error);
+  }
+
+  return res;
+}
+
 export function useLogin() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
@@ -28,22 +42,12 @@ export function useLogin() {
   });
 
   const mutation = useMutation({
-    mutationFn: async (payload: LoginSchema) => {
-      const res = await signIn('credentials', {
-        email: payload.email,
-        password: payload.password,
-        redirect: false,
-      });
+    mutationFn: (payload: LoginSchema) =>
+      loginWithCredentials(payload.email, payload.password),
 
-      if (res?.error) {
-        throw new Error(res.error);
-      }
-
-      return res;
-    },
     onSuccess: () => {
       toast.success('Logged in successfully');
-      router.push('/recruiter');
+      router.push('/system-preparation');
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Invalid email or password');
@@ -104,15 +108,23 @@ export function useSignup() {
 
   const mutation = useMutation({
     mutationFn: registerUser,
-    onSuccess: (res) => {
+
+    onSuccess: async (res, variables) => {
       if (!res.success) {
         toast.error(res.message);
         return;
       }
 
-      toast.success(res.data.message);
-      form.reset();
-      router.push('/registration-verification/resend');
+      try {
+        await loginWithCredentials(variables.email, variables.password);
+
+        toast.success(res.data.message);
+        form.reset();
+        router.push('/system-preparation');
+      } catch {
+        toast.success('Account created successfully');
+        router.push('/login');
+      }
     },
     onError: () => {
       toast.error('Something went wrong. Please try again.');
