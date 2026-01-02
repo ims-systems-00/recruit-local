@@ -1,8 +1,8 @@
 import React from 'react';
 import Image from 'next/image';
 
-import { Button } from '@/components/ui/button';
 import ConfirmImg from '@/public/images/pana.svg';
+import ResendVerificationButton from './resend-verification-button';
 
 export default function RegistrationVerificationResend() {
   return (
@@ -25,9 +25,7 @@ export default function RegistrationVerificationResend() {
               you haven’t received any email
             </p>
           </div>
-          <Button className=" min-w-[181px] text-base bg-primary border-primary text-white rounded-lg h-10">
-            Resend Verification
-          </Button>
+          <ResendVerificationButton />
         </div>
       </div>
     </div>

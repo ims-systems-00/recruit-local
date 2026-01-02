@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation } from '@tanstack/react-query';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { loginSchema, LoginSchema } from '@/app/(auth)/login/login.schema';
 import { signOut } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -13,7 +13,7 @@ import {
   SignupFormValues,
   signupSchema,
 } from '@/app/(auth)/sign-up/signup.schema';
-import { registerUser } from './auth.server';
+import { registerUser, resendVerificationLink } from './auth.server';
 
 async function loginWithCredentials(email: string, password: string) {
   const res = await signIn('credentials', {
@@ -120,7 +120,7 @@ export function useSignup() {
 
         toast.success(res.data.message);
         form.reset();
-        router.push('/system-preparation');
+        router.push('/registration-verification/resend');
       } catch {
         toast.success('Account created successfully');
         router.push('/login');
@@ -143,5 +143,24 @@ export function useSignup() {
     // react-query state
     isSubmitting: mutation.isPending,
     isError: mutation.isError,
+  };
+}
+
+export function useResendVerificationLink() {
+  const { data: session } = useSession();
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const res = await resendVerificationLink(session?.user.email || '');
+      toast.success(res.message);
+    },
+    onError: (err) => {
+      toast.error('Something went wrong. Please try again.');
+    },
+  });
+
+  return {
+    resend: mutation.mutate,
+    isLoading: mutation.isPending,
   };
 }

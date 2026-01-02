@@ -37,3 +37,11 @@ export async function registerUser(data: any): Promise<RegisterResponse> {
     };
   }
 }
+
+export async function resendVerificationLink(email: string) {
+  const res = await axiosServer.post('/auth/registration/verification/email', {
+    email,
+  });
+
+  return res.data;
+}
