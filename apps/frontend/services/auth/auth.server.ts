@@ -1,18 +1,38 @@
 'use server';
 import { axiosServer } from '@/lib/http/axios.server';
+import { handleServerError } from '@/lib/http/handleServerError';
 import { AxiosError } from 'axios';
+
+type SuccessResponse<T = any> = {
+  success: true;
+  data: T;
+};
+
+type ErrorResponse = {
+  success: false;
+  message: string;
+};
+
+export type ApiResponse<T = any> = SuccessResponse<T> | ErrorResponse;
 
 type RegisterResponse =
   | { success: true; data: any }
   | { success: false; message: string };
 
-export async function loginUser(data: any) {
-  const res = await axiosServer.post('/auth/login', data);
+export async function loginUser(data: any): Promise<ApiResponse> {
+  try {
+    const res = await axiosServer.post('/auth/login', data);
 
-  return res.data;
+    return {
+      success: true,
+      data: res.data,
+    };
+  } catch (error) {
+    return handleServerError(error, 'Login failed');
+  }
 }
 
-export async function registerUser(data: any): Promise<RegisterResponse> {
+export async function registerUser(data: any): Promise<ApiResponse> {
   try {
     const { confirmPassword, agreed, ...payload } = data;
     const res = await axiosServer.post('/auth/registration', payload);
@@ -22,26 +42,24 @@ export async function registerUser(data: any): Promise<RegisterResponse> {
       data: res.data,
     };
   } catch (error) {
-    if (error instanceof AxiosError) {
-      return {
-        success: false,
-        message:
-          error.response?.data?.message ??
-          'Registration failed. Please try again.',
-      };
-    }
-
-    return {
-      success: false,
-      message: 'Something went wrong',
-    };
+    return handleServerError(error, 'Registration failed');
   }
 }
 
-export async function resendVerificationLink(email: string) {
-  const res = await axiosServer.post('/auth/registration/verification/email', {
-    email,
-  });
+export async function resendVerificationLink(
+  email: string,
+): Promise<ApiResponse> {
+  try {
+    const res = await axiosServer.post(
+      '/auth/registration/verification/email',
+      { email },
+    );
 
-  return res.data;
+    return {
+      success: true,
+      data: res.data,
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to resend verification email');
+  }
 }

@@ -152,7 +152,12 @@ export function useResendVerificationLink() {
   const mutation = useMutation({
     mutationFn: async () => {
       const res = await resendVerificationLink(session?.user.email || '');
-      toast.success(res.message);
+      if (!res.success) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success(res.data.message);
     },
     onError: (err) => {
       toast.error('Something went wrong. Please try again.');
