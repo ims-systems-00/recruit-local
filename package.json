@@ -8,7 +8,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "backend:dev": "pnpm --filter @inrm/backend start:dev",
-    "start:dev": "concurrently --kill-others \"pnpm backend:dev\""
+    "frontend:dev": "pnpm --filter @inrm/frontend dev",
+    "start:dev": "concurrently --kill-others \"pnpm backend:dev\" \"pnpm frontend:dev\""
   },
   "keywords": [],
   "author": "",
