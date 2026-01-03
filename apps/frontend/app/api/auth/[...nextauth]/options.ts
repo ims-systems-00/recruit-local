@@ -11,28 +11,35 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error('INVALID_INPUT');
+        }
 
         try {
-          // ✅ Use your loginUser function instead of direct axios
-          const data = await loginUser({
+          const response = await loginUser({
             email: credentials.email,
             password: credentials.password,
           });
 
-          if (!data?.user?.accessToken) return null;
+          if (!response.success) {
+            throw new Error('INVALID_CREDENTIALS');
+          }
+
+          const user = response?.data?.user;
+
+          if (!user?.accessToken) return null;
 
           return {
-            id: data.user.id,
-            _id: data.user.id,
-            firstName: data.user.firstName,
-            lastName: data.user.lastName,
-            fullName: data.user.fullName,
-            email: data.user.email,
-            emailVerificationStatus: data.user.emailVerificationStatus,
-            type: data.user.type,
-            accessToken: data.user?.accessToken,
-            refreshToken: data.user?.refreshToken,
+            id: user.id,
+            _id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            fullName: user.fullName,
+            email: user.email,
+            emailVerificationStatus: user.emailVerificationStatus,
+            type: user.type,
+            accessToken: user?.accessToken,
+            refreshToken: user?.refreshToken,
           };
         } catch (err) {
           console.error('Login failed', err);

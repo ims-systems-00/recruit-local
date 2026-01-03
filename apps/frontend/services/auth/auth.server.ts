@@ -15,10 +15,6 @@ type ErrorResponse = {
 
 export type ApiResponse<T = any> = SuccessResponse<T> | ErrorResponse;
 
-type RegisterResponse =
-  | { success: true; data: any }
-  | { success: false; message: string };
-
 export async function loginUser(data: any): Promise<ApiResponse> {
   try {
     const res = await axiosServer.post('/auth/login', data);

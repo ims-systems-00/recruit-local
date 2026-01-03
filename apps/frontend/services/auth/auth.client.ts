@@ -15,6 +15,12 @@ import {
 } from '@/app/(auth)/sign-up/signup.schema';
 import { registerUser, resendVerificationLink } from './auth.server';
 
+const AUTH_ERROR_MAP: Record<string, string> = {
+  CredentialsSignin: 'Invalid email or password',
+  INVALID_CREDENTIALS: 'Invalid email or password',
+  INVALID_INPUT: 'Please enter email and password',
+};
+
 async function loginWithCredentials(email: string, password: string) {
   const res = await signIn('credentials', {
     email,
@@ -22,8 +28,14 @@ async function loginWithCredentials(email: string, password: string) {
     redirect: false,
   });
 
-  if (res?.error) {
-    throw new Error(res.error);
+  if (!res) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
+  if (res.error) {
+    throw new Error(
+      AUTH_ERROR_MAP[res.error] ?? 'Login failed. Please try again.',
+    );
   }
 
   return res;
@@ -50,6 +62,8 @@ export function useLogin() {
       router.push('/system-preparation');
     },
     onError: (error: Error) => {
+      console.log('error', error);
+
       toast.error(error.message || 'Invalid email or password');
     },
   });
