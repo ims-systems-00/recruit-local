@@ -205,7 +205,7 @@ export function useRegistrationVerificationToken() {
 
       await update({
         user: {
-          emailVerificationStatus: true,
+          emailVerificationStatus: 'verified',
         },
       });
 
