@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation } from '@tanstack/react-query';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn, useSession, signOut } from 'next-auth/react';
 import { loginSchema, LoginSchema } from '@/app/(auth)/login/login.schema';
-import { signOut } from 'next-auth/react';
 import { toast } from 'sonner';
 import {
   SignupFormValues,
@@ -189,6 +188,9 @@ export function useResendVerificationLink() {
 }
 
 export function useRegistrationVerificationToken() {
+  const { update } = useSession();
+  const router = useRouter();
+
   const mutation = useMutation({
     mutationFn: async (token: string) => {
       if (!token) {
@@ -201,10 +203,17 @@ export function useRegistrationVerificationToken() {
         throw new Error(res.message);
       }
 
+      await update({
+        user: {
+          emailVerificationStatus: true,
+        },
+      });
+
       return res.data;
     },
     onSuccess: (data) => {
       toast.success(data.message);
+      router.push('/system-preparation');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Something went wrong. Please try again.');
