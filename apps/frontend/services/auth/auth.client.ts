@@ -13,7 +13,11 @@ import {
   SignupFormValues,
   signupSchema,
 } from '@/app/(auth)/sign-up/signup.schema';
-import { registerUser, resendVerificationLink } from './auth.server';
+import {
+  registerUser,
+  registrationVerificationToken,
+  resendVerificationLink,
+} from './auth.server';
 
 const AUTH_ERROR_MAP: Record<string, string> = {
   CredentialsSignin: 'Invalid email or password',
@@ -180,6 +184,35 @@ export function useResendVerificationLink() {
 
   return {
     resend: mutation.mutate,
+    isLoading: mutation.isPending,
+  };
+}
+
+export function useRegistrationVerificationToken() {
+  const mutation = useMutation({
+    mutationFn: async (token: string) => {
+      if (!token) {
+        throw new Error('Verification token is missing');
+      }
+
+      const res = await registrationVerificationToken(token);
+
+      if (!res.success) {
+        throw new Error(res.message);
+      }
+
+      return res.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Something went wrong. Please try again.');
+    },
+  });
+
+  return {
+    verify: mutation.mutate,
     isLoading: mutation.isPending,
   };
 }

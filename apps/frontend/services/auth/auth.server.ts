@@ -59,3 +59,24 @@ export async function resendVerificationLink(
     return handleServerError(error, 'Failed to resend verification email');
   }
 }
+
+export async function registrationVerificationToken(
+  registration_token: string,
+): Promise<ApiResponse> {
+  try {
+    const res = await axiosServer.post(
+      '/auth/registration/verification',
+      {},
+      {
+        params: { registration_token },
+      },
+    );
+
+    return {
+      success: true,
+      data: res.data,
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to resend verification email');
+  }
+}
