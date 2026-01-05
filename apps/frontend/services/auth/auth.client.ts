@@ -137,7 +137,7 @@ export function useSignup() {
 
         toast.success(res.data.message);
         form.reset();
-        router.push('/registration-verification/resend');
+        router.push('/accounts/verify-email');
       } catch {
         toast.success('Account created successfully');
         router.push('/login');
@@ -205,7 +205,10 @@ export function useRegistrationVerificationToken() {
 
       await update({
         user: {
-          emailVerificationStatus: 'verified',
+          emailVerificationStatus: res.data.user.emailVerificationStatus,
+          type: res.data.user.type,
+          accessToken: res.data.user.accessToken,
+          refreshToken: res.data.user.refreshToken,
         },
       });
 
