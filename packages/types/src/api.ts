@@ -3,7 +3,7 @@ export interface IOptions {
   limit?: number;
 }
 
-export type ListQueryParams<T> = Partial<T & { id: string }>;
+export type ListQueryParams<T> = Partial<T & { _id: string }>;
 
 export interface IListParams<T> {
   query: ListQueryParams<T>;
