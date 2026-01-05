@@ -457,3 +457,8 @@ export enum JOBS_STATUS_ENUMS {
   POSTED = 'posted',
   CLOSED = 'closed',
 }
+
+export enum CV_STATUS_ENUM {
+  DRAFT = 'draft',
+  PUBLISHED = 'published',
+}

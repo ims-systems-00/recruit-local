@@ -7,3 +7,7 @@ export * from './ability-action';
 export * from './job-profile';
 export * from './api';
 export * from './job';
+export * from './experience';
+export * from './education';
+export * from './skill';
+export * from './interest';
