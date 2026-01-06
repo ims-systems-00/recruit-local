@@ -11,12 +11,13 @@ import { IBaseDoc } from "./interfaces/base.interface";
 export interface ExperienceInput extends IUserOwnedInput, JobProfileInput {
   company: string;
   location?: string;
-  workMode?: string;
+  workMode?: string; // e.g., Remote, On-site, Hybrid
   employmentType?: string;
-  position: string;
+  position: string; // todo: job title
   startDate: Date;
   endDate?: Date;
   description?: string;
+  isActive?: boolean; // todo: add isActive field
 }
 
 export interface IExperienceDoc extends ExperienceInput, ISoftDeleteDoc, IBaseDoc {}

@@ -13,12 +13,13 @@ export interface CertificationInput extends IUserOwnedInput, JobProfileInput {
   title: string;
   issuingOrganization: string;
   issueDate: Date;
-}
-
-export interface ICertificationDoc extends CertificationInput, IBaseDoc, ISoftDeleteDoc {
   imageSrc?: string;
   imageStorage?: AwsStorageTemplate;
+
+  // todo: certification document storage (pdf, link, etc.), verification link
 }
+
+export interface ICertificationDoc extends CertificationInput, IBaseDoc, ISoftDeleteDoc {}
 
 interface ICertificationModel
   extends Model<ICertificationDoc>,

@@ -10,6 +10,7 @@ import { IBaseDoc } from "./interfaces/base.interface";
 import { IExperience, IEducation, ISkill, IInterest, CV_STATUS_ENUM } from "@inrm/types";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 
+// todo - reuse interface
 export interface CVInput extends IUserOwnedInput, JobProfileInput {
   title: string;
   summary?: string;

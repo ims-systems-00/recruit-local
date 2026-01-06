@@ -24,7 +24,7 @@ import interestRoutes from "../modules/interest/interest.route";
 import skillRoutes from "../modules/skill/skill.route";
 import jobRoute from "../modules/job/job.route";
 import cvRoutes from "../modules/cv/cv.route";
-
+import applicationRoutes from "../modules/application/application.route";
 const router = express.Router();
 
 const getApiRoutes = () => {
@@ -49,6 +49,7 @@ const getApiRoutes = () => {
   router.use("/skills", skillRoutes);
   router.use("/jobs", jobRoute);
   router.use("/cvs", cvRoutes);
+  router.use("/applications", applicationRoutes);
 
   return router;
 };

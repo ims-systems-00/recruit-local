@@ -462,3 +462,11 @@ export enum CV_STATUS_ENUM {
   DRAFT = 'draft',
   PUBLISHED = 'published',
 }
+
+export enum APPLICATION_STATUS_ENUM {
+  APPLIED = 'applied',
+  SHORTLISTED = 'shortlisted',
+  INTERVIEW = 'interview',
+  HIRED = 'hired',
+  REJECTED = 'rejected',
+}

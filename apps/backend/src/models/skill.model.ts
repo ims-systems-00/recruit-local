@@ -12,7 +12,7 @@ export interface SkillInput extends IUserOwnedInput, JobProfileInput {
   name: string;
   proficiencyLevel?: string;
   description?: string;
-  // todo add fields like maybe endorsement, yearsOfExperience, etc.
+  // todo add fields like maybe endorsement(maybe another model), yearsOfExperience, etc.
 }
 
 export interface ISkillDoc extends SkillInput, ISoftDeleteDoc, IBaseDoc {}
