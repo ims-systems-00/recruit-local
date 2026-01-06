@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { getUserById } from './user.server';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export function useRefreshSession() {
   const { data: session, update } = useSession();
@@ -75,12 +76,13 @@ export function useAuth() {
 
       if (res.data?.user?.emailVerificationStatus !== 'verified') {
         router.push('/accounts/verify-email');
+        return null;
       }
 
       if (res.data?.user?.type === 'employer' && !res.data?.user?.tenantId) {
         router.push('/onboarding/create-organization');
+        return null;
       }
-
       return res.data?.user;
     },
   });

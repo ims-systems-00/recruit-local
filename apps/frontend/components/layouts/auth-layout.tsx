@@ -5,9 +5,9 @@ import React, { ReactNode } from 'react';
 import LoaderSvg from '@/public/images/loader.svg';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
-  const { isLoading } = useAuth();
+  const { isLoading, user } = useAuth();
 
-  if (isLoading)
+  if (isLoading || !user)
     return (
       <div className=" min-h-screen flex justify-center items-center bg-card">
         <div className="shadow-regular rounded-md p-12 flex items-center gap-6">

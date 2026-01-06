@@ -31,7 +31,7 @@ export default function SignUpForm() {
     showPassword,
     togglePassword,
     isSubmitting,
-    formState: { errors },
+    formState: { errors, isValid },
     control,
   } = useSignup();
 
@@ -50,26 +50,40 @@ export default function SignUpForm() {
                 <Label className="text-title text-base leading-[100%]">
                   First Name
                 </Label>
-                <InputGroup className="h-10 rounded-lg shadow-light">
-                  <InputGroupInput
-                    type="text"
-                    placeholder="Enter your First Name"
-                    {...register('firstName')}
-                  />
-                </InputGroup>
+                <div className=" space-y-2">
+                  <InputGroup className="h-10 rounded-lg shadow-light">
+                    <InputGroupInput
+                      type="text"
+                      placeholder="Enter your First Name"
+                      {...register('firstName')}
+                    />
+                  </InputGroup>
+                  {errors.firstName && (
+                    <p className="text-sm text-red-500">
+                      {errors.firstName.message}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-3">
                 <Label className="text-title text-base leading-[100%]">
                   Last Name
                 </Label>
-                <InputGroup className="h-10 rounded-lg shadow-light">
-                  <InputGroupInput
-                    type="text"
-                    placeholder="Enter your Last Name"
-                    {...register('lastName')}
-                  />
-                </InputGroup>
+                <div className=" space-y-2">
+                  <InputGroup className="h-10 rounded-lg shadow-light">
+                    <InputGroupInput
+                      type="text"
+                      placeholder="Enter your Last Name"
+                      {...register('lastName')}
+                    />
+                  </InputGroup>
+                  {errors.lastName && (
+                    <p className="text-sm text-red-500">
+                      {errors.lastName.message}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -77,13 +91,18 @@ export default function SignUpForm() {
               <Label className="text-title text-base leading-[100%]">
                 Email Address
               </Label>
-              <InputGroup className="h-10 rounded-lg shadow-light">
-                <InputGroupInput
-                  type="email"
-                  placeholder="Enter your email"
-                  {...register('email')}
-                />
-              </InputGroup>
+              <div className=" space-y-2">
+                <InputGroup className="h-10 rounded-lg shadow-light">
+                  <InputGroupInput
+                    type="email"
+                    placeholder="Enter your email"
+                    {...register('email')}
+                  />
+                </InputGroup>
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -91,56 +110,75 @@ export default function SignUpForm() {
                 User Type
               </Label>
 
-              <Controller
-                name="type"
-                control={control}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="h-10! w-full">
-                      <SelectValue placeholder="Choose your Role" />
-                    </SelectTrigger>
+              <div className=" space-y-2">
+                <Controller
+                  name="type"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="h-10! w-full">
+                        <SelectValue placeholder="Choose your Role" />
+                      </SelectTrigger>
 
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="employer">Employer</SelectItem>
-                        <SelectItem value="candidate">Candidate</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="employer">Employer</SelectItem>
+                          <SelectItem value="candidate">Candidate</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.type && (
+                  <p className="text-sm text-red-500">{errors.type.message}</p>
                 )}
-              />
+              </div>
             </div>
 
             <div className="space-y-3">
               <Label className="text-title text-base leading-[100%]">
                 New Password
               </Label>
-              <InputGroup className="h-10 rounded-lg shadow-light">
-                <InputGroupInput
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Set a New Password"
-                  {...register('password')}
-                />
-                <InputGroupAddon align="inline-end" onClick={togglePassword}>
-                  {showPassword ? <Eye /> : <EyeClosed />}
-                </InputGroupAddon>
-              </InputGroup>
+              <div className=" space-y-2">
+                <InputGroup className="h-10 rounded-lg shadow-light">
+                  <InputGroupInput
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Set a New Password"
+                    {...register('password')}
+                  />
+                  <InputGroupAddon align="inline-end" onClick={togglePassword}>
+                    {showPassword ? <Eye /> : <EyeClosed />}
+                  </InputGroupAddon>
+                </InputGroup>
+                {errors.password && (
+                  <p className="text-sm text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-3">
               <Label className="text-title text-base leading-[100%]">
                 Confirm Password
               </Label>
-              <InputGroup className="h-10 rounded-lg shadow-light">
-                <InputGroupInput
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Rewrite the password"
-                  {...register('confirmPassword')}
-                />
-                <InputGroupAddon align="inline-end" onClick={togglePassword}>
-                  {showPassword ? <Eye /> : <EyeClosed />}
-                </InputGroupAddon>
-              </InputGroup>
+              <div className=" space-y-2">
+                <InputGroup className="h-10 rounded-lg shadow-light">
+                  <InputGroupInput
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Rewrite the password"
+                    {...register('confirmPassword')}
+                  />
+                  <InputGroupAddon align="inline-end" onClick={togglePassword}>
+                    {showPassword ? <Eye /> : <EyeClosed />}
+                  </InputGroupAddon>
+                </InputGroup>
+                {errors.confirmPassword && (
+                  <p className="text-sm text-red-500">
+                    {errors.confirmPassword.message}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -177,7 +215,7 @@ export default function SignUpForm() {
         <Button
           type="submit"
           className=" w-full text-base bg-primary border-primary text-white rounded-lg h-10 cursor-pointer"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !isValid}
         >
           {isSubmitting ? 'Loading...' : 'Sign Up'}
         </Button>
