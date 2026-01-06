@@ -3,7 +3,7 @@ import { getToken } from 'next-auth/jwt';
 export { default } from 'next-auth/middleware';
 
 export const config = {
-  matcher: ['/recruiter/:path*', '/login', '/sign-up', '/', '/verify/:path*'],
+  matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
 };
 
 export async function middleware(request: NextRequest) {
@@ -14,12 +14,9 @@ export async function middleware(request: NextRequest) {
   // and trying to access sign-in, sign-up, or home page
   if (
     token &&
-    (url.pathname.startsWith('/login') ||
-      url.pathname.startsWith('/sign-up') ||
-      url.pathname.startsWith('/verify') ||
-      url.pathname === '/')
+    (url.pathname.startsWith('/login') || url.pathname.startsWith('/sign-up'))
   ) {
-    return NextResponse.redirect(new URL('/recruiter', request.url));
+    return NextResponse.redirect(new URL('/system-preparation', request.url));
   }
 
   if (!token && url.pathname.startsWith('/recruiter')) {
