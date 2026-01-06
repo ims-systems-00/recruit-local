@@ -3,9 +3,15 @@ import { FileManager, NotFoundException } from "../../../common/helper";
 import { IListUserParams } from "./user.interface";
 import { User, UserInput } from "../../../models";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
+import { matchQuery, userProjectionQuery, excludeDeletedQuery } from "./user.query";
 
 export const listUser = ({ query = {}, options }: IListUserParams) => {
-  return User.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
+  // return User.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
+  const users = User.aggregatePaginate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()], {
+    ...options,
+    sort: { createdAt: -1 },
+  });
+  return users;
 };
 
 export const getUser = async ({ query = {} }: IListUserParams) => {

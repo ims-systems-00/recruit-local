@@ -5,13 +5,14 @@ import {
   ApiResponse,
   ControllerParams,
   formatListResponse,
+  logger,
   NotFoundException,
   UnauthorizedException,
 } from "../../../common/helper";
 import { UserAbilityBuilder, UserAuthZEntity } from "@inrm/authz";
 import { AbilityAction } from "@inrm/types";
-import { accessibleBy } from "@casl/mongoose";
-import { mapCaslQueryToMongo } from "../../../common/helper/query-mapper";
+import { roleScopedSecurityQuery } from "./user.query";
+import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 
 export const listUser = async ({ req }: ControllerParams) => {
   const abilityBuilder = new UserAbilityBuilder(req.session);
@@ -27,16 +28,16 @@ export const listUser = async ({ req }: ControllerParams) => {
 
   const userSearchQuery = filter.getFilterQuery();
   const options = filter.getQueryOptions();
+  const securityQuery = roleScopedSecurityQuery(ability);
 
-  const rawSecurityQuery = accessibleBy(ability, AbilityAction.Read).ofType(UserAuthZEntity);
-  const securityQuery = mapCaslQueryToMongo(rawSecurityQuery);
   const finalQuery = {
     $and: [userSearchQuery, securityQuery],
   };
 
+  logger.debug(`User List - Final Query:${JSON.stringify(finalQuery)}`);
+
   const results = await userService.listUser({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    query: finalQuery as any,
+    query: sanitizeQueryIds(finalQuery) as unknown,
     options,
   });
 
