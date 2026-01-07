@@ -161,9 +161,7 @@ export const verifyRecovery = async ({
 
   const decoded = (await tokenService.verifyToken(token)) as CustomJwtPayload;
 
-  const user = await userService.getUser({
-    query: { _id: decoded.id },
-  });
+  const user = await userService.getUserById(decoded.id);
   user.password = password;
   await user.save();
   await verificationTokenService.remove({ _id: isExists._id.toString() });
