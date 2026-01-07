@@ -15,10 +15,19 @@ export const listUser = ({ query = {}, options }: IListUserParams) => {
 };
 
 export const getUser = async ({ query = {} }: IListUserParams) => {
-  const user = await User.findOneWithExcludeDeleted(query);
-  if (!user) throw new NotFoundException("User not found.");
+  // const user = await User.findOneWithExcludeDeleted(query);
+  // if (!user) throw new NotFoundException("User not found.");
 
-  return user;
+  // return user;
+
+  const users = await User.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()]);
+  if (users.length === 0) throw new NotFoundException("User not found.");
+
+  return users[0];
+};
+
+export const getUserById = (id: string) => {
+  return User.findOneWithExcludeDeleted({ _id: id });
 };
 
 export const getUserByEmail = (email: string) => {
