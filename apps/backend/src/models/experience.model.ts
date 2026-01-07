@@ -7,19 +7,9 @@ import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
-import { WORKPLACE_ENUMS, EMPLOYMENT_TYPE } from "@inrm/types";
+import { WORKPLACE_ENUMS, EMPLOYMENT_TYPE, IExperience } from "@inrm/types";
 
-export interface ExperienceInput extends IUserOwnedInput, JobProfileInput {
-  company: string;
-  location?: string;
-  workplace?: WORKPLACE_ENUMS;
-  employmentType?: EMPLOYMENT_TYPE;
-  jobTitle: string;
-  startDate: Date;
-  endDate?: Date;
-  description?: string;
-  isActive?: boolean;
-}
+export interface ExperienceInput extends IExperience, IUserOwnedInput, JobProfileInput {}
 
 export interface IExperienceDoc extends ExperienceInput, ISoftDeleteDoc, IBaseDoc {}
 

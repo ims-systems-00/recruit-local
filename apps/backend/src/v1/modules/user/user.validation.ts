@@ -21,7 +21,7 @@ export const updateBodySchema = Joi.object({
     .valid(...Object.values(ACCOUNT_TYPE_ENUMS))
     .optional()
     .label("Type"),
-  role: Joi.string()
+  role: Joi.string() // ? Question: Should we allow role updates?
     .valid(...Object.values(USER_ROLE_ENUMS))
     .optional()
     .label("Role"),

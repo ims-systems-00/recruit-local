@@ -10,7 +10,6 @@ import { IBaseDoc } from "./interfaces/base.interface";
 import { IExperience, IEducation, ISkill, IInterest, CV_STATUS_ENUM } from "@inrm/types";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 
-// todo - reuse interface
 export interface CVInput extends IUserOwnedInput, JobProfileInput {
   title: string;
   summary?: string;
@@ -58,12 +57,13 @@ const educationSchema = new Schema<IEducation>({
 const experienceSchema = new Schema<IExperience>({
   company: { type: String, required: true },
   location: { type: String },
-  workMode: { type: String },
+  workplace: { type: String },
   employmentType: { type: String },
-  position: { type: String, required: true },
+  jobTitle: { type: String, required: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date },
   description: { type: String },
+  isActive: { type: Boolean, default: false },
 });
 
 const interestSchema = new Schema<IInterest>({

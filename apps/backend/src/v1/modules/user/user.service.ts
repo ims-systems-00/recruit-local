@@ -3,16 +3,31 @@ import { FileManager, NotFoundException } from "../../../common/helper";
 import { IListUserParams } from "./user.interface";
 import { User, UserInput } from "../../../models";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
+import { matchQuery, userProjectionQuery, excludeDeletedQuery } from "./user.query";
 
 export const listUser = ({ query = {}, options }: IListUserParams) => {
-  return User.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
+  // return User.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
+  const users = User.aggregatePaginate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()], {
+    ...options,
+    sort: { createdAt: -1 },
+  });
+  return users;
 };
 
 export const getUser = async ({ query = {} }: IListUserParams) => {
-  const user = await User.findOneWithExcludeDeleted(query);
-  if (!user) throw new NotFoundException("User not found.");
+  // const user = await User.findOneWithExcludeDeleted(query);
+  // if (!user) throw new NotFoundException("User not found.");
 
-  return user;
+  // return user;
+
+  const users = await User.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()]);
+  if (users.length === 0) throw new NotFoundException("User not found.");
+
+  return users[0];
+};
+
+export const getUserById = (id: string) => {
+  return User.findOneWithExcludeDeleted({ _id: id });
 };
 
 export const getUserByEmail = (email: string) => {

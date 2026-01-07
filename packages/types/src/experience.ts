@@ -1,10 +1,11 @@
 export interface IExperience {
   company: string;
   location?: string;
-  workMode?: string;
+  workplace?: string;
   employmentType?: string;
-  position: string;
+  jobTitle: string;
   startDate: Date;
   endDate?: Date;
   description?: string;
+  isActive?: boolean;
 }
