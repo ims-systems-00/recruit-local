@@ -86,7 +86,7 @@ export const verifyRegistration = async ({ req }: ControllerParams): Promise<Api
   const { accessToken, refreshToken } = await tokenService.getTokenPairForUser(user);
 
   const responseData = {
-    ...pick(user, ["id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type"]),
+    ...pick(user, ["id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type", "role"]),
     accessToken,
     refreshToken,
   };
