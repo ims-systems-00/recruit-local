@@ -34,8 +34,6 @@ export const listUser = async ({ req }: ControllerParams) => {
     $and: [userSearchQuery, securityQuery],
   };
 
-  logger.debug(`User List - Final Query:${JSON.stringify(finalQuery)}`);
-
   const results = await userService.listUser({
     query: sanitizeQueryIds(finalQuery) as unknown,
     options,

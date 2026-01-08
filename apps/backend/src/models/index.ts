@@ -21,3 +21,4 @@ export * from "./skill.model";
 export * from "./interest.model";
 export * from "./skill.model";
 export * from "./job.model";
+export * from "./event.model";

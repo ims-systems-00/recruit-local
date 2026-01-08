@@ -1,7 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import * as authService from "./auth.service";
 import * as tokenService from "../token";
-import { ApiResponse, ControllerParams } from "../../../common/helper";
+import { ApiResponse, ControllerParams, logger } from "../../../common/helper";
 import { UserPayload } from "./auth.interface";
 import { pick } from "../../../common/helper";
 

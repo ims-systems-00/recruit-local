@@ -1,5 +1,5 @@
 import { s3Client } from "../../../.config/s3.config";
-import { FileManager, NotFoundException } from "../../../common/helper";
+import { FileManager, logger, NotFoundException } from "../../../common/helper";
 import { IListUserParams } from "./user.interface";
 import { User, UserInput } from "../../../models";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
@@ -19,8 +19,9 @@ export const getUser = async ({ query = {} }: IListUserParams) => {
   // if (!user) throw new NotFoundException("User not found.");
 
   // return user;
-
-  const users = await User.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()]);
+  logger.debug(`Get User - Query: ${JSON.stringify(query)}`);
+  const users = await User.aggregate([...matchQuery(query)]);
+  logger.debug(`Get User - Found Users Count: ${users.length}`);
   if (users.length === 0) throw new NotFoundException("User not found.");
 
   return users[0];
