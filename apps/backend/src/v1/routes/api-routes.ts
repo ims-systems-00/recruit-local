@@ -25,6 +25,7 @@ import skillRoutes from "../modules/skill/skill.route";
 import jobRoute from "../modules/job/job.route";
 import cvRoutes from "../modules/cv/cv.route";
 import applicationRoutes from "../modules/application/application.route";
+import eventRoutes from "../modules/event/event.route";
 const router = express.Router();
 
 const getApiRoutes = () => {
@@ -50,6 +51,7 @@ const getApiRoutes = () => {
   router.use("/jobs", jobRoute);
   router.use("/cvs", cvRoutes);
   router.use("/applications", applicationRoutes);
+  router.use("/events", eventRoutes);
 
   return router;
 };

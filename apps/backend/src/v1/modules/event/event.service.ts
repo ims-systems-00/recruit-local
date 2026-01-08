@@ -1,17 +1,19 @@
 import { IListParams } from "@inrm/types";
 import { NotFoundException } from "../../../common/helper";
 import { EventInput, Event } from "../../../models";
+import { matchQuery, excludeDeletedQuery } from "../../../common/query";
+import { eventProjectionQuery } from "./event.query";
 
 type IListEventParams = IListParams<EventInput>;
 
 export const list = ({ query = {}, options }: IListEventParams) => {
-  return Event.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
+  return Event.aggregatePaginate([...matchQuery(query), ...excludeDeletedQuery(), ...eventProjectionQuery()], options);
 };
 
-export const getOne = async (id: string) => {
-  const event = await Event.findOneWithExcludeDeleted({ _id: id });
-  if (!event) throw new NotFoundException("Event not found.");
-  return event;
+export const getOne = async (query = {}) => {
+  const event = await Event.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...eventProjectionQuery()]);
+  if (event.length === 0) throw new NotFoundException("Event not found.");
+  return event[0];
 };
 
 export const create = async (payload: EventInput) => {

@@ -100,9 +100,9 @@ export const verifyRegistration = async (token: string): Promise<IUserDoc> => {
 
   const decoded = (await tokenService.verifyToken(token)) as CustomJwtPayload;
 
-  const user = await userService.getUser({
-    query: { _id: decoded.id },
-  });
+  const user = await userService.getUserById(decoded.id);
+
+  logger.debug(`User found for registration verification: ${user.email}`);
 
   user.emailVerificationStatus = EMAIL_VERIFICATION_STATUS_ENUMS.VERIFIED;
   await user.save();

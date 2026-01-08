@@ -11,3 +11,4 @@ export * from './experience';
 export * from './education';
 export * from './skill';
 export * from './interest';
+export * from './event';

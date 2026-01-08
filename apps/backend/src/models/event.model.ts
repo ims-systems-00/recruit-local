@@ -4,37 +4,7 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { modelNames } from "./constants";
-
-export enum EVENT_STATUS_ENUMS {
-  UPCOMING = "upcoming",
-  ONGOING = "ongoing",
-  COMPLETED = "completed",
-  CANCELLED = "cancelled",
-}
-
-export enum EVENT_MODE_ENUMS {
-  IN_PERSON = "in_person",
-  VIRTUAL = "virtual",
-  HYBRID = "hybrid",
-}
-
-export enum EVENT_TYPE_ENUMS {
-  WORKSHOP = "workshop",
-  SEMINAR = "seminar",
-  CONFERENCE = "conference",
-  MEETUP = "meetup",
-  JOB_FAIR = "job_fair",
-  NETWORKING = "networking",
-  CAREER_DEVELOPMENT = "career_development",
-  MENTORSHIP = "mentorship",
-  OTHER = "other",
-}
-
-export type VirtualEvent = {
-  link: string;
-  id?: string;
-  password?: string;
-};
+import { EVENT_STATUS_ENUMS, EVENT_MODE_ENUMS, EVENT_TYPE_ENUMS, VirtualEvent } from "@inrm/types";
 
 export interface EventInput {
   organizers: [
