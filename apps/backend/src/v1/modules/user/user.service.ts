@@ -1,5 +1,5 @@
 import { s3Client } from "../../../.config/s3.config";
-import { FileManager, logger, NotFoundException } from "../../../common/helper";
+import { FileManager, NotFoundException } from "../../../common/helper";
 import { IListUserParams } from "./user.interface";
 import { User, UserInput } from "../../../models";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
@@ -18,10 +18,7 @@ export const getUser = async ({ query = {} }: IListUserParams) => {
   // const user = await User.findOneWithExcludeDeleted(query);
   // if (!user) throw new NotFoundException("User not found.");
 
-  // return user;
-  logger.debug(`Get User - Query: ${JSON.stringify(query)}`);
   const users = await User.aggregate([...matchQuery(query)]);
-  logger.debug(`Get User - Found Users Count: ${users.length}`);
   if (users.length === 0) throw new NotFoundException("User not found.");
 
   return users[0];
@@ -36,7 +33,7 @@ export const getUserByEmail = (email: string) => {
 };
 
 export const updateUser = async (id: string, payload: Partial<UserInput>) => {
-  await getUser({ query: { _id: id } });
+  await getUserById(id);
   const updatedUser = await User.findOneAndUpdate(
     { _id: id },
     {
