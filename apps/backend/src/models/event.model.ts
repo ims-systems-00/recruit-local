@@ -164,4 +164,4 @@ eventSchema.plugin(softDeletePlugin);
 eventSchema.plugin(mongoosePaginate);
 eventSchema.plugin(aggregatePaginate);
 
-export const EventModel = model<IEventDoc, IEventModel>(modelNames.EVENT, eventSchema);
+export const Event = model<IEventDoc, IEventModel>(modelNames.EVENT, eventSchema);
