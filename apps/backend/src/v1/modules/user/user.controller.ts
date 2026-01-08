@@ -5,7 +5,6 @@ import {
   ApiResponse,
   ControllerParams,
   formatListResponse,
-  logger,
   NotFoundException,
   UnauthorizedException,
 } from "../../../common/helper";
@@ -51,7 +50,7 @@ export const listUser = async ({ req }: ControllerParams) => {
 };
 
 export const getUser = async ({ req }: ControllerParams) => {
-  const user = await userService.getUser({ query: { _id: req.params.id } });
+  const user = await userService.getUser({ query: sanitizeQueryIds({ _id: req.params.id }) });
   if (!user) {
     throw new NotFoundException(`User ${req.params.id} not found.`);
   }
@@ -79,9 +78,11 @@ export const getUser = async ({ req }: ControllerParams) => {
 };
 
 export const updateUser = async ({ req }: ControllerParams) => {
-  const user = await userService.getUser({
-    query: { _id: req.params.id },
-  });
+  const user = await userService.getUser(
+    sanitizeQueryIds({
+      query: { _id: req.params.id },
+    })
+  );
 
   if (!user) {
     throw new NotFoundException(`User ${req.params.id} not found.`);
@@ -113,7 +114,9 @@ export const updateUser = async ({ req }: ControllerParams) => {
 };
 
 export const softRemoveUser = async ({ req }: ControllerParams) => {
-  const user = await userService.getUser({ query: { _id: req.params.id } });
+  const user = await userService.getUser({
+    query: sanitizeQueryIds({ _id: req.params.id }),
+  });
   if (!user) {
     throw new NotFoundException(`User ${req.params.id} not found.`);
   }
@@ -143,7 +146,9 @@ export const softRemoveUser = async ({ req }: ControllerParams) => {
 };
 
 export const hardRemoveUser = async ({ req }: ControllerParams) => {
-  const user = await userService.getUser({ query: { _id: req.params.id } });
+  const user = await userService.getUser({
+    query: sanitizeQueryIds({ _id: req.params.id }),
+  });
   if (!user) {
     throw new NotFoundException(`User ${req.params.id} not found.`);
   }
@@ -174,7 +179,9 @@ export const hardRemoveUser = async ({ req }: ControllerParams) => {
 };
 
 export const restoreUser = async ({ req }: ControllerParams) => {
-  const user = await userService.getUser({ query: { _id: req.params.id } });
+  const user = await userService.getUser({
+    query: sanitizeQueryIds({ _id: req.params.id }),
+  });
   if (!user) {
     throw new NotFoundException(`User ${req.params.id} not found.`);
   }
@@ -205,7 +212,7 @@ export const restoreUser = async ({ req }: ControllerParams) => {
 
 export const updateUserProfileImage = async ({ req }: ControllerParams) => {
   const user = await userService.getUser({
-    query: { _id: req.params.id },
+    query: sanitizeQueryIds({ _id: req.params.id }),
   });
 
   const abilityBuilder = new UserAbilityBuilder(req.session);

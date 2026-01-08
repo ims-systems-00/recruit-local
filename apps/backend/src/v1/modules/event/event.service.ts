@@ -1,8 +1,9 @@
 import { IListParams } from "@inrm/types";
-import { NotFoundException } from "../../../common/helper";
+import { logger, NotFoundException } from "../../../common/helper";
 import { EventInput, Event } from "../../../models";
 import { matchQuery, excludeDeletedQuery } from "../../../common/query";
 import { eventProjectionQuery } from "./event.query";
+import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 
 type IListEventParams = IListParams<EventInput>;
 
@@ -36,24 +37,24 @@ export const update = async (id: string, payload: Partial<EventInput>) => {
 };
 
 export const softRemove = async (id: string) => {
-  const event = await getOne(id);
+  const event = await getOne({ ...sanitizeQueryIds({ _id: id }) });
   const { deleted } = await Event.softDelete({ _id: id });
 
   return { event, deleted };
 };
 
 export const hardRemove = async (id: string) => {
-  const event = await getOne(id);
+  const event = await getOne({ ...sanitizeQueryIds({ _id: id }) });
   await Event.findOneAndDelete({ _id: id });
 
   return event;
 };
 
 export const restore = async (id: string) => {
-  const { restored } = await Event.restore({ _id: id });
+  const { restored } = await Event.restore({ ...sanitizeQueryIds({ _id: id }) });
   if (!restored) throw new NotFoundException("Event not found in trash.");
 
-  const event = await getOne(id);
+  const event = await getOne({ ...sanitizeQueryIds({ _id: id }) });
 
   return { event, restored };
 };
