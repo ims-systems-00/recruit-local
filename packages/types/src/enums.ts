@@ -72,17 +72,6 @@ export enum MEMBERSHIP_ROLE_ENUMS {
   STANDARD = 'standard',
 }
 
-export enum USER_ROLE_ENUMS {
-  ADMIN = 'admin',
-  MEMBER = 'member',
-}
-
-export enum ACCOUNT_TYPE_ENUMS {
-  PLATFORM_ADMIN = 'platform-admin',
-  EMPLOYER = 'employer',
-  CANDIDATE = 'candidate',
-}
-
 export enum NONCONFORMITY_STATUS_ENUMS {
   OPEN = 'open',
   RESOLVED = 'resolved',

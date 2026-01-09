@@ -1,4 +1,5 @@
 export * from './user';
+export * from './user.enums';
 export * from './session';
 export * from './enums';
 export * from './tenant.enum';
