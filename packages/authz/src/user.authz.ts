@@ -9,7 +9,7 @@ import {
 } from '@casl/ability';
 
 import {
-  USER_TYPE_ENUMS,
+  ACCOUNT_TYPE_ENUMS,
   ISession,
   IAbilityBuilder,
   AbilityAction,
@@ -48,7 +48,7 @@ export class UserAbilityBuilder implements IAbilityBuilder {
   getAbility(): AnyAbility {
     const builder = this.abilityBuilder;
 
-    if (this.session.user.type === USER_TYPE_ENUMS.CUSTOMER) {
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
       builder.can(AbilityAction.Read, UserAuthZEntity, {
         tenantId: this.session.tenantId,
       });
@@ -63,11 +63,11 @@ export class UserAbilityBuilder implements IAbilityBuilder {
       });
     }
 
-    if (this.session.user.type === USER_TYPE_ENUMS.PLATFORM_ADMIN) {
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       builder.can(AbilityAction.Manage, UserAuthZEntity);
     }
 
-    if (this.session.user.type === USER_TYPE_ENUMS.AUDITOR) {
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
       builder.can(AbilityAction.Read, UserAuthZEntity);
       builder.can(AbilityAction.Update, UserAuthZEntity, {
         _id: this.session.user._id,
