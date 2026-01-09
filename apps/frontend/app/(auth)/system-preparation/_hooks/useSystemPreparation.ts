@@ -23,7 +23,7 @@ export const useSystemPreparation = () => {
           router.push('/onboarding/create-organization');
           return;
         }
-        if (userType === 'candidate') {
+        if (userType === 'candidate' || userType === 'employer') {
           router.push('/recruiter');
           return;
         }

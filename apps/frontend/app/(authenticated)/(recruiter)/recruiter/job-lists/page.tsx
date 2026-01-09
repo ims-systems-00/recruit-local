@@ -10,22 +10,21 @@ import React from 'react';
 import JobSearchIcon from '@/public/images/jobSearch.svg';
 import { Input } from '@/components/ui/input';
 
-import { AppWindowIcon, CodeIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Can } from '@/authz/ability-context';
 import { AbilityAction } from '@inrm/types';
-import { UserAuthZEntity } from '@inrm/authz';
+import { JobAuthZEntity } from '@inrm/authz';
 
 export default function JobLists() {
   return (
     <div>
       <header className="py-4 px-6 flex justify-between items-center">
         <div className=" space-y-3">
-          <Can I={AbilityAction.Read} a={UserAuthZEntity}>
+          <Can
+            I={AbilityAction.Read}
+            a={new JobAuthZEntity({ tenantId: null })}
+          >
             <h3>Explore All Jobs</h3>
           </Can>
           <p>Browse the full range of available opportunities</p>
