@@ -26,6 +26,8 @@ import jobRoute from "../modules/job/job.route";
 import cvRoutes from "../modules/cv/cv.route";
 import applicationRoutes from "../modules/application/application.route";
 import eventRoutes from "../modules/event/event.route";
+import eventRegistrationRoutes from "../modules/event-registration/event-registration.route";
+
 const router = express.Router();
 
 const getApiRoutes = () => {
@@ -52,6 +54,7 @@ const getApiRoutes = () => {
   router.use("/cvs", cvRoutes);
   router.use("/applications", applicationRoutes);
   router.use("/events", eventRoutes);
+  router.use("/event-registrations", eventRegistrationRoutes);
 
   return router;
 };

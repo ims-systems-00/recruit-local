@@ -24,4 +24,5 @@ export const modelNames = {
   CV: "cvs",
   APPLICATION: "applications",
   EVENT: "events",
+  EVENT_REGISTRATION: "eventregistrations",
 };
