@@ -7,6 +7,7 @@ import {
   formatListResponse,
   logger,
   NotFoundException,
+  pick,
   UnauthorizedException,
 } from "../../../common/helper";
 import { UserAbilityBuilder, UserAuthZEntity } from "@inrm/authz";
@@ -34,8 +35,6 @@ export const list = async ({ req }: ControllerParams) => {
   //     $and: [userSearchQuery, securityQuery],
   //   };
 
-  logger.debug(`Event List - Final Query:${JSON.stringify(userSearchQuery)}`);
-
   const results = await eventService.list({
     query: sanitizeQueryIds(userSearchQuery) as unknown,
     options,
@@ -53,7 +52,7 @@ export const list = async ({ req }: ControllerParams) => {
 };
 
 export const get = async ({ req }: ControllerParams) => {
-  const event = await eventService.getOne({ _id: req.params.id });
+  const event = await eventService.getOne(sanitizeQueryIds({ _id: req.params.id }));
   if (!event) {
     throw new NotFoundException(`Event ${req.params.id} not found.`);
   }
@@ -80,20 +79,40 @@ export const create = async ({ req }: ControllerParams) => {
   //   }
 
   const tenantId = req.session.tenantId!;
-  req.body.organizers = req.body.organizers?.push(tenantId);
+  req.body.organizers?.push(tenantId);
 
   const event = await eventService.create(req.body);
 
   return new ApiResponse({
     message: "Event created",
     statusCode: StatusCodes.CREATED,
-    data: event,
+    data: pick(event, [
+      "_id",
+      "title",
+      "type",
+      "description",
+      "location",
+      "capacity",
+      "status",
+      "mode",
+      "organizers",
+      "startDate",
+      "startTime",
+      "endDate",
+      "endTime",
+      "registrationEndDate",
+      "virtualEvent",
+      "bannerImageStorage",
+      "bannerImageSrc",
+      "createdAt",
+      "updatedAt",
+    ]),
     fieldName: "event",
   });
 };
 
 export const update = async ({ req }: ControllerParams) => {
-  const event = await eventService.getOne({ _id: req.params.id });
+  const event = await eventService.getOne(sanitizeQueryIds({ _id: req.params.id }));
 
   if (!event) {
     throw new NotFoundException(`Event ${req.params.id} not found.`);
@@ -117,7 +136,9 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  const event = await eventService.getOne({ _id: req.params.id });
+  const event = await eventService.getOne({
+    ...sanitizeQueryIds({ _id: req.params.id }),
+  });
 
   if (!event) {
     throw new NotFoundException(`Event ${req.params.id} not found.`);
@@ -159,7 +180,7 @@ export const restore = async ({ req }: ControllerParams) => {
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  const event = await eventService.getOne({ _id: req.params.id });
+  const event = await eventService.getOne(sanitizeQueryIds({ _id: req.params.id }));
 
   if (!event) {
     throw new NotFoundException(`Event ${req.params.id} not found.`);
