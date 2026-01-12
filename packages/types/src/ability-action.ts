@@ -5,6 +5,9 @@ export enum AbilityAction {
   Read = 'read',
   Update = 'update',
   Delete = 'delete',
+  Restore = 'restore',
+  HardDelete = 'hard_delete',
+  SoftDelete = 'soft_delete',
   // utility actions
   Approval = 'approval',
   Send = 'send',
