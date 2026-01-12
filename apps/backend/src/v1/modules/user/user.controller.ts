@@ -5,6 +5,7 @@ import {
   ApiResponse,
   ControllerParams,
   formatListResponse,
+  logger,
   NotFoundException,
   UnauthorizedException,
 } from "../../../common/helper";

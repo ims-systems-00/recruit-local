@@ -1,5 +1,5 @@
 import { IListParams } from "@inrm/types";
-import { logger, NotFoundException } from "../../../common/helper";
+import { NotFoundException } from "../../../common/helper";
 import { EventInput, Event } from "../../../models";
 import { matchQuery, excludeDeletedQuery } from "../../../common/query";
 import { eventProjectionQuery } from "./event.query";
@@ -14,6 +14,12 @@ export const list = ({ query = {}, options }: IListEventParams) => {
 export const getOne = async (query = {}) => {
   const event = await Event.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...eventProjectionQuery()]);
   if (event.length === 0) throw new NotFoundException("Event not found.");
+  return event[0];
+};
+
+export const getSoftDeletedOne = async (query = {}) => {
+  const event = await Event.aggregate([...matchQuery(query), ...eventProjectionQuery()]);
+  if (event.length === 0) throw new NotFoundException("Event not found in trash.");
   return event[0];
 };
 
@@ -44,7 +50,7 @@ export const softRemove = async (id: string) => {
 };
 
 export const hardRemove = async (id: string) => {
-  const event = await getOne({ ...sanitizeQueryIds({ _id: id }) });
+  const event = await getSoftDeletedOne({ ...sanitizeQueryIds({ _id: id }) });
   await Event.findOneAndDelete({ _id: id });
 
   return event;

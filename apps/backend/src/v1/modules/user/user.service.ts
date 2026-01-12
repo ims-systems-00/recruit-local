@@ -4,6 +4,7 @@ import { IListUserParams } from "./user.interface";
 import { User, UserInput } from "../../../models";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 import { matchQuery, userProjectionQuery, excludeDeletedQuery } from "./user.query";
+import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 
 export const listUser = ({ query = {}, options }: IListUserParams) => {
   // return User.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
@@ -18,7 +19,7 @@ export const getUser = async ({ query = {} }: IListUserParams) => {
   // const user = await User.findOneWithExcludeDeleted(query);
   // if (!user) throw new NotFoundException("User not found.");
 
-  const users = await User.aggregate([...matchQuery(query)]);
+  const users = await User.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()]);
   if (users.length === 0) throw new NotFoundException("User not found.");
 
   return users[0];
@@ -54,13 +55,11 @@ export const createUser = async (payload: UserInput) => {
 
 export const softRemoveUser = async (id: string) => {
   const user = await getUser({
-    query: { _id: id },
+    query: sanitizeQueryIds({ _id: id }),
   });
   const { deleted } = await User.softDelete({ _id: id });
 
-  // Update email to avoid duplication
-  user.email = `[deleted-${user.email}-${user._id}]`;
-  await user.save();
+  await updateUser(id, { email: `[deleted-${user.email}-${user._id}]` });
 
   return { user, deleted };
 };
