@@ -1,6 +1,15 @@
 import { PipelineStage } from "mongoose";
+import { accessibleBy } from "@casl/mongoose";
+import { AnyMongoAbility } from "@casl/ability";
+import { AbilityAction } from "../../types/ability";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Constructor<T> = new (...args: any[]) => T;
+
+export const roleScopedSecurityQuery = <T>(entity: Constructor<T>, ability: AnyMongoAbility) => {
+  const query = accessibleBy(ability, AbilityAction.Read).ofType(entity);
+  return query;
+};
+
 export const matchQuery = (query: any): PipelineStage[] => {
   return [{ $match: { ...query } }];
 };
