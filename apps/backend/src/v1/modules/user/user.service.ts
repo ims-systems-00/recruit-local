@@ -4,10 +4,8 @@ import { IListUserParams } from "./user.interface";
 import { User, UserInput } from "../../../models";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 import { matchQuery, userProjectionQuery, excludeDeletedQuery } from "./user.query";
-import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 
 export const listUser = ({ query = {}, options }: IListUserParams) => {
-  // return User.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
   const users = User.aggregatePaginate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()], {
     ...options,
     sort: { createdAt: -1 },
@@ -16,17 +14,22 @@ export const listUser = ({ query = {}, options }: IListUserParams) => {
 };
 
 export const getUser = async ({ query = {} }: IListUserParams) => {
-  // const user = await User.findOneWithExcludeDeleted(query);
-  // if (!user) throw new NotFoundException("User not found.");
-
   const users = await User.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()]);
   if (users.length === 0) throw new NotFoundException("User not found.");
 
   return users[0];
 };
 
-export const getUserById = (id: string) => {
-  return User.findOneWithExcludeDeleted({ _id: id });
+export const getUserById = async (id: string) => {
+  const user = await User.findOneWithExcludeDeleted({ _id: id });
+  if (!user) throw new NotFoundException("User not found.");
+  return user;
+};
+
+export const getUserByIdIncludingDeleted = (id: string) => {
+  const user = User.findById(id);
+  if (!user) throw new NotFoundException("User not found.");
+  return user;
 };
 
 export const getUserByEmail = (email: string) => {
@@ -34,7 +37,6 @@ export const getUserByEmail = (email: string) => {
 };
 
 export const updateUser = async (id: string, payload: Partial<UserInput>) => {
-  await getUserById(id);
   const updatedUser = await User.findOneAndUpdate(
     { _id: id },
     {
@@ -54,22 +56,16 @@ export const createUser = async (payload: UserInput) => {
 };
 
 export const softRemoveUser = async (id: string) => {
-  const user = await getUser({
-    query: sanitizeQueryIds({ _id: id }),
-  });
   const { deleted } = await User.softDelete({ _id: id });
 
-  await updateUser(id, { email: `[deleted-${user.email}-${user._id}]` });
+  // const { user } = await updateUser(id, { email: `[deleted-${user.email}-${user._id}]` });
+  const user = await updateUser(id, { email: `[deleted-${id}]` });
 
   return { user, deleted };
 };
 
 export const hardRemoveUser = async (id: string) => {
-  const user = await getUser({
-    query: { _id: id },
-  });
-  await User.findOneAndDelete({ _id: id });
-
+  const user = await User.findOneAndDelete({ _id: id });
   return user;
 };
 

@@ -10,7 +10,7 @@ import {
   refreshAccessToken,
 } from "./auth.controller";
 import { handleController } from "../../../common/helper";
-import { validate, deserializeUser } from "../../../common/middlewares";
+import { validate } from "../../../common/middlewares";
 import {
   registerBodySchema,
   verifyRegistrationQuerySchema,
@@ -19,15 +19,12 @@ import {
   verifyRecoveryQuerySchema,
   verifyRecoveryBodySchema,
   loginBodySchema,
-  logoutCookieSchema,
-  refreshAccessTokenCookieSchema,
 } from "./auth.validation";
 
 const router = express.Router();
 
 const validateBody = validate("body");
 const validateQuery = validate("query");
-const validateCookies = validate("cookies");
 
 router.post("/login", validateBody(loginBodySchema), handleController(login));
 router.post("/registration", validateBody(registerBodySchema), handleController(registration));

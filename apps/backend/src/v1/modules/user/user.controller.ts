@@ -5,7 +5,6 @@ import {
   ApiResponse,
   ControllerParams,
   formatListResponse,
-  logger,
   NotFoundException,
   UnauthorizedException,
 } from "../../../common/helper";
@@ -118,9 +117,6 @@ export const softRemoveUser = async ({ req }: ControllerParams) => {
   const user = await userService.getUser({
     query: sanitizeQueryIds({ _id: req.params.id }),
   });
-  if (!user) {
-    throw new NotFoundException(`User ${req.params.id} not found.`);
-  }
 
   const abilityBuilder = new UserAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
@@ -180,12 +176,7 @@ export const hardRemoveUser = async ({ req }: ControllerParams) => {
 };
 
 export const restoreUser = async ({ req }: ControllerParams) => {
-  const user = await userService.getUser({
-    query: sanitizeQueryIds({ _id: req.params.id }),
-  });
-  if (!user) {
-    throw new NotFoundException(`User ${req.params.id} not found.`);
-  }
+  const user = await userService.getUserByIdIncludingDeleted(req.params.id);
 
   const abilityBuilder = new UserAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
