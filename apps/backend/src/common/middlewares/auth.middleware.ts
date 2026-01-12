@@ -27,7 +27,6 @@ export const deserializeUser = catchAsync(async (req: Request, res: Response, ne
   let currentUser: IUserDoc = null;
   try {
     currentUser = await userService.getUserById(decoded.id);
-    console.log("Current User:", currentUser);
   } catch (err) {
     return next(new UnauthorizedException(err.message));
   }
