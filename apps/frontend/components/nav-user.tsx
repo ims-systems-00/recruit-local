@@ -105,7 +105,7 @@ export function NavUser({
             <DropdownMenuItem
               className=" cursor-pointer"
               disabled={isLoading}
-              onClick={logout}
+              onClick={() => logout()}
             >
               <LogOut />
               Log out

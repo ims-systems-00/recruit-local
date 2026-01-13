@@ -9,6 +9,8 @@ import {
   CompositeDecorator,
   AtomicBlockUtils,
   ContentBlock,
+  ContentState,
+  DraftDecoratorComponentProps,
 } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import {
@@ -44,7 +46,7 @@ const styleMap = {
   },
 };
 
-function blockStyleFn(contentBlock: any) {
+function blockStyleFn(contentBlock: ContentBlock) {
   const type = contentBlock.getType();
   if (type === 'blockquote') {
     return ' border-l-[5px] border-border py-1.5 px-3 my-2 italic ';
@@ -57,8 +59,8 @@ function blockStyleFn(contentBlock: any) {
 // ---------------------------------------------
 const findLinkEntities = (
   contentBlock: ContentBlock,
-  callback: any,
-  contentState: any,
+  callback: (start: number, end: number) => void,
+  contentState: ContentState,
 ) => {
   contentBlock.findEntityRanges((character) => {
     const entityKey = character.getEntity();
@@ -69,15 +71,18 @@ const findLinkEntities = (
   }, callback);
 };
 
-const Link = (props: any) => {
-  const { url } = props.contentState.getEntity(props.entityKey).getData();
+const Link = (props: DraftDecoratorComponentProps) => {
+  const { contentState, entityKey, children } = props;
+  const { url } = contentState.getEntity(entityKey || '').getData();
+
   return (
     <a
       href={url}
       target="_blank"
+      rel="noopener noreferrer"
       className="text-blue-600 underline hover:text-blue-800"
     >
-      {props.children}
+      {children}
     </a>
   );
 };

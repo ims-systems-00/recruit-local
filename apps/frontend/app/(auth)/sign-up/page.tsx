@@ -22,10 +22,10 @@ export default function SignUp() {
               Empowering Employers, Job Seekers & Trainers in Your Community
             </p>
             <p className=" text-xs leading-4  text-body">
-              Recruit Local connects employers, job seekers, and trainers in one
+              {`Recruit Local connects employers, job seekers, and trainers in one
               platform to build stronger local careers and businesses. Whether
               you're hiring, seeking a job, or offering training, we help you
-              grow where you are.
+              grow where you are.`}
             </p>
           </div>
         </div>
