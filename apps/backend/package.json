@@ -1,5 +1,5 @@
 {
-  "name": "@inrm/backend",
+  "name": "@rl/backend",
   "version": "1.0.0",
   "description": "Interface NRM portal backend api",
   "main": "server.js",

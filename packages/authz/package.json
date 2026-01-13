@@ -1,5 +1,5 @@
 {
-  "name": "@inrm/authz",
+  "name": "@rl/authz",
   "version": "1.0.0",
   "description": "",
   "main": "./dist/cjs/index.js",
