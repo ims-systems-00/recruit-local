@@ -26,7 +26,7 @@ export const deserializeUser = catchAsync(async (req: Request, res: Response, ne
   // Check if user still exists
   let currentUser: IUserDoc = null;
   try {
-    currentUser = await userService.getUser(decoded.id);
+    currentUser = await userService.getUserById(decoded.id);
   } catch (err) {
     return next(new UnauthorizedException(err.message));
   }

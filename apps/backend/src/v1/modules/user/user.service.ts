@@ -3,15 +3,32 @@ import { FileManager, NotFoundException } from "../../../common/helper";
 import { IListUserParams } from "./user.interface";
 import { User, UserInput } from "../../../models";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
+import { matchQuery, userProjectionQuery, excludeDeletedQuery } from "./user.query";
 
 export const listUser = ({ query = {}, options }: IListUserParams) => {
-  return User.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
+  const users = User.aggregatePaginate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()], {
+    ...options,
+    sort: { createdAt: -1 },
+  });
+  return users;
 };
 
-export const getUser = async (id: string) => {
+export const getUser = async ({ query = {} }: IListUserParams) => {
+  const users = await User.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()]);
+  if (users.length === 0) throw new NotFoundException("User not found.");
+
+  return users[0];
+};
+
+export const getUserById = async (id: string) => {
   const user = await User.findOneWithExcludeDeleted({ _id: id });
   if (!user) throw new NotFoundException("User not found.");
+  return user;
+};
 
+export const getUserByIdIncludingDeleted = (id: string) => {
+  const user = User.findById(id);
+  if (!user) throw new NotFoundException("User not found.");
   return user;
 };
 
@@ -20,7 +37,6 @@ export const getUserByEmail = (email: string) => {
 };
 
 export const updateUser = async (id: string, payload: Partial<UserInput>) => {
-  await getUser(id);
   const updatedUser = await User.findOneAndUpdate(
     { _id: id },
     {
@@ -40,20 +56,16 @@ export const createUser = async (payload: UserInput) => {
 };
 
 export const softRemoveUser = async (id: string) => {
-  const user = await getUser(id);
   const { deleted } = await User.softDelete({ _id: id });
 
-  // Update email to avoid duplication
-  user.email = `[deleted-${user.email}-${user._id}]`;
-  await user.save();
+  // const { user } = await updateUser(id, { email: `[deleted-${user.email}-${user._id}]` });
+  const user = await updateUser(id, { email: `[deleted-${id}]` });
 
   return { user, deleted };
 };
 
 export const hardRemoveUser = async (id: string) => {
-  const user = await getUser(id);
-  await User.findOneAndDelete({ _id: id });
-
+  const user = await User.findOneAndDelete({ _id: id });
   return user;
 };
 
@@ -61,13 +73,17 @@ export const restoreUser = async (id: string) => {
   const { restored } = await User.restore({ _id: id });
   if (!restored) throw new NotFoundException("User not found in trash.");
 
-  const user = await getUser(id);
+  const user = await getUser({
+    query: { _id: id },
+  });
 
   return { user, restored };
 };
 
 export const updateUserProfileImage = async (id: string, payload: AwsStorageTemplate) => {
-  const user = await getUser(id);
+  const user = await getUser({
+    query: { _id: id },
+  });
   const fileManager = new FileManager(s3Client);
   const previousProfileImageStorage = user.profileImageStorage;
 

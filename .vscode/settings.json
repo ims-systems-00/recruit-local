@@ -1,23 +1,24 @@
 {
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "cSpell.language": "en-GB",
   "cSpell.words": [
     "commentactivities",
     "documentfolders",
+    "eventregistrations",
     "filemedias",
     "formelements",
     "formresponses",
     "formsubmissions",
+    "imsat",
+    "imsrt",
     "inrm",
     "jobprofiles",
-    "organisations",
-    "PEFC",
     "responsetemplates",
     "specializeduserprofiles",
-    "SSIP",
     "tokenpairs",
-    "transferregisters",
-    "verificationtokens",
-    "virtuals"
-  ]
+    "verificationtokens"
+  ],
+  "cSpell.flagWords": [],
+  "cSpell.caseSensitive": true
 }

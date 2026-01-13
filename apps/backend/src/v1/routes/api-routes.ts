@@ -23,6 +23,11 @@ import certificationRoutes from "../modules/certification/certification.route";
 import interestRoutes from "../modules/interest/interest.route";
 import skillRoutes from "../modules/skill/skill.route";
 import jobRoute from "../modules/job/job.route";
+import cvRoutes from "../modules/cv/cv.route";
+import applicationRoutes from "../modules/application/application.route";
+import eventRoutes from "../modules/event/event.route";
+import eventRegistrationRoutes from "../modules/event-registration/event-registration.route";
+import favouriteRoutes from "../modules/favourite/favourite.route";
 
 const router = express.Router();
 
@@ -47,6 +52,11 @@ const getApiRoutes = () => {
   router.use("/interests", interestRoutes);
   router.use("/skills", skillRoutes);
   router.use("/jobs", jobRoute);
+  router.use("/cvs", cvRoutes);
+  router.use("/applications", applicationRoutes);
+  router.use("/events", eventRoutes);
+  router.use("/event-registrations", eventRegistrationRoutes);
+  router.use("/favourites", favouriteRoutes);
 
   return router;
 };

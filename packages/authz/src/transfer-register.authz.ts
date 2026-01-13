@@ -9,7 +9,7 @@ import {
 } from '@casl/ability';
 
 import {
-  USER_TYPE_ENUMS,
+  ACCOUNT_TYPE_ENUMS,
   ISession,
   IAbilityBuilder,
   AbilityAction,
@@ -39,7 +39,7 @@ export class TransferRegisterAbilityBuilder implements IAbilityBuilder {
   getAbility(): AnyAbility {
     const builder = this.abilityBuilder;
 
-    if (this.session.user.type === USER_TYPE_ENUMS.CUSTOMER) {
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       builder.can(AbilityAction.Read, TransferRegisterAuthZEntity, {
         tenantId: this.session.tenantId,
       });
@@ -54,11 +54,11 @@ export class TransferRegisterAbilityBuilder implements IAbilityBuilder {
       });
     }
 
-    if (this.session.user.type === USER_TYPE_ENUMS.PLATFORM_ADMIN) {
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       builder.can(AbilityAction.Manage, TransferRegisterAuthZEntity);
     }
 
-    if (this.session.user.type === USER_TYPE_ENUMS.AUDITOR) {
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       // builder.can(AbilityAction.Manage, TransferRegisterAuthZEntity);
     }
 

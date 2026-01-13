@@ -7,17 +7,9 @@ import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
+import { WORKPLACE_ENUMS, EMPLOYMENT_TYPE, IExperience } from "@inrm/types";
 
-export interface ExperienceInput extends IUserOwnedInput, JobProfileInput {
-  company: string;
-  location?: string;
-  workMode?: string;
-  employmentType?: string;
-  position: string;
-  startDate: Date;
-  endDate?: Date;
-  description?: string;
-}
+export interface ExperienceInput extends IExperience, IUserOwnedInput, JobProfileInput {}
 
 export interface IExperienceDoc extends ExperienceInput, ISoftDeleteDoc, IBaseDoc {}
 
@@ -31,12 +23,13 @@ const experienceSchema = new Schema<IExperienceDoc>(
   {
     company: { type: String, required: true },
     location: { type: String },
-    workMode: { type: String },
-    employmentType: { type: String },
-    position: { type: String, required: true },
+    workplace: { type: String, enum: Object.values(WORKPLACE_ENUMS) },
+    employmentType: { type: String, enum: Object.values(EMPLOYMENT_TYPE) },
+    jobTitle: { type: String, required: true },
     startDate: { type: Date, required: true },
     endDate: { type: Date },
     description: { type: String },
+    isActive: { type: Boolean, default: false },
   },
   {
     ...baseSchemaOptions,

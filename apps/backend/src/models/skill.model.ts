@@ -7,13 +7,9 @@ import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
+import { ISkill } from "@inrm/types";
 
-export interface SkillInput extends IUserOwnedInput, JobProfileInput {
-  name: string;
-  proficiencyLevel?: string;
-  description?: string;
-  // todo add fields like maybe endorsement, yearsOfExperience, etc.
-}
+export interface SkillInput extends ISkill, IUserOwnedInput, JobProfileInput {}
 
 export interface ISkillDoc extends SkillInput, ISoftDeleteDoc, IBaseDoc {}
 

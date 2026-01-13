@@ -9,7 +9,8 @@ import {
 } from '@casl/ability';
 
 import {
-  USER_TYPE_ENUMS,
+  ACCOUNT_TYPE_ENUMS,
+  USER_ROLE_ENUMS,
   ISession,
   IAbilityBuilder,
   AbilityAction,
@@ -48,7 +49,16 @@ export class UserAbilityBuilder implements IAbilityBuilder {
   getAbility(): AnyAbility {
     const builder = this.abilityBuilder;
 
-    if (this.session.user.type === USER_TYPE_ENUMS.CUSTOMER) {
+    // admin can manage all
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
+      builder.can(AbilityAction.Manage, UserAuthZEntity);
+    }
+
+    // tenant admin can manage users within their tenant
+    if (
+      this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER &&
+      this.session.user.role === USER_ROLE_ENUMS.ADMIN
+    ) {
       builder.can(AbilityAction.Read, UserAuthZEntity, {
         tenantId: this.session.tenantId,
       });
@@ -63,13 +73,31 @@ export class UserAbilityBuilder implements IAbilityBuilder {
       });
     }
 
-    if (this.session.user.type === USER_TYPE_ENUMS.PLATFORM_ADMIN) {
-      builder.can(AbilityAction.Manage, UserAuthZEntity);
+    // employer can read only their own user if not admin
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
+      builder.can(AbilityAction.Read, UserAuthZEntity, {
+        // tenantId: this.session.tenantId,
+        _id: this.session.user._id,
+      });
+      builder.can(AbilityAction.Update, UserAuthZEntity, {
+        // tenantId: this.session.tenantId,
+        _id: this.session.user._id,
+      });
+      builder.can(AbilityAction.Delete, UserAuthZEntity, {
+        // tenantId: this.session.tenantId,
+        _id: this.session.user._id,
+      });
     }
 
-    if (this.session.user.type === USER_TYPE_ENUMS.AUDITOR) {
-      builder.can(AbilityAction.Read, UserAuthZEntity);
+    // candidate can read only their own user
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+      builder.can(AbilityAction.Read, UserAuthZEntity, {
+        _id: this.session.user._id,
+      });
       builder.can(AbilityAction.Update, UserAuthZEntity, {
+        _id: this.session.user._id,
+      });
+      builder.can(AbilityAction.Delete, UserAuthZEntity, {
         _id: this.session.user._id,
       });
     }

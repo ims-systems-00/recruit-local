@@ -1,5 +1,5 @@
 {
-  "name": "@inrm/backend",
+  "name": "@rl/backend",
   "version": "1.0.0",
   "description": "Interface NRM portal backend api",
   "main": "server.js",
@@ -25,6 +25,7 @@
     "@aws-sdk/client-s3": "^3.682.0",
     "@aws-sdk/s3-request-presigner": "^3.682.0",
     "@casl/ability": "^6.7.3",
+    "@casl/mongoose": "^8.0.3",
     "@ims-systems-00/ims-query-builder": "^0.0.11",
     "@inrm/authz": "workspace:*",
     "@inrm/types": "workspace:*",

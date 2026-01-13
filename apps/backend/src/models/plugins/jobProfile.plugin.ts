@@ -46,3 +46,5 @@ export const jobProfilePlugin = <T extends IJobProfileDoc>(schema: Schema<T>): v
     return this.find({ jobProfileId }).exec();
   };
 };
+
+// todo: delete function

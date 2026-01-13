@@ -21,4 +21,10 @@ export const modelNames = {
   CERTIFICATION: "certifications",
   INTEREST: "interests",
   JOB: "jobs",
+  CV: "cvs",
+  APPLICATION: "applications",
+  EVENT: "events",
+  EVENT_REGISTRATION: "eventregistrations",
+  FAVOURITE: "favourites",
+  SKILL_ASSESSMENT: "skillassessments",
 };

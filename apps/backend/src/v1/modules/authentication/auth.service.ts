@@ -100,7 +100,9 @@ export const verifyRegistration = async (token: string): Promise<IUserDoc> => {
 
   const decoded = (await tokenService.verifyToken(token)) as CustomJwtPayload;
 
-  const user = await userService.getUser(decoded.id);
+  const user = await userService.getUserById(decoded.id);
+
+  logger.debug(`User found for registration verification: ${user.email}`);
 
   user.emailVerificationStatus = EMAIL_VERIFICATION_STATUS_ENUMS.VERIFIED;
   await user.save();
@@ -159,7 +161,7 @@ export const verifyRecovery = async ({
 
   const decoded = (await tokenService.verifyToken(token)) as CustomJwtPayload;
 
-  const user = await userService.getUser(decoded.id);
+  const user = await userService.getUserById(decoded.id);
   user.password = password;
   await user.save();
   await verificationTokenService.remove({ _id: isExists._id.toString() });
@@ -181,7 +183,9 @@ export const refreshAccessToken = async ({
   }
 
   // Check if the user exists
-  const user = await userService.getUser(decoded.id);
+  const user = await userService.getUser({
+    query: { _id: decoded.id },
+  });
 
   // Check reuse of refresh token and remove all the tokens
   const token = await tokenService.findRefreshToken({ token: refreshToken, userId: user._id.toString() });

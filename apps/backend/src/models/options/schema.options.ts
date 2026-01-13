@@ -5,9 +5,9 @@ export const baseSchemaOptions: SchemaOptions = {
   toJSON: {
     virtuals: false,
     transform: (_doc, ret) => {
-      ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
+      // ret.id = ret._id;
+      // delete ret._id;
+      // delete ret.__v;
       return ret;
     },
   },

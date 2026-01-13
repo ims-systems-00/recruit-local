@@ -27,7 +27,6 @@ export interface UserInput extends PasswordHashInput, TenantInput {
 
 // Define an interface for User document
 export interface IUserDoc extends UserInput, IPasswordHashDoc, ITenantDoc, ISoftDeleteDoc, Document {
-  id: string;
   fullName: string;
   emailVerificationStatus: EMAIL_VERIFICATION_STATUS_ENUMS;
   createdAt: Date;
@@ -85,11 +84,6 @@ const userSchema = new Schema<IUserDoc>(
     timestamps: true,
     toJSON: {
       virtuals: true,
-      transform: (_doc, ret) => {
-        ret.id = ret._id;
-        delete ret._id;
-        return ret;
-      },
     },
   }
 );
