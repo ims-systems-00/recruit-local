@@ -14,3 +14,4 @@ export * from './interest';
 export * from './event';
 export * from './event-registration';
 export * from './favourite';
+export * from './skill-assessment';

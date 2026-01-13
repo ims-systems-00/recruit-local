@@ -78,6 +78,7 @@ export const create = async ({ req }: ControllerParams) => {
   const userId = req.session.user?._id;
   req.body.userId = userId;
 
+  // todo: check if favourite already exists for the user and item, if also item exists
   const favourite = await favouriteService.create(req.body);
   return new ApiResponse({
     message: "Favourite created",
