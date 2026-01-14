@@ -4,6 +4,7 @@ import './globals.css';
 import NextAuthProviders from '@/providers/next-auth-providers';
 import { ReactQueryProvider } from '@/providers/react-query-provider';
 import { Toaster } from '@/components/ui/sonner';
+import { AbilityProvider } from '@/authz/ability-provider';
 const poppins = Poppins({
   variable: '--font-poppins',
   subsets: ['latin'],
@@ -24,7 +25,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppins.variable} antialiased`}>
         <NextAuthProviders>
-          <ReactQueryProvider>{children}</ReactQueryProvider>
+          <ReactQueryProvider>
+            <AbilityProvider>{children}</AbilityProvider>
+          </ReactQueryProvider>
         </NextAuthProviders>
         <Toaster position="top-right" richColors />
       </body>
