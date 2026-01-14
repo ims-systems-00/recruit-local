@@ -28,6 +28,7 @@ import applicationRoutes from "../modules/application/application.route";
 import eventRoutes from "../modules/event/event.route";
 import eventRegistrationRoutes from "../modules/event-registration/event-registration.route";
 import favouriteRoutes from "../modules/favourite/favourite.route";
+import skillAssessment from "../modules/skill-assessment/skill-assessment.route";
 
 const router = express.Router();
 
@@ -57,6 +58,7 @@ const getApiRoutes = () => {
   router.use("/events", eventRoutes);
   router.use("/event-registrations", eventRegistrationRoutes);
   router.use("/favourites", favouriteRoutes);
+  router.use("/skill-assessments", skillAssessment);
 
   return router;
 };
