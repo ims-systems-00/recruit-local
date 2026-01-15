@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { ACCOUNT_TYPE_ENUMS } from "@inrm/types";
+import { ACCOUNT_TYPE_ENUMS } from "@rl/types";
 
 export const registerBodySchema = Joi.object({
   firstName: Joi.string().max(20).required().label("First Name"),

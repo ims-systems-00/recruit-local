@@ -1,7 +1,7 @@
 import Bull, { Queue } from "bull";
 import { Task } from "../../../models/tasks.model";
 import { User } from "../../../models/user.model";
-import { TASK_STATUS_ENUMS } from "@inrm/types";
+import { TASK_STATUS_ENUMS } from "@rl/types";
 
 // Configure the Redis connection
 export const taskScheduleQueue: Queue = new Bull("task-schedule-queue", {

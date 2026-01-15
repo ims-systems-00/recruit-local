@@ -17,11 +17,11 @@ phases:
   build:
     commands:
       - echo "Building types..."
-      - pnpm --filter @inrm/types build
+      - pnpm --filter @rl/types build
       - echo "Building authz..."
-      - pnpm --filter @inrm/authz build
+      - pnpm --filter @rl/authz build
       - echo "Building the React app..."
-      - pnpm --filter @inrm/frontend build
+      - pnpm --filter @rl/frontend build
 
   post_build:
     commands:

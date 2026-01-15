@@ -6,7 +6,7 @@ import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/so
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { EMAIL_VERIFICATION_STATUS_ENUMS, modelNames } from "./constants";
-import { USER_ROLE_ENUMS, ACCOUNT_TYPE_ENUMS } from "@inrm/types";
+import { USER_ROLE_ENUMS, ACCOUNT_TYPE_ENUMS } from "@rl/types";
 
 // Define an interface for User input
 /*

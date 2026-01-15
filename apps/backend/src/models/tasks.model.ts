@@ -1,6 +1,6 @@
 import { Schema, model, Document, Model, Types } from "mongoose";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
-import { TASK_STATUS_ENUMS, TASK_PRIORITY_ENUMS } from "@inrm/types";
+import { TASK_STATUS_ENUMS, TASK_PRIORITY_ENUMS } from "@rl/types";
 import { modelNames } from "./constants";
 import { User } from "./user.model";
 import { tenantDataPlugin, ITenantDoc } from "./plugins/tenant-data.plugin";

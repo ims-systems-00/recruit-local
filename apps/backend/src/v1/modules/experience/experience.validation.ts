@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
-import { WORKPLACE_ENUMS, EMPLOYMENT_TYPE } from "@inrm/types";
+import { WORKPLACE_ENUMS, EMPLOYMENT_TYPE } from "@rl/types";
 
 export const createBodySchema = Joi.object({
   jobProfileId: Joi.string().custom(objectIdValidation).required().label("Job Profile ID"),

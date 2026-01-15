@@ -2,8 +2,8 @@ import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import * as responseTemplateService from "./response-template.service";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
-import { ResponseTemplateAbilityBuilder, ResponseTemplateAuthZEntity } from "@inrm/authz";
-import { AbilityAction } from "@inrm/types";
+import { ResponseTemplateAbilityBuilder, ResponseTemplateAuthZEntity } from "@rl/authz";
+import { AbilityAction } from "@rl/types";
 
 export const listResponseTemplate = async ({ req }: ControllerParams) => {
   const filter = new MongoQuery(req.query, {

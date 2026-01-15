@@ -62,7 +62,13 @@ importers:
       '@ims-systems-00/ims-query-builder':
         specifier: ^0.0.11
         version: 0.0.11(@aws-sdk/credential-providers@3.817.0)(socks@2.8.4)
-      '@inrm/utils':
+      '@rl/authz':
+        specifier: workspace:*
+        version: link:../../packages/authz
+      '@rl/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@rl/utils':
         specifier: workspace:*
         version: link:../../packages/utils
       '@riadhossain43/mongoose-autoincrement':

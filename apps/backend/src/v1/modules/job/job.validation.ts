@@ -6,7 +6,7 @@ import {
   EMPLOYMENT_TYPE,
   PERIOD_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
-} from "@inrm/types";
+} from "@rl/types";
 
 // --- Sub-Schemas for Nested Objects ---
 

@@ -1,6 +1,6 @@
 import { accessibleBy } from "@casl/mongoose";
-import { AbilityAction } from "@inrm/types";
-import { UserAbilityBuilder, UserAuthZEntity } from "@inrm/authz";
+import { AbilityAction } from "@rl/types";
+import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
 import { PipelineStage } from "mongoose";
 
 export const roleScopedSecurityQuery = (ability: ReturnType<UserAbilityBuilder["getAbility"]>) => {

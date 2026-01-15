@@ -3,7 +3,7 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { ITEM_TYPE_ENUMS } from "@inrm/types";
+import { ITEM_TYPE_ENUMS } from "@rl/types";
 
 export interface IFavouriteInput {
   userId: Schema.Types.ObjectId;

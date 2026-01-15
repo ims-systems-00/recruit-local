@@ -4,13 +4,15 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { modelNames } from "./constants";
-import { SKILL_ASSESSMENT_LEVEL_ENUM, SKILL_ASSESSMENT_CATEGORY_ENUM, QUESTION_TYPE_ENUM } from "@inrm/types";
+import { SKILL_ASSESSMENT_LEVEL_ENUM, SKILL_ASSESSMENT_CATEGORY_ENUM, QUESTION_TYPE_ENUM } from "@rl/types";
 
 export interface IQuestion {
   questionText: string;
   type: QUESTION_TYPE_ENUM;
-  options: string[];
-  correctOptionIndex: number;
+  points: number;
+  options?: string[];
+  correctOptionIndex?: number;
+  correctAnswerText?: string;
 }
 
 export interface ISkillAssessmentInput {
@@ -22,15 +24,17 @@ export interface ISkillAssessmentInput {
   attachment?: AwsStorageTemplate;
 }
 
-export interface ISkillAssessmentDocument extends ISkillAssessmentInput, Document, ISoftDeleteDoc {}
+export interface ISkillAssessmentDoc extends ISkillAssessmentInput, Document, ISoftDeleteDoc {
+  totalPoints?: number;
+}
 
 export interface ISkillAssessmentModel
-  extends Model<ISkillAssessmentDocument>,
-    ISoftDeleteModel<ISkillAssessmentDocument>,
-    PaginateModel<ISkillAssessmentDocument>,
-    AggregatePaginateModel<ISkillAssessmentDocument> {}
+  extends Model<ISkillAssessmentDoc>,
+    ISoftDeleteModel<ISkillAssessmentDoc>,
+    PaginateModel<ISkillAssessmentDoc>,
+    AggregatePaginateModel<ISkillAssessmentDoc> {}
 
-const SkillAssessmentSchema = new Schema<ISkillAssessmentDocument>(
+const SkillAssessmentSchema = new Schema<ISkillAssessmentDoc>(
   {
     title: { type: String, required: true },
     description: { type: String },
@@ -52,22 +56,30 @@ const SkillAssessmentSchema = new Schema<ISkillAssessmentDocument>(
           enum: Object.values(QUESTION_TYPE_ENUM),
           required: true,
         },
+        points: { type: Number, required: true },
         options: [{ type: String }],
         correctOptionIndex: { type: Number },
+        correctAnswerText: { type: String },
       },
     ],
     attachment: { type: awsStorageTemplateMongooseDefinition, required: false },
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
+
+SkillAssessmentSchema.virtual("totalPoints").get(function () {
+  return this.questions.reduce((sum, question) => sum + (question.points || 0), 0);
+});
 
 SkillAssessmentSchema.plugin(softDeletePlugin);
 SkillAssessmentSchema.plugin(mongoosePaginate);
 SkillAssessmentSchema.plugin(aggregatePaginate);
 
-export const SkillAssessmentModel = model<ISkillAssessmentDocument, ISkillAssessmentModel>(
+export const SkillAssessment = model<ISkillAssessmentDoc, ISkillAssessmentModel>(
   modelNames.SKILL_ASSESSMENT,
   SkillAssessmentSchema
 );

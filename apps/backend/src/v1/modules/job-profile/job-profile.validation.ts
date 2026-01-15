@@ -1,7 +1,7 @@
 import Joi from "joi";
 
 import { objectIdValidation } from "../../../common/helper/validate";
-import { PROFICIENCY, VISIBILITY } from "@inrm/types";
+import { PROFICIENCY, VISIBILITY } from "@rl/types";
 
 export const createBodySchema = Joi.object({
   headline: Joi.string().optional().label("Headline"),

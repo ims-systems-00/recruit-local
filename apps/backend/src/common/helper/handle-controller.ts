@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { ISession } from "@inrm/types";
+import { ISession } from "@rl/types";
 import "../../types/request-extension";
 import { IQuotationPublicSession } from "../../types/quotation-public-session";
 

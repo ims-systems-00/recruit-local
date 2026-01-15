@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { ACCOUNT_TYPE_ENUMS, USER_ROLE_ENUMS, VERIFICATION_TOKEN_TYPE_ENUMS } from "@inrm/types";
+import { ACCOUNT_TYPE_ENUMS, USER_ROLE_ENUMS, VERIFICATION_TOKEN_TYPE_ENUMS } from "@rl/types";
 
 export const invitationBodySchema = Joi.array()
   .items(
