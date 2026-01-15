@@ -1,10 +1,11 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import '../design-system/tokens.css';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: var(--background);
+  --color-background: var(--colors-bg-primary);
   --color-foreground: var(--foreground);
   --font-poppins: var(--font-poppins);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -21,8 +22,8 @@
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
+  --color-input: var(--colors-border-primary);
+  --color-border: var(--colors-border-primary);
   --color-border-dark: var(--border-dark);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
@@ -34,19 +35,19 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-title: var(--title);
   --color-body: var(--body);
-  --color-primary: var(--primary);
+  --color-primary: var(--colors-bg-brand-solid);
   --color-primary-extra-ighter: var(--primary-extra-ighter);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-surface-lighter: var(--surface-lighter);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: var(--sizes-radius-sm);
+  --radius-md: var(--sizes-radius-md);
+  --radius-lg: var(--sizes-radius-lg);
+  --radius-xl: var(--sizes-radius-xl);
 }
-
+/* 
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -126,7 +127,7 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
   --surface-lighter: #f0f1f2;
-}
+} */
 
 @theme {
   --shadow-regular: 0px 4px 12px 0px #00000014;
