@@ -6,7 +6,7 @@ import {
   JobAbilityBuilder,
   TenantAbilityBuilder,
   UserAbilityBuilder,
-} from '@inrm/authz';
+} from '@rl/authz';
 import { useSession } from 'next-auth/react';
 
 export const AbilityProvider = ({

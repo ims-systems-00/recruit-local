@@ -2,6 +2,7 @@
 import { useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserInfo } from '@/services/user/user.client';
+import { ACCOUNT_TYPE_ENUMS } from '@rl/types';
 
 export const useSystemPreparation = () => {
   const router = useRouter();
@@ -19,15 +20,19 @@ export const useSystemPreparation = () => {
           router.push('/accounts/verify-email');
           return;
         }
-        if (userType === 'employer' && !user.tenantId) {
+        if (userType === ACCOUNT_TYPE_ENUMS.EMPLOYER && !user.tenantId) {
           router.push('/onboarding/create-organization');
           return;
         }
-        if (userType === 'candidate') {
+        if (userType === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
           router.push('/recruiter');
           return;
         }
-        if (userType === 'platform-admin') {
+        if (userType === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+          router.push('/recruiter');
+          return;
+        }
+        if (userType === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
           router.push('/recruiter');
           return;
         }

@@ -13,18 +13,15 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Can } from '@/authz/ability-context';
-import { AbilityAction } from '@inrm/types';
-import { JobAuthZEntity } from '@inrm/authz';
+import { AbilityAction } from '@rl/types';
+import { JobAuthZEntity } from '@rl/authz';
 
 export default function JobLists() {
   return (
     <div>
       <header className="py-4 px-6 flex justify-between items-center">
         <div className=" space-y-3">
-          <Can
-            I={AbilityAction.Delete}
-            a={new JobAuthZEntity({ tenantId: null })}
-          >
+          <Can I={AbilityAction.Delete} a={JobAuthZEntity}>
             <h3>Explore All Jobs</h3>
           </Can>
           <p>Browse the full range of available opportunities</p>
