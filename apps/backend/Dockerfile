@@ -35,10 +35,10 @@ COPY packages ./packages
 RUN pnpm install --frozen-lockfile
 
 # Build app
-RUN pnpm run --filter @inrm/types build
-RUN pnpm run --filter @inrm/authz build
-RUN pnpm run --filter @inrm/utils build
-RUN pnpm run --filter @inrm/backend build
+RUN pnpm run --filter @rl/types build
+RUN pnpm run --filter @rl/authz build
+RUN pnpm run --filter @rl/utils build
+RUN pnpm run --filter @rl/backend build
 
 WORKDIR /usr/src/app/apps/backend
 

@@ -1,5 +1,5 @@
 import { JwtPayload } from "jsonwebtoken";
-import { ACCOUNT_TYPE_ENUMS, USER_ROLE_ENUMS } from "@inrm/types";
+import { ACCOUNT_TYPE_ENUMS, USER_ROLE_ENUMS } from "@rl/types";
 
 export interface GenerateTokenOptions {
   expiresIn: string | number;

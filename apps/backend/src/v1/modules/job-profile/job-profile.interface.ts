@@ -1,5 +1,5 @@
 import { JobProfileInput } from "../../../models";
-import { VISIBILITY } from "@inrm/types";
+import { VISIBILITY } from "@rl/types";
 
 export type Query = Partial<JobProfileInput & { id: string; visibility: VISIBILITY }>;
 

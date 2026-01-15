@@ -7,7 +7,7 @@ import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
-import { IInterest } from "@inrm/types";
+import { IInterest } from "@rl/types";
 
 export interface InterestInput extends IInterest, IUserOwnedInput, JobProfileInput {}
 

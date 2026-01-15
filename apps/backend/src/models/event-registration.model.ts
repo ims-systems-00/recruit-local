@@ -3,7 +3,7 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { EventRegistrationStatusEnum } from "@inrm/types";
+import { EventRegistrationStatusEnum } from "@rl/types";
 
 export interface EventRegistrationInput {
   eventId: Schema.Types.ObjectId;

@@ -1,5 +1,5 @@
 import { BadRequestException } from "../../../common/helper";
-import { ACCOUNT_TYPE_ENUMS, VERIFICATION_TOKEN_TYPE_ENUMS } from "@inrm/types";
+import { ACCOUNT_TYPE_ENUMS, VERIFICATION_TOKEN_TYPE_ENUMS } from "@rl/types";
 
 export const getVerificationTokenType = (userType: ACCOUNT_TYPE_ENUMS) => {
   switch (userType) {

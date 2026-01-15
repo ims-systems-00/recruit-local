@@ -2,8 +2,8 @@ import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import * as documentFolderService from "./document-folder.service";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
-import { DocumentAbilityBuilder, DocumentAuthZEntity } from "@inrm/authz";
-import { AbilityAction, USER_TYPE_ENUMS } from "@inrm/types";
+import { DocumentAbilityBuilder, DocumentAuthZEntity } from "@rl/authz";
+import { AbilityAction, USER_TYPE_ENUMS } from "@rl/types";
 
 export const listDocumentFolder = async ({ req }: ControllerParams) => {
   const filter = new MongoQuery(req.query, {

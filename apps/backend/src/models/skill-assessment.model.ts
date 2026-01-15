@@ -4,7 +4,7 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { modelNames } from "./constants";
-import { SKILL_ASSESSMENT_LEVEL_ENUM, SKILL_ASSESSMENT_CATEGORY_ENUM, QUESTION_TYPE_ENUM } from "@inrm/types";
+import { SKILL_ASSESSMENT_LEVEL_ENUM, SKILL_ASSESSMENT_CATEGORY_ENUM, QUESTION_TYPE_ENUM } from "@rl/types";
 
 export interface IQuestion {
   questionText: string;

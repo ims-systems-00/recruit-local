@@ -1,7 +1,7 @@
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery } from "../../../common/query";
 import { favouriteProjectQuery } from "./favourite.query";
-import { IListParams } from "@inrm/types";
+import { IListParams } from "@rl/types";
 import { IFavouriteInput, Favourite } from "../../../models";
 
 type IListFavouriteParams = IListParams<IFavouriteInput>;

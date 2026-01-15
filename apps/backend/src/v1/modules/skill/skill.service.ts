@@ -1,4 +1,4 @@
-import { IListParams } from "@inrm/types";
+import { IListParams } from "@rl/types";
 import { SkillInput, Skill } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
 

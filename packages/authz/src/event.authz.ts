@@ -14,7 +14,7 @@ import {
   ISession,
   IAbilityBuilder,
   AbilityAction,
-} from '@inrm/types';
+} from '@rl/types';
 
 export class EventAuthZEntity {
   public readonly organizers: string[] | null;

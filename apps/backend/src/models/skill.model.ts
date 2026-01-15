@@ -7,7 +7,7 @@ import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
-import { ISkill } from "@inrm/types";
+import { ISkill } from "@rl/types";
 
 export interface SkillInput extends ISkill, IUserOwnedInput, JobProfileInput {}
 

@@ -1,6 +1,6 @@
 import { Education, EducationInput } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
-import { IListParams } from "@inrm/types";
+import { IListParams } from "@rl/types";
 
 type IListEducationProfileParams = IListParams<EducationInput>;
 

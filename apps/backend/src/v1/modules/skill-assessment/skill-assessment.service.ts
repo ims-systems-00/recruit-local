@@ -1,6 +1,6 @@
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery } from "../../../common/query";
-import { IListParams } from "@inrm/types";
+import { IListParams } from "@rl/types";
 import { skillAssessmentProjectionQuery } from "./skill-assessment.query";
 import { ISkillAssessmentInput, SkillAssessment } from "../../../models";
 

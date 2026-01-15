@@ -1,4 +1,4 @@
-import { EVENT_STATUS_ENUMS, IListParams } from "@inrm/types";
+import { EVENT_STATUS_ENUMS, IListParams } from "@rl/types";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery } from "../../../common/query";
 import { eventRegistrationProjectionQuery } from "./event-registration.query";

@@ -1,8 +1,8 @@
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
-import { UserAbilityBuilder, UserAuthZEntity } from "@inrm/authz";
-import { AbilityAction, ACCOUNT_TYPE_ENUMS } from "@inrm/types";
+import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
+import { AbilityAction, ACCOUNT_TYPE_ENUMS } from "@rl/types";
 import * as applicationService from "./application.service";
 
 export const list = async ({ req }: ControllerParams) => {

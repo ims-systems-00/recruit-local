@@ -1,6 +1,6 @@
 import Joi, { CustomHelpers } from "joi";
 import mongoose from "mongoose";
-import { EVENT_STATUS_ENUMS, EVENT_MODE_ENUMS, EVENT_TYPE_ENUMS } from "@inrm/types";
+import { EVENT_STATUS_ENUMS, EVENT_MODE_ENUMS, EVENT_TYPE_ENUMS } from "@rl/types";
 
 // --- Reusable Validators ---
 
