@@ -1,5 +1,5 @@
 import { VerificationTokenInput } from "../../../models";
-import { USER_ROLE_ENUMS, USER_TYPE_ENUMS } from "@inrm/types";
+import { USER_ROLE_ENUMS, USER_TYPE_ENUMS } from "@rl/types";
 
 export type Query = Partial<VerificationTokenInput & { _id: string }>;
 

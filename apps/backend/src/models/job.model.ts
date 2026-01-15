@@ -17,7 +17,7 @@ import {
   Education,
   Skill,
   Salary,
-} from "@inrm/types";
+} from "@rl/types";
 
 export interface IJobInput extends TenantInput {
   title?: string;

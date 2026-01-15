@@ -7,7 +7,7 @@ import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
-import { IEducation } from "@inrm/types";
+import { IEducation } from "@rl/types";
 
 // todo: change name to qualification
 export interface EducationInput extends IEducation, IUserOwnedInput, JobProfileInput {}

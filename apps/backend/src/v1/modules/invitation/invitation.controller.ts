@@ -3,7 +3,7 @@ import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import * as invitationService from "./invitation.service";
 import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 import { USER_TYPE_ENUMS } from "../../../models/constants";
-import { USER_ROLE_ENUMS } from "@inrm/types";
+import { USER_ROLE_ENUMS } from "@rl/types";
 
 type InvitationPayload = {
   type: USER_TYPE_ENUMS;

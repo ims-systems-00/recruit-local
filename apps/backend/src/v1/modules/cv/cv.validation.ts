@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
-import { CV_STATUS_ENUM } from "@inrm/types";
+import { CV_STATUS_ENUM } from "@rl/types";
 
 const subDocId = Joi.string().custom(objectIdValidation).optional().label("Sub-doc ID");
 

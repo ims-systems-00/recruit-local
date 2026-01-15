@@ -1,7 +1,7 @@
 import { Job, IJobInput } from "../../../models";
 import { getTenant } from "../tenant/tenant.service";
 import { NotFoundException } from "../../../common/helper";
-import { IListParams } from "@inrm/types";
+import { IListParams } from "@rl/types";
 
 type IListJobParams = IListParams<IJobInput>;
 type ICreateJobPayload = IJobInput & { autoFill?: boolean };

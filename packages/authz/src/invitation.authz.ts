@@ -13,7 +13,7 @@ import {
   ISession,
   IAbilityBuilder,
   AbilityAction,
-} from '@inrm/types';
+} from '@rl/types';
 
 export class InvitationAuthZEntity {
   public readonly tenantId: string | null;

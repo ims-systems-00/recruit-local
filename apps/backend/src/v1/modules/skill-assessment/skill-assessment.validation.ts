@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { SKILL_ASSESSMENT_LEVEL_ENUM, SKILL_ASSESSMENT_CATEGORY_ENUM, QUESTION_TYPE_ENUM } from "@inrm/types";
+import { SKILL_ASSESSMENT_LEVEL_ENUM, SKILL_ASSESSMENT_CATEGORY_ENUM, QUESTION_TYPE_ENUM } from "@rl/types";
 
 const questionSchema = Joi.object({
   questionText: Joi.string().required().trim().label("Question Text"),

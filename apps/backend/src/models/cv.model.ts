@@ -7,7 +7,7 @@ import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
-import { IExperience, IEducation, ISkill, IInterest, CV_STATUS_ENUM } from "@inrm/types";
+import { IExperience, IEducation, ISkill, IInterest, CV_STATUS_ENUM } from "@rl/types";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 
 export interface CVInput extends IUserOwnedInput, JobProfileInput {

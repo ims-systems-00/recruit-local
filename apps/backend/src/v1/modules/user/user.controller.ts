@@ -8,8 +8,8 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from "../../../common/helper";
-import { UserAbilityBuilder, UserAuthZEntity } from "@inrm/authz";
-import { AbilityAction } from "@inrm/types";
+import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
+import { AbilityAction } from "@rl/types";
 import { roleScopedSecurityQuery } from "./user.query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 

@@ -1,4 +1,4 @@
-import { IListParams } from "@inrm/types";
+import { IListParams } from "@rl/types";
 import { NotFoundException } from "../../../common/helper";
 import { ApplicationInput, Application } from "../../../models/application.model";
 

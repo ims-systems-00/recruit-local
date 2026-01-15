@@ -1,7 +1,7 @@
 import { User } from "../models";
 import { EMAIL_VERIFICATION_STATUS_ENUMS } from "../models/constants";
 import { logger } from "../common/helper/logger";
-import { USER_TYPE_ENUMS } from "@inrm/types";
+import { USER_TYPE_ENUMS } from "@rl/types";
 
 const validateEnv = () => {
   if (!process.env.ADMIN_USER_EMAIL || !process.env.ADMIN_USER_PASSWORD) {

@@ -6,7 +6,7 @@ import { modelNames } from "./constants";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
-import { APPLICATION_STATUS_ENUM } from "@inrm/types";
+import { APPLICATION_STATUS_ENUM } from "@rl/types";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 
 export interface ApplicationInput extends JobProfileInput {

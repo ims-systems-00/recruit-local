@@ -1,6 +1,6 @@
 import Joi, { CustomHelpers } from "joi";
 import mongoose from "mongoose";
-import { ACCOUNT_TYPE_ENUMS, USER_ROLE_ENUMS } from "@inrm/types";
+import { ACCOUNT_TYPE_ENUMS, USER_ROLE_ENUMS } from "@rl/types";
 
 // Custom validation for MongoDB ObjectId
 const objectIdValidation = (value: string, helpers: CustomHelpers) => {

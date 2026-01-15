@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
-import { APPLICATION_STATUS_ENUM } from "@inrm/types";
+import { APPLICATION_STATUS_ENUM } from "@rl/types";
 
 const awsStorageSchema = Joi.object({
   Name: Joi.string().required().label("Name"),

@@ -7,8 +7,8 @@ import {
   pick,
   UnauthorizedException,
 } from "../../../common/helper";
-import { UserAbilityBuilder, EventRegistrationAuthZEntity } from "@inrm/authz";
-import { AbilityAction } from "@inrm/types";
+import { UserAbilityBuilder, EventRegistrationAuthZEntity } from "@rl/authz";
+import { AbilityAction } from "@rl/types";
 import { roleScopedSecurityQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import * as eventService from "./event-registration.service";

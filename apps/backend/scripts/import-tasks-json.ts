@@ -5,7 +5,7 @@ import moment from "moment";
 import { Task } from "../src/models/tasks.model";
 import { Tenant } from "../src/models/tenant.model";
 import { Category } from "../src/models/category.model";
-import { CATEGORY_USED_FOR_ENUMS, TASK_PRIORITY_ENUMS, TASK_STATUS_ENUMS } from "@inrm/types";
+import { CATEGORY_USED_FOR_ENUMS, TASK_PRIORITY_ENUMS, TASK_STATUS_ENUMS } from "@rl/types";
 
 export const IMPORT_FLAG = "--tasks";
 const JSON_FILE_PATH = path.join(__dirname, "data", "14-10-25-tasks.json");

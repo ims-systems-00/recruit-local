@@ -1,6 +1,6 @@
 import Joi, { CustomHelpers } from "joi";
 import mongoose from "mongoose";
-import { EventRegistrationStatusEnum } from "@inrm/types";
+import { EventRegistrationStatusEnum } from "@rl/types";
 
 const objectIdValidation = (value: string, helpers: CustomHelpers) => {
   if (!mongoose.Types.ObjectId.isValid(value)) {

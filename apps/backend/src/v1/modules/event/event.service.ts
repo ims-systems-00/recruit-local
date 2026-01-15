@@ -1,4 +1,4 @@
-import { IListParams } from "@inrm/types";
+import { IListParams } from "@rl/types";
 import { NotFoundException } from "../../../common/helper";
 import { EventInput, Event, IEventDoc } from "../../../models";
 import { matchQuery, excludeDeletedQuery } from "../../../common/query";

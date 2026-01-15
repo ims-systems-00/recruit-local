@@ -1,7 +1,7 @@
 import { AbilityBuilder, AnyAbility, createMongoAbility } from "@casl/ability";
 import { IAbilityBuilder } from "../../../authz/builder.interface";
 import { AbilityAction } from "../../../types/ability";
-import { ISession } from "@inrm/types";
+import { ISession } from "@rl/types";
 import { USER_TYPE_ENUMS } from "../../../models/constants/types-enums.constant";
 import { modelNames } from "../../../models/constants/model-names.constant";
 

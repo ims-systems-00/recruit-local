@@ -1,12 +1,12 @@
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery } from "../../../common/query";
-import { IListParams } from "@inrm/types";
+import { IListParams } from "@rl/types";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { withTransaction } from "../../../common/helper/database-transaction";
 import { skillAssessmentResultQuery } from "./sar.query";
 import { IQuestion, ISkillAssessmentResultInput, SkillAssessmentResult } from "../../../models";
 import * as skillAssessmentService from "../skill-assessment/skill-assessment.service";
-import { QUESTION_TYPE_ENUM } from "@inrm/types";
+import { QUESTION_TYPE_ENUM } from "@rl/types";
 
 type IListSkillAssessmentResultParams = IListParams<ISkillAssessmentResultInput>;
 

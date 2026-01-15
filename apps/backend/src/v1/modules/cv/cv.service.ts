@@ -1,6 +1,6 @@
 import { CV, CVInput } from "../../../models/cv.model";
 import { NotFoundException } from "../../../common/helper";
-import { IListParams } from "@inrm/types";
+import { IListParams } from "@rl/types";
 
 type IListCVParams = IListParams<CVInput>;
 

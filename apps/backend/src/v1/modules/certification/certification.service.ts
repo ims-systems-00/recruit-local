@@ -1,4 +1,4 @@
-import { IListParams } from "@inrm/types";
+import { IListParams } from "@rl/types";
 import { CertificationInput, Certification, ICertificationDoc } from "../../../models";
 import { FileManager, NotFoundException } from "../../../common/helper";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";

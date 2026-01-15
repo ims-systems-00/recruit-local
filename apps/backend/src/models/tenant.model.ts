@@ -4,7 +4,7 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { AwsStorageTemplate } from "./templates/aws-storage.template";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
-import { TENANT_STATUS_ENUMS } from "@inrm/types";
+import { TENANT_STATUS_ENUMS } from "@rl/types";
 import { modelNames } from "./constants";
 
 export interface TenantInput {

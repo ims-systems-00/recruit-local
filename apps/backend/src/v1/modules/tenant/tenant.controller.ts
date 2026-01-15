@@ -1,6 +1,6 @@
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-// import { TenantAbilityBuilder, TenantAuthZEntity } from "@inrm/authz";
-import { AbilityAction, USER_ROLE_ENUMS } from "@inrm/types";
+// import { TenantAbilityBuilder, TenantAuthZEntity } from "@rl/authz";
+import { AbilityAction, USER_ROLE_ENUMS } from "@rl/types";
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
