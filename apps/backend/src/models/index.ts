@@ -25,3 +25,4 @@ export * from "./event.model";
 export * from "./event-registration.model";
 export * from "./favourite.model";
 export * from "./skill-assessment.model";
+export * from "./skill-assessment-result.model";

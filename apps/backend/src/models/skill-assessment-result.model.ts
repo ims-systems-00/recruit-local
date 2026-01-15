@@ -5,11 +5,19 @@ import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/so
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { modelNames } from "./constants";
 
+export interface IAnswer {
+  questionId: string;
+  selectedOptionIndex?: number;
+  answerText?: string;
+}
+
 export interface ISkillAssessmentResultInput {
   skillAssessmentId: Schema.Types.ObjectId;
   jobProfileId: Schema.Types.ObjectId;
-  score: number;
+  answers: IAnswer[];
   recommendations: string[];
+  score: number;
+  totalPossibleScore?: number;
 }
 
 export interface ISkillAssessmentResultDoc extends ISkillAssessmentResultInput, ISoftDeleteDoc, Document {
@@ -28,14 +36,17 @@ const SkillAssessmentResultSchema = new Schema<ISkillAssessmentResultDoc>(
   {
     skillAssessmentId: { type: Schema.Types.ObjectId, required: true, ref: modelNames.SKILL_ASSESSMENT },
     jobProfileId: { type: Schema.Types.ObjectId, required: true, ref: modelNames.JOB_PROFILE },
+    answers: [
+      {
+        questionId: { type: Schema.Types.ObjectId, required: true },
+        selectedOptionIndex: { type: Number },
+        answerText: { type: String },
+      },
+    ],
     score: { type: Number, required: true },
     recommendations: { type: [String], required: true },
+    totalPossibleScore: { type: Number, required: false },
     awsStorageTemplate: { type: awsStorageTemplateMongooseDefinition, required: false },
-    deleteMarker: {
-      status: { type: Boolean, default: false },
-      deletedAt: { type: Date, default: null },
-      dateScheduled: { type: Date, default: null },
-    },
   },
   {
     timestamps: true,
