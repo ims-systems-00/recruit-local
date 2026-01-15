@@ -7,9 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "build:packages": "pnpm --filter @rl/types --filter @rl/authz build",
-    "backend:dev": "pnpm --filter @rl/backend start:dev",
-    "frontend:dev": "pnpm --filter @rl/frontend dev",
+    "build:packages": "pnpm --filter @inrm/types --filter @inrm/authz build",
+    "backend:dev": "pnpm --filter @inrm/backend start:dev",
+    "frontend:dev": "pnpm --filter @inrm/frontend dev",
     "start:dev": "concurrently --kill-others \"pnpm backend:dev\" \"pnpm frontend:dev\""
   },
   "keywords": [],

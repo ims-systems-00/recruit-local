@@ -1,5 +1,5 @@
 {
-  "name": "@rl/types",
+  "name": "@inrm/types",
   "version": "1.0.0",
   "description": "",
   "main": "./dist/cjs/index.js",
