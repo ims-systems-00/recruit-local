@@ -27,4 +27,5 @@ export const modelNames = {
   EVENT_REGISTRATION: "eventregistrations",
   FAVOURITE: "favourites",
   SKILL_ASSESSMENT: "skillassessments",
+  SKILL_ASSESSMENT_RESULT: "skillassessmentresults",
 };
