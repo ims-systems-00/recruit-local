@@ -7,7 +7,7 @@ import {
   AbilityClass,
   AbilityBuilder,
 } from '@casl/ability';
-import { AbilityAction } from '@inrm/types';
+import { AbilityAction } from '@rl/types';
 type ClaimAbility = PureAbility<[AbilityAction.Manage, 'all']>;
 const ClaimAbility = PureAbility as AbilityClass<ClaimAbility>;
 export const ability = new AbilityBuilder(ClaimAbility);
