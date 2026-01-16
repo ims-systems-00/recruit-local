@@ -26,3 +26,5 @@ export * from "./event-registration.model";
 export * from "./favourite.model";
 export * from "./skill-assessment.model";
 export * from "./skill-assessment-result.model";
+export * from "./status.model";
+export * from "./action.model";
