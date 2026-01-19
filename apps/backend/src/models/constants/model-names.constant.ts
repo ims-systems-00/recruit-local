@@ -30,4 +30,6 @@ export const modelNames = {
   SKILL_ASSESSMENT_RESULT: "skillassessmentresults",
   STATUS: "statuses",
   ACTION: "actions",
+  BOARD: "boards",
+  CARD: "cards",
 };

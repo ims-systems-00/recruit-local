@@ -28,3 +28,4 @@ export * from "./skill-assessment.model";
 export * from "./skill-assessment-result.model";
 export * from "./status.model";
 export * from "./action.model";
+export * from "./kanban-board.model";

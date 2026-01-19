@@ -20,8 +20,9 @@ interface IStatusModel
 
 const statusSchema = new Schema<IStatusDoc>(
   {
+    // todo: control collectionName values via enum
     collectionName: { type: String, required: true },
-    collectionId: { type: Schema.Types.ObjectId, required: true },
+    collectionId: { type: Schema.Types.ObjectId, required: true, refPath: "collectionName" },
     label: { type: String, required: true },
   },
   { timestamps: true }

@@ -3,6 +3,8 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "cSpell.language": "en-GB",
   "cSpell.words": [
+    "boardable",
+    "Boardable",
     "commentactivities",
     "documentfolders",
     "eventregistrations",
@@ -14,6 +16,7 @@
     "imsrt",
     "inrm",
     "jobprofiles",
+    "Lexorank",
     "responsetemplates",
     "skillassessmentresults",
     "skillassessments",
