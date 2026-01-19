@@ -5,6 +5,8 @@ export interface IOptions {
 
 export type ListQueryParams<T> = Partial<T & { _id: string }>;
 
+// ? Question: export type ListQueryParams<T> = FilterQuery<T> update?
+
 export interface IListParams<T> {
   query: ListQueryParams<T>;
   options?: IOptions;

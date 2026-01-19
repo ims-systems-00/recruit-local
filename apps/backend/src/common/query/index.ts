@@ -34,3 +34,13 @@ export const excludeDeletedQuery = (): PipelineStage[] => {
     },
   ];
 };
+
+export const onlyDeletedQuery = (): PipelineStage[] => {
+  return [
+    {
+      $match: {
+        "deleteMarker.status": true,
+      },
+    },
+  ];
+};
