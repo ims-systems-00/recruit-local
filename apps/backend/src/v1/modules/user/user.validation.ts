@@ -10,6 +10,7 @@ const objectIdValidation = (value: string, helpers: CustomHelpers) => {
   return value;
 };
 
+// todo: keep it in a common space later
 export const idParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("ID"),
 });

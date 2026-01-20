@@ -30,6 +30,9 @@ import eventRegistrationRoutes from "../modules/event-registration/event-registr
 import favouriteRoutes from "../modules/favourite/favourite.route";
 import skillAssessment from "../modules/skill-assessment/skill-assessment.route";
 import skillAssessmentResult from "../modules/skill-assessment-result/sar.route";
+import statusRoutes from "../modules/status/status.route";
+import actionRoutes from "../modules/action/action.route";
+import boardRoutes from "../modules/board/board.route";
 
 const router = express.Router();
 
@@ -61,6 +64,9 @@ const getApiRoutes = () => {
   router.use("/favourites", favouriteRoutes);
   router.use("/skill-assessments", skillAssessment);
   router.use("/skill-assessment-results", skillAssessmentResult);
+  router.use("/statuses", statusRoutes);
+  router.use("/actions", actionRoutes);
+  router.use("/boards", boardRoutes);
 
   return router;
 };
