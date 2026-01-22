@@ -5,47 +5,326 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: var(--colors-bg-primary);
-  --color-foreground: var(--foreground);
-  --font-poppins: var(--font-poppins);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--colors-border-primary);
-  --color-border: var(--colors-border-primary);
-  --color-border-dark: var(--border-dark);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-title: var(--title);
-  --color-body: var(--body);
-  --color-primary: var(--colors-bg-brand-solid);
-  --color-primary-extra-ighter: var(--primary-extra-ighter);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-surface-lighter: var(--surface-lighter);
-  --color-card: var(--card);
+  /* ================= TEXT ================= */
+  --color-text-primary: var(--colors-text-primary);
+  --color-text-secondary: var(--colors-text-secondary);
+  --color-text-tertiary: var(--colors-text-tertiary);
+  --color-text-quaternary: var(--colors-text-quaternary);
+  --color-text-placeholder: var(--colors-text-placeholder);
+  --color-text-disabled: var(--colors-text-disabled);
+
+  --color-text-brand-primary: var(--colors-text-brand-primary);
+  --color-text-brand-secondary: var(--colors-text-brand-secondary);
+  --color-text-brand-tertiary: var(--colors-text-brand-tertiary);
+
+  --color-text-error: var(--colors-text-error);
+  --color-text-warning: var(--colors-text-warning);
+  --color-text-success: var(--colors-text-success);
+
+  --color-text-white: var(--colors-text-white);
+
+  /* ================= FOREGROUND (icons etc) ================= */
+  --color-fg-primary: var(--colors-fg-primary);
+  --color-fg-secondary: var(--colors-fg-secondary);
+  --color-fg-tertiary: var(--colors-fg-tertiary);
+  --color-fg-disabled: var(--colors-fg-disabled);
+
+  --color-fg-brand-primary: var(--colors-fg-brand-primary);
+  --color-fg-brand-secondary: var(--colors-fg-brand-secondary);
+
+  --color-fg-error: var(--colors-fg-error);
+  --color-fg-warning: var(--colors-fg-warning);
+  --color-fg-success: var(--colors-fg-success);
+
+  --color-fg-white: var(--colors-fg-white);
+
+  /* ================= BACKGROUND ================= */
+  --color-bg-primary: var(--colors-bg-primary);
+  --color-bg-secondary: var(--colors-bg-secondary);
+  --color-bg-tertiary: var(--colors-bg-tertiary);
+  --color-bg-disabled: var(--colors-bg-disabled);
+  --color-bg-active: var(--colors-bg-active);
+
+  --color-bg-brand-primary: var(--colors-bg-brand-primary);
+  --color-bg-brand-secondary: var(--colors-bg-brand-secondary);
+  --color-bg-brand-solid: var(--colors-bg-brand-solid);
+  --color-bg-brand-section: var(--colors-bg-brand-section);
+  --color-bg-brand-sidebar: var(--colors-bg-brand-sidebar);
+
+  --color-bg-error-primary: var(--colors-bg-error-primary);
+  --color-bg-error-secondary: var(--colors-bg-error-secondary);
+  --color-bg-error-solid: var(--colors-bg-error-solid);
+
+  --color-bg-warning-primary: var(--colors-bg-warning-primary);
+  --color-bg-warning-secondary: var(--colors-bg-warning-secondary);
+  --color-bg-warning-solid: var(--colors-bg-warning-solid);
+
+  --color-bg-success-primary: var(--colors-bg-success-primary);
+  --color-bg-success-secondary: var(--colors-bg-success-secondary);
+  --color-bg-success-solid: var(--colors-bg-success-solid);
+
+  --color-bg-white: var(--colors-bg-white);
+
+  /* ================= BORDER ================= */
+  --color-border-primary: var(--colors-border-primary);
+  --color-border-secondary: var(--colors-border-secondary);
+  --color-border-tertiary: var(--colors-border-tertiary);
+  --color-border-disabled: var(--colors-border-disabled);
+
+  --color-border-brand: var(--colors-border-brand);
+  --color-border-brand-subtle: var(--colors-border-brand_subtle);
+  --color-border-brand-disabled: var(--colors-border-brand-disabled);
+
+  --color-border-error: var(--colors-border-error);
+  --color-border-error-subtle: var(--colors-border-error_subtle);
+  --color-border-error-disabled: var(--colors-border-error-disabled);
+
+  --color-border-warning: var(--colors-border-warning);
+  --color-border-success: var(--colors-border-success);
+
+  /* ================= EFFECTS ================= */
+  --color-shadow-xs: var(--colors-effects-shadows-xs-primary);
+  --color-shadow-sm: var(--colors-effects-shadows-sm-primary);
+  --color-shadow-md: var(--colors-effects-shadows-md-primary);
+  --color-shadow-lg: var(--colors-effects-shadows-lg-primary);
+  --color-shadow-xl: var(--colors-effects-shadows-xl-primary);
+
+  --color-focus-ring: var(--colors-effects-focus_ring-primary);
+  --color-focus-ring-brand: var(--colors-effects-focus_ring-secondary_brand);
+  --color-focus-ring-error: var(--colors-effects-focus_ring-secondary_error);
+
+  /* ================= ALPHA ================= */
+  --color-alpha-white-10: var(--colors-alpha-white-10);
+  --color-alpha-white-20: var(--colors-alpha-white-20);
+  --color-alpha-white-30: var(--colors-alpha-white-30);
+  --color-alpha-white-40: var(--colors-alpha-white-40);
+  --color-alpha-white-50: var(--colors-alpha-white-50);
+
+  --color-alpha-black-10: var(--colors-alpha-black-10);
+  --color-alpha-black-20: var(--colors-alpha-black-20);
+  --color-alpha-black-30: var(--colors-alpha-black-30);
+  --color-alpha-black-40: var(--colors-alpha-black-40);
+  --color-alpha-black-50: var(--colors-alpha-black-50);
+
+  /* ---------------- BORDER RADIUS ---------------- */
+  --radius-0: var(--sizes-radius-zero);
+  --radius-xs: var(--sizes-radius-xs);
   --radius-sm: var(--sizes-radius-sm);
   --radius-md: var(--sizes-radius-md);
   --radius-lg: var(--sizes-radius-lg);
   --radius-xl: var(--sizes-radius-xl);
+  --radius-2xl: var(--sizes-radius-2xl);
+  --radius-3xl: var(--sizes-radius-3xl);
+  --radius-4xl: var(--sizes-radius-4xl);
+  --radius-5xl: var(--sizes-radius-5xl);
+  --radius-full: var(--sizes-radius-full);
+
+  /* ---------------- SPACING (padding / margin / gap) ---------------- */
+  --spacing-0: var(--sizes-spacing-zero);
+  --spacing-3xs: var(--sizes-spacing-3xs);
+  --spacing-2xs: var(--sizes-spacing-2xs);
+  --spacing-xs: var(--sizes-spacing-xs);
+  --spacing-sm: var(--sizes-spacing-sm);
+  --spacing-md: var(--sizes-spacing-md);
+  --spacing-lg: var(--sizes-spacing-lg);
+  --spacing-xl: var(--sizes-spacing-xl);
+  --spacing-2xl: var(--sizes-spacing-2xl);
+  --spacing-3xl: var(--sizes-spacing-3xl);
+  --spacing-4xl: var(--sizes-spacing-4xl);
+  --spacing-5xl: var(--sizes-spacing-5xl);
+  --spacing-6xl: var(--sizes-spacing-6xl);
+  --spacing-7xl: var(--sizes-spacing-7xl);
+  --spacing-8xl: var(--sizes-spacing-8xl);
+  --spacing-9xl: var(--sizes-spacing-9xl);
+  --spacing-10xl: var(--sizes-spacing-10xl);
+  --spacing-11xl: var(--sizes-spacing-11xl);
+  --spacing-12xl: var(--sizes-spacing-12xl);
+  --spacing-13xl: var(--sizes-spacing-13xl);
+  --spacing-14xl: var(--sizes-spacing-14xl);
+  --spacing-15xl: var(--sizes-spacing-15xl);
+
+  /* --font-weight- */
+
+  --font-display-sm: var(--typography-display-sm-family);
+  --font-display-lg: var(--typography-display-lg-family);
+
+  --font-heading-2xl: var(--typography-heading-2xl-family);
+  --font-heading-xl: var(--typography-heading-xl-family);
+  --font-heading-lg: var(--typography-heading-lg-family);
+  --font-heading-md: var(--typography-heading-md-family);
+  --font-heading-sm: var(--typography-heading-sm-family);
+
+  --font-body-xl: var(--typography-body-xl-family);
+  --font-body-lg: var(--typography-body-lg-family);
+  --font-body-md: var(--typography-body-md-family);
+  --font-body-sm: var(--typography-body-sm-family);
+  --font-body-xs: var(--typography-body-xs-family);
+
+  --font-label-xl: var(--typography-label-xl-family);
+  --font-label-lg: var(--typography-label-lg-family);
+  --font-label-md: var(--typography-label-md-family);
+  --font-label-sm: var(--typography-label-sm-family);
+  --font-label-xs: var(--typography-label-xs-family);
+
+  /* ---------------- FONT SIZE ---------------- */
+  --text-display-sm: var(--typography-display-sm-size);
+  --text-display-lg: var(--typography-display-lg-size);
+
+  --text-heading-2xl: var(--typography-heading-2xl-size);
+  --text-heading-xl: var(--typography-heading-xl-size);
+  --text-heading-lg: var(--typography-heading-lg-size);
+  --text-heading-md: var(--typography-heading-md-size);
+  --text-heading-sm: var(--typography-heading-sm-size);
+
+  --text-body-xl: var(--typography-body-xl-size);
+  --text-body-lg: var(--typography-body-lg-size);
+  --text-body-md: var(--typography-body-md-size);
+  --text-body-sm: var(--typography-body-sm-size);
+  --text-body-xs: var(--typography-body-xs-size);
+
+  --text-label-xl: var(--typography-label-xl-size);
+  --text-label-lg: var(--typography-label-lg-size);
+  --text-label-md: var(--typography-label-md-size);
+  --text-label-sm: var(--typography-label-sm-size);
+  --text-label-xs: var(--typography-label-xs-size);
+
+  /* ---------------- LINE HEIGHT ---------------- */
+  --leading-display-sm: var(--typography-display-sm-line-height);
+  --leading-display-lg: var(--typography-display-lg-line-height);
+
+  --leading-heading-2xl: var(--typography-heading-2xl-line-height);
+  --leading-heading-xl: var(--typography-heading-xl-line-height);
+  --leading-heading-lg: var(--typography-heading-lg-line-height);
+  --leading-heading-md: var(--typography-heading-md-line-height);
+  --leading-heading-sm: var(--typography-heading-sm-line-height);
+
+  --leading-body-xl: var(--typography-body-xl-line-height);
+  --leading-body-lg: var(--typography-body-lg-line-height);
+  --leading-body-md: var(--typography-body-md-line-height);
+  --leading-body-sm: var(--typography-body-sm-line-height);
+  --leading-body-xs: var(--typography-body-xs-line-height);
+
+  --leading-label-xl: var(--typography-label-xl-line-height);
+  --leading-label-lg: var(--typography-label-lg-line-height);
+  --leading-label-md: var(--typography-label-md-line-height);
+  --leading-label-sm: var(--typography-label-sm-line-height);
+  --leading-label-xs: var(--typography-label-xs-line-height);
+
+  /* ---------------- LETTER SPACING ---------------- */
+  --tracking-display-sm: var(--typography-display-sm-letter-spacing);
+  --tracking-display-lg: var(--typography-display-lg-letter-spacing);
+
+  --tracking-heading-2xl: var(--typography-heading-2xl-letter-spacing);
+  --tracking-heading-xl: var(--typography-heading-xl-letter-spacing);
+  --tracking-heading-lg: var(--typography-heading-lg-letter-spacing);
+  --tracking-heading-md: var(--typography-heading-md-letter-spacing);
+  --tracking-heading-sm: var(--typography-heading-sm-letter-spacing);
+
+  --tracking-body-xl: var(--typography-body-xl-letter-spacing);
+  --tracking-body-lg: var(--typography-body-lg-letter-spacing);
+  --tracking-body-md: var(--typography-body-md-letter-spacing);
+  --tracking-body-sm: var(--typography-body-sm-letter-spacing);
+  --tracking-body-xs: var(--typography-body-xs-letter-spacing);
+
+  --tracking-label-xl: var(--typography-label-xl-letter-spacing);
+  --tracking-label-lg: var(--typography-label-lg-letter-spacing);
+  --tracking-label-md: var(--typography-label-md-letter-spacing);
+  --tracking-label-sm: var(--typography-label-sm-letter-spacing);
+  --tracking-label-xs: var(--typography-label-xs-letter-spacing);
+
+  /* ---------------- FONT WEIGHT ---------------- */
+  /* ---------------- DISPLAY ---------------- */
+  --font-weight-display-sm-base: var(--typography-display-sm-weight-base);
+  --font-weight-display-sm-strong: var(--typography-display-sm-weight-strong);
+  --font-weight-display-sm-emphasis: var(
+    --typography-display-sm-weight-emphasis
+  );
+
+  --font-weight-display-lg-base: var(--typography-display-lg-weight-base);
+  --font-weight-display-lg-strong: var(--typography-display-lg-weight-strong);
+  --font-weight-display-lg-emphasis: var(
+    --typography-display-lg-weight-emphasis
+  );
+
+  /* ---------------- HEADING ---------------- */
+  --font-weight-heading-2xl-base: var(--typography-heading-2xl-weight-base);
+  --font-weight-heading-2xl-strong: var(--typography-heading-2xl-weight-strong);
+
+  --font-weight-heading-xl-base: var(--typography-heading-xl-weight-base);
+  --font-weight-heading-xl-strong: var(--typography-heading-xl-weight-strong);
+
+  --font-weight-heading-lg-base: var(--typography-heading-lg-weight-base);
+  --font-weight-heading-lg-strong: var(--typography-heading-lg-weight-strong);
+
+  --font-weight-heading-md-base: var(--typography-heading-md-weight-base);
+  --font-weight-heading-md-strong: var(--typography-heading-md-weight-strong);
+
+  --font-weight-heading-sm-base: var(--typography-heading-sm-weight-base);
+  --font-weight-heading-sm-strong: var(--typography-heading-sm-weight-strong);
+
+  /* ---------------- LABEL ---------------- */
+  --font-weight-label-xl-base: var(--typography-label-xl-weight-base);
+  --font-weight-label-xl-strong: var(--typography-label-xl-weight-strong);
+
+  --font-weight-label-lg-base: var(--typography-label-lg-weight-base);
+  --font-weight-label-lg-strong: var(--typography-label-lg-weight-strong);
+
+  --font-weight-label-md-base: var(--typography-label-md-weight-base);
+  --font-weight-label-md-strong: var(--typography-label-md-weight-strong);
+
+  --font-weight-label-sm-base: var(--typography-label-sm-weight-base);
+  --font-weight-label-sm-strong: var(--typography-label-sm-weight-strong);
+
+  --font-weight-label-xs-base: var(--typography-label-xs-weight-base);
+  --font-weight-label-xs-strong: var(--typography-label-xs-weight-strong);
+
+  /* ---------------- BODY ---------------- */
+  --font-weight-body-xl-base: var(--typography-body-xl-weight-base);
+  --font-weight-body-xl-strong: var(--typography-body-xl-weight-strong);
+
+  --font-weight-body-lg-base: var(--typography-body-lg-weight-base);
+  --font-weight-body-lg-strong: var(--typography-body-lg-weight-strong);
+
+  --font-weight-body-md-base: var(--typography-body-md-weight-base);
+  --font-weight-body-md-strong: var(--typography-body-md-weight-strong);
+
+  --font-weight-body-sm-base: var(--typography-body-sm-weight-base);
+  --font-weight-body-sm-strong: var(--typography-body-sm-weight-strong);
+
+  --font-weight-body-xs-base: var(--typography-body-xs-weight-base);
+  --font-weight-body-xs-strong: var(--typography-body-xs-weight-strong);
+
+  --shadow-xs: var(--effect-styles-shadow-xs);
+  --shadow-sm: var(--effect-styles-shadow-sm);
+  --shadow-md: var(--effect-styles-shadow-md);
+  --shadow-lg: var(--effect-styles-shadow-lg);
+  --shadow-xl: var(--effect-styles-shadow-xl);
+  --shadow-2xl: var(--effect-styles-shadow-2xl);
+  --shadow-3xl: var(--effect-styles-shadow-3xl);
+
+  /* ========================= */
+  /* Focus Rings (using tokens) */
+  /* ========================= */
+  --ring-brand: var(--effect-styles-focus-ring-brand);
+  --ring-error: var(--effect-styles-focus-ring-error);
+
+  /* optional combined ring + shadow */
+  --ring-brand-shadow-xs: var(--effect-styles-focus-ring-brand-shadow-xs);
+  --ring-brand-shadow-sm: var(--effect-styles-focus-ring-brand-shadow-sm);
+  --ring-error-shadow-xs: var(--effect-styles-focus-ring-error-shadow-xs);
+
+  /* ========================= */
+  /* Skeuomorphic (using token) */
+  /* ========================= */
+  --skeuomorphic-xs: var(--effect-styles-skeuomorphic-xs);
+
+  /* ========================= */
+  /* Backdrop Blur (using token) */
+  /* ========================= */
+  --backdrop-blur-sm: var(--effect-styles-backdrop-blur-sm);
+  --backdrop-blur-md: var(--effect-styles-backdrop-blur-md);
+  --backdrop-blur-lg: var(--effect-styles-backdrop-blur-lg);
+  --backdrop-blur-xl: var(--effect-styles-backdrop-blur-xl);
 }
 /* 
 :root {

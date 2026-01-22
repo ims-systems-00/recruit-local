@@ -4,7 +4,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { ChevronRight, Ellipsis, Search, X } from 'lucide-react';
+import { ArrowRight, ChevronRight, Ellipsis, Search, X } from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 import JobSearchIcon from '@/public/images/jobSearch.svg';
@@ -19,34 +19,34 @@ import { JobAuthZEntity } from '@rl/authz';
 export default function JobLists() {
   return (
     <div>
-      <header className="py-4 px-6 flex justify-between items-center">
-        <div className=" space-y-3">
-          <Can I={AbilityAction.Delete} a={JobAuthZEntity}>
-            <h3>Explore All Jobs</h3>
-          </Can>
-          <p>Browse the full range of available opportunities</p>
-        </div>
-        <div className="min-w-[356px]">
-          <InputGroup className="max-w-[356px] h-10">
-            <InputGroupInput placeholder="Search..." />
-            <InputGroupAddon>
-              <Search />
-            </InputGroupAddon>
-          </InputGroup>
-        </div>
-      </header>
-      <div className="p-6 grid grid-cols-3 gap-6 ">
-        <div className=" col-span-2 p-5 bg-surface-lighter space-y-10 rounded-xl">
-          <div className="space-y-5">
-            <h4>Hi , Want to Hire talent?</h4>
+      <div className=" border-b border-border">
+        <header className="p-4xl flex justify-between items-center">
+          <div className=" space-y-3">
+            <h3 className="text-text-primary">Explore All Jobs</h3>
+            <p>Browse the full range of available opportunities</p>
+          </div>
+          <div className="min-w-[356px]">
+            <InputGroup className="max-w-[356px] h-10">
+              <InputGroupInput placeholder="Search..." />
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+            </InputGroup>
+          </div>
+        </header>
+      </div>
+      <div className="p-4xl grid grid-cols-3 gap-6 ">
+        <div className=" col-span-2 bg-surface-lighter space-y-4xl rounded-xl">
+          <div className="space-y-5 border border-border-secondary p-2xl rounded-lg">
+            <h4 className="text-text-secondary">Hi , Want to Hire talent?</h4>
             <div className=" flex items-center gap-4">
               <div className="min-w-8">
                 <Image
-                  className="max-h-8 max-w-8"
+                  className="max-h-12 max-w-12"
                   alt="Fav"
                   src={JobSearchIcon}
-                  width={32}
-                  height={32}
+                  width={48}
+                  height={48}
                 />
               </div>
               <Input
@@ -247,28 +247,26 @@ export default function JobLists() {
             </div>
             <span className="text-sm text-title">See all</span>
           </div>
-          <div className=" space-y-2">
+          <div className=" space-y-2xl">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
               <div
                 key={item}
-                className=" flex justify-between items-center gap-4 p-4 border-b-[0.5px] border-border-dark last:border-b-0"
+                className="flex w-full items-center gap-2xl  p-2xl 2xl:gap-4xl 2xl:p-4xl border border-border rounded-2xl"
               >
-                <div className="flex items-center gap-3">
-                  <Avatar className=" size-8">
-                    <AvatarImage
-                      src="https://github.com/shadcn.png"
-                      alt="@shadcn"
-                    />
-                    <AvatarFallback>CN</AvatarFallback>
-                  </Avatar>
-                  <div className=" space-y-2">
-                    <p className="text-title">Annette Black</p>
-                    <p className="text-sm">Applied on 15 May 2020 9:30 am</p>
+                <Avatar className=" size-12">
+                  <AvatarImage
+                    src="https://github.com/shadcn.png"
+                    alt="@shadcn"
+                  />
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
+                <div className=" space-y-3xs w-full">
+                  <div className=" flex justify-between items-start font-[600px] gap-4 w-full">
+                    <p className="text-text-primary">Annette Black</p>
+                    <ArrowRight className="w-5 h-5 text-body" />
                   </div>
+                  <p className="text-sm">Applied on 15 May 2020 9:30 am</p>
                 </div>
-                <span className=" flex items-center justify-center border border-border h-6 w-6 rounded-lg bg-card">
-                  <ChevronRight className="w-5 h-5 text-body" />
-                </span>
               </div>
             ))}
           </div>
