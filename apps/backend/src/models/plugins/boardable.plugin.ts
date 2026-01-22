@@ -4,7 +4,7 @@ import { modelNames } from "../constants";
 export interface IBoardableInput {
   boardId: Schema.Types.ObjectId;
   statusId: Schema.Types.ObjectId;
-  rank: string;
+  rank: number;
 }
 
 export interface IBoardableDoc extends IBoardableInput, Document {}
@@ -32,7 +32,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
         index: true,
       },
       rank: {
-        type: String,
+        type: Number,
         required: true,
       },
     },

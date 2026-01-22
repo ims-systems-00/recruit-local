@@ -15,6 +15,10 @@ export const getOne = async (id: string) => {
 };
 
 export const create = async (payload: ApplicationInput) => {
+  // todo: check if job exists
+  // todo: check if boardId and statusId are valid if exists
+  // todo: check if application already exists for the jobId
+  // todo: generate lexorank for rank field
   let application = new Application(payload);
   application = await application.save();
 
