@@ -8,9 +8,9 @@ import { IBaseDoc } from "./interfaces/base.interface";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { APPLICATION_STATUS_ENUM } from "@rl/types";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
-import { boardablePlugin, IBoardableInput } from "./plugins/boardable.plugin";
+import { boardablePlugin, IBoardableInput, IBoardableModel } from "./plugins/boardable.plugin";
 
-export interface ApplicationInput extends JobProfileInput {
+export interface ApplicationInput extends JobProfileInput, IBoardableInput {
   jobId: Types.ObjectId;
   coverLetter?: string;
   resumeSrc?: string;
@@ -19,15 +19,16 @@ export interface ApplicationInput extends JobProfileInput {
   appliedAt?: Date;
 }
 
-export interface IApplicationDoc extends ApplicationInput, ISoftDeleteDoc, IBaseDoc, IBoardableInput {
-  status?: APPLICATION_STATUS_ENUM; // todo: status weight.
+export interface IApplicationDoc extends ApplicationInput, ISoftDeleteDoc, IBaseDoc {
+  status?: APPLICATION_STATUS_ENUM;
 }
 
 interface IApplicationModel
   extends Model<IApplicationDoc>,
     ISoftDeleteModel<IApplicationDoc>,
     PaginateModel<IApplicationDoc>,
-    AggregatePaginateModel<IApplicationDoc> {}
+    AggregatePaginateModel<IApplicationDoc>,
+    IBoardableModel<IApplicationDoc> {}
 
 const applicationSchema = new Schema<IApplicationDoc>(
   {

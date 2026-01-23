@@ -116,17 +116,6 @@ const jobSchema = new Schema<IJobDoc>(
     ...baseSchemaOptions,
     toJSON: {
       virtuals: false,
-      transform: function (doc, ret) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ret.skills?.forEach((skill: any) => {
-          skill.id = skill._id;
-          delete skill._id;
-        });
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      },
     },
   }
 );

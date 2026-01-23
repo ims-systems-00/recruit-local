@@ -3,6 +3,7 @@ import { modelNames } from "../constants";
 import { withTransaction } from "../../common/helper/database-transaction";
 import { Status } from "../status.model";
 import { Board } from "../kanban-board.model";
+import { logger } from "../../common/helper";
 
 // ! when a item is created, need to assign initial rank based on first status weight + merit rank
 
@@ -27,27 +28,24 @@ export interface IBoardableModel<T extends IBoardableDoc> extends Model<T> {
 export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): void => {
   if (!(schema instanceof Schema)) throw new Error("Schema must be an instance of mongoose schema");
 
-  const boardableSchema = new Schema<IBoardableDoc>(
-    {
-      boardId: {
-        type: Schema.Types.ObjectId,
-        ref: modelNames.BOARD,
-        required: true,
-        index: true,
-      },
-      statusId: {
-        type: Schema.Types.ObjectId,
-        ref: modelNames.STATUS,
-        required: true,
-        index: true,
-      },
-      rank: {
-        type: Number,
-        required: true,
-      },
+  const boardableSchema = new Schema<IBoardableDoc>({
+    boardId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.BOARD,
+      required: true,
+      index: true,
     },
-    { _id: false, autoIndex: false }
-  );
+    statusId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.STATUS,
+      required: true,
+      index: true,
+    },
+    rank: {
+      type: Number,
+      required: true,
+    },
+  });
 
   schema.add(boardableSchema);
 
@@ -87,6 +85,14 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
     "moveToPosition",
     async function (itemId: string | Types.ObjectId, targetStatusId: string | Types.ObjectId, targetIndex: number) {
       return withTransaction(async (session: ClientSession) => {
+        console.log(
+          "Moving item:",
+          itemId.toString(),
+          "to status:",
+          targetStatusId.toString(),
+          "at index:",
+          targetIndex
+        );
         const item = await this.findById(itemId).session(session);
         if (!item) throw new Error("Item not found");
 
@@ -100,6 +106,8 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
           .select("_id rank")
           .sort({ rank: -1 })
           .session(session);
+
+        logger.info(`Column items count: ${columnItems.length}`);
 
         // Remove the item being moved from the list if it's already in the target column
         const existingItems = columnItems.filter((i) => !i._id.equals(item._id));

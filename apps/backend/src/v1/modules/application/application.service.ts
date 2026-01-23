@@ -1,11 +1,15 @@
 import { IListParams } from "@rl/types";
 import { NotFoundException } from "../../../common/helper";
 import { ApplicationInput, Application } from "../../../models/application.model";
+import * as jobService from "../job/job.service";
+import * as boardService from "../board/board.service";
+import * as statusService from "../status/status.service";
+import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 
 type IListApplicationParams = IListParams<ApplicationInput>;
 
 export const list = ({ query = {}, options }: IListApplicationParams) => {
-  return Application.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
+  return Application.paginateAndExcludeDeleted(query, { ...options });
 };
 
 export const getOne = async (id: string) => {
@@ -15,10 +19,30 @@ export const getOne = async (id: string) => {
 };
 
 export const create = async (payload: ApplicationInput) => {
-  // todo: check if job exists
-  // todo: check if boardId and statusId are valid if exists
-  // todo: check if application already exists for the jobId
-  // todo: generate lexorank for rank field
+  // check if job exists
+  const job = await jobService.getOne(payload.jobId.toString());
+  // check if boardId and statusId are valid if exists
+  const board = await boardService.getOne({
+    collectionId: job._id,
+  });
+  // get the first status of the board
+
+  // ! this is keeping in mind that they exist
+  payload.boardId = board._id as any;
+  payload.statusId = board.columnOrder[0] as any;
+
+  console.log("payload.statusId", sanitizeQueryIds(payload.statusId!));
+  // get the status
+  const status = await statusService.getOne({
+    ...sanitizeQueryIds({
+      _id: payload.statusId!,
+    }),
+  });
+
+  // create a random number 1 - 10
+  const merit = Math.floor(Math.random() * 10) + 1;
+  payload.rank = merit + status.weight;
+
   let application = new Application(payload);
   application = await application.save();
 
@@ -70,4 +94,8 @@ export const statusUpdate = async (id: string, status: string) => {
   );
   if (!updatedApplication) throw new NotFoundException("Application not found.");
   return updatedApplication;
+};
+
+export const moveItemOnBoard = async (itemId: string, targetStatusId: string, targetIndex: number) => {
+  return Application.moveToPosition(itemId, targetStatusId, targetIndex);
 };
