@@ -8,6 +8,7 @@ import { IBaseDoc } from "./interfaces/base.interface";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { APPLICATION_STATUS_ENUM } from "@rl/types";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
+import { boardablePlugin, IBoardableInput } from "./plugins/boardable.plugin";
 
 export interface ApplicationInput extends JobProfileInput {
   jobId: Types.ObjectId;
@@ -18,8 +19,8 @@ export interface ApplicationInput extends JobProfileInput {
   appliedAt?: Date;
 }
 
-export interface IApplicationDoc extends ApplicationInput, ISoftDeleteDoc, IBaseDoc {
-  status?: APPLICATION_STATUS_ENUM;
+export interface IApplicationDoc extends ApplicationInput, ISoftDeleteDoc, IBaseDoc, IBoardableInput {
+  status?: APPLICATION_STATUS_ENUM; // todo: status weight.
 }
 
 interface IApplicationModel
@@ -59,5 +60,10 @@ applicationSchema.plugin(softDeletePlugin);
 applicationSchema.plugin(mongoosePaginate);
 applicationSchema.plugin(aggregatePaginate);
 applicationSchema.plugin(jobProfilePlugin);
+applicationSchema.plugin(boardablePlugin);
+
+// --- Indexes ---
+applicationSchema.index({ jobId: 1, status: 1 });
+applicationSchema.index({ createdAt: -1 });
 
 export const Application = model<IApplicationDoc, IApplicationModel>(modelNames.APPLICATION, applicationSchema);

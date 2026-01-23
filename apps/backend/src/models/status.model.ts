@@ -4,10 +4,13 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 
+type ModelName = (typeof modelNames)[keyof typeof modelNames];
+
 export interface IStatusInput {
-  collectionName: string;
+  collectionName: ModelName;
   collectionId: Schema.Types.ObjectId;
   label: string;
+  weight?: number;
 }
 
 export interface IStatusDoc extends IStatusInput, ISoftDeleteDoc {}
@@ -20,10 +23,10 @@ interface IStatusModel
 
 const statusSchema = new Schema<IStatusDoc>(
   {
-    // todo: control collectionName values via enum
-    collectionName: { type: String, required: true },
+    collectionName: { type: String, required: true, enum: Object.values(modelNames) },
     collectionId: { type: Schema.Types.ObjectId, required: true, refPath: "collectionName" },
     label: { type: String, required: true },
+    weight: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
