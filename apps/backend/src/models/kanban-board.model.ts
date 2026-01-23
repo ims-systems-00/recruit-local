@@ -5,13 +5,14 @@ import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/so
 import { tenantDataPlugin, ITenantDoc } from "./plugins/tenant-data.plugin";
 import { modelNames } from "./constants";
 
+type ModelName = (typeof modelNames)[keyof typeof modelNames];
+
 export interface IBoardInput {
   title: string;
   description?: string;
-  collectionName?: string;
-  collectionId?: Schema.Types.ObjectId;
+  collectionName: ModelName;
+  collectionId: Schema.Types.ObjectId;
   columnOrder: Schema.Types.ObjectId[];
-  isTemplate: boolean;
   background?: string;
 }
 
@@ -27,10 +28,9 @@ const boardSchema = new Schema<IBoardDoc>(
   {
     title: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
-    collectionName: { type: String, trim: true },
-    collectionId: { type: String, trim: true },
+    collectionName: { type: String, required: true, enum: Object.values(modelNames) },
+    collectionId: { type: Schema.Types.ObjectId, required: true, refPath: "collectionName", unique: true },
     columnOrder: [{ type: Schema.Types.ObjectId, ref: modelNames.STATUS }],
-    isTemplate: { type: Boolean, default: false },
     background: { type: String, default: "#ffffff" },
   },
   { timestamps: true }
