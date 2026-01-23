@@ -120,28 +120,28 @@
   --radius-full: var(--sizes-radius-full);
 
   /* ---------------- SPACING (padding / margin / gap) ---------------- */
-  --spacing-0: var(--sizes-spacing-zero);
-  --spacing-3xs: var(--sizes-spacing-3xs);
-  --spacing-2xs: var(--sizes-spacing-2xs);
-  --spacing-xs: var(--sizes-spacing-xs);
-  --spacing-sm: var(--sizes-spacing-sm);
-  --spacing-md: var(--sizes-spacing-md);
-  --spacing-lg: var(--sizes-spacing-lg);
-  --spacing-xl: var(--sizes-spacing-xl);
-  --spacing-2xl: var(--sizes-spacing-2xl);
-  --spacing-3xl: var(--sizes-spacing-3xl);
-  --spacing-4xl: var(--sizes-spacing-4xl);
-  --spacing-5xl: var(--sizes-spacing-5xl);
-  --spacing-6xl: var(--sizes-spacing-6xl);
-  --spacing-7xl: var(--sizes-spacing-7xl);
-  --spacing-8xl: var(--sizes-spacing-8xl);
-  --spacing-9xl: var(--sizes-spacing-9xl);
-  --spacing-10xl: var(--sizes-spacing-10xl);
-  --spacing-11xl: var(--sizes-spacing-11xl);
-  --spacing-12xl: var(--sizes-spacing-12xl);
-  --spacing-13xl: var(--sizes-spacing-13xl);
-  --spacing-14xl: var(--sizes-spacing-14xl);
-  --spacing-15xl: var(--sizes-spacing-15xl);
+  --spacing-spacing-0: var(--sizes-spacing-zero);
+  --spacing-spacing-3xs: var(--sizes-spacing-3xs);
+  --spacing-spacing-2xs: var(--sizes-spacing-2xs);
+  --spacing-spacing-xs: var(--sizes-spacing-xs);
+  --spacing-spacing-sm: var(--sizes-spacing-sm);
+  --spacing-spacing-md: var(--sizes-spacing-md);
+  --spacing-spacing-lg: var(--sizes-spacing-lg);
+  --spacing-spacing-xl: var(--sizes-spacing-xl);
+  --spacing-spacing-2xl: var(--sizes-spacing-2xl);
+  --spacing-spacing-3xl: var(--sizes-spacing-3xl);
+  --spacing-spacing-4xl: var(--sizes-spacing-4xl);
+  --spacing-spacing-5xl: var(--sizes-spacing-5xl);
+  --spacing-spacing-6xl: var(--sizes-spacing-6xl);
+  --spacing-spacing-7xl: var(--sizes-spacing-7xl);
+  --spacing-spacing-8xl: var(--sizes-spacing-8xl);
+  --spacing-spacing-9xl: var(--sizes-spacing-9xl);
+  --spacing-spacing-10xl: var(--sizes-spacing-10xl);
+  --spacing-spacing-11xl: var(--sizes-spacing-11xl);
+  --spacing-spacing-12xl: var(--sizes-spacing-12xl);
+  --spacing-spacing-13xl: var(--sizes-spacing-13xl);
+  --spacing-spacing-14xl: var(--sizes-spacing-14xl);
+  --spacing-spacing-15xl: var(--sizes-spacing-15xl);
 
   /* --font-weight- */
 
@@ -325,6 +325,8 @@
   --backdrop-blur-md: var(--effect-styles-backdrop-blur-md);
   --backdrop-blur-lg: var(--effect-styles-backdrop-blur-lg);
   --backdrop-blur-xl: var(--effect-styles-backdrop-blur-xl);
+
+  --font-poppins: var(--font-poppins);
 }
 /* 
 :root {
@@ -415,38 +417,38 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border-primary outline-bg-brand-solid;
   }
   body {
-    @apply bg-background text-foreground font-poppins;
+    @apply bg-bg-primary text-text-secondary font-poppins;
   }
 
   h1 {
-    @apply text-5xl leading-[58px] text-title;
+    @apply text-5xl leading-[58px] text-text-primary;
   }
 
   h2 {
-    @apply text-[32px] leading-[38.8px] text-title;
+    @apply text-[32px] leading-[38.8px] text-text-primary;
   }
 
   h3 {
-    @apply text-2xl leading-7 font-medium text-title;
+    @apply text-2xl leading-7 font-medium text-text-primary;
   }
 
   h4 {
-    @apply text-xl leading-6 font-medium text-title;
+    @apply text-xl leading-6 font-medium text-text-primary;
   }
 
   p {
-    @apply text-base leading-[100%] text-body;
+    @apply text-base leading-[100%] text-text-secondary;
   }
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border-primary outline-bg-brand-solid;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-bg-primary text-text-secondary;
   }
 }
