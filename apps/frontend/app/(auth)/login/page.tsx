@@ -46,14 +46,14 @@ export default function Login() {
             <div className="space-y-6">
               <div className="space-y-4">
                 <div className=" space-y-2">
-                  <InputGroup className="h-10 rounded-lg shadow-light">
+                  <InputGroup className="h-12 rounded-lg shadow-xs">
                     <InputGroupInput
                       type="email"
                       placeholder="Enter your email"
                       {...register('email', { required: true })}
                     />
                     <InputGroupAddon>
-                      <MailIcon />
+                      <MailIcon className=" text-fg-tertiary" />
                     </InputGroupAddon>
                   </InputGroup>
                   {errors.email && (
@@ -64,21 +64,21 @@ export default function Login() {
                 </div>
 
                 <div className=" space-y-2">
-                  <InputGroup className="h-10 rounded-lg shadow-light">
+                  <InputGroup className="h-12 rounded-lg shadow-xs">
                     <InputGroupInput
                       type={showPassword ? 'text' : 'password'}
                       placeholder="*********"
                       {...register('password', { required: true })}
                     />
                     <InputGroupAddon>
-                      <LockKeyholeOpen />
+                      <LockKeyholeOpen className=" text-fg-tertiary" />
                     </InputGroupAddon>
                     <InputGroupAddon
                       className=" cursor-pointer"
                       align="inline-end"
                       onClick={togglePassword}
                     >
-                      <EyeClosed />
+                      <EyeClosed className=" text-fg-tertiary" />
                     </InputGroupAddon>
                   </InputGroup>
                   {errors.password && (
@@ -105,7 +105,7 @@ export default function Login() {
             <Button
               type="submit"
               disabled={isLoading}
-              className=" w-full text-base bg-primary text-white h-10 cursor-pointer"
+              className=" w-full text-base bg-bg-brand-solid text-white h-10 cursor-pointer"
             >
               {isLoading ? 'Logging in...' : 'Login'}
             </Button>
@@ -113,7 +113,7 @@ export default function Login() {
             <div className=" flex justify-center">
               <p>
                 Don’t you have account?{' '}
-                <Link href="/sign-up" className="text-primary">
+                <Link href="/sign-up" className=" text-text-brand-primary">
                   Create Account
                 </Link>
               </p>
