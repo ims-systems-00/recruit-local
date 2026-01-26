@@ -5,8 +5,6 @@ import { Status } from "../status.model";
 import { Board } from "../kanban-board.model";
 import { logger } from "../../common/helper";
 
-// ! when a item is created, need to assign initial rank based on first status weight + merit rank
-
 export interface IBoardableInput {
   boardId: Types.ObjectId;
   statusId: Types.ObjectId;
@@ -16,6 +14,7 @@ export interface IBoardableInput {
 export interface IBoardableDoc extends IBoardableInput, Document {}
 
 export interface IBoardableModel<T extends IBoardableDoc> extends Model<T> {
+  rebalanceColumn(statusId: Types.ObjectId, session: ClientSession): Promise<boolean>;
   moveToPosition(
     itemId: string | Types.ObjectId,
     targetStatusId: string | Types.ObjectId,
@@ -78,12 +77,15 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
     return true;
   });
 
-  // todo need another static method to add item to board with initial rank
-
   // --- Main Logic: Move To Position  ---
   schema.static(
     "moveToPosition",
-    async function (itemId: string | Types.ObjectId, targetStatusId: string | Types.ObjectId, targetIndex: number) {
+    async function (
+      this: IBoardableModel<T>,
+      itemId: string | Types.ObjectId,
+      targetStatusId: string | Types.ObjectId,
+      targetIndex: number
+    ) {
       return withTransaction(async (session: ClientSession) => {
         console.log(
           "Moving item:",
@@ -110,7 +112,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
         logger.info(`Column items count: ${columnItems.length}`);
 
         // Remove the item being moved from the list if it's already in the target column
-        const existingItems = columnItems.filter((i) => !i._id.equals(item._id));
+        const existingItems = columnItems.filter((i) => i._id.toString() !== item._id.toString());
 
         if (targetIndex < 0 || targetIndex > existingItems.length) {
           throw new Error(`Target index ${targetIndex} out of bounds`);
@@ -118,6 +120,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
 
         let newRank: number;
         let rebalanced = false;
+        const MIN_GAP = 0.005;
 
         // check if moving within the same column
         const movingWithinSameColumn = item.statusId.equals(targetStatusObjectId);
@@ -142,17 +145,29 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
           }
         } else {
           if (targetIndex == 0) {
-            newRank = existingItems[0].rank + 1; // ! adding only one is dangerous
+            newRank = existingItems[0].rank + 1; // ! adding only one could be dangerous
           } else if (targetIndex === existingItems.length) {
-            newRank = existingItems[existingItems.length - 1].rank - 1;
+            newRank = existingItems[existingItems.length - 1].rank / 2;
+            // if rank is too small, need to rebalance
+            if (newRank < MIN_GAP) {
+              rebalanced = true;
+            }
           } else {
             const prevRank = existingItems[targetIndex - 1].rank;
             const nextRank = existingItems[targetIndex].rank;
             newRank = (prevRank + nextRank) / 2;
+            // if the gap is too small, need to rebalance
+            if (nextRank - prevRank < MIN_GAP) {
+              rebalanced = true;
+            }
           }
         }
 
-        // todo  later implement rebalancing
+        // rebalancing if needed
+        if (rebalanced) {
+          logger.info(`Rebalancing column for statusId: ${targetStatusObjectId.toString()}`);
+          await this.rebalanceColumn(targetStatusObjectId, session);
+        }
 
         // update the item with the new status and rank
         item.statusId = targetStatusObjectId;

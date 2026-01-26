@@ -3,7 +3,6 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { APPLICATION_STATUS_ENUM } from "@rl/types";
@@ -51,7 +50,6 @@ const applicationSchema = new Schema<IApplicationDoc>(
     appliedAt: { type: Date, default: Date.now },
   },
   {
-    ...baseSchemaOptions,
     timestamps: true,
   }
 );
