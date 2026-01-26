@@ -563,38 +563,38 @@
 
 @layer base {
   * {
-    @apply border-border-primary outline-bg-brand-solid;
+    @apply border-border-gray-primary outline-bg-brand-solid-primary;
   }
   body {
-    @apply bg-bg-primary text-text-secondary font-poppins;
+    @apply bg-bg-white text-text-gray-secondary font-poppins;
   }
 
   h1 {
-    @apply text-5xl leading-[58px] text-text-primary;
+    @apply text-5xl leading-[58px] text-text-gray-primary;
   }
 
   h2 {
-    @apply text-[32px] leading-[38.8px] text-text-primary;
+    @apply text-[32px] leading-[38.8px] text-text-gray-primary;
   }
 
   h3 {
-    @apply text-2xl leading-7 font-medium text-text-primary;
+    @apply text-2xl leading-7 font-medium text-text-gray-primary;
   }
 
   h4 {
-    @apply text-xl leading-6 font-medium text-text-primary;
+    @apply text-xl leading-6 font-medium text-text-gray-primary;
   }
 
   p {
-    @apply text-base leading-[100%] text-text-secondary;
+    @apply text-base leading-[100%] text-text-gray-secondary;
   }
 }
 
 @layer base {
   * {
-    @apply border-border-primary outline-bg-brand-solid;
+    @apply border-border-gray-primary outline-bg-brand-solid-primary;
   }
   body {
-    @apply bg-bg-primary text-text-secondary;
+    @apply bg-bg-white text-text-gray-secondary;
   }
 }
