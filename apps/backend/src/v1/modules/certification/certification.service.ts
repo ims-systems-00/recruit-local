@@ -3,19 +3,40 @@ import { CertificationInput, Certification, ICertificationDoc } from "../../../m
 import { FileManager, NotFoundException } from "../../../common/helper";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 import { s3Client } from "../../../.config/s3.config";
+import { matchQuery, excludeDeletedQuery } from "../../../common/query";
+import { certificationProjectionQuery } from "./certification.query";
+import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 
 type IListCertificationParams = IListParams<CertificationInput>;
+type IGetOneCertificationParams = Partial<ICertificationDoc>;
 
 type CreatePayload = CertificationInput & AwsStorageTemplate;
 
 export const list = ({ query = {}, options }: IListCertificationParams) => {
-  return Certification.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
+  return Certification.aggregatePaginate(
+    [...matchQuery(query), ...excludeDeletedQuery(), ...certificationProjectionQuery()],
+    options
+  );
 };
 
-export const getOne = async (id: string) => {
-  const certification = await Certification.findOneWithExcludeDeleted({ _id: id });
-  if (!certification) throw new NotFoundException("Certification not found.");
-  return certification;
+export const getOne = async (query: IGetOneCertificationParams) => {
+  const certification = await Certification.aggregate([
+    ...matchQuery(query),
+    ...excludeDeletedQuery(),
+    ...certificationProjectionQuery(),
+  ]);
+  if (certification.length === 0) throw new NotFoundException("Certification not found.");
+  return certification[0];
+};
+
+export const listSoftDeleted = ({ query = {}, options }: IListCertificationParams) => {
+  return Certification.aggregatePaginate([...matchQuery(query), ...certificationProjectionQuery()], options);
+};
+
+export const getSoftDeletedOne = async (id: string) => {
+  const certification = await Certification.aggregate([...matchQuery({ _id: id }), ...certificationProjectionQuery()]);
+  if (certification.length === 0) throw new NotFoundException("Certification not found in trash.");
+  return certification[0];
 };
 
 export const create = async (payload: CreatePayload) => {
@@ -36,7 +57,7 @@ export const create = async (payload: CreatePayload) => {
 };
 
 export const update = async (id: string, payload: Partial<CertificationInput> & AwsStorageTemplate) => {
-  const certification = await getOne(id);
+  const certification = await getOne(sanitizeQueryIds({ _id: id }));
   const existingImageStorage = certification.imageStorage;
 
   const fileManager = new FileManager(s3Client);
@@ -69,24 +90,18 @@ export const update = async (id: string, payload: Partial<CertificationInput> & 
 };
 
 export const softRemove = async (id: string) => {
-  const certification = await getOne(id);
   const { deleted } = await Certification.softDelete({ _id: id });
 
-  return { certification, deleted };
+  return { deleted };
 };
 
 export const hardRemove = async (id: string) => {
-  const certification = await getOne(id);
-  await Certification.findOneAndDelete({ _id: id });
-
-  return certification;
+  return await Certification.findOneAndDelete({ _id: id });
 };
 
 export const restore = async (id: string) => {
   const { restored } = await Certification.restore({ _id: id });
   if (!restored) throw new NotFoundException("Certification not found in trash.");
 
-  const certification = await getOne(id);
-
-  return { certification, restored };
+  return { restored };
 };

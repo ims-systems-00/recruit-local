@@ -7,7 +7,7 @@ import * as applicationService from "./application.service";
 
 export const list = async ({ req }: ControllerParams) => {
   const filter = new MongoQuery(req.query, {
-    searchFields: ["jobTitle", "companyName", "status"],
+    searchFields: [],
   }).build();
 
   const query = filter.getFilterQuery();
@@ -137,6 +137,17 @@ export const statusUpdate = async ({ req }: ControllerParams) => {
 
   return new ApiResponse({
     message: "Application status updated.",
+    statusCode: StatusCodes.OK,
+    data: application,
+    fieldName: "application",
+  });
+};
+
+export const moveItemOnBoard = async ({ req }: ControllerParams) => {
+  const itemId = req.params.id;
+  const application = await applicationService.moveItemOnBoard(itemId, req.body.targetStatusId, req.body.targetIndex);
+  return new ApiResponse({
+    message: "Application moved on board.",
     statusCode: StatusCodes.OK,
     data: application,
     fieldName: "application",

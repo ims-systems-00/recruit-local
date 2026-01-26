@@ -3,7 +3,7 @@ import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../comm
 import { IListParams } from "@rl/types";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { boardProjectQuery } from "./board.query";
-import { IBoardInput, Board } from "../../../models";
+import { IBoardInput, Board, IBoardDoc } from "../../../models";
 
 type IBoardListParams = IListParams<IBoardInput>;
 type IBoardQueryParams = Partial<IBoardInput & { _id: string }>;
@@ -11,7 +11,7 @@ type IBoardQueryParams = Partial<IBoardInput & { _id: string }>;
 export const list = ({ query = {}, options }: IBoardListParams) => {
   return Board.aggregatePaginate([...matchQuery(query), ...excludeDeletedQuery(), ...boardProjectQuery()], options);
 };
-export const getOne = async (query = {}) => {
+export const getOne = async (query = {}): Promise<IBoardDoc> => {
   const board = await Board.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...boardProjectQuery()]);
   if (board.length === 0) throw new NotFoundException("Board not found.");
   return board[0];
