@@ -4082,7 +4082,7 @@
   "theme": {
     "brand-50": {
       "$type": "color",
-      "$value": "{primitives.global_colors.indigo.50}",
+      "$value": "{primitives.global_colors.pink.50}",
       "$description": "",
       "$extensions": {
         "mode": {
@@ -4101,7 +4101,7 @@
     },
     "brand-100": {
       "$type": "color",
-      "$value": "{primitives.global_colors.indigo.100}",
+      "$value": "{primitives.global_colors.pink.100}",
       "$description": "",
       "$extensions": {
         "mode": {
@@ -4120,7 +4120,7 @@
     },
     "brand-200": {
       "$type": "color",
-      "$value": "{primitives.global_colors.indigo.200}",
+      "$value": "{primitives.global_colors.pink.200}",
       "$description": "",
       "$extensions": {
         "mode": {
@@ -4139,7 +4139,7 @@
     },
     "brand-300": {
       "$type": "color",
-      "$value": "{primitives.global_colors.indigo.300}",
+      "$value": "{primitives.global_colors.pink.300}",
       "$description": "",
       "$extensions": {
         "mode": {
@@ -4158,7 +4158,7 @@
     },
     "brand-400": {
       "$type": "color",
-      "$value": "{primitives.global_colors.indigo.400}",
+      "$value": "{primitives.global_colors.pink.400}",
       "$description": "",
       "$extensions": {
         "mode": {
@@ -4177,7 +4177,7 @@
     },
     "brand-500": {
       "$type": "color",
-      "$value": "{primitives.global_colors.indigo.500}",
+      "$value": "{primitives.global_colors.pink.500}",
       "$description": "",
       "$extensions": {
         "mode": {
@@ -4196,7 +4196,7 @@
     },
     "brand-600": {
       "$type": "color",
-      "$value": "{primitives.global_colors.indigo.600}",
+      "$value": "{primitives.global_colors.pink.600}",
       "$description": "",
       "$extensions": {
         "mode": {
@@ -4215,7 +4215,7 @@
     },
     "brand-700": {
       "$type": "color",
-      "$value": "{primitives.global_colors.indigo.700}",
+      "$value": "{primitives.global_colors.pink.700}",
       "$description": "",
       "$extensions": {
         "mode": {
@@ -4234,7 +4234,7 @@
     },
     "brand-800": {
       "$type": "color",
-      "$value": "{primitives.global_colors.indigo.800}",
+      "$value": "{primitives.global_colors.pink.800}",
       "$description": "",
       "$extensions": {
         "mode": {
@@ -4253,7 +4253,7 @@
     },
     "brand-900": {
       "$type": "color",
-      "$value": "{primitives.global_colors.indigo.900}",
+      "$value": "{primitives.global_colors.pink.900}",
       "$description": "",
       "$extensions": {
         "mode": {
@@ -4272,7 +4272,7 @@
     },
     "brand-950": {
       "$type": "color",
-      "$value": "{primitives.global_colors.indigo.950}",
+      "$value": "{primitives.global_colors.pink.950}",
       "$description": "",
       "$extensions": {
         "mode": {
@@ -4291,7 +4291,7 @@
     },
     "brand-alt": {
       "$type": "color",
-      "$value": "#8be9fd",
+      "$value": "#ffffff",
       "$description": "",
       "$extensions": {
         "mode": {

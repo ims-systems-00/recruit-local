@@ -258,7 +258,7 @@ export default function JobLists() {
           </div>
           <div className=" flex justify-between items-center gap-6">
             <div className="flex items-center gap-2">
-              <span className=" flex py-spacing-2xs px-spacing-md rounded-lg bg-bg-brand-solid border border-border-brand text-label-xs font-label-xs-strong! text-text-white">
+              <span className=" flex py-spacing-2xs px-spacing-md rounded-lg bg-bg-brand-solid-primary border border-border-brand text-label-xs font-label-xs-strong! text-text-white">
                 All
               </span>
               <span className=" flex py-spacing-2xs px-spacing-md rounded-lg bg-bg-primary text-label-xs font-label-xs-strong! text-text-tertiary border border-border-primary">
