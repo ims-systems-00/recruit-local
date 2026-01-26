@@ -61,13 +61,15 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
   });
 
   schema.static("rebalanceColumn", async function (statusId: Types.ObjectId, session: ClientSession) {
-    const items = await this.find({ statusId }).sort({ rank: -1 }).session(session);
-    const BASE_GAP = 10000;
-    let currentRank = items.length * BASE_GAP;
+    const items = await this.find({ statusId }).sort({ rank: 1 }).session(session);
+    const status = await Status.findById(statusId).select("weight").session(session);
+    if (!status) throw new Error("Status not found");
+    const BASE_GAP = 1;
+    let currentRank = status.weight + items.length + BASE_GAP;
 
     const bulkOps = items.map((doc) => {
       const update = { updateOne: { filter: { _id: doc._id }, update: { rank: currentRank } } };
-      currentRank -= BASE_GAP;
+      currentRank += BASE_GAP;
       return update;
     });
 
@@ -112,7 +114,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
 
         let newRank: number;
         let rebalanced = false;
-        const MIN_GAP = 0.005;
+        const MIN_GAP = 0.05;
 
         // check if moving within the same column
         const movingWithinSameColumn = item.statusId.equals(targetStatusObjectId);
@@ -140,16 +142,12 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
             newRank = existingItems[0].rank + 1; // ! adding only one could be dangerous
           } else if (targetIndex === existingItems.length) {
             newRank = existingItems[existingItems.length - 1].rank - 1;
-            // if rank is too small, need to rebalance
-            if (newRank < MIN_GAP) {
-              rebalanced = true;
-            }
           } else {
             const prevRank = existingItems[targetIndex - 1].rank;
             const nextRank = existingItems[targetIndex].rank;
             newRank = (prevRank + nextRank) / 2;
             // if the gap is too small, need to rebalance
-            if (nextRank - prevRank < MIN_GAP) {
+            if ((prevRank - nextRank) / 2 < MIN_GAP) {
               rebalanced = true;
             }
           }
