@@ -163,16 +163,16 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
           }
         }
 
+        // update the item with the new status and rank
+        item.statusId = targetStatusObjectId;
+        item.rank = newRank;
+        await item.save({ session });
+
         // rebalancing if needed
         if (rebalanced) {
           logger.info(`Rebalancing column for statusId: ${targetStatusObjectId.toString()}`);
           await this.rebalanceColumn(targetStatusObjectId, session);
         }
-
-        // update the item with the new status and rank
-        item.statusId = targetStatusObjectId;
-        item.rank = newRank;
-        await item.save({ session });
 
         return { success: true, rank: newRank, rebalanced };
       });
