@@ -4080,243 +4080,241 @@
     }
   },
   "theme": {
-    "brand": {
-      "50": {
-        "$type": "color",
-        "$value": "{primitives.global_colors.indigo.50}",
-        "$description": "",
-        "$extensions": {
-          "mode": {
-            "reef": "{primitives.global_colors.reef.50}",
-            "tidal": "{primitives.global_colors.tidal.50}",
-            "indigo": "{primitives.global_colors.indigo.50}",
-            "glacier": "{primitives.global_colors.glacier.50}",
-            "blue": "{primitives.global_colors.blue.50}",
-            "violet": "{primitives.global_colors.violet.50}",
-            "purple": "{primitives.global_colors.purple.50}",
-            "orange": "{primitives.global_colors.orange.50}",
-            "gray-violet": "{primitives.global_colors.gray_violet.50}",
-            "pink": "{primitives.global_colors.pink.50}"
-          }
+    "brand-50": {
+      "$type": "color",
+      "$value": "{primitives.global_colors.indigo.50}",
+      "$description": "",
+      "$extensions": {
+        "mode": {
+          "reef": "{primitives.global_colors.reef.50}",
+          "tidal": "{primitives.global_colors.tidal.50}",
+          "indigo": "{primitives.global_colors.indigo.50}",
+          "glacier": "{primitives.global_colors.glacier.50}",
+          "blue": "{primitives.global_colors.blue.50}",
+          "violet": "{primitives.global_colors.violet.50}",
+          "purple": "{primitives.global_colors.purple.50}",
+          "orange": "{primitives.global_colors.orange.50}",
+          "gray-violet": "{primitives.global_colors.gray_violet.50}",
+          "pink": "{primitives.global_colors.pink.50}"
         }
-      },
-      "100": {
-        "$type": "color",
-        "$value": "{primitives.global_colors.indigo.100}",
-        "$description": "",
-        "$extensions": {
-          "mode": {
-            "reef": "{primitives.global_colors.reef.100}",
-            "tidal": "{primitives.global_colors.tidal.100}",
-            "indigo": "{primitives.global_colors.indigo.100}",
-            "glacier": "{primitives.global_colors.glacier.100}",
-            "blue": "{primitives.global_colors.blue.100}",
-            "violet": "{primitives.global_colors.violet.100}",
-            "purple": "{primitives.global_colors.purple.100}",
-            "orange": "{primitives.global_colors.orange.100}",
-            "gray-violet": "{primitives.global_colors.gray_violet.100}",
-            "pink": "{primitives.global_colors.pink.100}"
-          }
+      }
+    },
+    "brand-100": {
+      "$type": "color",
+      "$value": "{primitives.global_colors.indigo.100}",
+      "$description": "",
+      "$extensions": {
+        "mode": {
+          "reef": "{primitives.global_colors.reef.100}",
+          "tidal": "{primitives.global_colors.tidal.100}",
+          "indigo": "{primitives.global_colors.indigo.100}",
+          "glacier": "{primitives.global_colors.glacier.100}",
+          "blue": "{primitives.global_colors.blue.100}",
+          "violet": "{primitives.global_colors.violet.100}",
+          "purple": "{primitives.global_colors.purple.100}",
+          "orange": "{primitives.global_colors.orange.100}",
+          "gray-violet": "{primitives.global_colors.gray_violet.100}",
+          "pink": "{primitives.global_colors.pink.100}"
         }
-      },
-      "200": {
-        "$type": "color",
-        "$value": "{primitives.global_colors.indigo.200}",
-        "$description": "",
-        "$extensions": {
-          "mode": {
-            "reef": "{primitives.global_colors.reef.200}",
-            "tidal": "{primitives.global_colors.tidal.200}",
-            "indigo": "{primitives.global_colors.indigo.200}",
-            "glacier": "{primitives.global_colors.glacier.200}",
-            "blue": "{primitives.global_colors.blue.200}",
-            "violet": "{primitives.global_colors.violet.200}",
-            "purple": "{primitives.global_colors.purple.200}",
-            "orange": "{primitives.global_colors.orange.200}",
-            "gray-violet": "{primitives.global_colors.gray_violet.200}",
-            "pink": "{primitives.global_colors.pink.200}"
-          }
+      }
+    },
+    "brand-200": {
+      "$type": "color",
+      "$value": "{primitives.global_colors.indigo.200}",
+      "$description": "",
+      "$extensions": {
+        "mode": {
+          "reef": "{primitives.global_colors.reef.200}",
+          "tidal": "{primitives.global_colors.tidal.200}",
+          "indigo": "{primitives.global_colors.indigo.200}",
+          "glacier": "{primitives.global_colors.glacier.200}",
+          "blue": "{primitives.global_colors.blue.200}",
+          "violet": "{primitives.global_colors.violet.200}",
+          "purple": "{primitives.global_colors.purple.200}",
+          "orange": "{primitives.global_colors.orange.200}",
+          "gray-violet": "{primitives.global_colors.gray_violet.200}",
+          "pink": "{primitives.global_colors.pink.200}"
         }
-      },
-      "300": {
-        "$type": "color",
-        "$value": "{primitives.global_colors.indigo.300}",
-        "$description": "",
-        "$extensions": {
-          "mode": {
-            "reef": "{primitives.global_colors.reef.300}",
-            "tidal": "{primitives.global_colors.tidal.300}",
-            "indigo": "{primitives.global_colors.indigo.300}",
-            "glacier": "{primitives.global_colors.glacier.300}",
-            "blue": "{primitives.global_colors.blue.300}",
-            "violet": "{primitives.global_colors.violet.300}",
-            "purple": "{primitives.global_colors.purple.300}",
-            "orange": "{primitives.global_colors.orange.300}",
-            "gray-violet": "{primitives.global_colors.gray_violet.300}",
-            "pink": "{primitives.global_colors.pink.300}"
-          }
+      }
+    },
+    "brand-300": {
+      "$type": "color",
+      "$value": "{primitives.global_colors.indigo.300}",
+      "$description": "",
+      "$extensions": {
+        "mode": {
+          "reef": "{primitives.global_colors.reef.300}",
+          "tidal": "{primitives.global_colors.tidal.300}",
+          "indigo": "{primitives.global_colors.indigo.300}",
+          "glacier": "{primitives.global_colors.glacier.300}",
+          "blue": "{primitives.global_colors.blue.300}",
+          "violet": "{primitives.global_colors.violet.300}",
+          "purple": "{primitives.global_colors.purple.300}",
+          "orange": "{primitives.global_colors.orange.300}",
+          "gray-violet": "{primitives.global_colors.gray_violet.300}",
+          "pink": "{primitives.global_colors.pink.300}"
         }
-      },
-      "400": {
-        "$type": "color",
-        "$value": "{primitives.global_colors.indigo.400}",
-        "$description": "",
-        "$extensions": {
-          "mode": {
-            "reef": "{primitives.global_colors.reef.400}",
-            "tidal": "{primitives.global_colors.tidal.400}",
-            "indigo": "{primitives.global_colors.indigo.400}",
-            "glacier": "{primitives.global_colors.glacier.400}",
-            "blue": "{primitives.global_colors.blue.400}",
-            "violet": "{primitives.global_colors.violet.400}",
-            "purple": "{primitives.global_colors.purple.400}",
-            "orange": "{primitives.global_colors.orange.400}",
-            "gray-violet": "{primitives.global_colors.gray_violet.400}",
-            "pink": "{primitives.global_colors.pink.400}"
-          }
+      }
+    },
+    "brand-400": {
+      "$type": "color",
+      "$value": "{primitives.global_colors.indigo.400}",
+      "$description": "",
+      "$extensions": {
+        "mode": {
+          "reef": "{primitives.global_colors.reef.400}",
+          "tidal": "{primitives.global_colors.tidal.400}",
+          "indigo": "{primitives.global_colors.indigo.400}",
+          "glacier": "{primitives.global_colors.glacier.400}",
+          "blue": "{primitives.global_colors.blue.400}",
+          "violet": "{primitives.global_colors.violet.400}",
+          "purple": "{primitives.global_colors.purple.400}",
+          "orange": "{primitives.global_colors.orange.400}",
+          "gray-violet": "{primitives.global_colors.gray_violet.400}",
+          "pink": "{primitives.global_colors.pink.400}"
         }
-      },
-      "500": {
-        "$type": "color",
-        "$value": "{primitives.global_colors.indigo.500}",
-        "$description": "",
-        "$extensions": {
-          "mode": {
-            "reef": "{primitives.global_colors.reef.500}",
-            "tidal": "{primitives.global_colors.tidal.500}",
-            "indigo": "{primitives.global_colors.indigo.500}",
-            "glacier": "{primitives.global_colors.glacier.500}",
-            "blue": "{primitives.global_colors.blue.500}",
-            "violet": "{primitives.global_colors.violet.500}",
-            "purple": "{primitives.global_colors.purple.500}",
-            "orange": "{primitives.global_colors.orange.500}",
-            "gray-violet": "{primitives.global_colors.gray_violet.500}",
-            "pink": "{primitives.global_colors.pink.500}"
-          }
+      }
+    },
+    "brand-500": {
+      "$type": "color",
+      "$value": "{primitives.global_colors.indigo.500}",
+      "$description": "",
+      "$extensions": {
+        "mode": {
+          "reef": "{primitives.global_colors.reef.500}",
+          "tidal": "{primitives.global_colors.tidal.500}",
+          "indigo": "{primitives.global_colors.indigo.500}",
+          "glacier": "{primitives.global_colors.glacier.500}",
+          "blue": "{primitives.global_colors.blue.500}",
+          "violet": "{primitives.global_colors.violet.500}",
+          "purple": "{primitives.global_colors.purple.500}",
+          "orange": "{primitives.global_colors.orange.500}",
+          "gray-violet": "{primitives.global_colors.gray_violet.500}",
+          "pink": "{primitives.global_colors.pink.500}"
         }
-      },
-      "600": {
-        "$type": "color",
-        "$value": "{primitives.global_colors.indigo.600}",
-        "$description": "",
-        "$extensions": {
-          "mode": {
-            "reef": "{primitives.global_colors.reef.600}",
-            "tidal": "{primitives.global_colors.tidal.600}",
-            "indigo": "{primitives.global_colors.indigo.600}",
-            "glacier": "{primitives.global_colors.glacier.600}",
-            "blue": "{primitives.global_colors.blue.600}",
-            "violet": "{primitives.global_colors.violet.600}",
-            "purple": "{primitives.global_colors.purple.600}",
-            "orange": "{primitives.global_colors.orange.600}",
-            "gray-violet": "{primitives.global_colors.gray_violet.600}",
-            "pink": "{primitives.global_colors.pink.600}"
-          }
+      }
+    },
+    "brand-600": {
+      "$type": "color",
+      "$value": "{primitives.global_colors.indigo.600}",
+      "$description": "",
+      "$extensions": {
+        "mode": {
+          "reef": "{primitives.global_colors.reef.600}",
+          "tidal": "{primitives.global_colors.tidal.600}",
+          "indigo": "{primitives.global_colors.indigo.600}",
+          "glacier": "{primitives.global_colors.glacier.600}",
+          "blue": "{primitives.global_colors.blue.600}",
+          "violet": "{primitives.global_colors.violet.600}",
+          "purple": "{primitives.global_colors.purple.600}",
+          "orange": "{primitives.global_colors.orange.600}",
+          "gray-violet": "{primitives.global_colors.gray_violet.600}",
+          "pink": "{primitives.global_colors.pink.600}"
         }
-      },
-      "700": {
-        "$type": "color",
-        "$value": "{primitives.global_colors.indigo.700}",
-        "$description": "",
-        "$extensions": {
-          "mode": {
-            "reef": "{primitives.global_colors.reef.700}",
-            "tidal": "{primitives.global_colors.tidal.700}",
-            "indigo": "{primitives.global_colors.indigo.700}",
-            "glacier": "{primitives.global_colors.glacier.700}",
-            "blue": "{primitives.global_colors.blue.700}",
-            "violet": "{primitives.global_colors.violet.700}",
-            "purple": "{primitives.global_colors.purple.700}",
-            "orange": "{primitives.global_colors.orange.700}",
-            "gray-violet": "{primitives.global_colors.gray_violet.700}",
-            "pink": "{primitives.global_colors.pink.700}"
-          }
+      }
+    },
+    "brand-700": {
+      "$type": "color",
+      "$value": "{primitives.global_colors.indigo.700}",
+      "$description": "",
+      "$extensions": {
+        "mode": {
+          "reef": "{primitives.global_colors.reef.700}",
+          "tidal": "{primitives.global_colors.tidal.700}",
+          "indigo": "{primitives.global_colors.indigo.700}",
+          "glacier": "{primitives.global_colors.glacier.700}",
+          "blue": "{primitives.global_colors.blue.700}",
+          "violet": "{primitives.global_colors.violet.700}",
+          "purple": "{primitives.global_colors.purple.700}",
+          "orange": "{primitives.global_colors.orange.700}",
+          "gray-violet": "{primitives.global_colors.gray_violet.700}",
+          "pink": "{primitives.global_colors.pink.700}"
         }
-      },
-      "800": {
-        "$type": "color",
-        "$value": "{primitives.global_colors.indigo.800}",
-        "$description": "",
-        "$extensions": {
-          "mode": {
-            "reef": "{primitives.global_colors.reef.800}",
-            "tidal": "{primitives.global_colors.tidal.800}",
-            "indigo": "{primitives.global_colors.indigo.800}",
-            "glacier": "{primitives.global_colors.glacier.800}",
-            "blue": "{primitives.global_colors.blue.800}",
-            "violet": "{primitives.global_colors.violet.800}",
-            "purple": "{primitives.global_colors.purple.800}",
-            "orange": "{primitives.global_colors.orange.800}",
-            "gray-violet": "{primitives.global_colors.gray_violet.800}",
-            "pink": "{primitives.global_colors.pink.800}"
-          }
+      }
+    },
+    "brand-800": {
+      "$type": "color",
+      "$value": "{primitives.global_colors.indigo.800}",
+      "$description": "",
+      "$extensions": {
+        "mode": {
+          "reef": "{primitives.global_colors.reef.800}",
+          "tidal": "{primitives.global_colors.tidal.800}",
+          "indigo": "{primitives.global_colors.indigo.800}",
+          "glacier": "{primitives.global_colors.glacier.800}",
+          "blue": "{primitives.global_colors.blue.800}",
+          "violet": "{primitives.global_colors.violet.800}",
+          "purple": "{primitives.global_colors.purple.800}",
+          "orange": "{primitives.global_colors.orange.800}",
+          "gray-violet": "{primitives.global_colors.gray_violet.800}",
+          "pink": "{primitives.global_colors.pink.800}"
         }
-      },
-      "900": {
-        "$type": "color",
-        "$value": "{primitives.global_colors.indigo.900}",
-        "$description": "",
-        "$extensions": {
-          "mode": {
-            "reef": "{primitives.global_colors.reef.900}",
-            "tidal": "{primitives.global_colors.tidal.900}",
-            "indigo": "{primitives.global_colors.indigo.900}",
-            "glacier": "{primitives.global_colors.glacier.900}",
-            "blue": "{primitives.global_colors.blue.900}",
-            "violet": "{primitives.global_colors.violet.900}",
-            "purple": "{primitives.global_colors.purple.900}",
-            "orange": "{primitives.global_colors.orange.900}",
-            "gray-violet": "{primitives.global_colors.gray_violet.900}",
-            "pink": "{primitives.global_colors.pink.900}"
-          }
+      }
+    },
+    "brand-900": {
+      "$type": "color",
+      "$value": "{primitives.global_colors.indigo.900}",
+      "$description": "",
+      "$extensions": {
+        "mode": {
+          "reef": "{primitives.global_colors.reef.900}",
+          "tidal": "{primitives.global_colors.tidal.900}",
+          "indigo": "{primitives.global_colors.indigo.900}",
+          "glacier": "{primitives.global_colors.glacier.900}",
+          "blue": "{primitives.global_colors.blue.900}",
+          "violet": "{primitives.global_colors.violet.900}",
+          "purple": "{primitives.global_colors.purple.900}",
+          "orange": "{primitives.global_colors.orange.900}",
+          "gray-violet": "{primitives.global_colors.gray_violet.900}",
+          "pink": "{primitives.global_colors.pink.900}"
         }
-      },
-      "950": {
-        "$type": "color",
-        "$value": "{primitives.global_colors.indigo.950}",
-        "$description": "",
-        "$extensions": {
-          "mode": {
-            "reef": "{primitives.global_colors.reef.950}",
-            "tidal": "{primitives.global_colors.tidal.950}",
-            "indigo": "{primitives.global_colors.indigo.950}",
-            "glacier": "{primitives.global_colors.glacier.950}",
-            "blue": "{primitives.global_colors.blue.950}",
-            "violet": "{primitives.global_colors.violet.950}",
-            "purple": "{primitives.global_colors.purple.950}",
-            "orange": "{primitives.global_colors.orange.950}",
-            "gray-violet": "{primitives.global_colors.gray_violet.950}",
-            "pink": "{primitives.global_colors.pink.950}"
-          }
+      }
+    },
+    "brand-950": {
+      "$type": "color",
+      "$value": "{primitives.global_colors.indigo.950}",
+      "$description": "",
+      "$extensions": {
+        "mode": {
+          "reef": "{primitives.global_colors.reef.950}",
+          "tidal": "{primitives.global_colors.tidal.950}",
+          "indigo": "{primitives.global_colors.indigo.950}",
+          "glacier": "{primitives.global_colors.glacier.950}",
+          "blue": "{primitives.global_colors.blue.950}",
+          "violet": "{primitives.global_colors.violet.950}",
+          "purple": "{primitives.global_colors.purple.950}",
+          "orange": "{primitives.global_colors.orange.950}",
+          "gray-violet": "{primitives.global_colors.gray_violet.950}",
+          "pink": "{primitives.global_colors.pink.950}"
         }
-      },
-      "alt": {
-        "$type": "color",
-        "$value": "#cffafe",
-        "$description": "",
-        "$extensions": {
-          "mode": {
-            "reef": "#daff99",
-            "tidal": "#ffffff",
-            "indigo": "#cffafe",
-            "glacier": "#c1fdc2",
-            "blue": "#ffffff",
-            "violet": "#ffffff",
-            "purple": "#ffffff",
-            "orange": "#ffffff",
-            "gray-violet": "#ffffff",
-            "pink": "#ffffff"
-          }
+      }
+    },
+    "brand-alt": {
+      "$type": "color",
+      "$value": "#8be9fd",
+      "$description": "",
+      "$extensions": {
+        "mode": {
+          "reef": "#daff99",
+          "tidal": "#ffffff",
+          "indigo": "#8be9fd",
+          "glacier": "#c1fdc2",
+          "blue": "#ffffff",
+          "violet": "#ffffff",
+          "purple": "#ffffff",
+          "orange": "#ffffff",
+          "gray-violet": "#ffffff",
+          "pink": "#ffffff"
         }
       }
     }
   },
   "colors": {
     "text": {
-      "primary": {
+      "gray-primary": {
         "$type": "color",
         "$value": "{semantics.gray.900}",
-        "$description": "Used for key headings across pages.",
+        "$description": "Heading, Title, Label Hover",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.900}",
@@ -4324,21 +4322,10 @@
           }
         }
       },
-      "primary_on-brand": {
-        "$type": "color",
-        "$value": "{semantics.base.white}",
-        "$description": "Applied to headings placed on solid brand-colored areas, often seen in themed sections like CTAs.",
-        "$extensions": {
-          "mode": {
-            "light": "{semantics.base.white}",
-            "dark": "{semantics.gray.50}"
-          }
-        }
-      },
-      "secondary": {
+      "gray-secondary": {
         "$type": "color",
         "$value": "{semantics.gray.700}",
-        "$description": "Used for Button & Input label and section titles.",
+        "$description": "Subheading, Subtitle, Label",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.700}",
@@ -4346,32 +4333,10 @@
           }
         }
       },
-      "secondary_hover": {
-        "$type": "color",
-        "$value": "{semantics.gray.800}",
-        "$description": "The visual style for secondary text when hovered over.",
-        "$extensions": {
-          "mode": {
-            "light": "{semantics.gray.800}",
-            "dark": "{semantics.gray.200}"
-          }
-        }
-      },
-      "secondary_on-brand": {
-        "$type": "color",
-        "$value": "{theme.brand.200}",
-        "$description": "Designed for secondary-level content on solid brand-colored sections, such as CTA banners.",
-        "$extensions": {
-          "mode": {
-            "light": "{theme.brand.200}",
-            "dark": "{semantics.gray.300}"
-          }
-        }
-      },
-      "tertiary": {
+      "gray-tertiary": {
         "$type": "color",
         "$value": "{semantics.gray.600}",
-        "$description": "Best suited for body content and supporting information.",
+        "$description": "Body & Supporting Text",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.600}",
@@ -4379,35 +4344,13 @@
           }
         }
       },
-      "quaternary": {
+      "brand-secondary_on-brand": {
         "$type": "color",
-        "$value": "{semantics.gray.500}",
-        "$description": "Used for subtle, low-contrast content like footer labels or muted annotations.",
+        "$value": "{theme.brand-200}",
+        "$description": "Subtitle over brand solid",
         "$extensions": {
           "mode": {
-            "light": "{semantics.gray.500}",
-            "dark": "{semantics.gray.400}"
-          }
-        }
-      },
-      "tertiary_on-brand": {
-        "$type": "color",
-        "$value": "{theme.brand.200}",
-        "$description": "Applied to supportive text placed on branded backgrounds, typically in promotional areas.",
-        "$extensions": {
-          "mode": {
-            "light": "{theme.brand.200}",
-            "dark": "{semantics.gray.400}"
-          }
-        }
-      },
-      "quaternary_on-brand": {
-        "$type": "color",
-        "$value": "{theme.brand.300}",
-        "$description": "Used in low-emphasis areas over brand-colored sections, like footers.",
-        "$extensions": {
-          "mode": {
-            "light": "{theme.brand.300}",
+            "light": "{theme.brand-200}",
             "dark": "{semantics.gray.400}"
           }
         }
@@ -4423,10 +4366,10 @@
           }
         }
       },
-      "placeholder": {
+      "gray-quaternary": {
         "$type": "color",
         "$value": "{semantics.gray.500}",
-        "$description": "Used in input fields.",
+        "$description": "Placeholder Label",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.500}",
@@ -4434,65 +4377,32 @@
           }
         }
       },
-      "placeholder_subtle": {
-        "$type": "color",
-        "$value": "{semantics.gray.300}",
-        "$description": "A less prominent placeholder style, good for contexts like verification inputs.",
-        "$extensions": {
-          "mode": {
-            "light": "{semantics.gray.300}",
-            "dark": "{semantics.gray.700}"
-          }
-        }
-      },
       "brand-primary": {
         "$type": "color",
-        "$value": "{theme.brand.900}",
-        "$description": "Used for prominent headings in branded sections, like pricing cards.",
+        "$value": "{theme.brand-700}",
+        "$description": "Heading, Title, Label Hover",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.900}",
-            "dark": "{semantics.gray.50}"
+            "light": "{theme.brand-700}",
+            "dark": "{theme.brand-300}"
           }
         }
       },
       "brand-secondary": {
         "$type": "color",
-        "$value": "{theme.brand.700}",
-        "$description": "Suitable for accent content highlights, or subheadings (e.g. in blog cards).",
+        "$value": "{theme.brand-600}",
+        "$description": "Subtitle, Label",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.700}",
-            "dark": "{semantics.gray.400}"
+            "light": "{theme.brand-600}",
+            "dark": "{theme.brand-400}"
           }
         }
       },
-      "brand-tertiary_hover": {
-        "$type": "color",
-        "$value": "{theme.brand.700}",
-        "$description": "Variant used when hovering over branded interactive text, such as buttons.",
-        "$extensions": {
-          "mode": {
-            "light": "{theme.brand.700}",
-            "dark": "{theme.brand.300}"
-          }
-        }
-      },
-      "brand-tertiary": {
-        "$type": "color",
-        "$value": "{theme.brand.600}",
-        "$description": "Designed for such as button labels or less emphasized numeric values (e.g. in metrics).",
-        "$extensions": {
-          "mode": {
-            "light": "{theme.brand.600}",
-            "dark": "{theme.brand.400}"
-          }
-        }
-      },
-      "error": {
+      "error-secondary": {
         "$type": "color",
         "$value": "{semantics.error.600}",
-        "$description": "Color used to indicate error states, especially in form inputs & buttons",
+        "$description": "Error Label, Error title",
         "$extensions": {
           "mode": {
             "light": "{semantics.error.600}",
@@ -4503,7 +4413,7 @@
       "success": {
         "$type": "color",
         "$value": "{semantics.success.600}",
-        "$description": "Indicates positive outcomes or confirmations.",
+        "$description": "Success title",
         "$extensions": {
           "mode": {
             "light": "{semantics.success.600}",
@@ -4514,7 +4424,7 @@
       "warning": {
         "$type": "color",
         "$value": "{semantics.warning.600}",
-        "$description": "Used to flag warnings or cautionary messages.",
+        "$description": "Warning title",
         "$extensions": {
           "mode": {
             "light": "{semantics.warning.600}",
@@ -4522,10 +4432,10 @@
           }
         }
       },
-      "disabled": {
+      "gray-quinary": {
         "$type": "color",
         "$value": "{semantics.gray.400}",
-        "$description": "Applied to input fields or buttons.",
+        "$description": "Disabled Text",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.400}",
@@ -4533,21 +4443,21 @@
           }
         }
       },
-      "brand-disabled": {
+      "brand-tertiary": {
         "$type": "color",
-        "$value": "{theme.brand.400}",
-        "$description": "Suitable for accent content such as button labels, highlights, or subheadings (e.g. in blog cards).",
+        "$value": "{theme.brand-400}",
+        "$description": "Disabled text & sometimes subtitle",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.400}",
-            "dark": "{theme.brand.600}"
+            "light": "{theme.brand-400}",
+            "dark": "{theme.brand-600}"
           }
         }
       },
       "error-disabled": {
         "$type": "color",
         "$value": "{semantics.error.400}",
-        "$description": "Suitable for disabled button labels.",
+        "$description": "Disabled",
         "$extensions": {
           "mode": {
             "light": "{semantics.error.400}",
@@ -4555,10 +4465,10 @@
           }
         }
       },
-      "error_hover": {
+      "error-primary": {
         "$type": "color",
         "$value": "{semantics.error.700}",
-        "$description": "Variant used when hovering over branded interactive text, such as buttons.",
+        "$description": "Error Hover",
         "$extensions": {
           "mode": {
             "light": "{semantics.error.700}",
@@ -4566,34 +4476,34 @@
           }
         }
       },
-      "tertiary_on-brand-alt": {
+      "brand-secondary_on-brand-alt": {
         "$type": "color",
-        "$value": "{theme.brand.800}",
-        "$description": "Designed for such as button labels.",
+        "$value": "{theme.brand-700}",
+        "$description": "Subtitle, Label over brand alt",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.800}",
-            "dark": "{theme.brand.800}"
+            "light": "{theme.brand-700}",
+            "dark": "{theme.brand-700}"
           }
         }
       },
-      "brand-secondary_alt": {
+      "brand-alt": {
         "$type": "color",
-        "$value": "{theme.brand.alt}",
-        "$description": "Suitable for accent content highlights, or subheadings (e.g. in blog cards).",
+        "$value": "{theme.brand-alt}",
+        "$description": "Subtitle, Label",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.alt}",
-            "dark": "{theme.brand.alt}"
+            "light": "{theme.brand-alt}",
+            "dark": "{theme.brand-alt}"
           }
         }
       }
     },
     "border": {
-      "primary": {
+      "gray-primary": {
         "$type": "color",
         "$value": "{semantics.gray.300}",
-        "$description": "Used for outlines in components like input fields, button groups, and checkbox.",
+        "$description": "Input fields, button groups, and checkbox.",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.300}",
@@ -4601,10 +4511,10 @@
           }
         }
       },
-      "secondary": {
+      "gray-secondary": {
         "$type": "color",
         "$value": "{semantics.gray.200}",
-        "$description": "Used for typical UI elements like file uploaders, tables, and content dividers.",
+        "$description": "Default & Disabled",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.200}",
@@ -4612,32 +4522,10 @@
           }
         }
       },
-      "tertiary": {
-        "$type": "color",
-        "$value": "{semantics.gray.100}",
-        "$description": "Useful for very subtle dividers and borders such as line and bar chart axis dividers.",
-        "$extensions": {
-          "mode": {
-            "light": "{semantics.gray.100}",
-            "dark": "{semantics.gray.800}"
-          }
-        }
-      },
-      "disabled": {
-        "$type": "color",
-        "$value": "{semantics.gray.200}",
-        "$description": "Used on elements like disabled buttons, input fields and checkboxes.",
-        "$extensions": {
-          "mode": {
-            "light": "{semantics.gray.200}",
-            "dark": "{semantics.gray.800}"
-          }
-        }
-      },
-      "secondary_alt": {
+      "gray-tertiary": {
         "$type": "color",
         "$value": "#00000014",
-        "$description": "An alternative to secondary border that uses alpha transparency. This is used exclusively for floating menus such as input dropdowns and notifications to create sharper bottom border.",
+        "$description": "Transparent border",
         "$extensions": {
           "mode": {
             "light": "#00000014",
@@ -4645,21 +4533,21 @@
           }
         }
       },
-      "brand": {
+      "brand-primary": {
         "$type": "color",
-        "$value": "{theme.brand.500}",
-        "$description": "Useful for active states in components such as active input fields.",
+        "$value": "{theme.brand-500}",
+        "$description": "Active states",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.500}",
-            "dark": "{theme.brand.400}"
+            "light": "{theme.brand-500}",
+            "dark": "{theme.brand-400}"
           }
         }
       },
-      "error": {
+      "error-primary": {
         "$type": "color",
         "$value": "{semantics.error.500}",
-        "$description": "Useful for error states in components such as buttons, input fields and file uploaders.",
+        "$description": "Buttons, input fields and file uploaders.",
         "$extensions": {
           "mode": {
             "light": "{semantics.error.500}",
@@ -4670,7 +4558,7 @@
       "warning": {
         "$type": "color",
         "$value": "{semantics.warning.500}",
-        "$description": "Default warning state semantic border color.",
+        "$description": "Warning border",
         "$extensions": {
           "mode": {
             "light": "{semantics.warning.500}",
@@ -4681,7 +4569,7 @@
       "success": {
         "$type": "color",
         "$value": "{semantics.success.500}",
-        "$description": "Default success state semantic border color.",
+        "$description": "Success border",
         "$extensions": {
           "mode": {
             "light": "{semantics.success.500}",
@@ -4689,21 +4577,21 @@
           }
         }
       },
-      "brand-disabled": {
+      "brand-secondary": {
         "$type": "color",
-        "$value": "{theme.brand.200}",
-        "$description": "Useful for disabled borders such as disabled buttons.",
+        "$value": "{theme.brand-200}",
+        "$description": "Disabled border",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.200}",
-            "dark": "{theme.brand.800}"
+            "light": "{theme.brand-200}",
+            "dark": "{theme.brand-800}"
           }
         }
       },
-      "error-disabled": {
+      "error-secondary": {
         "$type": "color",
         "$value": "{semantics.error.200}",
-        "$description": "Useful for disabled borders such as disabled buttons.",
+        "$description": "Disabled border",
         "$extensions": {
           "mode": {
             "light": "{semantics.error.200}",
@@ -4711,51 +4599,18 @@
           }
         }
       },
-      "error_subtle": {
-        "$type": "color",
-        "$value": "{semantics.error.300}",
-        "$description": "Useful for error states in components such as buttons.",
-        "$extensions": {
-          "mode": {
-            "light": "{semantics.error.300}",
-            "dark": "{semantics.error.500}"
-          }
-        }
-      },
-      "brand_subtle": {
-        "$type": "color",
-        "$value": "{theme.brand.300}",
-        "$description": "Useful for active states in components such as buttons.",
-        "$extensions": {
-          "mode": {
-            "light": "{theme.brand.300}",
-            "dark": "{theme.brand.500}"
-          }
-        }
-      },
       "brand_alt": {
         "$type": "color",
-        "$value": "{theme.brand.alt}",
+        "$value": "{theme.brand-alt}",
         "$description": "Useful for active states alternatively with border-brand.",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.alt}",
-            "dark": "{theme.brand.alt}"
+            "light": "{theme.brand-alt}",
+            "dark": "{theme.brand-alt}"
           }
         }
       },
-      "tertiary_alt": {
-        "$type": "color",
-        "$value": "#00000029",
-        "$description": "An alternative to secondary border that uses alpha transparency. This is used exclusively for floating menus such as input dropdowns and notifications to create sharper bottom border.",
-        "$extensions": {
-          "mode": {
-            "light": "#00000029",
-            "dark": "#ffffff29"
-          }
-        }
-      },
-      "mockup": {
+      "gray-mockup": {
         "$type": "color",
         "$value": "{semantics.gray.900}",
         "$description": "Useful for borders such as mockup.",
@@ -4768,10 +4623,10 @@
       }
     },
     "fg": {
-      "primary": {
+      "gray-primary": {
         "$type": "color",
         "$value": "{semantics.gray.900}",
-        "$description": "Highest contrast non-text foreground elements such as icons.",
+        "$description": "Highest contrast, Hover",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.900}",
@@ -4779,10 +4634,10 @@
           }
         }
       },
-      "secondary": {
+      "gray-secondary": {
         "$type": "color",
         "$value": "{semantics.gray.700}",
-        "$description": "Medium contrast non-text foreground elements such as icons in buttons",
+        "$description": "Medium contrast, Default",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.700}",
@@ -4790,10 +4645,10 @@
           }
         }
       },
-      "tertiary": {
+      "gray-tertiary": {
         "$type": "color",
         "$value": "{semantics.gray.400}",
-        "$description": "Low contrast non-text foreground elements help icons, and icons used in input fields.",
+        "$description": "Low contrast, Disabled",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.400}",
@@ -4801,21 +4656,10 @@
           }
         }
       },
-      "secondary_hover": {
-        "$type": "color",
-        "$value": "{semantics.gray.800}",
-        "$description": "Secondary foreground elements when in hover state.",
-        "$extensions": {
-          "mode": {
-            "light": "{semantics.gray.800}",
-            "dark": "{semantics.gray.200}"
-          }
-        }
-      },
       "white": {
         "$type": "color",
         "$value": "{semantics.base.white}",
-        "$description": "Foreground elements that are always white, regardless of the mode.",
+        "$description": "Always white, regardless of the mode.",
         "$extensions": {
           "mode": {
             "light": "{semantics.base.white}",
@@ -4823,54 +4667,21 @@
           }
         }
       },
-      "disabled": {
-        "$type": "color",
-        "$value": "{semantics.gray.400}",
-        "$description": "Disabled non-text foreground such as icons in disabled button group buttons, input dropdown menu items, disabled active checkboxes and tag checkboxes.",
-        "$extensions": {
-          "mode": {
-            "light": "{semantics.gray.400}",
-            "dark": "{semantics.gray.600}"
-          }
-        }
-      },
-      "tertiary_hover": {
-        "$type": "color",
-        "$value": "{semantics.gray.500}",
-        "$description": "Tertiary foreground elements when in hover state.",
-        "$extensions": {
-          "mode": {
-            "light": "{semantics.gray.500}",
-            "dark": "{semantics.gray.500}"
-          }
-        }
-      },
-      "brand-primary": {
-        "$type": "color",
-        "$value": "{theme.brand.600}",
-        "$description": "Primary brand color non-text foreground elements such as brand button icons and progress bars.",
-        "$extensions": {
-          "mode": {
-            "light": "{theme.brand.600}",
-            "dark": "{theme.brand.400}"
-          }
-        }
-      },
       "brand-secondary": {
         "$type": "color",
-        "$value": "{theme.brand.500}",
-        "$description": "Secondary brand color non-text foreground elements such as accents and arrows in website design.",
+        "$value": "{theme.brand-600}",
+        "$description": "Medium contrast, Default",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.500}",
-            "dark": "{theme.brand.500}"
+            "light": "{theme.brand-600}",
+            "dark": "{theme.brand-400}"
           }
         }
       },
-      "error": {
+      "error-secondary": {
         "$type": "color",
         "$value": "{semantics.error.600}",
-        "$description": "Default error for non-text foreground elements, especially in form inputs & buttons.",
+        "$description": "Medium contrast, Default",
         "$extensions": {
           "mode": {
             "light": "{semantics.error.600}",
@@ -4881,7 +4692,7 @@
       "warning": {
         "$type": "color",
         "$value": "{semantics.warning.600}",
-        "$description": "Default warning for non-text foreground elements.",
+        "$description": "Default warning",
         "$extensions": {
           "mode": {
             "light": "{semantics.warning.600}",
@@ -4892,7 +4703,7 @@
       "success": {
         "$type": "color",
         "$value": "{semantics.success.600}",
-        "$description": "Default success for non-text foreground elements.",
+        "$description": "Default success",
         "$extensions": {
           "mode": {
             "light": "{semantics.success.600}",
@@ -4900,32 +4711,32 @@
           }
         }
       },
-      "brand-primary_on-brand-alt": {
+      "brand-secondary_on-brand-alt": {
         "$type": "color",
-        "$value": "{theme.brand.800}",
-        "$description": "Primary brand color non-text foreground elements such as brand button icons.",
+        "$value": "{theme.brand-700}",
+        "$description": "Medium contrast, Default over brand alt",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.800}",
-            "dark": "{theme.brand.800}"
+            "light": "{theme.brand-700}",
+            "dark": "{theme.brand-700}"
           }
         }
       },
-      "brand-disabled": {
+      "brand-tertiary": {
         "$type": "color",
-        "$value": "{theme.brand.400}",
-        "$description": "Disabled non-text foreground such as icons in disabled button group buttons.",
+        "$value": "{theme.brand-400}",
+        "$description": "Low contrast, Disabled",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.400}",
-            "dark": "{theme.brand.600}"
+            "light": "{theme.brand-400}",
+            "dark": "{theme.brand-600}"
           }
         }
       },
-      "error-disabled": {
+      "error-tertiary": {
         "$type": "color",
         "$value": "{semantics.error.400}",
-        "$description": "Disabled non-text foreground such as icons in disabled button group buttons.",
+        "$description": "Low contrast, Disabled",
         "$extensions": {
           "mode": {
             "light": "{semantics.error.400}",
@@ -4933,21 +4744,21 @@
           }
         }
       },
-      "brand-primary_hover": {
+      "brand-primary": {
         "$type": "color",
-        "$value": "{theme.brand.700}",
-        "$description": "Hover state color non-text foreground elements such as brand button icons.",
+        "$value": "{theme.brand-700}",
+        "$description": "Highest contrast, Hover",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.700}",
-            "dark": "{theme.brand.300}"
+            "light": "{theme.brand-700}",
+            "dark": "{theme.brand-300}"
           }
         }
       },
-      "error_hover": {
+      "error-primary": {
         "$type": "color",
         "$value": "{semantics.error.700}",
-        "$description": "Hover state color non-text foreground elements such as button icons.",
+        "$description": "Highest contrast, Hover",
         "$extensions": {
           "mode": {
             "light": "{semantics.error.700}",
@@ -4955,34 +4766,23 @@
           }
         }
       },
-      "brand-secondary_alt": {
+      "brand-alt": {
         "$type": "color",
-        "$value": "{theme.brand.alt}",
-        "$description": "Alternative color non-text foreground elements such as accents and arrows in website design.",
+        "$value": "{theme.brand-alt}",
+        "$description": "Alternative color",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.alt}",
-            "dark": "{theme.brand.alt}"
-          }
-        }
-      },
-      "brand-primary_alt": {
-        "$type": "color",
-        "$value": "{theme.brand.600}",
-        "$description": "Non-text foreground elements that switches to gray when in dark mode such as active horizontal tabs.",
-        "$extensions": {
-          "mode": {
-            "light": "{theme.brand.600}",
-            "dark": "{semantics.gray.300}"
+            "light": "{theme.brand-alt}",
+            "dark": "{theme.brand-alt}"
           }
         }
       }
     },
     "bg": {
-      "primary": {
+      "gray-soft-primary": {
         "$type": "color",
         "$value": "{semantics.base.white}",
-        "$description": "The primary background color (white) used across all layouts and components.",
+        "$description": "Primary background color (white), Level 1",
         "$extensions": {
           "mode": {
             "light": "{semantics.base.white}",
@@ -4990,21 +4790,10 @@
           }
         }
       },
-      "primary_hover": {
-        "$type": "color",
-        "$value": "{semantics.gray.50}",
-        "$description": "Hover state background color for components with white backgrounds (e.g. input dropdown menu items).",
-        "$extensions": {
-          "mode": {
-            "light": "{semantics.gray.50}",
-            "dark": "{semantics.gray.800}"
-          }
-        }
-      },
-      "primary-solid": {
+      "gray-solid-secondary": {
         "$type": "color",
         "$value": "{semantics.gray.950}",
-        "$description": "The primary dark background color useful for components such as tooltips and Text editor tooltips & overlay components such as modals.",
+        "$description": "Component specific",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.950}",
@@ -5012,10 +4801,10 @@
           }
         }
       },
-      "secondary": {
+      "gray-soft-secondary": {
         "$type": "color",
         "$value": "{semantics.gray.50}",
-        "$description": "The secondary background color used to create contrast against white backgrounds, such as website section backgrounds.",
+        "$description": "Secondary background color, Level 2",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.50}",
@@ -5023,21 +4812,10 @@
           }
         }
       },
-      "secondary_hover": {
-        "$type": "color",
-        "$value": "{semantics.gray.100}",
-        "$description": "Secondary background hover color. Useful for hover states for navigation items and date pickers.",
-        "$extensions": {
-          "mode": {
-            "light": "{semantics.gray.100}",
-            "dark": "{semantics.gray.800}"
-          }
-        }
-      },
-      "tertiary": {
+      "gray-soft-quaternary": {
         "$type": "color",
         "$value": "{semantics.gray.200}",
-        "$description": "The tertiary background color used such as toggles, sliders and progress bars & Miscellaneous Icons.",
+        "$description": "toggles, sliders and progress bars",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.200}",
@@ -5045,10 +4823,10 @@
           }
         }
       },
-      "disabled": {
+      "gray-soft-tertiary": {
         "$type": "color",
         "$value": "{semantics.gray.100}",
-        "$description": "Default disabled background color for components such as disabled primary buttons, input fields, checkboxes and toggles.",
+        "$description": "Disabled background",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.100}",
@@ -5056,76 +4834,65 @@
           }
         }
       },
-      "brand-primary": {
+      "brand-soft-primary": {
         "$type": "color",
-        "$value": "{theme.brand.50}",
-        "$description": "The primary brand background color for components such as buttons.",
+        "$value": "{theme.brand-50}",
+        "$description": "Button Hover",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.50}",
-            "dark": "{theme.brand.950}"
+            "light": "{theme.brand-50}",
+            "dark": "{theme.brand-950}"
           }
         }
       },
-      "brand-secondary": {
+      "brand-solid-primary": {
         "$type": "color",
-        "$value": "{theme.brand.100}",
-        "$description": "The secondary brand background color for Miscellaneous Icons.",
+        "$value": "{theme.brand-600}",
+        "$description": "Default buttons",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.100}",
-            "dark": "{theme.brand.600}"
+            "light": "{theme.brand-600}",
+            "dark": "{theme.brand-600}"
           }
         }
       },
-      "brand-solid": {
+      "brand-solid-quinary": {
         "$type": "color",
-        "$value": "{theme.brand.600}",
-        "$description": "Useful for components such as buttons, toggles and messages.",
+        "$value": "{theme.brand-800}",
+        "$description": "Website section",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.600}",
-            "dark": "{theme.brand.600}"
+            "light": "{theme.brand-800}",
+            "dark": "{theme.brand-800}"
           }
         }
       },
-      "brand-section": {
+      "brand-solid-tertiary": {
         "$type": "color",
-        "$value": "{theme.brand.800}",
-        "$description": "Used for website sections such as CTA sections and testimonial sections.",
-        "$extensions": {
-          "mode": {
-            "light": "{theme.brand.800}",
-            "dark": "{semantics.gray.800}"
-          }
-        }
-      },
-      "brand-sidebar": {
-        "$type": "color",
-        "$value": "{theme.brand.700}",
+        "$value": "{theme.brand-700}",
         "$description": "Used for Sidebar.",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.700}",
-            "dark": "{theme.brand.950}"
+            "light": "{theme.brand-700}",
+            "dark": "{theme.brand-950}"
           }
         }
       },
-      "brand-solid_hover": {
+      "brand-solid-secondary": {
         "$type": "color",
-        "$value": "{theme.brand.700}",
-        "$description": "Hover state useful for components such as buttons, toggles.",
+        "$value": "{theme.brand-700}",
+        "$description": "Hover buttons, toggle",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.700}",
-            "dark": "{theme.brand.500}"
+            "light": "{theme.brand-700}",
+            "dark": "{theme.brand-500}"
           }
         }
       },
-      "error-primary": {
+      "error-soft-primary": {
         "$type": "color",
         "$value": "{semantics.error.50}",
-        "$description": "Primary error state background color for components such as buttons.",
+        "$description": "Button Hover",
         "$extensions": {
           "mode": {
             "light": "{semantics.error.50}",
@@ -5133,21 +4900,10 @@
           }
         }
       },
-      "error-secondary": {
-        "$type": "color",
-        "$value": "{semantics.error.100}",
-        "$description": "Secondary error state background color for Miscellaneous Icons.",
-        "$extensions": {
-          "mode": {
-            "light": "{semantics.error.100}",
-            "dark": "{semantics.error.600}"
-          }
-        }
-      },
-      "error-solid": {
+      "error-solid-primary": {
         "$type": "color",
         "$value": "{semantics.error.600}",
-        "$description": "Background color for components such as buttons, Miscellaneous Icons, and metric items.",
+        "$description": "Default buttons",
         "$extensions": {
           "mode": {
             "light": "{semantics.error.600}",
@@ -5155,10 +4911,10 @@
           }
         }
       },
-      "error-solid_hover": {
+      "error-solid-secondary": {
         "$type": "color",
         "$value": "{semantics.error.700}",
-        "$description": "Hover state background color for components such as buttons.",
+        "$description": "Hover buttons",
         "$extensions": {
           "mode": {
             "light": "{semantics.error.700}",
@@ -5166,10 +4922,10 @@
           }
         }
       },
-      "warning-primary": {
+      "warning-soft-primary": {
         "$type": "color",
         "$value": "{semantics.warning.50}",
-        "$description": "Primary warning state background color for components.",
+        "$description": "Default",
         "$extensions": {
           "mode": {
             "light": "{semantics.warning.50}",
@@ -5177,21 +4933,21 @@
           }
         }
       },
-      "warning-secondary": {
+      "warning-soft-secondary": {
         "$type": "color",
         "$value": "{semantics.warning.100}",
-        "$description": "Secondary warning state background color for Miscellaneous Icons.",
+        "$description": "disabled",
         "$extensions": {
           "mode": {
             "light": "{semantics.warning.100}",
-            "dark": "{semantics.warning.600}"
+            "dark": "{semantics.warning.800}"
           }
         }
       },
       "warning-solid": {
         "$type": "color",
         "$value": "{semantics.warning.600}",
-        "$description": "Background color for components such as Miscellaneous Icons.",
+        "$description": "Default solid",
         "$extensions": {
           "mode": {
             "light": "{semantics.warning.600}",
@@ -5199,10 +4955,10 @@
           }
         }
       },
-      "success-primary": {
+      "success-soft-primary": {
         "$type": "color",
         "$value": "{semantics.success.50}",
-        "$description": "Primary success state background color for components.",
+        "$description": "Default",
         "$extensions": {
           "mode": {
             "light": "{semantics.success.50}",
@@ -5210,21 +4966,21 @@
           }
         }
       },
-      "success-secondary": {
+      "success-soft-secondary": {
         "$type": "color",
         "$value": "{semantics.success.100}",
-        "$description": "Secondary success state background color for Miscellaneous Icons.",
+        "$description": "disabled",
         "$extensions": {
           "mode": {
             "light": "{semantics.success.100}",
-            "dark": "{semantics.success.600}"
+            "dark": "{semantics.success.800}"
           }
         }
       },
       "success-solid": {
         "$type": "color",
         "$value": "{semantics.success.600}",
-        "$description": "Background color for components such as Miscellaneous Icons.",
+        "$description": "Default solid",
         "$extensions": {
           "mode": {
             "light": "{semantics.success.600}",
@@ -5232,10 +4988,10 @@
           }
         }
       },
-      "secondary-solid": {
+      "gray-solid-primary": {
         "$type": "color",
         "$value": "{semantics.gray.600}",
-        "$description": "The secondary dark background color for Miscellaneous Icons.",
+        "$description": "Default",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.600}",
@@ -5243,21 +4999,21 @@
           }
         }
       },
-      "brand-disabled": {
+      "brand-soft-secondary": {
         "$type": "color",
-        "$value": "{theme.brand.100}",
-        "$description": "Default disabled background color for components such as disabled primary buttons.",
+        "$value": "{theme.brand-100}",
+        "$description": "Disabled background",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.100}",
-            "dark": "{theme.brand.800}"
+            "light": "{theme.brand-100}",
+            "dark": "{theme.brand-800}"
           }
         }
       },
-      "error-disabled": {
+      "error-soft-secondary": {
         "$type": "color",
         "$value": "{semantics.error.100}",
-        "$description": "Default disabled background color for components such as disabled buttons.",
+        "$description": "Disabled background",
         "$extensions": {
           "mode": {
             "light": "{semantics.error.100}",
@@ -5265,21 +5021,21 @@
           }
         }
       },
-      "brand-solid_alt": {
+      "brand-solid-alt": {
         "$type": "color",
-        "$value": "{theme.brand.alt}",
-        "$description": "Useful for components such as buttons.",
+        "$value": "{theme.brand-alt}",
+        "$description": "buttons alt",
         "$extensions": {
           "mode": {
-            "light": "{theme.brand.alt}",
-            "dark": "{theme.brand.alt}"
+            "light": "{theme.brand-alt}",
+            "dark": "{theme.brand-alt}"
           }
         }
       },
       "white": {
         "$type": "color",
         "$value": "{semantics.base.white}",
-        "$description": "Background elements that are always white, regardless of the mode.",
+        "$description": "always white, regardless of the mode.",
         "$extensions": {
           "mode": {
             "light": "{semantics.base.white}",
@@ -5287,25 +5043,14 @@
           }
         }
       },
-      "active": {
+      "brand-solid-quaternary": {
         "$type": "color",
-        "$value": "{semantics.gray.50}",
-        "$description": "Active state components such as (e.g. menu items in input fields).",
+        "$value": "{theme.brand-600}",
+        "$description": "Sidebar hover",
         "$extensions": {
           "mode": {
-            "light": "{semantics.gray.50}",
-            "dark": "{semantics.gray.800}"
-          }
-        }
-      },
-      "brand-sidebar_hover": {
-        "$type": "color",
-        "$value": "{theme.brand.600}",
-        "$description": "Used for Sidebar.",
-        "$extensions": {
-          "mode": {
-            "light": "{theme.brand.600}",
-            "dark": "{theme.brand.800}"
+            "light": "{theme.brand-600}",
+            "dark": "{theme.brand-800}"
           }
         }
       }
@@ -5466,67 +5211,6 @@
               }
             }
           }
-        },
-        "3xl": {
-          "primary": {
-            "$type": "color",
-            "$value": "#0a0d120a",
-            "$description": "",
-            "$extensions": {
-              "mode": {
-                "light": "#0a0d120a",
-                "dark": "#ffffff0a"
-              }
-            }
-          },
-          "secondary": {
-            "$type": "color",
-            "$value": "#0a0d1224",
-            "$description": "",
-            "$extensions": {
-              "mode": {
-                "light": "#0a0d1224",
-                "dark": "#ffffff24"
-              }
-            }
-          }
-        }
-      },
-      "skeuomorphic": {
-        "xs": {
-          "primary": {
-            "$type": "color",
-            "$value": "#0a0d120d",
-            "$description": "",
-            "$extensions": {
-              "mode": {
-                "light": "#0a0d120d",
-                "dark": "#ffffff0d"
-              }
-            }
-          },
-          "inner-border": {
-            "$type": "color",
-            "$value": "#0a0d122e",
-            "$description": "",
-            "$extensions": {
-              "mode": {
-                "light": "#0a0d122e",
-                "dark": "#ffffff2e"
-              }
-            }
-          },
-          "inner": {
-            "$type": "color",
-            "$value": "#0a0d120d",
-            "$description": "",
-            "$extensions": {
-              "mode": {
-                "light": "#0a0d120d",
-                "dark": "#ffffff0d"
-              }
-            }
-          }
         }
       },
       "focus_ring": {
@@ -5543,12 +5227,12 @@
         },
         "secondary_brand": {
           "$type": "color",
-          "$value": "{theme.brand.300}",
+          "$value": "{theme.brand-300}",
           "$description": "",
           "$extensions": {
             "mode": {
-              "light": "{theme.brand.300}",
-              "dark": "{theme.brand.700}"
+              "light": "{theme.brand-300}",
+              "dark": "{theme.brand-700}"
             }
           }
         },
@@ -5574,56 +5258,21 @@
             }
           }
         }
-      },
-      "backdrop_blur": {
-        "sm": {
-          "$type": "color",
-          "$value": "#ffffff99",
-          "$description": "",
-          "$extensions": {
-            "mode": {
-              "light": "#ffffff99",
-              "dark": "#00000099"
-            }
-          }
-        },
-        "md": {
-          "$type": "color",
-          "$value": "#ffffff99",
-          "$description": "",
-          "$extensions": {
-            "mode": {
-              "light": "#ffffff99",
-              "dark": "#00000099"
-            }
-          }
-        },
-        "lg": {
-          "$type": "color",
-          "$value": "#ffffff99",
-          "$description": "",
-          "$extensions": {
-            "mode": {
-              "light": "#ffffff99",
-              "dark": "#00000099"
-            }
-          }
-        },
-        "xl": {
-          "$type": "color",
-          "$value": "#ffffff99",
-          "$description": "",
-          "$extensions": {
-            "mode": {
-              "light": "#ffffff99",
-              "dark": "#00000099"
-            }
-          }
-        }
       }
     },
     "alpha": {
       "white": {
+        "0": {
+          "$type": "color",
+          "$value": "#ffffff00",
+          "$description": "",
+          "$extensions": {
+            "mode": {
+              "light": "#ffffff00",
+              "dark": "#0d121c00"
+            }
+          }
+        },
         "10": {
           "$type": "color",
           "$value": "#ffffff1a",
@@ -5725,6 +5374,17 @@
         }
       },
       "black": {
+        "0": {
+          "$type": "color",
+          "$value": "#00000000",
+          "$description": "",
+          "$extensions": {
+            "mode": {
+              "light": "#00000000",
+              "dark": "#ffffff00"
+            }
+          }
+        },
         "10": {
           "$type": "color",
           "$value": "#0000001a",
@@ -5826,60 +5486,60 @@
         }
       }
     },
-    "utility": {
+    "others": {
       "brand": {
         "default": {
           "$type": "color",
-          "$value": "{theme.brand.500}",
+          "$value": "{theme.brand-500}",
           "$description": "",
           "$extensions": {
             "mode": {
-              "light": "{theme.brand.500}",
-              "dark": "{theme.brand.500}"
+              "light": "{theme.brand-500}",
+              "dark": "{theme.brand-500}"
             }
           }
         },
         "dark": {
           "$type": "color",
-          "$value": "{theme.brand.700}",
+          "$value": "{theme.brand-700}",
           "$description": "",
           "$extensions": {
             "mode": {
-              "light": "{theme.brand.700}",
-              "dark": "{theme.brand.300}"
+              "light": "{theme.brand-700}",
+              "dark": "{theme.brand-300}"
             }
           }
         },
         "light": {
           "$type": "color",
-          "$value": "{theme.brand.200}",
+          "$value": "{theme.brand-200}",
           "$description": "",
           "$extensions": {
             "mode": {
-              "light": "{theme.brand.200}",
-              "dark": "{theme.brand.200}"
+              "light": "{theme.brand-200}",
+              "dark": "{theme.brand-200}"
             }
           }
         },
         "brand-zero": {
           "$type": "color",
-          "$value": "{theme.brand.50}",
+          "$value": "{theme.brand-50}",
           "$description": "",
           "$extensions": {
             "mode": {
-              "light": "{theme.brand.50}",
-              "dark": "{theme.brand.950}"
+              "light": "{theme.brand-50}",
+              "dark": "{theme.brand-950}"
             }
           }
         },
         "xlight": {
           "$type": "color",
-          "$value": "{theme.brand.100}",
+          "$value": "{theme.brand-100}",
           "$description": "",
           "$extensions": {
             "mode": {
-              "light": "{theme.brand.100}",
-              "dark": "{theme.brand.900}"
+              "light": "{theme.brand-100}",
+              "dark": "{theme.brand-900}"
             }
           }
         }
@@ -6848,182 +6508,6 @@
           "spread": {
             "$type": "dimension",
             "$value": "-12px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          }
-        }
-      },
-      "3xl": {
-        "primary": {
-          "x": {
-            "$type": "dimension",
-            "$value": "0px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "y": {
-            "$type": "dimension",
-            "$value": "5px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "blur": {
-            "$type": "dimension",
-            "$value": "5px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "spread": {
-            "$type": "dimension",
-            "$value": "-2.5px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          }
-        },
-        "secondary": {
-          "x": {
-            "$type": "dimension",
-            "$value": "0px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "y": {
-            "$type": "dimension",
-            "$value": "32px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "blur": {
-            "$type": "dimension",
-            "$value": "64px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "spread": {
-            "$type": "dimension",
-            "$value": "-12px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          }
-        }
-      }
-    },
-    "skeumorphic": {
-      "xs": {
-        "primary": {
-          "x": {
-            "$type": "dimension",
-            "$value": "0px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "y": {
-            "$type": "dimension",
-            "$value": "1px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "blur": {
-            "$type": "dimension",
-            "$value": "2px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "spread": {
-            "$type": "dimension",
-            "$value": "0px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          }
-        },
-        "inner": {
-          "x": {
-            "$type": "dimension",
-            "$value": "0px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "y": {
-            "$type": "dimension",
-            "$value": "-2px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "blur": {
-            "$type": "dimension",
-            "$value": "0px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "spread": {
-            "$type": "dimension",
-            "$value": "0px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          }
-        },
-        "inner_border": {
-          "x": {
-            "$type": "dimension",
-            "$value": "0px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "y": {
-            "$type": "dimension",
-            "$value": "0px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "blur": {
-            "$type": "dimension",
-            "$value": "0px",
-            "$description": "",
-            "$extensions": {
-              "mode": {}
-            }
-          },
-          "spread": {
-            "$type": "dimension",
-            "$value": "1px",
             "$description": "",
             "$extensions": {
               "mode": {}
@@ -8563,7 +8047,7 @@
         "$value": [
           {
             "inset": false,
-            "color": "#0a0d120d",
+            "color": "{colors.effects.shadows.xs.primary}",
             "offsetX": "{effects.shadow.xs.primary.x}",
             "offsetY": "{effects.shadow.xs.primary.y}",
             "blur": "2px",
@@ -8576,7 +8060,7 @@
         "$value": [
           {
             "inset": false,
-            "color": "#0a0d121a",
+            "color": "{colors.effects.shadows.sm.secondary}",
             "offsetX": "{effects.shadow.sm.secondary.x}",
             "offsetY": "{effects.shadow.sm.secondary.y}",
             "blur": "3px",
@@ -8584,7 +8068,7 @@
           },
           {
             "inset": false,
-            "color": "#0a0d121a",
+            "color": "{colors.effects.shadows.sm.primary}",
             "offsetX": "{effects.shadow.sm.primary.x}",
             "offsetY": "{effects.shadow.sm.primary.y}",
             "blur": "2px",
@@ -8597,7 +8081,7 @@
         "$value": [
           {
             "inset": false,
-            "color": "#0a0d121a",
+            "color": "{colors.effects.shadows.md.secondary}",
             "offsetX": "{effects.shadow.md.secondary.x}",
             "offsetY": "{effects.shadow.md.secondary.y}",
             "blur": "6px",
@@ -8605,7 +8089,7 @@
           },
           {
             "inset": false,
-            "color": "#0a0d120f",
+            "color": "{colors.effects.shadows.md.primary}",
             "offsetX": "{effects.shadow.md.primary.x}",
             "offsetY": "{effects.shadow.md.primary.y}",
             "blur": "4px",
@@ -8618,7 +8102,7 @@
         "$value": [
           {
             "inset": false,
-            "color": "#0a0d1214",
+            "color": "{colors.effects.shadows.lg.tertiary}",
             "offsetX": "{effects.shadow.lg.tertiary.x}",
             "offsetY": "{effects.shadow.lg.tertiary.y}",
             "blur": "16px",
@@ -8626,7 +8110,7 @@
           },
           {
             "inset": false,
-            "color": "#0a0d1208",
+            "color": "{colors.effects.shadows.lg.secondary}",
             "offsetX": "{effects.shadow.lg.secondary.x}",
             "offsetY": "{effects.shadow.lg.secondary.y}",
             "blur": "6px",
@@ -8634,7 +8118,7 @@
           },
           {
             "inset": false,
-            "color": "#0a0d120a",
+            "color": "{colors.effects.shadows.lg.primary}",
             "offsetX": "{effects.shadow.lg.primary.x}",
             "offsetY": "{effects.shadow.lg.primary.y}",
             "blur": "2px",
@@ -8647,7 +8131,7 @@
         "$value": [
           {
             "inset": false,
-            "color": "#0a0d1214",
+            "color": "{colors.effects.shadows.xl.tertiary}",
             "offsetX": "{effects.shadow.xl.tertiary.x}",
             "offsetY": "{effects.shadow.xl.tertiary.y}",
             "blur": "24px",
@@ -8655,7 +8139,7 @@
           },
           {
             "inset": false,
-            "color": "#0a0d1208",
+            "color": "{colors.effects.shadows.xl.secondary}",
             "offsetX": "{effects.shadow.xl.secondary.x}",
             "offsetY": "{effects.shadow.xl.secondary.y}",
             "blur": "8px",
@@ -8663,7 +8147,7 @@
           },
           {
             "inset": false,
-            "color": "#0a0d120a",
+            "color": "{colors.effects.shadows.xl.primary}",
             "offsetX": "{effects.shadow.xl.primary.x}",
             "offsetY": "{effects.shadow.xl.primary.y}",
             "blur": "3px",
@@ -8676,7 +8160,7 @@
         "$value": [
           {
             "inset": false,
-            "color": "#0a0d122e",
+            "color": "{colors.effects.shadows.2xl.secondary}",
             "offsetX": "{effects.shadow.2xl.secondary.x}",
             "offsetY": "{effects.shadow.2xl.secondary.y}",
             "blur": "48px",
@@ -8684,32 +8168,11 @@
           },
           {
             "inset": false,
-            "color": "#0a0d120a",
+            "color": "{colors.effects.shadows.2xl.primary}",
             "offsetX": "{effects.shadow.2xl.primary.x}",
             "offsetY": "{effects.shadow.2xl.primary.y}",
             "blur": "4px",
             "spread": "{effects.shadow.2xl.primary.spread}"
-          }
-        ]
-      },
-      "3xl": {
-        "$type": "shadow",
-        "$value": [
-          {
-            "inset": false,
-            "color": "#0a0d1224",
-            "offsetX": "{effects.shadow.3xl.secondary.x}",
-            "offsetY": "{effects.shadow.3xl.secondary.y}",
-            "blur": "64px",
-            "spread": "{effects.shadow.3xl.secondary.spread}"
-          },
-          {
-            "inset": false,
-            "color": "#0a0d120a",
-            "offsetX": "{effects.shadow.3xl.primary.x}",
-            "offsetY": "{effects.shadow.3xl.primary.y}",
-            "blur": "5px",
-            "spread": "{effects.shadow.3xl.primary.spread}"
           }
         ]
       }
@@ -8720,7 +8183,7 @@
         "$value": [
           {
             "inset": false,
-            "color": "#a3b3ff",
+            "color": "{colors.effects.focus_ring.secondary_brand}",
             "offsetX": "{effects.focus_ring.secondary.x}",
             "offsetY": "{effects.focus_ring.secondary.y}",
             "blur": "0px",
@@ -8728,7 +8191,7 @@
           },
           {
             "inset": false,
-            "color": "#ffffff",
+            "color": "{colors.effects.focus_ring.primary}",
             "offsetX": "{effects.focus_ring.primary.x}",
             "offsetY": "{effects.focus_ring.primary.y}",
             "blur": "0px",
@@ -8741,7 +8204,7 @@
         "$value": [
           {
             "inset": true,
-            "color": "#a3b3ff",
+            "color": "{colors.effects.focus_ring.secondary_brand}",
             "offsetX": "{effects.focus_ring.secondary.x}",
             "offsetY": "{effects.focus_ring.secondary.y}",
             "blur": "0px",
@@ -8749,7 +8212,7 @@
           },
           {
             "inset": true,
-            "color": "#ffffff",
+            "color": "{colors.effects.focus_ring.primary}",
             "offsetX": "{effects.focus_ring.primary.x}",
             "offsetY": "{effects.focus_ring.primary.y}",
             "blur": "0px",
@@ -8762,7 +8225,7 @@
         "$value": [
           {
             "inset": false,
-            "color": "#ffa2a2",
+            "color": "{colors.effects.focus_ring.secondary_error}",
             "offsetX": "{effects.focus_ring.secondary.x}",
             "offsetY": "{effects.focus_ring.secondary.y}",
             "blur": "0px",
@@ -8770,7 +8233,28 @@
           },
           {
             "inset": false,
-            "color": "#ffffff",
+            "color": "{colors.effects.focus_ring.primary}",
+            "offsetX": "{effects.focus_ring.primary.x}",
+            "offsetY": "{effects.focus_ring.primary.y}",
+            "blur": "0px",
+            "spread": "{effects.focus_ring.primary.spread}"
+          }
+        ]
+      },
+      "Error-inner": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "inset": true,
+            "color": "{colors.effects.focus_ring.secondary_error}",
+            "offsetX": "{effects.focus_ring.secondary.x}",
+            "offsetY": "{effects.focus_ring.secondary.y}",
+            "blur": "0px",
+            "spread": "{effects.focus_ring.secondary.spread}"
+          },
+          {
+            "inset": true,
+            "color": "{colors.effects.focus_ring.primary}",
             "offsetX": "{effects.focus_ring.primary.x}",
             "offsetY": "{effects.focus_ring.primary.y}",
             "blur": "0px",
@@ -8783,7 +8267,7 @@
         "$value": [
           {
             "inset": false,
-            "color": "#a3b3ff",
+            "color": "{colors.effects.focus_ring.secondary_brand}",
             "offsetX": "{effects.focus_ring.secondary.x}",
             "offsetY": "{effects.focus_ring.secondary.y}",
             "blur": "0px",
@@ -8791,7 +8275,7 @@
           },
           {
             "inset": false,
-            "color": "#ffffff",
+            "color": "{colors.effects.focus_ring.primary}",
             "offsetX": "{effects.focus_ring.primary.x}",
             "offsetY": "{effects.focus_ring.primary.y}",
             "blur": "0px",
@@ -8799,7 +8283,7 @@
           },
           {
             "inset": false,
-            "color": "#0a0d120d",
+            "color": "{colors.effects.focus_ring.teriary}",
             "offsetX": "{effects.focus_ring.tertiary.x}",
             "offsetY": "{effects.focus_ring.tertiary.y}",
             "blur": "2px",
@@ -8812,7 +8296,7 @@
         "$value": [
           {
             "inset": false,
-            "color": "#a3b3ff",
+            "color": "{colors.effects.focus_ring.secondary_brand}",
             "offsetX": "{effects.focus_ring.secondary.x}",
             "offsetY": "{effects.focus_ring.secondary.y}",
             "blur": "0px",
@@ -8820,7 +8304,7 @@
           },
           {
             "inset": false,
-            "color": "#ffffff",
+            "color": "{colors.effects.focus_ring.primary}",
             "offsetX": "{effects.focus_ring.primary.x}",
             "offsetY": "{effects.focus_ring.primary.y}",
             "blur": "0px",
@@ -8828,7 +8312,7 @@
           },
           {
             "inset": false,
-            "color": "#0a0d120d",
+            "color": "{colors.effects.focus_ring.teriary}",
             "offsetX": "{effects.focus_ring.tertiary.x}",
             "offsetY": "{effects.focus_ring.tertiary.y}",
             "blur": "2px",
@@ -8836,7 +8320,7 @@
           },
           {
             "inset": false,
-            "color": "#0a0d120d",
+            "color": "{colors.effects.focus_ring.teriary}",
             "offsetX": "{effects.focus_ring.quaterly.x}",
             "offsetY": "{effects.focus_ring.quaterly.y}",
             "blur": "3px",
@@ -8849,7 +8333,7 @@
         "$value": [
           {
             "inset": false,
-            "color": "#ffa2a2",
+            "color": "{colors.effects.focus_ring.secondary_error}",
             "offsetX": "{effects.focus_ring.secondary.x}",
             "offsetY": "{effects.focus_ring.secondary.y}",
             "blur": "0px",
@@ -8857,7 +8341,7 @@
           },
           {
             "inset": false,
-            "color": "#ffffff",
+            "color": "{colors.effects.focus_ring.primary}",
             "offsetX": "{effects.focus_ring.primary.x}",
             "offsetY": "{effects.focus_ring.primary.y}",
             "blur": "0px",
@@ -8865,69 +8349,75 @@
           },
           {
             "inset": false,
-            "color": "#0a0d120d",
+            "color": "{colors.effects.focus_ring.teriary}",
             "offsetX": "{effects.focus_ring.tertiary.x}",
             "offsetY": "{effects.focus_ring.tertiary.y}",
             "blur": "2px",
             "spread": "{effects.focus_ring.tertiary.spread}"
           }
         ]
-      }
-    },
-    "Skeuomorphic": {
-      "xs": {
+      },
+      "Brand-error-sm": {
         "$type": "shadow",
         "$value": [
           {
-            "inset": true,
-            "color": "#0a0d122e",
-            "offsetX": "{effects.skeumorphic.xs.inner_border.x}",
-            "offsetY": "{effects.skeumorphic.xs.inner_border.y}",
+            "inset": false,
+            "color": "{colors.effects.focus_ring.secondary_error}",
+            "offsetX": "{effects.focus_ring.secondary.x}",
+            "offsetY": "{effects.focus_ring.secondary.y}",
             "blur": "0px",
-            "spread": "{effects.skeumorphic.xs.inner_border.spread}"
-          },
-          {
-            "inset": true,
-            "color": "#0a0d120d",
-            "offsetX": "{effects.skeumorphic.xs.inner.x}",
-            "offsetY": "-2px",
-            "blur": "0px",
-            "spread": "{effects.skeumorphic.xs.inner.spread}"
+            "spread": "{effects.focus_ring.secondary.spread}"
           },
           {
             "inset": false,
-            "color": "#0a0d120d",
-            "offsetX": "{effects.skeumorphic.xs.primary.x}",
-            "offsetY": "{effects.skeumorphic.xs.primary.y}",
+            "color": "{colors.effects.focus_ring.primary}",
+            "offsetX": "{effects.focus_ring.primary.x}",
+            "offsetY": "{effects.focus_ring.primary.y}",
+            "blur": "0px",
+            "spread": "{effects.focus_ring.primary.spread}"
+          },
+          {
+            "inset": false,
+            "color": "{colors.effects.focus_ring.teriary}",
+            "offsetX": "{effects.focus_ring.tertiary.x}",
+            "offsetY": "{effects.focus_ring.tertiary.y}",
             "blur": "2px",
-            "spread": "{effects.skeumorphic.xs.primary.spread}"
+            "spread": "{effects.focus_ring.tertiary.spread}"
+          },
+          {
+            "inset": false,
+            "color": "{colors.effects.focus_ring.teriary}",
+            "offsetX": "{effects.focus_ring.quaterly.x}",
+            "offsetY": "{effects.focus_ring.quaterly.y}",
+            "blur": "3px",
+            "spread": "{effects.focus_ring.quaterly.spread}"
           }
         ]
       }
     },
     "Backdrop Blur": {
-      "sm": {
+      "soft": {
         "$type": "blur",
         "$value": {
           "role": "background",
           "blur": "4px"
         }
       },
-      "md": {
+      "default": {
         "$type": "blur",
         "$value": {
           "role": "background",
           "blur": "8px"
         }
       },
-      "lg": {
+      "strong": {
         "$type": "blur",
         "$value": {
           "role": "background",
           "blur": "16px"
         }
       },
-      "xl": {
+      "hard": {
         "$type": "blur",
         "$value": {
           "role": "background",
@@ -8951,7 +8441,7 @@
         "font",
         "sizes"
       ],
-      "createdAt": "2026-01-12T14:56:37.776Z"
+      "createdAt": "2026-01-26T10:09:33.957Z"
     }
   }
 }
