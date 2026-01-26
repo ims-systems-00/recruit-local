@@ -6,12 +6,14 @@ export const createStatusBodySchema = Joi.object({
   collectionName: Joi.string().trim().max(100).required().label("Collection Name"),
   collectionId: objectId.required().label("Collection ID"),
   label: Joi.string().trim().max(100).required().label("Status Label"),
+  weight: Joi.number().integer().min(0).default(0).label("Status Weight"),
 });
 
 export const updateStatusBodySchema = Joi.object({
   collectionName: Joi.string().trim().max(100).optional().label("Collection Name"),
   collectionId: objectId.optional().label("Collection ID"),
   label: Joi.string().trim().max(100).optional().label("Status Label"),
+  weight: Joi.number().integer().min(0).optional().label("Status Weight"),
 });
 
 export const statusListQuerySchema = Joi.object({

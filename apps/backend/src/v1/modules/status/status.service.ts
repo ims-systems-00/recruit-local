@@ -4,7 +4,7 @@ import { IListParams } from "@rl/types";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { withTransaction } from "../../../common/helper/database-transaction";
 import { statusProjectionQuery } from "./status.query";
-import { IStatusInput, Status } from "../../../models";
+import { IStatusDoc, IStatusInput, Status } from "../../../models";
 
 type IStatusListParams = IListParams<IStatusInput>;
 type IStatusQueryParams = Partial<IStatusInput & { _id: string }>;
@@ -16,7 +16,7 @@ export const list = ({ query = {}, options }: IStatusListParams) => {
   );
 };
 
-export const getOne = async (query = {}) => {
+export const getOne = async (query = {}): Promise<IStatusDoc> => {
   const status = await Status.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...statusProjectionQuery()]);
   if (status.length === 0) throw new NotFoundException("Status not found.");
   return status[0];

@@ -3,8 +3,7 @@ import { modelNames } from "../constants";
 import { withTransaction } from "../../common/helper/database-transaction";
 import { Status } from "../status.model";
 import { Board } from "../kanban-board.model";
-
-// ! when a item is created, need to assign initial rank based on first status weight + merit rank
+import { logger } from "../../common/helper";
 
 export interface IBoardableInput {
   boardId: Types.ObjectId;
@@ -15,6 +14,7 @@ export interface IBoardableInput {
 export interface IBoardableDoc extends IBoardableInput, Document {}
 
 export interface IBoardableModel<T extends IBoardableDoc> extends Model<T> {
+  rebalanceColumn(statusId: Types.ObjectId, session: ClientSession): Promise<boolean>;
   moveToPosition(
     itemId: string | Types.ObjectId,
     targetStatusId: string | Types.ObjectId,
@@ -27,27 +27,24 @@ export interface IBoardableModel<T extends IBoardableDoc> extends Model<T> {
 export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): void => {
   if (!(schema instanceof Schema)) throw new Error("Schema must be an instance of mongoose schema");
 
-  const boardableSchema = new Schema<IBoardableDoc>(
-    {
-      boardId: {
-        type: Schema.Types.ObjectId,
-        ref: modelNames.BOARD,
-        required: true,
-        index: true,
-      },
-      statusId: {
-        type: Schema.Types.ObjectId,
-        ref: modelNames.STATUS,
-        required: true,
-        index: true,
-      },
-      rank: {
-        type: Number,
-        required: true,
-      },
+  const boardableSchema = new Schema<IBoardableDoc>({
+    boardId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.BOARD,
+      required: true,
+      index: true,
     },
-    { _id: false, autoIndex: false }
-  );
+    statusId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.STATUS,
+      required: true,
+      index: true,
+    },
+    rank: {
+      type: Number,
+      required: true,
+    },
+  });
 
   schema.add(boardableSchema);
 
@@ -64,13 +61,15 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
   });
 
   schema.static("rebalanceColumn", async function (statusId: Types.ObjectId, session: ClientSession) {
-    const items = await this.find({ statusId }).sort({ rank: -1 }).session(session);
-    const BASE_GAP = 10000;
-    let currentRank = items.length * BASE_GAP;
+    const items = await this.find({ statusId }).sort({ rank: 1 }).session(session);
+    const status = await Status.findById(statusId).select("weight").session(session);
+    if (!status) throw new Error("Status not found");
+    const BASE_GAP = 1;
+    let currentRank = status.weight + items.length + BASE_GAP;
 
     const bulkOps = items.map((doc) => {
       const update = { updateOne: { filter: { _id: doc._id }, update: { rank: currentRank } } };
-      currentRank -= BASE_GAP;
+      currentRank += BASE_GAP;
       return update;
     });
 
@@ -80,12 +79,15 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
     return true;
   });
 
-  // todo need another static method to add item to board with initial rank
-
   // --- Main Logic: Move To Position  ---
   schema.static(
     "moveToPosition",
-    async function (itemId: string | Types.ObjectId, targetStatusId: string | Types.ObjectId, targetIndex: number) {
+    async function (
+      this: IBoardableModel<T>,
+      itemId: string | Types.ObjectId,
+      targetStatusId: string | Types.ObjectId,
+      targetIndex: number
+    ) {
       return withTransaction(async (session: ClientSession) => {
         const item = await this.findById(itemId).session(session);
         if (!item) throw new Error("Item not found");
@@ -101,8 +103,10 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
           .sort({ rank: -1 })
           .session(session);
 
+        logger.info(`Column items count: ${columnItems.length}`);
+
         // Remove the item being moved from the list if it's already in the target column
-        const existingItems = columnItems.filter((i) => !i._id.equals(item._id));
+        const existingItems = columnItems.filter((i) => i._id.toString() !== item._id.toString());
 
         if (targetIndex < 0 || targetIndex > existingItems.length) {
           throw new Error(`Target index ${targetIndex} out of bounds`);
@@ -110,6 +114,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
 
         let newRank: number;
         let rebalanced = false;
+        const MIN_GAP = 0.05;
 
         // check if moving within the same column
         const movingWithinSameColumn = item.statusId.equals(targetStatusObjectId);
@@ -134,22 +139,30 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
           }
         } else {
           if (targetIndex == 0) {
-            newRank = existingItems[0].rank + 1; // ! adding only one is dangerous
+            newRank = existingItems[0].rank + 1; // ! adding only one could be dangerous
           } else if (targetIndex === existingItems.length) {
             newRank = existingItems[existingItems.length - 1].rank - 1;
           } else {
             const prevRank = existingItems[targetIndex - 1].rank;
             const nextRank = existingItems[targetIndex].rank;
             newRank = (prevRank + nextRank) / 2;
+            // if the gap is too small, need to rebalance
+            if ((prevRank - nextRank) / 2 < MIN_GAP) {
+              rebalanced = true;
+            }
           }
         }
-
-        // todo  later implement rebalancing
 
         // update the item with the new status and rank
         item.statusId = targetStatusObjectId;
         item.rank = newRank;
         await item.save({ session });
+
+        // rebalancing if needed // ?Q move this part to a queue job
+        if (rebalanced) {
+          logger.info(`Rebalancing column for statusId: ${targetStatusObjectId.toString()}`);
+          await this.rebalanceColumn(targetStatusObjectId, session);
+        }
 
         return { success: true, rank: newRank, rebalanced };
       });
