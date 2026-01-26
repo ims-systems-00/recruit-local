@@ -87,14 +87,6 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
       targetIndex: number
     ) {
       return withTransaction(async (session: ClientSession) => {
-        console.log(
-          "Moving item:",
-          itemId.toString(),
-          "to status:",
-          targetStatusId.toString(),
-          "at index:",
-          targetIndex
-        );
         const item = await this.findById(itemId).session(session);
         if (!item) throw new Error("Item not found");
 
@@ -147,7 +139,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
           if (targetIndex == 0) {
             newRank = existingItems[0].rank + 1; // ! adding only one could be dangerous
           } else if (targetIndex === existingItems.length) {
-            newRank = existingItems[existingItems.length - 1].rank / 2;
+            newRank = existingItems[existingItems.length - 1].rank - 1;
             // if rank is too small, need to rebalance
             if (newRank < MIN_GAP) {
               rebalanced = true;
@@ -168,7 +160,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
         item.rank = newRank;
         await item.save({ session });
 
-        // rebalancing if needed
+        // rebalancing if needed // ?Q move this part to a queue job
         if (rebalanced) {
           logger.info(`Rebalancing column for statusId: ${targetStatusObjectId.toString()}`);
           await this.rebalanceColumn(targetStatusObjectId, session);
