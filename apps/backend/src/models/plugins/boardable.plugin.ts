@@ -70,7 +70,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
     const items = await this.find({ statusId }).sort({ rank: 1 }).session(session);
     const status = await Status.findById(statusId).select("weight").session(session);
     if (!status) throw new Error("Status not found");
-    let currentRank = status.weight + items.length + BOARD_CONFIG.REBALANCE_BASE_GAP;
+    let currentRank = status.weight + BOARD_CONFIG.REBALANCE_BASE_GAP;
 
     const bulkOps = items.map((doc) => {
       const update = { updateOne: { filter: { _id: doc._id }, update: { rank: currentRank } } };
