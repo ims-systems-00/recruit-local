@@ -10,26 +10,41 @@ type IStatusListParams = IListParams<IStatusInput>;
 type IStatusQueryParams = Partial<IStatusInput & { _id: string }>;
 
 export const list = ({ query = {}, options }: IStatusListParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
   return Status.aggregatePaginate(
-    [...matchQuery(query), ...excludeDeletedQuery(), ...statusProjectionQuery()],
+    [...matchQuery(sanitizedQuery), ...excludeDeletedQuery(), ...statusProjectionQuery()],
     options
   );
 };
 
 export const getOne = async (query = {}): Promise<IStatusDoc> => {
-  const status = await Status.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...statusProjectionQuery()]);
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const status = await Status.aggregate([
+    ...matchQuery(sanitizedQuery),
+    ...excludeDeletedQuery(),
+    ...statusProjectionQuery(),
+  ]);
   if (status.length === 0) throw new NotFoundException("Status not found.");
   return status[0];
 };
 
 export const listSoftDeleted = async (query = {}) => {
-  const status = await Status.aggregate([...matchQuery(query), ...onlyDeletedQuery(), ...statusProjectionQuery()]);
-  if (status.length === 0) throw new NotFoundException("Status not found in trash.");
-  return status[0];
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const status = await Status.aggregate([
+    ...matchQuery(sanitizedQuery),
+    ...onlyDeletedQuery(),
+    ...statusProjectionQuery(),
+  ]);
+  return status;
 };
 
 export const getOneSoftDeleted = async (query = {}) => {
-  const status = await Status.aggregate([...matchQuery(query), ...onlyDeletedQuery(), ...statusProjectionQuery()]);
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const status = await Status.aggregate([
+    ...matchQuery(sanitizedQuery),
+    ...onlyDeletedQuery(),
+    ...statusProjectionQuery(),
+  ]);
   if (status.length === 0) throw new NotFoundException("Status not found in trash.");
   return status[0];
 };
