@@ -5,6 +5,12 @@ import { Status } from "../status.model";
 import { Board } from "../kanban-board.model";
 import { logger } from "../../common/helper";
 
+const BOARD_CONFIG = {
+  REBALANCE_BASE_GAP: parseFloat(process.env.KANBAN_REBALANCE_BASE_GAP || "1"),
+  MIN_RANK_GAP: parseFloat(process.env.KANBAN_MIN_RANK_GAP || "0.005"),
+  EDGE_RANK_GAP: parseFloat(process.env.KANBAN_EDGE_RANK_GAP || "1"),
+};
+
 export interface IBoardableInput {
   boardId: Types.ObjectId;
   statusId: Types.ObjectId;
@@ -61,15 +67,14 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
   });
 
   schema.static("rebalanceColumn", async function (statusId: Types.ObjectId, session: ClientSession) {
-    const items = await this.find({ statusId }).sort({ rank: 1 }).session(session);
+    const items = await this.find({ statusId }).sort({ rank: 1, createdAt: -1 }).session(session);
     const status = await Status.findById(statusId).select("weight").session(session);
     if (!status) throw new Error("Status not found");
-    const BASE_GAP = 1;
-    let currentRank = status.weight + items.length + BASE_GAP;
+    let currentRank = status.weight + BOARD_CONFIG.REBALANCE_BASE_GAP;
 
     const bulkOps = items.map((doc) => {
       const update = { updateOne: { filter: { _id: doc._id }, update: { rank: currentRank } } };
-      currentRank += BASE_GAP;
+      currentRank += BOARD_CONFIG.REBALANCE_BASE_GAP;
       return update;
     });
 
@@ -100,7 +105,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
         // Get all items in the target column to determine neighbors
         const columnItems = await this.find({ statusId: targetStatusObjectId })
           .select("_id rank")
-          .sort({ rank: -1 })
+          .sort({ rank: -1, createdAt: 1 })
           .session(session);
 
         logger.info(`Column items count: ${columnItems.length}`);
@@ -114,7 +119,6 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
 
         let newRank: number;
         let rebalanced = false;
-        const MIN_GAP = 0.05;
 
         // check if moving within the same column
         const movingWithinSameColumn = item.statusId.equals(targetStatusObjectId);
@@ -139,15 +143,15 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
           }
         } else {
           if (targetIndex == 0) {
-            newRank = existingItems[0].rank + 1; // ! adding only one could be dangerous
+            newRank = existingItems[0].rank + BOARD_CONFIG.EDGE_RANK_GAP; // ! adding only one could be dangerous
           } else if (targetIndex === existingItems.length) {
-            newRank = existingItems[existingItems.length - 1].rank - 1;
+            newRank = existingItems[existingItems.length - 1].rank - BOARD_CONFIG.EDGE_RANK_GAP;
           } else {
             const prevRank = existingItems[targetIndex - 1].rank;
             const nextRank = existingItems[targetIndex].rank;
             newRank = (prevRank + nextRank) / 2;
             // if the gap is too small, need to rebalance
-            if ((prevRank - nextRank) / 2 < MIN_GAP) {
+            if ((prevRank - nextRank) / 2 < BOARD_CONFIG.MIN_RANK_GAP) {
               rebalanced = true;
             }
           }
