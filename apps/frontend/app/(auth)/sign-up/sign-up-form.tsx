@@ -36,22 +36,29 @@ export default function SignUpForm() {
   } = useSignup();
 
   return (
-    <form onSubmit={onSubmit} className=" flex flex-col gap-y-10 flex-1">
-      <div className="space-y-6">
-        <div className="space-y-3">
-          <h4>Welcome to Recruit Local</h4>
-          <p>Sign Up to Unlock Exclusive Features</p>
+    <form
+      onSubmit={onSubmit}
+      className=" flex flex-col gap-y-spacing-6xl flex-1"
+    >
+      <div className="space-y-spacing-4xl">
+        <div className="space-y-spacing-xs">
+          <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-secondary">
+            Welcome to Recruit Local
+          </h4>
+          <p className=" text-body-md text-text-gray-tertiary">
+            Sign Up to Unlock Exclusive Features
+          </p>
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <div className=" grid grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label className="text-title text-base leading-[100%]">
+        <div className="space-y-spacing-2xl">
+          <div className="space-y-spacing-2xl">
+            <div className=" grid grid-cols-2 gap-spacing-2xl">
+              <div className="space-y-spacing-xs">
+                <Label className=" text-label-sm font-label-sm-strong!">
                   First Name
                 </Label>
                 <div className=" space-y-2">
-                  <InputGroup className="h-10 rounded-lg shadow-light">
+                  <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
                     <InputGroupInput
                       type="text"
                       placeholder="Enter your First Name"
@@ -66,12 +73,12 @@ export default function SignUpForm() {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Label className="text-title text-base leading-[100%]">
+              <div className="space-y-spacing-xs">
+                <Label className="text-label-sm font-label-sm-strong!">
                   Last Name
                 </Label>
                 <div className=" space-y-2">
-                  <InputGroup className="h-10 rounded-lg shadow-light">
+                  <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
                     <InputGroupInput
                       type="text"
                       placeholder="Enter your Last Name"
@@ -87,12 +94,12 @@ export default function SignUpForm() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Label className="text-title text-base leading-[100%]">
+            <div className="space-y-spacing-xs">
+              <Label className="text-label-sm font-label-sm-strong!">
                 Email Address
               </Label>
               <div className=" space-y-2">
-                <InputGroup className="h-10 rounded-lg shadow-light">
+                <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupInput
                     type="email"
                     placeholder="Enter your email"
@@ -105,8 +112,8 @@ export default function SignUpForm() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Label className="text-title text-base leading-[100%]">
+            <div className="space-y-spacing-xs">
+              <Label className="text-label-sm font-label-sm-strong!">
                 User Type
               </Label>
 
@@ -116,11 +123,11 @@ export default function SignUpForm() {
                   control={control}
                   render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="h-10! w-full">
+                      <SelectTrigger className="h-12! w-full rounded-lg shadow-xs border-border-gray-primary">
                         <SelectValue placeholder="Choose your Role" />
                       </SelectTrigger>
 
-                      <SelectContent>
+                      <SelectContent className=" bg-white">
                         <SelectGroup>
                           <SelectItem value="employer">Employer</SelectItem>
                           <SelectItem value="candidate">Candidate</SelectItem>
@@ -135,12 +142,12 @@ export default function SignUpForm() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Label className="text-title text-base leading-[100%]">
+            <div className="space-y-spacing-xs">
+              <Label className="text-label-sm font-label-sm-strong!">
                 New Password
               </Label>
               <div className=" space-y-2">
-                <InputGroup className="h-10 rounded-lg shadow-light">
+                <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupInput
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Set a New Password"
@@ -158,12 +165,12 @@ export default function SignUpForm() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Label className="text-title text-base leading-[100%]">
+            <div className="space-y-spacing-xs">
+              <Label className="text-label-sm font-label-sm-strong!">
                 Confirm Password
               </Label>
               <div className=" space-y-2">
-                <InputGroup className="h-10 rounded-lg shadow-light">
+                <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupInput
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Rewrite the password"
@@ -214,16 +221,16 @@ export default function SignUpForm() {
       <div className=" flex-1 flex justify-between flex-col gap-8">
         <Button
           type="submit"
-          className=" w-full text-base bg-primary border-primary text-white rounded-lg h-10 cursor-pointer"
+          className="button-xl bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer"
           disabled={isSubmitting || !isValid}
         >
           {isSubmitting ? 'Loading...' : 'Sign Up'}
         </Button>
 
         <div className=" flex justify-center">
-          <p className="text-base text-body">
+          <p className=" text-body-md">
             Already In Recruit Local ?{' '}
-            <Link href={'/login'} className="text-primary">
+            <Link href={'/login'} className="text-text-brand-primary">
               Login Here
             </Link>{' '}
           </p>

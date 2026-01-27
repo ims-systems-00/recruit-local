@@ -13,14 +13,14 @@ import { Label } from '@/components/ui/label';
 export default function ChangePassword() {
   return (
     <div className=" min-h-screen flex justify-center items-center bg-card">
-      <div className=" shadow-regular w-[692px] bg-card rounded-lg flex flex-col gap-y-8 p-12">
-        <div className="space-y-3">
+      <div className=" shadow-regular w-[692px] bg-card rounded-lg flex flex-col gap-y-spacing-5xl p-12">
+        <div className="space-y-spacing-lg">
           <h4>Create New Password</h4>
           <p>alifun99@gmail.com</p>
         </div>
         <div className=" space-y-12">
-          <div className="space-y-6">
-            <div className="space-y-3">
+          <div className="space-y-spacing-4xl">
+            <div className="space-y-spacing-lg">
               <Label className="text-title text-base leading-[100%]">
                 New Password
               </Label>
@@ -35,7 +35,7 @@ export default function ChangePassword() {
               </InputGroup>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-spacing-lg">
               <Label className="text-title text-base leading-[100%]">
                 Confirm Password
               </Label>

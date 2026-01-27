@@ -16,8 +16,8 @@ export default function CreateOrganizationForm() {
   } = useCreateTanent();
   return (
     <form onSubmit={onSubmit} className=" space-y-12">
-      <div className="space-y-6">
-        <div className="space-y-3">
+      <div className="space-y-spacing-4xl">
+        <div className="space-y-spacing-lg">
           <Label className="text-title text-base leading-[100%]">
             Organization Name
           </Label>

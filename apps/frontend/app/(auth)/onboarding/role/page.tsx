@@ -8,14 +8,14 @@ import { Button } from '@/components/ui/button';
 export default function Role() {
   return (
     <div className=" min-h-screen flex justify-center items-center bg-card">
-      <div className=" shadow-regular w-[692px] bg-card rounded-lg flex flex-col gap-y-8 p-12">
-        <div className="space-y-3">
+      <div className=" shadow-regular w-[692px] bg-card rounded-lg flex flex-col gap-y-spacing-5xl p-12">
+        <div className="space-y-spacing-lg">
           <h3>What Brings to you Recruit Local ?</h3>
           <p>Choose One for Now</p>
         </div>
         <div className=" space-y-12">
-          <div className="space-y-6">
-            <div className="border border-primary rounded-lg py-5 px-8 flex items-center gap-4">
+          <div className="space-y-spacing-4xl">
+            <div className="border border-primary rounded-lg py-5 px-spacing-5xl flex items-center gap-4">
               <div className="min-w-[100px]">
                 <Image
                   className="max-h-[67px] max-w-[100px]"
@@ -25,14 +25,14 @@ export default function Role() {
                   height={67}
                 />
               </div>
-              <div className=" space-y-3">
+              <div className=" space-y-spacing-lg">
                 <h4>Job Seeker</h4>
                 <p className="text-sm">
                   Begin your job search by creating your profile.
                 </p>
               </div>
             </div>
-            <div className="border border-border rounded-lg py-5 px-8 flex items-center gap-4">
+            <div className="border border-border rounded-lg py-5 px-spacing-5xl flex items-center gap-4">
               <div className="min-w-[100px]">
                 <Image
                   className="max-h-[67px] max-w-[100px]"
@@ -42,14 +42,14 @@ export default function Role() {
                   height={67}
                 />
               </div>
-              <div className=" space-y-3">
+              <div className=" space-y-spacing-lg">
                 <h4>Job Seeker</h4>
                 <p className="text-sm">
                   Begin your job search by creating your profile.
                 </p>
               </div>
             </div>
-            <div className="border border-border rounded-lg py-5 px-8 flex items-center gap-4">
+            <div className="border border-border rounded-lg py-5 px-spacing-5xl flex items-center gap-4">
               <div className="min-w-[100px]">
                 <Image
                   className="max-h-[67px] max-w-[100px]"
@@ -59,7 +59,7 @@ export default function Role() {
                   height={67}
                 />
               </div>
-              <div className=" space-y-3">
+              <div className=" space-y-spacing-lg">
                 <h4>Job Seeker</h4>
                 <p className="text-sm">
                   Begin your job search by creating your profile.

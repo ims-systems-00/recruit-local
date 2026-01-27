@@ -25,8 +25,8 @@ export default function Login() {
   } = useLogin();
 
   return (
-    <div className=" min-h-screen flex justify-center items-center bg-card">
-      <div className=" shadow-regular w-[692px] h-[700px] bg-card rounded-lg flex flex-col gap-y-8 p-8">
+    <div className=" min-h-screen flex justify-center items-center">
+      <div className=" shadow-regular w-[692px] h-[700px] rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
         <div>
           <Image
             className="max-h-[62px] max-w-[114px]"
@@ -37,23 +37,30 @@ export default function Login() {
           />
         </div>
 
-        <form onSubmit={onSubmit} className=" flex flex-col gap-y-10 flex-1">
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <h4>Welcome Back !!</h4>
-              <p>Please log into our portal.</p>
+        <form
+          onSubmit={onSubmit}
+          className=" flex flex-col gap-y-spacing-6xl flex-1"
+        >
+          <div className="space-y-spacing-4xl">
+            <div className="space-y-spacing-xs">
+              <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-secondary">
+                Welcome Back !!
+              </h4>
+              <p className=" text-body-md text-text-gray-tertiary">
+                Please log into our portal.
+              </p>
             </div>
-            <div className="space-y-6">
-              <div className="space-y-4">
+            <div className="space-y-spacing-4xl">
+              <div className="space-y-spacing-2xl">
                 <div className=" space-y-2">
-                  <InputGroup className="h-12 rounded-lg shadow-xs">
+                  <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
                     <InputGroupInput
                       type="email"
                       placeholder="Enter your email"
                       {...register('email', { required: true })}
                     />
                     <InputGroupAddon>
-                      <MailIcon className=" text-fg-tertiary" />
+                      <MailIcon className=" text-fg-gray-tertiary" />
                     </InputGroupAddon>
                   </InputGroup>
                   {errors.email && (
@@ -64,21 +71,21 @@ export default function Login() {
                 </div>
 
                 <div className=" space-y-2">
-                  <InputGroup className="h-12 rounded-lg shadow-xs">
+                  <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
                     <InputGroupInput
                       type={showPassword ? 'text' : 'password'}
                       placeholder="*********"
                       {...register('password', { required: true })}
                     />
                     <InputGroupAddon>
-                      <LockKeyholeOpen className=" text-fg-tertiary" />
+                      <LockKeyholeOpen className=" text-fg-gray-tertiary" />
                     </InputGroupAddon>
                     <InputGroupAddon
                       className=" cursor-pointer"
                       align="inline-end"
                       onClick={togglePassword}
                     >
-                      <EyeClosed className=" text-fg-tertiary" />
+                      <EyeClosed className=" text-fg-gray-tertiary" />
                     </InputGroupAddon>
                   </InputGroup>
                   {errors.password && (
@@ -105,13 +112,13 @@ export default function Login() {
             <Button
               type="submit"
               disabled={isLoading}
-              className=" w-full text-base bg-bg-brand-solid text-white h-10 cursor-pointer"
+              className=" button-xl bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer"
             >
               {isLoading ? 'Logging in...' : 'Login'}
             </Button>
 
             <div className=" flex justify-center">
-              <p>
+              <p className="text-body-md">
                 Don’t you have account?{' '}
                 <Link href="/sign-up" className=" text-text-brand-primary">
                   Create Account

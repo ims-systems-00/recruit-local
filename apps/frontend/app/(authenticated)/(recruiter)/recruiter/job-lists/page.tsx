@@ -39,7 +39,7 @@ export default function JobLists() {
           </div>
         </header>
       </div>
-      <div className="p-spacing-4xl grid grid-cols-3 gap-6 ">
+      <div className="p-spacing-4xl grid grid-cols-3 gap-spacing-4xl ">
         <div className=" col-span-2 bg-surface-lighter space-y-spacing-4xl rounded-xl">
           <div className="space-y-5 border border-border-secondary p-spacing-2xl rounded-lg">
             <h4 className="text-text-secondary text-label-lg font-label-lg-strong!">
@@ -62,7 +62,10 @@ export default function JobLists() {
               />
             </div>
           </div>
-          <Tabs defaultValue="active-jobs" className="w-full space-y-4">
+          <Tabs
+            defaultValue="active-jobs"
+            className="w-full space-y-spacing-2xl"
+          >
             <TabsList className="w-full bg-bg-secondary p-1 border border-border-secondary h-10">
               <TabsTrigger
                 value="active-jobs"
@@ -78,7 +81,7 @@ export default function JobLists() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="active-jobs">
-              <div className="space-y-4">
+              <div className="space-y-spacing-2xl">
                 {[1, 2, 3].map((item) => (
                   <div
                     key={item}
@@ -86,7 +89,7 @@ export default function JobLists() {
                   >
                     <div className=" p-spacing-4xl space-y-spacing-4xl">
                       <div className=" space-y-spacing-sm">
-                        <div className="flex justify-between items-center gap-6">
+                        <div className="flex justify-between items-center gap-spacing-4xl">
                           <p className=" text-label-sm text-text-tertiary">
                             XJ-486
                           </p>
@@ -256,7 +259,7 @@ export default function JobLists() {
               See who recently updated their profile
             </p>
           </div>
-          <div className=" flex justify-between items-center gap-6">
+          <div className=" flex justify-between items-center gap-spacing-4xl">
             <div className="flex items-center gap-2">
               <span className=" flex py-spacing-2xs px-spacing-md rounded-lg bg-bg-brand-solid-primary border border-border-brand text-label-xs font-label-xs-strong! text-text-white">
                 All
