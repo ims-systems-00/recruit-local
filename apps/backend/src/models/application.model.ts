@@ -5,7 +5,6 @@ import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/so
 import { modelNames } from "./constants";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
-import { APPLICATION_STATUS_ENUM } from "@rl/types";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { boardablePlugin, IBoardableInput, IBoardableModel } from "./plugins/boardable.plugin";
 
@@ -18,9 +17,7 @@ export interface ApplicationInput extends JobProfileInput, IBoardableInput {
   appliedAt?: Date;
 }
 
-export interface IApplicationDoc extends ApplicationInput, ISoftDeleteDoc, IBaseDoc {
-  status?: APPLICATION_STATUS_ENUM;
-}
+export interface IApplicationDoc extends ApplicationInput, ISoftDeleteDoc, IBaseDoc {}
 
 interface IApplicationModel
   extends Model<IApplicationDoc>,
@@ -35,12 +32,6 @@ const applicationSchema = new Schema<IApplicationDoc>(
       type: Schema.Types.ObjectId,
       ref: modelNames.JOB,
       required: true,
-      index: true,
-    },
-    status: {
-      type: String,
-      enum: Object.values(APPLICATION_STATUS_ENUM),
-      default: APPLICATION_STATUS_ENUM.APPLIED,
       index: true,
     },
     coverLetter: { type: String },
