@@ -19,13 +19,15 @@ export const sanitizeQueryIds = <T = unknown>(query: T): T => {
     for (const key in query) {
       const value = (query as unknown)[key];
 
+      const isIdField = key === "_id" || key.endsWith("Id");
+
       // Case A: Exact match on '_id' -> Cast String to ObjectId
-      if (key === "_id" && typeof value === "string" && mongoose.Types.ObjectId.isValid(value)) {
+      if (isIdField && typeof value === "string" && mongoose.Types.ObjectId.isValid(value)) {
         newQuery[key] = new mongoose.Types.ObjectId(value);
       }
 
       // Case B: Operator query on '_id' with '$in' -> Cast array items
-      else if (key === "_id" && value && typeof value === "object" && "$in" in value && Array.isArray(value.$in)) {
+      else if (isIdField && value && typeof value === "object" && "$in" in value && Array.isArray(value.$in)) {
         newQuery[key] = {
           ...value,
           $in: value.$in.map((id: unknown) =>

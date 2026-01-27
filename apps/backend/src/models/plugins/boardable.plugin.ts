@@ -67,7 +67,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
   });
 
   schema.static("rebalanceColumn", async function (statusId: Types.ObjectId, session: ClientSession) {
-    const items = await this.find({ statusId }).sort({ rank: 1 }).session(session);
+    const items = await this.find({ statusId }).sort({ rank: 1, createdAt: -1 }).session(session);
     const status = await Status.findById(statusId).select("weight").session(session);
     if (!status) throw new Error("Status not found");
     let currentRank = status.weight + BOARD_CONFIG.REBALANCE_BASE_GAP;
@@ -105,7 +105,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>): voi
         // Get all items in the target column to determine neighbors
         const columnItems = await this.find({ statusId: targetStatusObjectId })
           .select("_id rank")
-          .sort({ rank: -1 })
+          .sort({ rank: -1, createdAt: 1 })
           .session(session);
 
         logger.info(`Column items count: ${columnItems.length}`);
