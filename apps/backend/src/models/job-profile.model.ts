@@ -2,21 +2,32 @@ import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mon
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
+import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { modelNames } from "./constants";
 import { VISIBILITY, language } from "@rl/types";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 
+export enum STATUS_ENUM {
+  VERIFIED = "verified",
+  UNVERIFIED = "unverified",
+  PENDING = "pending",
+  REJECTED = "rejected",
+}
+
 export interface JobProfileInput extends IUserOwnedInput {
   headline?: string;
   summary?: string;
   keywords?: string[];
   languages?: language[];
+  kycDocumentUrl?: string;
+  kycDocumentStorage?: AwsStorageTemplate;
 }
 
 export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, IBaseDoc {
   visibility: VISIBILITY;
+  status: STATUS_ENUM;
 }
 
 interface IJobProfileModel
@@ -59,6 +70,18 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       type: String,
       enum: Object.values(VISIBILITY),
       default: VISIBILITY.PRIVATE,
+    },
+    status: {
+      type: String,
+      enum: Object.values(STATUS_ENUM),
+      default: STATUS_ENUM.PENDING,
+    },
+    kycDocumentUrl: {
+      type: String,
+    },
+    kycDocumentStorage: {
+      type: Schema.Types.Mixed,
+      default: awsStorageTemplateMongooseDefinition,
     },
   },
   {
