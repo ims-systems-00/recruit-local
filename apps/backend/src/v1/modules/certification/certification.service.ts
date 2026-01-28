@@ -109,7 +109,20 @@ export const softRemove = async (query: IGetOneCertificationParams) => {
 };
 
 export const hardRemove = async (id: string) => {
-  // todo: remove orphaned files from s3
+  const certification = await getOne({ _id: id });
+  // 2. If it exists and has a key, delete from S3
+  if (certification?.imageStorage?.Key) {
+    const fileManager = new FileManager(s3Client);
+    // Wrap in try/catch so DB deletion happens even if S3 fails
+    try {
+      await fileManager.deleteFile({
+        Bucket: certification.imageStorage.Bucket,
+        Key: certification.imageStorage.Key,
+      });
+    } catch (error) {
+      console.error("Failed to delete file from S3:", error);
+    }
+  }
   return await Certification.findOneAndDelete({ _id: id });
 };
 
