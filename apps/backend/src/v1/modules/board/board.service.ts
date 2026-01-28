@@ -9,22 +9,33 @@ type IBoardListParams = IListParams<IBoardInput>;
 type IBoardQueryParams = Partial<IBoardInput & { _id: string }>;
 
 export const list = ({ query = {}, options }: IBoardListParams) => {
-  return Board.aggregatePaginate([...matchQuery(query), ...excludeDeletedQuery(), ...boardProjectQuery()], options);
+  const sanitizedQuery = sanitizeQueryIds(query);
+  return Board.aggregatePaginate(
+    [...matchQuery(sanitizedQuery), ...excludeDeletedQuery(), ...boardProjectQuery()],
+    options
+  );
 };
 export const getOne = async (query = {}): Promise<IBoardDoc> => {
-  const board = await Board.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...boardProjectQuery()]);
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const board = await Board.aggregate([
+    ...matchQuery(sanitizedQuery),
+    ...excludeDeletedQuery(),
+    ...boardProjectQuery(),
+  ]);
   if (board.length === 0) throw new NotFoundException("Board not found.");
   return board[0];
 };
 
 export const listSoftDeleted = async (query = {}) => {
-  const board = await Board.aggregate([...matchQuery(query), ...onlyDeletedQuery(), ...boardProjectQuery()]);
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const board = await Board.aggregate([...matchQuery(sanitizedQuery), ...onlyDeletedQuery(), ...boardProjectQuery()]);
   if (board.length === 0) throw new NotFoundException("Board not found in trash.");
   return board[0];
 };
 
 export const getOneSoftDeleted = async (query = {}) => {
-  const board = await Board.aggregate([...matchQuery(query), ...onlyDeletedQuery(), ...boardProjectQuery()]);
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const board = await Board.aggregate([...matchQuery(sanitizedQuery), ...onlyDeletedQuery(), ...boardProjectQuery()]);
   if (board.length === 0) throw new NotFoundException("Board not found in trash.");
   return board[0];
 };

@@ -34,7 +34,7 @@ export const list = async ({ req }: ControllerParams) => {
   };
 
   const results = await boardService.list({
-    query: sanitizeQueryIds(finalQuery) as unknown,
+    query: finalQuery as unknown,
     options,
   });
 

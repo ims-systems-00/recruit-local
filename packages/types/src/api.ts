@@ -1,11 +1,13 @@
+import { FilterQuery } from 'mongoose';
+
 export interface IOptions {
   page?: number;
   limit?: number;
 }
 
-export type ListQueryParams<T> = Partial<T & { _id: string }>;
-
-// ? Question: export type ListQueryParams<T> = FilterQuery<T> update?
+export type ListQueryParams<T> = FilterQuery<T> & {
+  _id?: string | string[];
+};
 
 export interface IListParams<T> {
   query: ListQueryParams<T>;
