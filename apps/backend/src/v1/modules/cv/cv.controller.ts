@@ -88,7 +88,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} cv.`
   //     );
 
-  await cvService.softRemove(req.params.id);
+  await cvService.softRemove({ query: { _id: req.params.id } });
 
   return new ApiResponse({
     message: "CV removed successfully.",
@@ -103,7 +103,7 @@ export const restore = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Restore} cv.`
   //     );
 
-  await cvService.restore(req.params.id);
+  await cvService.restore({ query: { _id: req.params.id } });
 
   return new ApiResponse({
     message: "CV restored successfully.",
@@ -118,7 +118,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.ForceDelete} cv.`
   //     );
 
-  await cvService.hardRemove(req.params.id);
+  await cvService.hardRemove({ query: { _id: req.params.id } });
 
   return new ApiResponse({
     message: "CV deleted permanently.",
