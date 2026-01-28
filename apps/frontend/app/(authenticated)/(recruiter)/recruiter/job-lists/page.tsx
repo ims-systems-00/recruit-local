@@ -19,13 +19,13 @@ import { JobAuthZEntity } from '@rl/authz';
 export default function JobLists() {
   return (
     <div>
-      <div className=" border-b border-border-secondary">
+      <div className=" border-b border-border-gray-secondary">
         <header className="p-spacing-4xl flex justify-between items-center">
           <div className=" space-y-spacing-2xs">
-            <h3 className="text-text-primary text-heading-sm font-heading-sm-strong!">
+            <h3 className="text-text-gray-primary text-heading-sm font-heading-sm-strong!">
               Explore All Jobs
             </h3>
-            <p className=" text-text-tertiary text-label-md">
+            <p className=" text-text-gray-tertiary text-label-md">
               Browse the full range of available opportunities
             </p>
           </div>
@@ -41,8 +41,8 @@ export default function JobLists() {
       </div>
       <div className="p-spacing-4xl grid grid-cols-3 gap-spacing-4xl ">
         <div className=" col-span-2 bg-surface-lighter space-y-spacing-4xl rounded-xl">
-          <div className="space-y-5 border border-border-secondary p-spacing-2xl rounded-lg">
-            <h4 className="text-text-secondary text-label-lg font-label-lg-strong!">
+          <div className="space-y-spacing-2xl border border-border-gray-secondary p-spacing-2xl rounded-lg">
+            <h4 className="text-text-gray-secondary text-label-lg font-label-lg-strong!">
               Hi , Want to Hire talent?
             </h4>
             <div className=" flex items-center gap-4">
@@ -66,40 +66,38 @@ export default function JobLists() {
             defaultValue="active-jobs"
             className="w-full space-y-spacing-2xl"
           >
-            <TabsList className="w-full bg-bg-secondary p-1 border border-border-secondary h-10">
+            <TabsList className="w-full bg-bg-gray-soft-secondary p-1 border border-border-gray-secondary h-10">
               <TabsTrigger
                 value="active-jobs"
-                className="h-8 data-[state=active]:bg-bg-primary data-[state=active]:text-text-secondary text-text-quaternary"
+                className="h-8 data-[state=active]:bg-bg-gray-soft-primary data-[state=active]:text-text-gray-secondary text-text-gray-quaternary"
               >
                 Active Jobs
               </TabsTrigger>
               <TabsTrigger
                 value="archived-jobs"
-                className="h-8 data-[state=active]:bg-bg-primary data-[state=active]:text-text-secondary text-text-quaternary"
+                className="h-8 data-[state=active]:bg-bg-gray-soft-primary data-[state=active]:text-text-gray-secondary text-text-gray-quaternary"
               >
                 Archived jobs
               </TabsTrigger>
             </TabsList>
             <TabsContent value="active-jobs">
-              <div className="space-y-spacing-2xl">
+              <div className="space-y-spacing-4xl">
                 {[1, 2, 3].map((item) => (
                   <div
                     key={item}
-                    className="border border-border-secondary rounded-2xl bg-bg-primary shadow-xs"
+                    className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs"
                   >
                     <div className=" p-spacing-4xl space-y-spacing-4xl">
-                      <div className=" space-y-spacing-sm">
+                      <div className=" space-y-spacing-xs">
                         <div className="flex justify-between items-center gap-spacing-4xl">
-                          <p className=" text-label-sm text-text-tertiary">
+                          <p className=" text-label-sm text-text-gray-tertiary">
                             XJ-486
                           </p>
-                          <div className="flex items-center gap-5">
-                            <span>
-                              <Ellipsis className="w-5 h-5 text-title" />
-                            </span>
-                          </div>
+                          <span>
+                            <Ellipsis className="w-5 h-5 text-text-gray-primary" />
+                          </span>
                         </div>
-                        <h4 className=" text-label-lg font-label-lg-strong! text-text-primary">
+                        <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
                           UI/UX Designer Wanted – Join Our Creative Team!
                         </h4>
                       </div>
@@ -149,10 +147,14 @@ export default function JobLists() {
                             </defs>
                           </svg>
                         </span>
-                        <div className="space-y-1.5 relative z-10">
-                          <p className="text-title">Wanna Join us?</p>
-                          <p className="text-xs text-title">Apply Now!! </p>
-                          <p className="text-xs text-title">
+                        <div className="relative z-10">
+                          <p className=" text-label-md font-label-md-strong! text-text-gray-primary">
+                            Wanna Join us?
+                          </p>
+                          <p className="text-body-xs text-text-gray-primary">
+                            Apply Now!!{' '}
+                          </p>
+                          <p className="text-body-xs text-text-gray-primary">
                             www.BootTech/apply{' '}
                           </p>
                         </div>
@@ -203,9 +205,9 @@ export default function JobLists() {
                         </span>
                       </div>
                     </div>
-                    <div className=" border-t border-border-secondary flex justify-between gap-2.5 px-spacing-4xl py-spacing-2xl">
+                    <div className=" border-t border-border-gray-secondary flex justify-between gap-2.5 px-spacing-4xl py-spacing-2xl">
                       <div className="space-y-spacing-2xs flex-1">
-                        <p className="text-label-sm text-text-tertiary">
+                        <p className="text-label-sm text-text-gray-tertiary">
                           Applicants
                         </p>
                         <div className="flex items-center">
@@ -221,24 +223,24 @@ export default function JobLists() {
                               <AvatarFallback>CN</AvatarFallback>
                             </Avatar>
                           ))}
-                          <Avatar className="-ml-1.5 size-6 bg-gray-200 border border-white text-xs">
+                          <Avatar className="-ml-1.5 size-6 bg-gray-200 border border-white text-body-xs">
                             <AvatarFallback>+7</AvatarFallback>
                           </Avatar>
                         </div>
                       </div>
-                      <div className="flex-1 pl-2 border-l border-border-secondary-alt space-y-spacing-2xs ">
-                        <p className="text-label-sm text-text-tertiary">
+                      <div className="flex-1 pl-2 border-l border-border-gray-secondary-alt space-y-spacing-2xs ">
+                        <p className="text-label-sm text-text-gray-tertiary">
                           Applied
                         </p>
-                        <p className=" text-body-sm font-body-sm-strong! text-text-secondary">
+                        <p className=" text-body-sm font-body-sm-strong! text-text-gray-secondary">
                           88
                         </p>
                       </div>
-                      <div className="flex-1 pl-2 border-l border-border-secondary-alt space-y-spacing-2xs">
-                        <p className="text-label-sm text-text-tertiary">
+                      <div className="flex-1 pl-2 border-l border-border-gray-secondary-alt space-y-spacing-2xs">
+                        <p className="text-label-sm text-text-gray-tertiary">
                           Posted
                         </p>
-                        <p className="text-body-sm font-body-sm-strong! text-text-secondary ">
+                        <p className="text-body-sm font-body-sm-strong! text-text-gray-secondary ">
                           2 hours ago
                         </p>
                       </div>
@@ -250,12 +252,12 @@ export default function JobLists() {
             <TabsContent value="archived-jobs"></TabsContent>
           </Tabs>
         </div>
-        <div className="bg-white rounded-xl p-spacing-4xl space-y-spacing-4xl border border-border-secondary shadow-xs h-fit">
+        <div className="bg-white rounded-xl p-spacing-4xl space-y-spacing-4xl border border-border-gray-secondary shadow-xs h-fit">
           <div className="space-y-spacing-3xs">
-            <h4 className="text-label-lg font-label-lg-strong! text-text-primary">
+            <h4 className="text-label-lg font-label-lg-strong! text-text-gray-primary">
               Profile Updated Applicants
             </h4>
-            <p className=" text-body-sm text-text-tertiary">
+            <p className=" text-body-sm text-text-gray-tertiary">
               See who recently updated their profile
             </p>
           </div>
@@ -264,11 +266,13 @@ export default function JobLists() {
               <span className=" flex py-spacing-2xs px-spacing-md rounded-lg bg-bg-brand-solid-primary border border-border-brand text-label-xs font-label-xs-strong! text-text-white">
                 All
               </span>
-              <span className=" flex py-spacing-2xs px-spacing-md rounded-lg bg-bg-primary text-label-xs font-label-xs-strong! text-text-tertiary border border-border-primary">
+              <span className=" flex py-spacing-2xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-xs font-label-xs-strong! text-text-gray-tertiary border border-border-primary">
                 Recent
               </span>
             </div>
-            <span className=" text-label-sm text-text-tertiary">See all</span>
+            <span className=" text-label-sm text-text-gray-tertiary">
+              See all
+            </span>
           </div>
           <div className=" space-y-spacing-2xl">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
@@ -285,12 +289,12 @@ export default function JobLists() {
                 </Avatar>
                 <div className=" space-y-spacing-3xs w-full">
                   <div className=" flex justify-between items-start font-[600px] gap-4 w-full">
-                    <p className="text-text-primary text-label-lg font-label-lg-strong!">
+                    <p className="text-text-gray-primary text-label-md font-label-md-strong!">
                       Annette Black
                     </p>
                     <ArrowRight className="w-5 h-5 text-fg-secondary" />
                   </div>
-                  <p className="text-label-sm text-text-tertiary">
+                  <p className="text-label-sm text-text-gray-tertiary">
                     Applied on 15 May 2020 9:30 am
                   </p>
                 </div>

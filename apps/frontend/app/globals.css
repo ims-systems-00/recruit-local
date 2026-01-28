@@ -73,6 +73,8 @@
   /* BACKGROUND */
   --color-bg-white: var(--colors-bg-white);
 
+  --color-primary-extra-ighter: #facfe5;
+
   --color-bg-gray-soft-primary: var(--colors-bg-gray-soft-primary);
   --color-bg-gray-soft-secondary: var(--colors-bg-gray-soft-secondary);
   --color-bg-gray-soft-tertiary: var(--colors-bg-gray-soft-tertiary);
@@ -418,7 +420,7 @@
 @layer utilities {
   /* ================= DISPLAY ================= */
   .text-display-sm {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-display-sm);
     line-height: var(--leading-display-sm);
     letter-spacing: var(--tracking-display-sm);
@@ -426,7 +428,7 @@
   }
 
   .text-display-lg {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-display-lg);
     line-height: var(--leading-display-lg);
     letter-spacing: var(--tracking-display-lg);
@@ -435,7 +437,7 @@
 
   /* ================= HEADING ================= */
   .text-heading-2xl {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-heading-2xl);
     line-height: var(--leading-heading-2xl);
     letter-spacing: var(--tracking-heading-2xl);
@@ -443,7 +445,7 @@
   }
 
   .text-heading-xl {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-heading-xl);
     line-height: var(--leading-heading-xl);
     letter-spacing: var(--tracking-heading-xl);
@@ -451,7 +453,7 @@
   }
 
   .text-heading-lg {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-heading-lg);
     line-height: var(--leading-heading-lg);
     letter-spacing: var(--tracking-heading-lg);
@@ -459,7 +461,7 @@
   }
 
   .text-heading-md {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-heading-md);
     line-height: var(--leading-heading-md);
     letter-spacing: var(--tracking-heading-md);
@@ -467,7 +469,7 @@
   }
 
   .text-heading-sm {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-heading-sm);
     line-height: var(--leading-heading-sm);
     letter-spacing: var(--tracking-heading-sm);
@@ -476,7 +478,7 @@
 
   /* ================= BODY ================= */
   .text-body-xl {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-body-xl);
     line-height: var(--leading-body-xl);
     letter-spacing: var(--tracking-body-xl);
@@ -484,7 +486,7 @@
   }
 
   .text-body-lg {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-body-lg);
     line-height: var(--leading-body-lg);
     letter-spacing: var(--tracking-body-lg);
@@ -492,7 +494,7 @@
   }
 
   .text-body-md {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-body-md);
     line-height: var(--leading-body-md);
     letter-spacing: var(--tracking-body-md);
@@ -500,7 +502,7 @@
   }
 
   .text-body-sm {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-body-sm);
     line-height: var(--leading-body-sm);
     letter-spacing: var(--tracking-body-sm);
@@ -508,7 +510,7 @@
   }
 
   .text-body-xs {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-body-xs);
     line-height: var(--leading-body-xs);
     letter-spacing: var(--tracking-body-xs);
@@ -517,7 +519,7 @@
 
   /* ================= LABEL ================= */
   .text-label-xl {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-label-xl);
     line-height: var(--leading-label-xl);
     letter-spacing: var(--tracking-label-xl);
@@ -525,7 +527,7 @@
   }
 
   .text-label-lg {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-label-lg);
     line-height: var(--leading-label-lg);
     letter-spacing: var(--tracking-label-lg);
@@ -533,7 +535,7 @@
   }
 
   .text-label-md {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-label-md);
     line-height: var(--leading-label-md);
     letter-spacing: var(--tracking-label-md);
@@ -541,7 +543,7 @@
   }
 
   .text-label-sm {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-label-sm);
     line-height: var(--leading-label-sm);
     letter-spacing: var(--tracking-label-sm);
@@ -549,7 +551,7 @@
   }
 
   .text-label-xs {
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
     font-size: var(--text-label-xs);
     line-height: var(--leading-label-xs);
     letter-spacing: var(--tracking-label-xs);
@@ -573,10 +575,10 @@
 
 @layer base {
   * {
-    @apply border-border-gray-primary outline-bg-brand-solid-primary font-inter;
+    @apply border-border-gray-primary outline-bg-brand-solid-primary font-poppins;
   }
   body {
-    @apply bg-bg-white text-text-gray-secondary font-inter;
+    @apply bg-bg-white text-text-gray-secondary font-poppins;
   }
 
   h1 {
