@@ -1,45 +1,17 @@
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import * as eventService from "./event.service";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  logger,
-  NotFoundException,
-  pick,
-  UnauthorizedException,
-} from "../../../common/helper";
-import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
-import { AbilityAction } from "@rl/types";
-import { roleScopedSecurityQuery } from "./event.query";
-import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
+import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 
 export const list = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Read, UserAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read users.`);
-  //   }
-
   const filter = new MongoQuery(req.query, {
-    searchFields: ["fullName"],
+    searchFields: ["title", "description", "location"],
   }).build();
 
-  const userSearchQuery = filter.getFilterQuery();
+  const query = filter.getFilterQuery();
   const options = filter.getQueryOptions();
-  //   const securityQuery = roleScopedSecurityQuery(ability);
 
-  //   const finalQuery = {
-  //     $and: [userSearchQuery, securityQuery],
-  //   };
-
-  const results = await eventService.list({
-    query: sanitizeQueryIds(userSearchQuery) as unknown,
-    options,
-  });
-
+  const results = await eventService.list({ query, options });
   const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
@@ -52,15 +24,9 @@ export const list = async ({ req }: ControllerParams) => {
 };
 
 export const get = async ({ req }: ControllerParams) => {
-  const event = await eventService.getOne(sanitizeQueryIds({ _id: req.params.id }));
-  if (!event) {
-    throw new NotFoundException(`Event ${req.params.id} not found.`);
-  }
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.Read, UserAuthZEntity, user)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read user ${req.params.id}.`);
-  //   }
+  const event = await eventService.getOne({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: `Event ${req.params.id} retrieved`,
@@ -70,62 +36,62 @@ export const get = async ({ req }: ControllerParams) => {
   });
 };
 
+export const listSoftDeleted = async ({ req }: ControllerParams) => {
+  const filter = new MongoQuery(req.query, {
+    searchFields: ["title", "description", "location"],
+  }).build();
+
+  const query = filter.getFilterQuery();
+  const options = filter.getQueryOptions();
+
+  const results = await eventService.listSoftDeleted({ query, options });
+  const { data, pagination } = formatListResponse(results);
+
+  return new ApiResponse({
+    message: "Soft deleted events retrieved",
+    statusCode: StatusCodes.OK,
+    data,
+    fieldName: "events",
+    pagination,
+  });
+};
+
+export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
+  const event = await eventService.getOneSoftDeleted({
+    query: { _id: req.params.id },
+  });
+
+  return new ApiResponse({
+    message: `Deleted event ${req.params.id} retrieved`,
+    statusCode: StatusCodes.OK,
+    data: event,
+    fieldName: "event",
+  });
+};
+
 export const create = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
+  const tenantId = req.session.tenantId;
 
-  //   if (!ability.can(AbilityAction.Create, UserAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create users.`);
-  //   }
-
-  const tenantId = req.session.tenantId!;
-  req.body.organizers?.push(tenantId);
+  if (tenantId) {
+    req.body.organizers = req.body.organizers || [];
+    req.body.organizers.push(tenantId);
+  }
 
   const event = await eventService.create(req.body);
 
   return new ApiResponse({
     message: "Event created",
     statusCode: StatusCodes.CREATED,
-    data: pick(event, [
-      "_id",
-      "title",
-      "type",
-      "description",
-      "location",
-      "capacity",
-      "status",
-      "mode",
-      "organizers",
-      "startDate",
-      "startTime",
-      "endDate",
-      "endTime",
-      "registrationEndDate",
-      "virtualEvent",
-      "bannerImageStorage",
-      "bannerImageSrc",
-      "createdAt",
-      "updatedAt",
-    ]),
+    data: event,
     fieldName: "event",
   });
 };
 
 export const update = async ({ req }: ControllerParams) => {
-  const event = await eventService.getOne(sanitizeQueryIds({ _id: req.params.id }));
-
-  if (!event) {
-    throw new NotFoundException(`Event ${req.params.id} not found.`);
-  }
-
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Update, UserAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to update users.`);
-  //   }
-
-  const updatedEvent = await eventService.update(req.params.id, req.body);
+  const updatedEvent = await eventService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: `Event ${req.params.id} updated.`,
@@ -136,69 +102,36 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  const event = await eventService.getOne({
-    ...sanitizeQueryIds({ _id: req.params.id }),
+  await eventService.softRemove({
+    query: { _id: req.params.id },
   });
 
-  if (!event) {
-    throw new NotFoundException(`Event ${req.params.id} not found.`);
-  }
-
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Delete, UserAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to delete users.`);
-  //   }
-
-  const deletedEvent = await eventService.softRemove(req.params.id);
-
   return new ApiResponse({
-    message: `Event ${req.params.id} deleted.`,
+    message: `Event ${req.params.id} moved to trash.`,
     statusCode: StatusCodes.OK,
-    data: deletedEvent,
-    fieldName: "event",
-  });
-};
-
-export const restore = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Update, UserAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to restore users.`);
-  //   }
-
-  const restoredEvent = await eventService.restore(req.params.id);
-
-  return new ApiResponse({
-    message: `Event ${req.params.id} restored.`,
-    statusCode: StatusCodes.OK,
-    data: restoredEvent,
-    fieldName: "event",
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  const event = await eventService.getOne(sanitizeQueryIds({ _id: req.params.id }));
-
-  if (!event) {
-    throw new NotFoundException(`Event ${req.params.id} not found.`);
-  }
-
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Delete, UserAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to hard delete users.`);
-  //   }
-
-  const deletedEvent = await eventService.hardRemove(req.params.id);
+  await eventService.hardRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
-    message: `Event ${req.params.id} hard deleted.`,
+    message: `Event ${req.params.id} permanently removed.`,
     statusCode: StatusCodes.OK,
-    data: deletedEvent,
+  });
+};
+
+export const restore = async ({ req }: ControllerParams) => {
+  const result = await eventService.restore({
+    query: { _id: req.params.id },
+  });
+
+  return new ApiResponse({
+    message: `Event ${req.params.id} restored.`,
+    statusCode: StatusCodes.OK,
+    data: result,
     fieldName: "event",
   });
 };
