@@ -35,9 +35,7 @@ export const getSoftDeletedOne = async (query = {}) => {
 };
 
 export const create = async (payload: EventRegistrationInput) => {
-  const event = await getAEvent({
-    ...sanitizeQueryIds({ _id: payload.eventId }),
-  });
+  const event = await getAEvent({ query: { _id: payload.eventId } });
 
   if (event.status !== EVENT_STATUS_ENUMS.UPCOMING && event.registrationEndDate < new Date()) {
     throw new Error(`Event ${event.title} is not open for registration.`);
