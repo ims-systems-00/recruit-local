@@ -1,6 +1,6 @@
 import express from "express";
 import { validate } from "../../../common/middlewares";
-import { list, get, create, update, softRemove, hardRemove, restore } from "./event-registration.controller";
+import { list, getOne, create, update, softRemove, hardRemove, restore } from "./event-registration.controller";
 import { handleController } from "../../../common/helper";
 import {
   createEventRegistrationBodySchema,
@@ -19,7 +19,7 @@ const validateQuery = validate("query");
 router.post("/", validateBody(createEventRegistrationBodySchema), handleController(create));
 router.get("/", validateQuery(eventRegistrationListQuerySchema), handleController(list));
 
-router.get("/:id", validateParams(idParamsSchema), handleController(get));
+router.get("/:id", validateParams(idParamsSchema), handleController(getOne));
 router.put(
   "/:id",
   validateParams(idParamsSchema),
