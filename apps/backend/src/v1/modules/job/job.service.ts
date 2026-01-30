@@ -1,9 +1,14 @@
 import { Job, IJobInput } from "../../../models";
 import { getTenant } from "../tenant/tenant.service";
 import { NotFoundException } from "../../../common/helper";
-import { IListParams } from "@rl/types";
+import { IListParams, ListQueryParams } from "@rl/types";
+import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
+import { jobProjectionQuery } from "./job.query";
 
 type IListJobParams = IListParams<IJobInput>;
+type IJobQueryParams = ListQueryParams<IJobInput>;
+
 type ICreateJobPayload = IJobInput & { autoFill?: boolean };
 type IUpdateJobPayload = Partial<IJobInput> & {
   autoFill?: boolean;
@@ -11,7 +16,6 @@ type IUpdateJobPayload = Partial<IJobInput> & {
 
 const _autoFill = async (tenantId: string) => {
   const tenant = await getTenant(tenantId);
-  // throw error that can't auto fill
   if (!tenant || !tenant.email || !tenant.phone || !tenant.description)
     throw new NotFoundException("Organization data not found for auto fill.");
 
@@ -23,79 +27,97 @@ const _autoFill = async (tenantId: string) => {
 };
 
 export const list = ({ query = {}, options }: IListJobParams) => {
-  return Job.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
+  return Job.aggregatePaginate(
+    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...jobProjectionQuery()],
+    options
+  );
 };
 
-export const getOne = async (id: string) => {
-  const job = await Job.findOneWithExcludeDeleted({ _id: id });
-  if (!job) throw new NotFoundException("Job not found.");
-  return job;
+export const getOne = async ({ query = {} }: IJobQueryParams) => {
+  const jobs = await Job.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...jobProjectionQuery(),
+  ]);
+  if (jobs.length === 0) throw new NotFoundException("Job not found.");
+  return jobs[0];
+};
+
+export const listSoftDeleted = async ({ query = {}, options }: IListJobParams) => {
+  return Job.aggregatePaginate(
+    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...jobProjectionQuery()],
+    options
+  );
+};
+
+export const getOneSoftDeleted = async ({ query = {} }: IListJobParams) => {
+  const jobs = await Job.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...onlyDeletedQuery(),
+    ...jobProjectionQuery(),
+  ]);
+  if (jobs.length === 0) throw new NotFoundException("Job not found in trash.");
+  return jobs[0];
 };
 
 export const create = async (payload: ICreateJobPayload) => {
-  // if no title Create a default title
+  // 1. Handle Default Title
   if (!payload.title) {
     const numberOfJobs = await Job.countDocuments({
       tenantId: payload.tenantId,
     });
     payload.title = `Untitled Job ${numberOfJobs + 1}`;
   }
+
+  // 2. Handle AutoFill
   if (payload.autoFill) {
     const autoFillData = await _autoFill(payload.tenantId!.toString());
     payload = { ...payload, ...autoFillData };
   }
+
   let job = new Job(payload);
   job = await job.save();
 
   return job;
 };
 
-export const update = async (id: string, payload: IUpdateJobPayload) => {
+export const update = async ({ query, payload }: { query: IJobQueryParams; payload: IUpdateJobPayload }) => {
   if (payload.autoFill) {
-    console.log("Auto filling job data...");
-    const job = await getOne(id);
+    const job = await getOne({ query });
     const autoFillData = await _autoFill(job.tenantId!.toString());
-    // also remove autoFill from payload to avoid overwriting again
+
     payload = { ...payload, ...autoFillData };
     delete payload.autoFill;
-    console.log("Auto fill data:", payload);
   }
-  const updatedJob = await Job.findOneAndUpdate(
-    { _id: id },
-    {
-      $set: { ...payload },
-    },
-    { new: true }
-  );
+
+  const updatedJob = await Job.findOneAndUpdate(sanitizeQueryIds(query), { $set: payload }, { new: true });
 
   if (!updatedJob) throw new NotFoundException("Job not found.");
   return updatedJob;
 };
-export const softRemove = async (id: string) => {
-  const job = await getOne(id);
-  const { deleted } = await Job.softDelete({ _id: id });
 
-  return { job, deleted };
+export const softRemove = async ({ query }: { query: IJobQueryParams }) => {
+  const { deleted } = await Job.softDelete(sanitizeQueryIds(query));
+  if (!deleted) throw new NotFoundException("Job not found to delete.");
+  return { deleted };
 };
 
-export const hardRemove = async (id: string) => {
-  const job = await getOne(id);
-  await Job.findOneAndDelete({ _id: id });
-
-  return job;
+export const hardRemove = async ({ query }: { query: IJobQueryParams }) => {
+  const deletedJob = await Job.findOneAndDelete(sanitizeQueryIds(query));
+  if (!deletedJob) throw new NotFoundException("Job not found to delete.");
+  return deletedJob;
 };
 
-export const restore = async (id: string) => {
-  const { restored } = await Job.restore({ _id: id });
+export const restore = async ({ query }: { query: IJobQueryParams }) => {
+  const { restored } = await Job.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Job not found in trash.");
-
-  const job = await getOne(id);
-
-  return { job, restored };
+  return { restored };
 };
 
-export const post = async (id: string) => {
-  const job = await getOne(id);
+export const post = async ({ query }: { query: IJobQueryParams }) => {
+  const job = await getOne({ query });
+  if (!job) throw new NotFoundException("Job not found.");
+
   job.status = "Posted";
   await job.save();
   return job;

@@ -1,8 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
-import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
-import { AbilityAction, ACCOUNT_TYPE_ENUMS } from "@rl/types";
+import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 import * as interestService from "./interest.service";
 
 export const list = async ({ req }: ControllerParams) => {
@@ -12,12 +10,6 @@ export const list = async ({ req }: ControllerParams) => {
 
   const query = filter.getFilterQuery();
   const options = filter.getQueryOptions();
-
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Read, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} interests.`
-  //     );
 
   const results = await interestService.list({ query, options });
   const { data, pagination } = formatListResponse(results);
@@ -31,14 +23,10 @@ export const list = async ({ req }: ControllerParams) => {
   });
 };
 
-export const get = async ({ req }: ControllerParams) => {
-  const interest = await interestService.getOne(req.params.id);
-
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Read, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} interest.`
-  //     );
+export const getOne = async ({ req }: ControllerParams) => {
+  const interest = await interestService.getOne({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Interest retrieved.",
@@ -48,13 +36,61 @@ export const get = async ({ req }: ControllerParams) => {
   });
 };
 
+export const listSoftDeleted = async ({ req }: ControllerParams) => {
+  const filter = new MongoQuery(req.query, {
+    searchFields: ["name", "description"],
+  }).build();
+
+  const query = filter.getFilterQuery();
+  const options = filter.getQueryOptions();
+
+  const results = await interestService.listSoftDeleted({ query, options });
+  const { data, pagination } = formatListResponse(results);
+
+  return new ApiResponse({
+    message: "Soft deleted interests retrieved",
+    statusCode: StatusCodes.OK,
+    data,
+    fieldName: "interests",
+    pagination,
+  });
+};
+
+export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
+  const interest = await interestService.getOneSoftDeleted({
+    query: { _id: req.params.id },
+  });
+
+  return new ApiResponse({
+    message: "Deleted interest retrieved.",
+    statusCode: StatusCodes.OK,
+    data: interest,
+    fieldName: "interest",
+  });
+};
+
+export const create = async ({ req }: ControllerParams) => {
+  const userId = req.session.user?._id;
+
+  const interest = await interestService.create({
+    ...req.body,
+    userId: userId!,
+  });
+
+  return new ApiResponse({
+    message: "Interest created.",
+    statusCode: StatusCodes.CREATED,
+    data: interest,
+    fieldName: "interest",
+  });
+};
+
 export const update = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Update, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} interest.`
-  //     );
-  const interest = await interestService.update(req.params.id, req.body);
+  const interest = await interestService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
+
   return new ApiResponse({
     message: "Interest updated.",
     statusCode: StatusCodes.OK,
@@ -63,66 +99,37 @@ export const update = async ({ req }: ControllerParams) => {
   });
 };
 
-export const create = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Create, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} interest.`
-  //     );
-  const userId = req.session.user?._id;
-
-  const interest = await interestService.create({
-    ...req.body,
-    userId: userId!,
-  });
-  return new ApiResponse({
-    message: "Interest created.",
-    statusCode: StatusCodes.CREATED,
-    data: interest,
-    fieldName: "interest",
-  });
-};
 export const softRemove = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Delete, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} interest.`
-  //     );
-  const { interest, deleted } = await interestService.softRemove(req.params.id);
+  await interestService.softRemove({
+    query: { _id: req.params.id },
+  });
+
   return new ApiResponse({
-    message: "Interest soft deleted.",
+    message: "Interest moved to trash.",
     statusCode: StatusCodes.OK,
-    data: { interest, deleted },
-    fieldName: "interest",
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Delete, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} interest.`
-  //     );
-  const interest = await interestService.hardRemove(req.params.id);
+  await interestService.hardRemove({
+    query: { _id: req.params.id },
+  });
+
   return new ApiResponse({
-    message: "Interest hard deleted.",
+    message: "Interest permanently deleted.",
     statusCode: StatusCodes.OK,
-    data: interest,
-    fieldName: "interest",
   });
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Update, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} interest.`
-  //     );
-  const { interest, restored } = await interestService.restore(req.params.id);
+  const result = await interestService.restore({
+    query: { _id: req.params.id },
+  });
+
   return new ApiResponse({
     message: "Interest restored.",
     statusCode: StatusCodes.OK,
-    data: { interest, restored },
+    data: result,
     fieldName: "interest",
   });
 };

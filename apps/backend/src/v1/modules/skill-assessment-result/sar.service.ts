@@ -1,6 +1,6 @@
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery } from "../../../common/query";
-import { IListParams } from "@rl/types";
+import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import { IListParams, ListQueryParams } from "@rl/types";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { withTransaction } from "../../../common/helper/database-transaction";
 import { skillAssessmentResultQuery } from "./sar.query";
@@ -8,59 +8,66 @@ import { IQuestion, ISkillAssessmentResultInput, SkillAssessmentResult } from ".
 import * as skillAssessmentService from "../skill-assessment/skill-assessment.service";
 import { QUESTION_TYPE_ENUM } from "@rl/types";
 
-type IListSkillAssessmentResultParams = IListParams<ISkillAssessmentResultInput>;
+type IListSARParams = IListParams<ISkillAssessmentResultInput>;
+type ISARQueryParams = ListQueryParams<ISkillAssessmentResultInput>;
 
-export const list = ({ query = {}, options }: IListSkillAssessmentResultParams) => {
+export const list = ({ query = {}, options }: IListSARParams) => {
   return SkillAssessmentResult.aggregatePaginate(
-    [...matchQuery(query), ...excludeDeletedQuery(), ...skillAssessmentResultQuery()],
+    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...skillAssessmentResultQuery()],
     options
   );
 };
 
-export const listWithSoftDeleted = ({ query = {}, options }: IListSkillAssessmentResultParams) => {
-  return SkillAssessmentResult.aggregatePaginate([...matchQuery(query), ...skillAssessmentResultQuery()], options);
-};
-
-export const getOne = async (query = {}) => {
-  const skillAssessmentResult = await SkillAssessmentResult.aggregate([
-    ...matchQuery(query),
+export const getOne = async ({ query = {} }: IListSARParams) => {
+  const results = await SkillAssessmentResult.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...skillAssessmentResultQuery(),
   ]);
-  if (skillAssessmentResult.length === 0) throw new NotFoundException("Skill Assessment Result not found.");
-  return skillAssessmentResult[0];
+  if (results.length === 0) throw new NotFoundException("Skill Assessment Result not found.");
+  return results[0];
 };
 
-export const getSoftDeletedOne = async (query = {}) => {
-  const skillAssessmentResult = await SkillAssessmentResult.aggregate([
-    ...matchQuery(query),
+export const listSoftDeleted = async ({ query = {}, options }: IListSARParams) => {
+  return SkillAssessmentResult.aggregatePaginate(
+    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...skillAssessmentResultQuery()],
+    options
+  );
+};
+
+export const getOneSoftDeleted = async ({ query = {} }: IListSARParams) => {
+  const results = await SkillAssessmentResult.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...onlyDeletedQuery(),
     ...skillAssessmentResultQuery(),
   ]);
-  if (skillAssessmentResult.length === 0) throw new NotFoundException("Skill Assessment Result not found in trash.");
-  return skillAssessmentResult[0];
+  if (results.length === 0) throw new NotFoundException("Skill Assessment Result not found in trash.");
+  return results[0];
 };
 
 export const create = async (payload: ISkillAssessmentResultInput) => {
   return withTransaction<ISkillAssessmentResultInput>(async (session) => {
-    // todo: probably move the scoring logic to a queue worker later recommendation and result could be compute intensive
     const skillAssessment = await skillAssessmentService.getOne({
-      ...sanitizeQueryIds({ _id: payload.skillAssessmentId }),
+      query: { _id: payload.skillAssessmentId },
     });
 
     let totalScore = 0;
-    // only count the questions that belong to the assessment
+
+    // Only count questions that belong to this assessment
     skillAssessment.questions.forEach((question: IQuestion & { _id: string }) => {
       const qaPair = payload.answers.find(
         (ans: { questionId: string; answer: string }) => ans.questionId === question._id.toString()
       );
+
       if (qaPair) {
         let isCorrect = false;
+
         if (question.type === QUESTION_TYPE_ENUM.MULTIPLE_CHOICE || question.type === QUESTION_TYPE_ENUM.TRUE_FALSE) {
           if (qaPair.selectedOptionIndex === question.correctOptionIndex) {
             isCorrect = true;
           }
         } else if (question.type === QUESTION_TYPE_ENUM.SHORT_ANSWER) {
-          // For short answer, we can implement a more complex logic later
+          // Placeholder for short answer logic
           isCorrect = false;
         }
 
@@ -72,13 +79,13 @@ export const create = async (payload: ISkillAssessmentResultInput) => {
 
     payload.score = totalScore;
     payload.totalPossibleScore = skillAssessment.questions.reduce(
-      (acc, question: IQuestion) => acc + question.points,
+      (acc: number, question: IQuestion) => acc + question.points,
       0
     );
 
-    // generate recommendations based on score percentage
     const scorePercentage = (payload.score / (payload.totalPossibleScore || 1)) * 100;
     const recommendations: string[] = [];
+
     if (scorePercentage >= 80) {
       recommendations.push("Excellent performance! You have a strong understanding of the material.");
     } else if (scorePercentage >= 50) {
@@ -95,39 +102,36 @@ export const create = async (payload: ISkillAssessmentResultInput) => {
   });
 };
 
-export const update = async (id: string, payload: Partial<ISkillAssessmentResultInput>) => {
-  const updatedSkillAssessmentResult = await SkillAssessmentResult.findOneAndUpdate(
-    { _id: id },
-    {
-      $set: { ...payload },
-    },
+export const update = async ({
+  query,
+  payload,
+}: {
+  query: ISARQueryParams;
+  payload: Partial<ISkillAssessmentResultInput>;
+}) => {
+  const updatedResult = await SkillAssessmentResult.findOneAndUpdate(
+    sanitizeQueryIds(query),
+    { $set: payload },
     { new: true }
   );
-  if (!updatedSkillAssessmentResult) throw new NotFoundException("Skill Assessment Result not found.");
-  return updatedSkillAssessmentResult;
+  if (!updatedResult) throw new NotFoundException("Skill Assessment Result not found.");
+  return updatedResult;
 };
 
-export const softRemove = async (id: string) => {
-  const deletedSkillAssessmentResult = await SkillAssessmentResult.findOneAndUpdate(
-    { _id: id },
-    { $set: { deletedAt: new Date() } },
-    { new: true }
-  );
-  if (!deletedSkillAssessmentResult) throw new NotFoundException("Skill Assessment Result not found.");
-  return deletedSkillAssessmentResult;
+export const softRemove = async ({ query }: { query: ISARQueryParams }) => {
+  const { deleted } = await SkillAssessmentResult.softDelete(sanitizeQueryIds(query));
+  if (!deleted) throw new NotFoundException("Skill Assessment Result not found to delete.");
+  return { deleted };
 };
 
-export const restore = async (id: string) => {
-  const restoredSkillAssessmentResult = await SkillAssessmentResult.findOneAndUpdate(
-    { _id: id },
-    { $set: { deletedAt: null } },
-    { new: true }
-  );
-  if (!restoredSkillAssessmentResult) throw new NotFoundException("Skill Assessment Result not found in trash.");
-  return restoredSkillAssessmentResult;
+export const hardRemove = async ({ query }: { query: ISARQueryParams }) => {
+  const deletedResult = await SkillAssessmentResult.findOneAndDelete(sanitizeQueryIds(query));
+  if (!deletedResult) throw new NotFoundException("Skill Assessment Result not found to delete.");
+  return deletedResult;
 };
 
-export const hardRemove = async (id: string) => {
-  const skillAssessmentResult = await SkillAssessmentResult.findOneAndDelete({ _id: id });
-  return skillAssessmentResult;
+export const restore = async ({ query }: { query: ISARQueryParams }) => {
+  const { restored } = await SkillAssessmentResult.restore(sanitizeQueryIds(query));
+  if (!restored) throw new NotFoundException("Skill Assessment Result not found in trash.");
+  return { restored };
 };

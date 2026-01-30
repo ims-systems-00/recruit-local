@@ -1,45 +1,17 @@
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  logger,
-  NotFoundException,
-  pick,
-  UnauthorizedException,
-} from "../../../common/helper";
-import { UserAbilityBuilder, EventRegistrationAuthZEntity } from "@rl/authz";
-import { AbilityAction } from "@rl/types";
-import { roleScopedSecurityQuery } from "../../../common/query";
-import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
+import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 import * as statusService from "./status.service";
 
 export const list = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Read, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read skill assessment results.`);
-  //   }
-
   const filter = new MongoQuery(req.query, {
-    searchFields: ["label"],
+    searchFields: ["label", "value"], // Added 'value' as a likely search field
   }).build();
 
-  const userSearchQuery = filter.getFilterQuery();
+  const query = filter.getFilterQuery();
   const options = filter.getQueryOptions();
-  //   const securityQuery = roleScopedSecurityQuery(EventRegistrationAuthZEntity, ability);
 
-  const finalQuery = {
-    $and: [userSearchQuery /*securityQuery*/],
-  };
-
-  const results = await statusService.list({
-    query: sanitizeQueryIds(finalQuery) as unknown,
-    options,
-  });
-
+  const results = await statusService.list({ query, options });
   const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
@@ -52,16 +24,9 @@ export const list = async ({ req }: ControllerParams) => {
 };
 
 export const get = async ({ req }: ControllerParams) => {
-  const status = await statusService.getOne(sanitizeQueryIds({ _id: req.params.id }));
-  if (!status) {
-    throw new NotFoundException(`Status ${req.params.id} not found.`);
-  }
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Read, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read skill assessment results.`);
-  //   }
+  const status = await statusService.getOne({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Status retrieved.",
@@ -71,14 +36,40 @@ export const get = async ({ req }: ControllerParams) => {
   });
 };
 
+export const listSoftDeleted = async ({ req }: ControllerParams) => {
+  const filter = new MongoQuery(req.query, {
+    searchFields: ["label", "value"],
+  }).build();
+
+  const query = filter.getFilterQuery();
+  const options = filter.getQueryOptions();
+
+  const results = await statusService.listSoftDeleted({ query, options });
+  const { data, pagination } = formatListResponse(results);
+
+  return new ApiResponse({
+    message: "Soft deleted statuses retrieved",
+    statusCode: StatusCodes.OK,
+    data,
+    fieldName: "statuses",
+    pagination,
+  });
+};
+
+export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
+  const status = await statusService.getOneSoftDeleted({
+    query: { _id: req.params.id },
+  });
+
+  return new ApiResponse({
+    message: "Deleted status retrieved",
+    statusCode: StatusCodes.OK,
+    data: status,
+    fieldName: "status",
+  });
+};
+
 export const create = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Create, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create skill assessment results.`);
-  //   }
-
   const status = await statusService.create(req.body);
 
   return new ApiResponse({
@@ -90,14 +81,10 @@ export const create = async ({ req }: ControllerParams) => {
 };
 
 export const update = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Update, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to update skill assessment results.`);
-  //   }
-
-  const status = await statusService.update(sanitizeQueryIds({ _id: req.params.id }), req.body);
+  const status = await statusService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Status updated.",
@@ -108,51 +95,36 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Delete, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to delete skill assessment results.`);
-  //   }
-
-  await statusService.softRemove(sanitizeQueryIds({ _id: req.params.id }));
+  await statusService.softRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
-    message: "Status deleted.",
+    message: "Status moved to trash.",
+    statusCode: StatusCodes.OK,
+  });
+};
+
+export const hardRemove = async ({ req }: ControllerParams) => {
+  await statusService.hardRemove({
+    query: { _id: req.params.id },
+  });
+
+  return new ApiResponse({
+    message: "Status permanently deleted.",
     statusCode: StatusCodes.OK,
   });
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Restore, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to restore skill assessment results.`);
-  //   }
-
-  const status = await statusService.restore(sanitizeQueryIds({ _id: req.params.id }));
+  const result = await statusService.restore({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Status restored from trash.",
     statusCode: StatusCodes.OK,
-    data: status,
+    data: result,
     fieldName: "status",
-  });
-};
-
-export const hardRemove = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.ForceDelete, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to permanently delete skill assessment results.`);
-  //   }
-
-  await statusService.hardRemove(sanitizeQueryIds({ _id: req.params.id }));
-
-  return new ApiResponse({
-    message: "Status permanently deleted.",
-    statusCode: StatusCodes.OK,
   });
 };
