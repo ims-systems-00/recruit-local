@@ -40,7 +40,7 @@
 
   --color-border-brand-primary: var(--colors-border-brand-primary);
   --color-border-brand-secondary: var(--colors-border-brand-secondary);
-  --color-border-brand_alt: var(--colors-border-brand_alt);
+  --color-border-brand_alt: var(--colors-border-brand-alt);
 
   --color-border-error-primary: var(--colors-border-error-primary);
   --color-border-error-secondary: var(--colors-border-error-secondary);
@@ -385,25 +385,9 @@
   /* Focus Rings (using tokens) */
   /* ========================= */
   --shadow-focus-ring-brand: var(--effect-styles-focus-ring-brand);
-  --shadow-focus-ring-brand-inner: var(--effect-styles-focus-ring-brand-inner);
 
   --shadow-focus-ring-error: var(--effect-styles-focus-ring-error);
   --shadow-focus-ring-error-inner: var(--effect-styles-focus-ring-error-inner);
-
-  /* FOCUS RING – WITH SHADOW */
-  --shadow-focus-ring-brand-shadow-xs: var(
-    --effect-styles-focus-ring-brand-shadow-xs
-  );
-  --shadow-focus-ring-brand-shadow-sm: var(
-    --effect-styles-focus-ring-brand-shadow-sm
-  );
-
-  --shadow-focus-ring-error-shadow-xs: var(
-    --effect-styles-focus-ring-error-shadow-xs
-  );
-  --shadow-focus-ring-brand-error-sm: var(
-    --effect-styles-focus-ring-brand-error-sm
-  );
 
   /* ========================= */
   /* Backdrop Blur (using token) */

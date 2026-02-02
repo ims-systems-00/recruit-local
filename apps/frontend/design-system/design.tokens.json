@@ -4351,14 +4351,14 @@
         "$extensions": {
           "mode": {
             "light": "{theme.brand-200}",
-            "dark": "{semantics.gray.400}"
+            "dark": "{theme.brand-400}"
           }
         }
       },
       "white": {
         "$type": "color",
         "$value": "{semantics.base.white}",
-        "$description": "Always remains white, regardless of light or dark mode settings.",
+        "$description": "Always white, regardless of light or dark mode.",
         "$extensions": {
           "mode": {
             "light": "{semantics.base.white}",
@@ -4524,12 +4524,12 @@
       },
       "gray-tertiary": {
         "$type": "color",
-        "$value": "#00000014",
+        "$value": "#0000001a",
         "$description": "Transparent border",
         "$extensions": {
           "mode": {
-            "light": "#00000014",
-            "dark": "#ffffff14"
+            "light": "#0000001a",
+            "dark": "#ffffff1a"
           }
         }
       },
@@ -4599,10 +4599,10 @@
           }
         }
       },
-      "brand_alt": {
+      "brand-alt": {
         "$type": "color",
         "$value": "{theme.brand-alt}",
-        "$description": "Useful for active states alternatively with border-brand.",
+        "$description": "Useful for alternatively with brand",
         "$extensions": {
           "mode": {
             "light": "{theme.brand-alt}",
@@ -4815,7 +4815,7 @@
       "gray-soft-quaternary": {
         "$type": "color",
         "$value": "{semantics.gray.200}",
-        "$description": "toggles, sliders and progress bars",
+        "$description": "Component specific",
         "$extensions": {
           "mode": {
             "light": "{semantics.gray.200}",
@@ -5244,17 +5244,6 @@
             "mode": {
               "light": "{semantics.error.300}",
               "dark": "{semantics.error.700}"
-            }
-          }
-        },
-        "teriary": {
-          "$type": "color",
-          "$value": "#0a0d120d",
-          "$description": "",
-          "$extensions": {
-            "mode": {
-              "light": "#0a0d120d",
-              "dark": "#ffffff0d"
             }
           }
         }
@@ -6579,74 +6568,6 @@
         "spread": {
           "$type": "dimension",
           "$value": "4px",
-          "$description": "",
-          "$extensions": {
-            "mode": {}
-          }
-        }
-      },
-      "tertiary": {
-        "x": {
-          "$type": "dimension",
-          "$value": "0px",
-          "$description": "",
-          "$extensions": {
-            "mode": {}
-          }
-        },
-        "y": {
-          "$type": "dimension",
-          "$value": "1px",
-          "$description": "",
-          "$extensions": {
-            "mode": {}
-          }
-        },
-        "blur": {
-          "$type": "dimension",
-          "$value": "2px",
-          "$description": "",
-          "$extensions": {
-            "mode": {}
-          }
-        },
-        "spread": {
-          "$type": "dimension",
-          "$value": "0px",
-          "$description": "",
-          "$extensions": {
-            "mode": {}
-          }
-        }
-      },
-      "quaterly": {
-        "x": {
-          "$type": "dimension",
-          "$value": "0px",
-          "$description": "",
-          "$extensions": {
-            "mode": {}
-          }
-        },
-        "y": {
-          "$type": "dimension",
-          "$value": "1px",
-          "$description": "",
-          "$extensions": {
-            "mode": {}
-          }
-        },
-        "blur": {
-          "$type": "dimension",
-          "$value": "3px",
-          "$description": "",
-          "$extensions": {
-            "mode": {}
-          }
-        },
-        "spread": {
-          "$type": "dimension",
-          "$value": "0px",
           "$description": "",
           "$extensions": {
             "mode": {}
@@ -8199,27 +8120,6 @@
           }
         ]
       },
-      "Brand-inner": {
-        "$type": "shadow",
-        "$value": [
-          {
-            "inset": true,
-            "color": "{colors.effects.focus_ring.secondary_brand}",
-            "offsetX": "{effects.focus_ring.secondary.x}",
-            "offsetY": "{effects.focus_ring.secondary.y}",
-            "blur": "0px",
-            "spread": "{effects.focus_ring.secondary.spread}"
-          },
-          {
-            "inset": true,
-            "color": "{colors.effects.focus_ring.primary}",
-            "offsetX": "{effects.focus_ring.primary.x}",
-            "offsetY": "{effects.focus_ring.primary.y}",
-            "blur": "0px",
-            "spread": "{effects.focus_ring.primary.spread}"
-          }
-        ]
-      },
       "Error": {
         "$type": "shadow",
         "$value": [
@@ -8233,6 +8133,27 @@
           },
           {
             "inset": false,
+            "color": "{colors.effects.focus_ring.primary}",
+            "offsetX": "{effects.focus_ring.primary.x}",
+            "offsetY": "{effects.focus_ring.primary.y}",
+            "blur": "0px",
+            "spread": "{effects.focus_ring.primary.spread}"
+          }
+        ]
+      },
+      "Brand-inner": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "inset": true,
+            "color": "{colors.effects.focus_ring.secondary_brand}",
+            "offsetX": "{effects.focus_ring.secondary.x}",
+            "offsetY": "{effects.focus_ring.secondary.y}",
+            "blur": "0px",
+            "spread": "{effects.focus_ring.secondary.spread}"
+          },
+          {
+            "inset": true,
             "color": "{colors.effects.focus_ring.primary}",
             "offsetX": "{effects.focus_ring.primary.x}",
             "offsetY": "{effects.focus_ring.primary.y}",
@@ -8259,138 +8180,6 @@
             "offsetY": "{effects.focus_ring.primary.y}",
             "blur": "0px",
             "spread": "{effects.focus_ring.primary.spread}"
-          }
-        ]
-      },
-      "Brand-shadow-xs": {
-        "$type": "shadow",
-        "$value": [
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.secondary_brand}",
-            "offsetX": "{effects.focus_ring.secondary.x}",
-            "offsetY": "{effects.focus_ring.secondary.y}",
-            "blur": "0px",
-            "spread": "{effects.focus_ring.secondary.spread}"
-          },
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.primary}",
-            "offsetX": "{effects.focus_ring.primary.x}",
-            "offsetY": "{effects.focus_ring.primary.y}",
-            "blur": "0px",
-            "spread": "{effects.focus_ring.primary.spread}"
-          },
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.teriary}",
-            "offsetX": "{effects.focus_ring.tertiary.x}",
-            "offsetY": "{effects.focus_ring.tertiary.y}",
-            "blur": "2px",
-            "spread": "{effects.focus_ring.tertiary.spread}"
-          }
-        ]
-      },
-      "Brand-shadow-sm": {
-        "$type": "shadow",
-        "$value": [
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.secondary_brand}",
-            "offsetX": "{effects.focus_ring.secondary.x}",
-            "offsetY": "{effects.focus_ring.secondary.y}",
-            "blur": "0px",
-            "spread": "{effects.focus_ring.secondary.spread}"
-          },
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.primary}",
-            "offsetX": "{effects.focus_ring.primary.x}",
-            "offsetY": "{effects.focus_ring.primary.y}",
-            "blur": "0px",
-            "spread": "{effects.focus_ring.primary.spread}"
-          },
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.teriary}",
-            "offsetX": "{effects.focus_ring.tertiary.x}",
-            "offsetY": "{effects.focus_ring.tertiary.y}",
-            "blur": "2px",
-            "spread": "{effects.focus_ring.tertiary.spread}"
-          },
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.teriary}",
-            "offsetX": "{effects.focus_ring.quaterly.x}",
-            "offsetY": "{effects.focus_ring.quaterly.y}",
-            "blur": "3px",
-            "spread": "{effects.focus_ring.quaterly.spread}"
-          }
-        ]
-      },
-      "Error-shadow-xs": {
-        "$type": "shadow",
-        "$value": [
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.secondary_error}",
-            "offsetX": "{effects.focus_ring.secondary.x}",
-            "offsetY": "{effects.focus_ring.secondary.y}",
-            "blur": "0px",
-            "spread": "{effects.focus_ring.secondary.spread}"
-          },
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.primary}",
-            "offsetX": "{effects.focus_ring.primary.x}",
-            "offsetY": "{effects.focus_ring.primary.y}",
-            "blur": "0px",
-            "spread": "{effects.focus_ring.primary.spread}"
-          },
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.teriary}",
-            "offsetX": "{effects.focus_ring.tertiary.x}",
-            "offsetY": "{effects.focus_ring.tertiary.y}",
-            "blur": "2px",
-            "spread": "{effects.focus_ring.tertiary.spread}"
-          }
-        ]
-      },
-      "Brand-error-sm": {
-        "$type": "shadow",
-        "$value": [
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.secondary_error}",
-            "offsetX": "{effects.focus_ring.secondary.x}",
-            "offsetY": "{effects.focus_ring.secondary.y}",
-            "blur": "0px",
-            "spread": "{effects.focus_ring.secondary.spread}"
-          },
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.primary}",
-            "offsetX": "{effects.focus_ring.primary.x}",
-            "offsetY": "{effects.focus_ring.primary.y}",
-            "blur": "0px",
-            "spread": "{effects.focus_ring.primary.spread}"
-          },
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.teriary}",
-            "offsetX": "{effects.focus_ring.tertiary.x}",
-            "offsetY": "{effects.focus_ring.tertiary.y}",
-            "blur": "2px",
-            "spread": "{effects.focus_ring.tertiary.spread}"
-          },
-          {
-            "inset": false,
-            "color": "{colors.effects.focus_ring.teriary}",
-            "offsetX": "{effects.focus_ring.quaterly.x}",
-            "offsetY": "{effects.focus_ring.quaterly.y}",
-            "blur": "3px",
-            "spread": "{effects.focus_ring.quaterly.spread}"
           }
         ]
       }
@@ -8441,7 +8230,7 @@
         "font",
         "sizes"
       ],
-      "createdAt": "2026-01-26T10:09:33.957Z"
+      "createdAt": "2026-01-30T20:13:00.679Z"
     }
   }
 }

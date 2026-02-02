@@ -116,7 +116,7 @@ ${darkVars.map((v) => `  ${v}`).join('\n')}
    * Style Dictionary config
    */
   const myStyleDictionary = new StyleDictionary({
-    source: ['design-system/final.tokens.json'],
+    source: ['design-system/design.tokens.json'],
     platforms: {
       css: {
         transformGroup: 'css',
