@@ -1,45 +1,17 @@
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  logger,
-  NotFoundException,
-  pick,
-  UnauthorizedException,
-} from "../../../common/helper";
-import { UserAbilityBuilder, EventRegistrationAuthZEntity } from "@rl/authz";
-import { AbilityAction } from "@rl/types";
-import { roleScopedSecurityQuery } from "../../../common/query";
-import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
+import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 import * as skillAssessmentResultService from "./sar.service";
 
 export const list = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Read, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read skill assessment results.`);
-  //   }
-
   const filter = new MongoQuery(req.query, {
-    searchFields: ["assessmentName", "candidateName"],
+    searchFields: ["score", "recommendations"], // Adjusted search fields
   }).build();
 
-  const userSearchQuery = filter.getFilterQuery();
+  const query = filter.getFilterQuery();
   const options = filter.getQueryOptions();
-  //   const securityQuery = roleScopedSecurityQuery(EventRegistrationAuthZEntity, ability);
 
-  const finalQuery = {
-    $and: [userSearchQuery /*securityQuery*/],
-  };
-
-  const results = await skillAssessmentResultService.list({
-    query: sanitizeQueryIds(finalQuery) as unknown,
-    options,
-  });
-
+  const results = await skillAssessmentResultService.list({ query, options });
   const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
@@ -51,17 +23,10 @@ export const list = async ({ req }: ControllerParams) => {
   });
 };
 
-export const get = async ({ req }: ControllerParams) => {
-  const skillAssessmentResult = await skillAssessmentResultService.getOne(sanitizeQueryIds({ _id: req.params.id }));
-  if (!skillAssessmentResult) {
-    throw new NotFoundException(`Skill assessment result ${req.params.id} not found.`);
-  }
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Read, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read skill assessment results.`);
-  //   }
+export const getOne = async ({ req }: ControllerParams) => {
+  const skillAssessmentResult = await skillAssessmentResultService.getOne({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Skill assessment result retrieved",
@@ -71,16 +36,44 @@ export const get = async ({ req }: ControllerParams) => {
   });
 };
 
-export const create = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.Create, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create skill assessment results.`);
-  //   }
+export const listSoftDeleted = async ({ req }: ControllerParams) => {
+  const filter = new MongoQuery(req.query, {
+    searchFields: ["score", "recommendations"],
+  }).build();
 
-  // todo: Get job profile id from req.session later
+  const query = filter.getFilterQuery();
+  const options = filter.getQueryOptions();
+
+  const results = await skillAssessmentResultService.listSoftDeleted({ query, options });
+  const { data, pagination } = formatListResponse(results);
+
+  return new ApiResponse({
+    message: "Soft deleted skill assessment results retrieved",
+    statusCode: StatusCodes.OK,
+    data,
+    fieldName: "skillAssessmentResults",
+    pagination,
+  });
+};
+
+export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
+  const skillAssessmentResult = await skillAssessmentResultService.getOneSoftDeleted({
+    query: { _id: req.params.id },
+  });
+
+  return new ApiResponse({
+    message: "Deleted skill assessment result retrieved",
+    statusCode: StatusCodes.OK,
+    data: skillAssessmentResult,
+    fieldName: "skillAssessmentResult",
+  });
+};
+
+export const create = async ({ req }: ControllerParams) => {
+  // TODO: Retrieve job profile ID or user context from session if needed
 
   const skillAssessmentResult = await skillAssessmentResultService.create(req.body);
+
   return new ApiResponse({
     message: "Skill assessment result created",
     statusCode: StatusCodes.CREATED,
@@ -90,12 +83,10 @@ export const create = async ({ req }: ControllerParams) => {
 };
 
 export const update = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.Update, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to update skill assessment results.`);
-  //   }
-  const updatedSkillAssessmentResult = await skillAssessmentResultService.update(req.params.id, req.body);
+  const updatedSkillAssessmentResult = await skillAssessmentResultService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Skill assessment result updated",
@@ -106,52 +97,36 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.Delete, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to delete skill assessment results.`);
-  //   }
-
-  const deletedSkillAssessmentResult = await skillAssessmentResultService.softRemove(req.params.id);
+  await skillAssessmentResultService.softRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Skill assessment result moved to trash",
     statusCode: StatusCodes.OK,
-    data: deletedSkillAssessmentResult,
-    fieldName: "skillAssessmentResult",
+  });
+};
+
+export const hardRemove = async ({ req }: ControllerParams) => {
+  await skillAssessmentResultService.hardRemove({
+    query: { _id: req.params.id },
+  });
+
+  return new ApiResponse({
+    message: "Skill assessment result permanently deleted",
+    statusCode: StatusCodes.OK,
   });
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.Restore, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to restore skill assessment results.`);
-  //   }
-
-  const restoredSkillAssessmentResult = await skillAssessmentResultService.restore(req.params.id);
+  const restoredSkillAssessmentResult = await skillAssessmentResultService.restore({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Skill assessment result restored from trash",
     statusCode: StatusCodes.OK,
     data: restoredSkillAssessmentResult,
-    fieldName: "skillAssessmentResult",
-  });
-};
-
-export const hardRemove = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.ForceDelete, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to permanently delete skill assessment results.`);
-  //   }
-
-  const hardDeletedSkillAssessmentResult = await skillAssessmentResultService.hardRemove(req.params.id);
-
-  return new ApiResponse({
-    message: "Skill assessment result permanently deleted",
-    statusCode: StatusCodes.OK,
-    data: hardDeletedSkillAssessmentResult,
     fieldName: "skillAssessmentResult",
   });
 };

@@ -1,42 +1,18 @@
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  logger,
-  NotFoundException,
-  pick,
-  UnauthorizedException,
-} from "../../../common/helper";
-import { UserAbilityBuilder, EventRegistrationAuthZEntity } from "@rl/authz";
-import { AbilityAction } from "@rl/types";
-import { roleScopedSecurityQuery } from "../../../common/query";
-import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import * as eventService from "./event-registration.service";
+import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
+import * as eventRegistrationService from "./event-registration.service";
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 
 export const list = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Read, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read event registrations.`);
-  //   }
-
   const filter = new MongoQuery(req.query, {
-    searchFields: ["eventName", "registrantName"],
+    searchFields: ["status"],
   }).build();
 
-  const userSearchQuery = filter.getFilterQuery();
+  const query = filter.getFilterQuery();
   const options = filter.getQueryOptions();
-  //   const securityQuery = roleScopedSecurityQuery(EventRegistrationAuthZEntity, ability);
 
-  const finalQuery = {
-    $and: [userSearchQuery /*securityQuery*/],
-  };
-
-  const results = await eventService.list({
-    query: sanitizeQueryIds(finalQuery) as unknown,
+  const results = await eventRegistrationService.list({
+    query,
     options,
   });
 
@@ -51,17 +27,10 @@ export const list = async ({ req }: ControllerParams) => {
   });
 };
 
-export const get = async ({ req }: ControllerParams) => {
-  const eventRegistration = await eventService.getOne(sanitizeQueryIds({ _id: req.params.id }));
-  if (!eventRegistration) {
-    throw new NotFoundException(`Event registration ${req.params.id} not found.`);
-  }
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Read, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read event registrations.`);
-  //   }
+export const getOne = async ({ req }: ControllerParams) => {
+  const eventRegistration = await eventRegistrationService.getOne({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Event registration retrieved",
@@ -71,16 +40,48 @@ export const get = async ({ req }: ControllerParams) => {
   });
 };
 
-export const create = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
+export const listSoftDeleted = async ({ req }: ControllerParams) => {
+  const filter = new MongoQuery(req.query, {
+    searchFields: ["status"],
+  }).build();
 
-  //   if (!ability.can(AbilityAction.Create, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create event registrations.`);
-  //   }
+  const query = filter.getFilterQuery();
+  const options = filter.getQueryOptions();
+
+  const results = await eventRegistrationService.listSoftDeleted({
+    query,
+    options,
+  });
+
+  const { data, pagination } = formatListResponse(results);
+
+  return new ApiResponse({
+    message: "Soft deleted event registrations retrieved",
+    statusCode: StatusCodes.OK,
+    data,
+    fieldName: "eventRegistrations",
+    pagination,
+  });
+};
+
+export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
+  const eventRegistration = await eventRegistrationService.getOneSoftDeleted({
+    query: { _id: req.params.id },
+  });
+
+  return new ApiResponse({
+    message: "Deleted event registration retrieved",
+    statusCode: StatusCodes.OK,
+    data: eventRegistration,
+    fieldName: "eventRegistration",
+  });
+};
+
+export const create = async ({ req }: ControllerParams) => {
   const userId = req.session.user?._id;
   req.body.userId = userId;
-  const createdEventRegistration = await eventService.create(req.body);
+
+  const createdEventRegistration = await eventRegistrationService.create(req.body);
 
   return new ApiResponse({
     message: "Event registration created",
@@ -91,14 +92,10 @@ export const create = async ({ req }: ControllerParams) => {
 };
 
 export const update = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Update, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to update event registrations.`);
-  //   }
-
-  const updatedEventRegistration = await eventService.update(req.params.id, req.body);
+  const updatedEventRegistration = await eventRegistrationService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Event registration updated",
@@ -109,50 +106,31 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Delete, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to delete event registrations.`);
-  //   }
-
-  const deletedEventRegistration = await eventService.softRemove(req.params.id);
+  await eventRegistrationService.softRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
-    message: "Event registration deleted",
+    message: "Event registration moved to trash",
     statusCode: StatusCodes.OK,
-    data: deletedEventRegistration,
-    fieldName: "eventRegistration",
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Delete, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to hard delete event registrations.`);
-  //   }
-
-  const deletedEventRegistration = await eventService.hardRemove(req.params.id);
+  await eventRegistrationService.hardRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Event registration permanently deleted",
     statusCode: StatusCodes.OK,
-    data: deletedEventRegistration,
-    fieldName: "eventRegistration",
   });
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-
-  //   if (!ability.can(AbilityAction.Update, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to restore event registrations.`);
-  //   }
-
-  const restoredEventRegistration = await eventService.restore(req.params.id);
+  const restoredEventRegistration = await eventRegistrationService.restore({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Event registration restored",

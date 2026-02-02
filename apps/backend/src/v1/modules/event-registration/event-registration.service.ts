@@ -1,75 +1,92 @@
-import { EVENT_STATUS_ENUMS, IListParams } from "@rl/types";
+import { EVENT_STATUS_ENUMS, IListParams, ListQueryParams } from "@rl/types";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery } from "../../../common/query";
+import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { eventRegistrationProjectionQuery } from "./event-registration.query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { EventRegistrationInput, EventRegistration } from "../../../models";
 import { getOne as getAEvent } from "../event/event.service";
 
 type IListEventRegistrationParams = IListParams<EventRegistrationInput>;
+type IEventRegistrationQueryParams = ListQueryParams<EventRegistrationInput>;
 
 export const list = ({ query = {}, options }: IListEventRegistrationParams) => {
   return EventRegistration.aggregatePaginate(
-    [...matchQuery(query), ...excludeDeletedQuery(), ...eventRegistrationProjectionQuery()],
+    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...eventRegistrationProjectionQuery()],
     options
   );
 };
 
-export const getOne = async (query = {}) => {
-  const eventRegistration = await EventRegistration.aggregate([
-    ...matchQuery(query),
+export const getOne = async ({ query = {} }: IListEventRegistrationParams) => {
+  const eventRegistrations = await EventRegistration.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...eventRegistrationProjectionQuery(),
   ]);
-  if (eventRegistration.length === 0) throw new NotFoundException("Event Registration not found.");
-  return eventRegistration[0];
+  if (eventRegistrations.length === 0) throw new NotFoundException("Event Registration not found.");
+  return eventRegistrations[0];
 };
 
-export const getSoftDeletedOne = async (query = {}) => {
-  const eventRegistration = await EventRegistration.aggregate([
-    ...matchQuery(query),
+export const listSoftDeleted = async ({ query = {}, options }: IListEventRegistrationParams) => {
+  return EventRegistration.aggregatePaginate(
+    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...eventRegistrationProjectionQuery()],
+    options
+  );
+};
+
+export const getOneSoftDeleted = async ({ query = {} }: IListEventRegistrationParams) => {
+  const eventRegistrations = await EventRegistration.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...onlyDeletedQuery(),
     ...eventRegistrationProjectionQuery(),
   ]);
-  if (eventRegistration.length === 0) throw new NotFoundException("Event Registration not found in trash.");
-  return eventRegistration[0];
+  if (eventRegistrations.length === 0) throw new NotFoundException("Event Registration not found in trash.");
+  return eventRegistrations[0];
 };
 
 export const create = async (payload: EventRegistrationInput) => {
+  // Uses the standardized signature from your Event service
   const event = await getAEvent({ query: { _id: payload.eventId } });
 
-  if (event.status !== EVENT_STATUS_ENUMS.UPCOMING && event.registrationEndDate < new Date()) {
+  // Ensure date comparison is safe
+  if (event.status !== EVENT_STATUS_ENUMS.UPCOMING && new Date(event.registrationEndDate) < new Date()) {
     throw new Error(`Event ${event.title} is not open for registration.`);
   }
 
   let eventRegistration = new EventRegistration(payload);
   eventRegistration = await eventRegistration.save();
-
   return eventRegistration;
 };
 
-export const update = async (id: string, payload: Partial<EventRegistrationInput>) => {
+export const update = async ({
+  query,
+  payload,
+}: {
+  query: IEventRegistrationQueryParams;
+  payload: Partial<EventRegistrationInput>;
+}) => {
   const updatedEventRegistration = await EventRegistration.findOneAndUpdate(
-    { _id: id },
-    {
-      $set: { ...payload },
-    },
+    sanitizeQueryIds(query),
+    { $set: payload },
     { new: true }
   );
   if (!updatedEventRegistration) throw new NotFoundException("Event Registration not found.");
   return updatedEventRegistration;
 };
 
-export const softRemove = async (id: string) => {
-  const { deleted } = await EventRegistration.softDelete({ _id: id });
+export const softRemove = async ({ query }: { query: IEventRegistrationQueryParams }) => {
+  const { deleted } = await EventRegistration.softDelete(sanitizeQueryIds(query));
+  if (!deleted) throw new NotFoundException("Event Registration not found to delete.");
   return { deleted };
 };
 
-export const hardRemove = async (id: string) => {
-  const eventRegistration = await EventRegistration.findOneAndDelete({ _id: id });
-  return eventRegistration;
+export const hardRemove = async ({ query }: { query: IEventRegistrationQueryParams }) => {
+  const deletedRegistration = await EventRegistration.findOneAndDelete(sanitizeQueryIds(query));
+  if (!deletedRegistration) throw new NotFoundException("Event Registration not found to delete.");
+  return deletedRegistration;
 };
 
-export const restore = async (id: string) => {
-  const { restored } = await EventRegistration.restore({ ...sanitizeQueryIds({ _id: id }) });
-  return restored;
+export const restore = async ({ query }: { query: IEventRegistrationQueryParams }) => {
+  const { restored } = await EventRegistration.restore(sanitizeQueryIds(query));
+  if (!restored) throw new NotFoundException("Event Registration not found in trash.");
+  return { restored };
 };

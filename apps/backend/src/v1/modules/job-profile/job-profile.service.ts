@@ -1,30 +1,64 @@
-import { IListJobProfileParams } from "./job-profile.interface";
+import { IListParams, ListQueryParams } from "@rl/types";
 import { JobProfile, JobProfileInput } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
+import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
+// Assuming this query file exists following your pattern
+import { jobProfileProjectQuery } from "./job-profile.query";
+
+type IListJobProfileParams = IListParams<JobProfileInput>;
+type IJobProfileQueryParams = ListQueryParams<JobProfileInput>;
 
 export const list = ({ query = {}, options }: IListJobProfileParams) => {
-  return JobProfile.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 } });
+  return JobProfile.aggregatePaginate(
+    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...jobProfileProjectQuery()],
+    options
+  );
 };
 
-export const getOne = async (id: string) => {
-  const jobProfile = await JobProfile.findOneWithExcludeDeleted({ _id: id });
-  if (!jobProfile) throw new NotFoundException("Job Profile not found.");
-  return jobProfile;
+export const getOne = async ({ query = {} }: IListJobProfileParams) => {
+  const jobProfiles = await JobProfile.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...jobProfileProjectQuery(),
+  ]);
+  if (jobProfiles.length === 0) throw new NotFoundException("Job Profile not found.");
+  return jobProfiles[0];
+};
+
+export const listSoftDeleted = async ({ query = {}, options }: IListJobProfileParams) => {
+  return JobProfile.aggregatePaginate(
+    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...jobProfileProjectQuery()],
+    options
+  );
+};
+
+export const getOneSoftDeleted = async ({ query = {} }: IListJobProfileParams) => {
+  const jobProfiles = await JobProfile.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...onlyDeletedQuery(),
+    ...jobProfileProjectQuery(),
+  ]);
+  if (jobProfiles.length === 0) throw new NotFoundException("Job Profile not found in trash.");
+  return jobProfiles[0];
 };
 
 export const create = async (payload: JobProfileInput) => {
   let jobProfile = new JobProfile(payload);
   jobProfile = await jobProfile.save();
-
   return jobProfile;
 };
 
-export const update = async (id: string, payload: Partial<JobProfileInput>) => {
+export const update = async ({
+  query,
+  payload,
+}: {
+  query: IJobProfileQueryParams;
+  payload: Partial<JobProfileInput>;
+}) => {
   const updatedJobProfile = await JobProfile.findOneAndUpdate(
-    { _id: id },
-    {
-      $set: { ...payload },
-    },
+    sanitizeQueryIds(query),
+    { $set: payload },
     { new: true }
   );
 
@@ -32,25 +66,20 @@ export const update = async (id: string, payload: Partial<JobProfileInput>) => {
   return updatedJobProfile;
 };
 
-export const softRemove = async (id: string) => {
-  const jobProfile = await getOne(id);
-  const { deleted } = await JobProfile.softDelete({ _id: id });
-
-  return { jobProfile, deleted };
+export const softRemove = async ({ query }: { query: IJobProfileQueryParams }) => {
+  const { deleted } = await JobProfile.softDelete(sanitizeQueryIds(query));
+  if (!deleted) throw new NotFoundException("Job Profile not found to delete.");
+  return { deleted };
 };
 
-export const hardRemove = async (id: string) => {
-  const jobProfile = await getOne(id);
-  await JobProfile.findOneAndDelete({ _id: id });
-
-  return jobProfile;
+export const hardRemove = async ({ query }: { query: IJobProfileQueryParams }) => {
+  const deletedJobProfile = await JobProfile.findOneAndDelete(sanitizeQueryIds(query));
+  if (!deletedJobProfile) throw new NotFoundException("Job Profile not found to delete.");
+  return deletedJobProfile;
 };
 
-export const restore = async (id: string) => {
-  const { restored } = await JobProfile.restore({ _id: id });
+export const restore = async ({ query }: { query: IJobProfileQueryParams }) => {
+  const { restored } = await JobProfile.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Job Profile not found in trash.");
-
-  const jobProfile = await getOne(id);
-
-  return { jobProfile, restored };
+  return { restored };
 };

@@ -3,7 +3,7 @@ import { validate } from "../../../common/middlewares";
 import { handleController } from "../../../common/helper";
 import { idParamsSchema } from "../user/user.validation";
 import { createSarBodySchema, updateSarBodySchema, sarListQuerySchema } from "./sar.validation";
-import { list, get, create, update, softRemove, hardRemove, restore } from "./sar.controller";
+import { list, getOne, create, update, softRemove, hardRemove, restore } from "./sar.controller";
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ const validateQuery = validate("query");
 router.post("/", validateBody(createSarBodySchema), handleController(create));
 router.get("/", validateQuery(sarListQuerySchema), handleController(list));
 
-router.get("/:id", validateParams(idParamsSchema), handleController(get));
+router.get("/:id", validateParams(idParamsSchema), handleController(getOne));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateSarBodySchema), handleController(update));
 
 router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemove));
