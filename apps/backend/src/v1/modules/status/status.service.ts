@@ -1,26 +1,24 @@
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
-import { IListParams } from "@rl/types";
+import { IListParams, ListQueryParams } from "@rl/types";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { withTransaction } from "../../../common/helper/database-transaction";
 import { statusProjectionQuery } from "./status.query";
 import { IStatusDoc, IStatusInput, Status } from "../../../models";
 
 type IStatusListParams = IListParams<IStatusInput>;
-type IStatusQueryParams = Partial<IStatusInput & { _id: string }>;
+type IStatusQueryParams = ListQueryParams<IStatusInput>;
 
 export const list = ({ query = {}, options }: IStatusListParams) => {
-  const sanitizedQuery = sanitizeQueryIds(query);
   return Status.aggregatePaginate(
-    [...matchQuery(sanitizedQuery), ...excludeDeletedQuery(), ...statusProjectionQuery()],
+    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...statusProjectionQuery()],
     options
   );
 };
 
-export const getOne = async (query = {}): Promise<IStatusDoc> => {
-  const sanitizedQuery = sanitizeQueryIds(query);
+export const getOne = async ({ query = {} }: IStatusQueryParams): Promise<IStatusDoc> => {
   const status = await Status.aggregate([
-    ...matchQuery(sanitizedQuery),
+    ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...statusProjectionQuery(),
   ]);
@@ -28,20 +26,16 @@ export const getOne = async (query = {}): Promise<IStatusDoc> => {
   return status[0];
 };
 
-export const listSoftDeleted = async (query = {}) => {
-  const sanitizedQuery = sanitizeQueryIds(query);
-  const status = await Status.aggregate([
-    ...matchQuery(sanitizedQuery),
-    ...onlyDeletedQuery(),
-    ...statusProjectionQuery(),
-  ]);
-  return status;
+export const listSoftDeleted = async ({ query = {}, options }: IStatusListParams) => {
+  return Status.aggregatePaginate(
+    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...statusProjectionQuery()],
+    options
+  );
 };
 
-export const getOneSoftDeleted = async (query = {}) => {
-  const sanitizedQuery = sanitizeQueryIds(query);
+export const getOneSoftDeleted = async ({ query = {} }: IStatusListParams) => {
   const status = await Status.aggregate([
-    ...matchQuery(sanitizedQuery),
+    ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...statusProjectionQuery(),
   ]);
@@ -49,37 +43,34 @@ export const getOneSoftDeleted = async (query = {}) => {
   return status[0];
 };
 
-export const create = async (data: IStatusInput) => {
-  const status = new Status(data);
-  await status.save();
+export const create = async (payload: IStatusInput) => {
+  let status = new Status(payload);
+  status = await status.save();
   return status;
 };
 
-export const update = async (query: IStatusQueryParams, data: Partial<IStatusInput>) => {
-  const sanitizedQuery = sanitizeQueryIds(query);
-  const status = await Status.findOneAndUpdate(sanitizedQuery, data, { new: true });
-  if (!status) throw new NotFoundException("Status not found for update.");
-  return status;
+export const update = async ({ query, payload }: { query: IStatusQueryParams; payload: Partial<IStatusInput> }) => {
+  const updatedStatus = await Status.findOneAndUpdate(sanitizeQueryIds(query), { $set: payload }, { new: true });
+  if (!updatedStatus) throw new NotFoundException("Status not found for update.");
+  return updatedStatus;
 };
 
-export const softRemove = async (query: IStatusQueryParams) => {
-  const sanitizedQuery = sanitizeQueryIds(query);
-  const status = await Status.softDelete(sanitizedQuery);
-  if (!status) throw new NotFoundException("Status not found for delete.");
-  return status;
+export const softRemove = async ({ query }: { query: IStatusQueryParams }) => {
+  const { deleted } = await Status.softDelete(sanitizeQueryIds(query));
+  if (!deleted) throw new NotFoundException("Status not found to delete.");
+  return { deleted };
 };
 
-export const restore = async (query: IStatusQueryParams) => {
-  const sanitizedQuery = sanitizeQueryIds(query);
-  const status = await Status.restore(sanitizedQuery);
-  if (!status) throw new NotFoundException("Status not found for restore.");
-  return status;
+export const restore = async ({ query }: { query: IStatusQueryParams }) => {
+  const { restored } = await Status.restore(sanitizeQueryIds(query));
+  if (!restored) throw new NotFoundException("Status not found in trash.");
+  return { restored };
 };
 
-export const hardRemove = async (query: IStatusQueryParams) => {
+export const hardRemove = async ({ query }: { query: IStatusQueryParams }) => {
+  // Transaction isn't strictly necessary for a single atomic delete, but keeping it if you prefer safety
   return withTransaction(async (session) => {
-    const sanitizedQuery = sanitizeQueryIds(query);
-    const status = await Status.findOneAndDelete(sanitizedQuery).session(session);
+    const status = await Status.findOneAndDelete(sanitizeQueryIds(query)).session(session);
     if (!status) throw new NotFoundException("Status not found for hard delete.");
     return status;
   });

@@ -1,40 +1,18 @@
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  logger,
-  NotFoundException,
-  pick,
-  UnauthorizedException,
-} from "../../../common/helper";
-import { UserAbilityBuilder, EventRegistrationAuthZEntity } from "@rl/authz";
-import { AbilityAction } from "@rl/types";
-import { roleScopedSecurityQuery } from "../../../common/query";
-import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
+import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 import * as favouriteService from "./favourite.service";
 
 export const list = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.Read, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read event registrations.`);
-  //   }
   const filter = new MongoQuery(req.query, {
-    searchFields: ["feedback"],
+    searchFields: [],
   }).build();
 
-  const userSearchQuery = filter.getFilterQuery();
+  const query = filter.getFilterQuery();
   const options = filter.getQueryOptions();
-  //   const securityQuery = roleScopedSecurityQuery(EventRegistrationAuthZEntity, ability);
-
-  const finalQuery = {
-    $and: [userSearchQuery /*securityQuery*/],
-  };
 
   const results = await favouriteService.list({
-    query: sanitizeQueryIds(finalQuery) as unknown,
+    query,
     options,
   });
 
@@ -50,15 +28,9 @@ export const list = async ({ req }: ControllerParams) => {
 };
 
 export const get = async ({ req }: ControllerParams) => {
-  const favourite = await favouriteService.getOne(sanitizeQueryIds({ _id: req.params.id }));
-  if (!favourite) {
-    throw new NotFoundException(`Favourite ${req.params.id} not found.`);
-  }
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.Read, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read event registrations.`);
-  //   }
+  const favourite = await favouriteService.getOne({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Favourite retrieved",
@@ -68,18 +40,50 @@ export const get = async ({ req }: ControllerParams) => {
   });
 };
 
-export const create = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.Create, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create event registrations.`);
-  //   }
+export const listSoftDeleted = async ({ req }: ControllerParams) => {
+  const filter = new MongoQuery(req.query, {
+    searchFields: ["feedback"],
+  }).build();
 
+  const query = filter.getFilterQuery();
+  const options = filter.getQueryOptions();
+
+  const results = await favouriteService.listSoftDeleted({
+    query,
+    options,
+  });
+
+  const { data, pagination } = formatListResponse(results);
+
+  return new ApiResponse({
+    message: "Soft deleted favourites retrieved",
+    statusCode: StatusCodes.OK,
+    data,
+    fieldName: "favourites",
+    pagination,
+  });
+};
+
+export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
+  const favourite = await favouriteService.getOneSoftDeleted({
+    query: { _id: req.params.id },
+  });
+
+  return new ApiResponse({
+    message: "Deleted favourite retrieved",
+    statusCode: StatusCodes.OK,
+    data: favourite,
+    fieldName: "favourite",
+  });
+};
+
+export const create = async ({ req }: ControllerParams) => {
   const userId = req.session.user?._id;
   req.body.userId = userId;
 
-  // todo: check if favourite already exists for the user and item, if also item exists
+  // TODO: Add check if favourite already exists for the user/item here or in service
   const favourite = await favouriteService.create(req.body);
+
   return new ApiResponse({
     message: "Favourite created",
     statusCode: StatusCodes.CREATED,
@@ -89,16 +93,10 @@ export const create = async ({ req }: ControllerParams) => {
 };
 
 export const update = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.Update, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to update event registrations.`);
-  //   }
-
-  const updatedFavourite = await favouriteService.update(req.params.id, req.body);
-  if (!updatedFavourite) {
-    throw new NotFoundException(`Favourite ${req.params.id} not found.`);
-  }
+  const updatedFavourite = await favouriteService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Favourite updated",
@@ -109,56 +107,31 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.Delete, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to delete event registrations.`);
-  //   }
-
-  const deletedFavourite = await favouriteService.softRemove(req.params.id);
-  if (!deletedFavourite) {
-    throw new NotFoundException(`Favourite ${req.params.id} not found.`);
-  }
+  await favouriteService.softRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
-    message: "Favourite deleted",
+    message: "Favourite moved to trash",
     statusCode: StatusCodes.OK,
-    data: deletedFavourite,
-    fieldName: "favourite",
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.Delete, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to delete event registrations.`);
-  //   }
-
-  const deletedFavourite = await favouriteService.hardRemove(req.params.id);
-  if (!deletedFavourite) {
-    throw new NotFoundException(`Favourite ${req.params.id} not found.`);
-  }
+  await favouriteService.hardRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Favourite permanently deleted",
     statusCode: StatusCodes.OK,
-    data: deletedFavourite,
-    fieldName: "favourite",
   });
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
-  //   if (!ability.can(AbilityAction.Update, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to restore event registrations.`);
-  //   }
-
-  const restoredFavourite = await favouriteService.restore(req.params.id);
-  if (!restoredFavourite) {
-    throw new NotFoundException(`Favourite ${req.params.id} not found.`);
-  }
+  const restoredFavourite = await favouriteService.restore({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Favourite restored",

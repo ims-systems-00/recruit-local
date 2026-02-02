@@ -1,8 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
-import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
-import { AbilityAction, ACCOUNT_TYPE_ENUMS } from "@rl/types";
+import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 import * as experienceService from "./experience.service";
 
 export const list = async ({ req }: ControllerParams) => {
@@ -12,12 +10,6 @@ export const list = async ({ req }: ControllerParams) => {
 
   const query = filter.getFilterQuery();
   const options = filter.getQueryOptions();
-
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Read, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} experiences.`
-  //     );
 
   const results = await experienceService.list({ query, options });
   const { data, pagination } = formatListResponse(results);
@@ -32,13 +24,9 @@ export const list = async ({ req }: ControllerParams) => {
 };
 
 export const get = async ({ req }: ControllerParams) => {
-  const experience = await experienceService.getOne(req.params.id);
-
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Read, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} experience.`
-  //     );
+  const experience = await experienceService.getOne({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Experience retrieved.",
@@ -48,17 +36,33 @@ export const get = async ({ req }: ControllerParams) => {
   });
 };
 
-export const update = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Update, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} experience.`
-  //     );
+export const listSoftDeleted = async ({ req }: ControllerParams) => {
+  const filter = new MongoQuery(req.query, {
+    searchFields: ["company", "position", "responsibilities"],
+  }).build();
 
-  const experience = await experienceService.update(req.params.id, req.body);
+  const query = filter.getFilterQuery();
+  const options = filter.getQueryOptions();
+
+  const results = await experienceService.listSoftDeleted({ query, options });
+  const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
-    message: "Experience updated.",
+    message: "Soft deleted experiences retrieved",
+    statusCode: StatusCodes.OK,
+    data,
+    fieldName: "experiences",
+    pagination,
+  });
+};
+
+export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
+  const experience = await experienceService.getOneSoftDeleted({
+    query: { _id: req.params.id },
+  });
+
+  return new ApiResponse({
+    message: "Deleted experience retrieved.",
     statusCode: StatusCodes.OK,
     data: experience,
     fieldName: "experience",
@@ -66,11 +70,6 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const create = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Create, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} experience.`
-  //     );
   const userId = req.session.user?._id;
 
   const experience = await experienceService.create({
@@ -86,47 +85,51 @@ export const create = async ({ req }: ControllerParams) => {
   });
 };
 
-export const softRemove = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Delete, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} experience.`
-  //     );
-
-  await experienceService.softRemove(req.params.id);
+export const update = async ({ req }: ControllerParams) => {
+  const experience = await experienceService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
 
   return new ApiResponse({
-    message: "Experience removed successfully.",
+    message: "Experience updated.",
     statusCode: StatusCodes.OK,
+    data: experience,
+    fieldName: "experience",
   });
 };
 
-export const restore = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Restore, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Restore} experience.`
-  //     );
-
-  await experienceService.restore(req.params.id);
+export const softRemove = async ({ req }: ControllerParams) => {
+  await experienceService.softRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
-    message: "Experience restored successfully.",
+    message: "Experience moved to trash.",
     statusCode: StatusCodes.OK,
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Delete, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} experience.`
-  //     );
-
-  await experienceService.hardRemove(req.params.id);
+  await experienceService.hardRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Experience permanently deleted successfully.",
     statusCode: StatusCodes.OK,
+  });
+};
+
+export const restore = async ({ req }: ControllerParams) => {
+  const result = await experienceService.restore({
+    query: { _id: req.params.id },
+  });
+
+  return new ApiResponse({
+    message: "Experience restored successfully.",
+    statusCode: StatusCodes.OK,
+    data: result,
+    fieldName: "experience",
   });
 };

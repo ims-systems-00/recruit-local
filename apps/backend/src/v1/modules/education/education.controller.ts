@@ -33,7 +33,9 @@ export const list = async ({ req }: ControllerParams) => {
 };
 
 export const get = async ({ req }: ControllerParams) => {
-  const education = await educationService.getOne(req.params.id);
+  const education = await educationService.getOne({
+    query: { _id: req.params.id },
+  });
 
   //   const ability = new UserAbilityBuilder(req.session);
   //   if (!ability.getAbility().can(AbilityAction.Read, UserAuthZEntity))
@@ -56,7 +58,10 @@ export const update = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} education.`
   //     );
 
-  const education = await educationService.update(req.params.id, req.body);
+  const education = await educationService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Education updated successfully.",
@@ -91,7 +96,9 @@ export const softRemove = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} education.`
   //     );
 
-  await educationService.softRemove(req.params.id);
+  await educationService.softRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Education removed successfully.",
@@ -106,7 +113,9 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} education.`
   //     );
 
-  await educationService.hardRemove(req.params.id);
+  await educationService.hardRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Education permanently removed.",
@@ -121,7 +130,9 @@ export const restore = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} education.`
   //     );
 
-  const education = await educationService.restore(req.params.id);
+  const education = await educationService.restore({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Education restored successfully.",

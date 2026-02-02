@@ -53,7 +53,9 @@ export const getOneSoftDeleted = async (query: IApplicationQueryParams) => {
 
 export const create = async (payload: ApplicationInput) => {
   // check if job exists
-  const job = await jobService.getOne(payload.jobId.toString());
+  const job = await jobService.getOne({
+    query: { _id: payload.jobId! },
+  });
   // check if boardId and statusId are valid if exists
   const board = await boardService.getOne({
     collectionId: job._id,
@@ -65,7 +67,9 @@ export const create = async (payload: ApplicationInput) => {
   payload.statusId = board.columnOrder[0] as any;
 
   // get the status
-  const status = await statusService.getOne({ _id: payload.statusId! });
+  const status = await statusService.getOne({
+    query: { _id: payload.statusId },
+  });
 
   // create a random number 1 - 10
   const merit = Math.floor(Math.random() * 10) + 1;
