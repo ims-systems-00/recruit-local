@@ -8,7 +8,7 @@ type ModelName = (typeof modelNames)[keyof typeof modelNames];
 
 export interface IStatusInput {
   collectionName: ModelName;
-  collectionId: Schema.Types.ObjectId;
+  collectionId?: Schema.Types.ObjectId;
   label: string;
   weight?: number;
 }
@@ -24,7 +24,7 @@ interface IStatusModel
 const statusSchema = new Schema<IStatusDoc>(
   {
     collectionName: { type: String, required: true, enum: Object.values(modelNames) },
-    collectionId: { type: Schema.Types.ObjectId, required: true, refPath: "collectionName" },
+    collectionId: { type: Schema.Types.ObjectId, required: false, refPath: "collectionName" },
     label: { type: String, required: true },
     weight: { type: Number, default: 0 },
   },
