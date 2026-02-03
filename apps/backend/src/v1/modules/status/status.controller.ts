@@ -5,7 +5,7 @@ import * as statusService from "./status.service";
 
 export const list = async ({ req }: ControllerParams) => {
   const filter = new MongoQuery(req.query, {
-    searchFields: ["label", "value"], // Added 'value' as a likely search field
+    searchFields: ["label", "value"],
   }).build();
 
   const query = filter.getFilterQuery();

@@ -11,25 +11,37 @@ type IActionQueryParams = Partial<IActionInput & { _id: string }>;
 
 export const list = ({ query = {}, options }: IActionListParams) => {
   return Action.aggregatePaginate(
-    [...matchQuery(query), ...excludeDeletedQuery(), ...actionProjectionQuery()],
+    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...actionProjectionQuery()],
     options
   );
 };
 
 export const getOne = async (query = {}) => {
-  const action = await Action.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...actionProjectionQuery()]);
+  const action = await Action.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...actionProjectionQuery(),
+  ]);
   if (action.length === 0) throw new NotFoundException("Action not found.");
   return action[0];
 };
 
 export const listSoftDeleted = async (query = {}) => {
-  const action = await Action.aggregate([...matchQuery(query), ...onlyDeletedQuery(), ...actionProjectionQuery()]);
+  const action = await Action.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...onlyDeletedQuery(),
+    ...actionProjectionQuery(),
+  ]);
   if (action.length === 0) throw new NotFoundException("Action not found in trash.");
   return action[0];
 };
 
 export const getOneSoftDeleted = async (query = {}) => {
-  const action = await Action.aggregate([...matchQuery(query), ...onlyDeletedQuery(), ...actionProjectionQuery()]);
+  const action = await Action.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...onlyDeletedQuery(),
+    ...actionProjectionQuery(),
+  ]);
   if (action.length === 0) throw new NotFoundException("Action not found in trash.");
   return action[0];
 };

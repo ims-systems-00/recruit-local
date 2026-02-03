@@ -1,6 +1,5 @@
 import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
-import { APPLICATION_STATUS_ENUM } from "@rl/types";
 
 const awsStorageSchema = Joi.object({
   Name: Joi.string().required().label("Name"),
@@ -22,10 +21,7 @@ export const createBodySchema = Joi.object({
 });
 
 export const updateBodySchema = Joi.object({
-  status: Joi.string()
-    .valid(...Object.values(APPLICATION_STATUS_ENUM))
-    .optional()
-    .label("Status"),
+  statusId: Joi.string().custom(objectIdValidation).required().label("Status"),
 
   coverLetter: Joi.string().optional().allow("").label("Cover Letter"),
 
@@ -37,10 +33,7 @@ export const updateBodySchema = Joi.object({
 });
 
 export const statusUpdateBodySchema = Joi.object({
-  status: Joi.string()
-    .valid(...Object.values(APPLICATION_STATUS_ENUM))
-    .required()
-    .label("Status"),
+  statusId: Joi.string().custom(objectIdValidation).required().label("Status"),
 });
 
 export const idParamsSchema = Joi.object({
