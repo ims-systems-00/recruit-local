@@ -98,7 +98,10 @@ export default function Login() {
 
               <div className=" flex justify-between items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Checkbox id="remember_me" />
+                  <Checkbox
+                    id="remember_me"
+                    className=" data-[state=checked]:bg-bg-brand-solid-primary data-[state=checked]:text-text-white data-[state=checked]:border-bg-brand-solid-primary"
+                  />
                   <Label htmlFor="remember_me">Remember me</Label>
                 </div>
                 <Link href="/forget-password" className="text-primary text-sm">

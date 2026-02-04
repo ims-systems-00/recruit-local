@@ -199,7 +199,7 @@ export default function SignUpForm() {
                     id="agreed"
                     checked={field.value}
                     onCheckedChange={field.onChange}
-                    className="w-4 h-4 rounded-xs shadow-none border border-border"
+                    className="w-4 h-4 rounded-xs shadow-none data-[state=checked]:bg-bg-brand-solid-primary data-[state=checked]:text-text-white data-[state=checked]:border-bg-brand-solid-primary"
                   />
                 )}
               />
