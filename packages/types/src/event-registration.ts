@@ -1,5 +1,6 @@
 export enum EventRegistrationStatusEnum {
-  REGISTERED = 'registered',
-  CANCELLED = 'cancelled',
-  ATTENDED = 'attended',
+  PENDING = 'PENDING',
+  REGISTERED = 'REGISTERED',
+  ATTENDED = 'ATTENDED',
+  CANCELLED = 'CANCELLED',
 }

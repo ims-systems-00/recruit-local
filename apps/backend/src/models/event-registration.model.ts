@@ -3,12 +3,11 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { EventRegistrationStatusEnum } from "@rl/types";
 
 export interface EventRegistrationInput {
   eventId: Schema.Types.ObjectId;
   userId: Schema.Types.ObjectId;
-  status: EventRegistrationStatusEnum;
+  statusId: Schema.Types.ObjectId;
   feedback?: string;
 }
 export interface IEventRegistrationDoc extends EventRegistrationInput, ISoftDeleteDoc, Document {
@@ -34,10 +33,9 @@ const eventRegistrationSchema = new Schema<IEventRegistrationDoc>(
       ref: modelNames.USER,
       required: true,
     },
-    status: {
-      type: String,
-      enum: Object.values(EventRegistrationStatusEnum),
-      default: EventRegistrationStatusEnum.REGISTERED,
+    statusId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.STATUS,
       required: true,
     },
     feedback: {
