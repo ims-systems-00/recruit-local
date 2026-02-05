@@ -17,6 +17,7 @@ export const eventProjectionQuery = (): PipelineStage[] => {
   const fieldsToExclude: (keyof IEventDoc | "__v")[] = ["__v"];
 
   const selectedFields = Object.keys(omit(Event.schema.paths, fieldsToExclude));
+  selectedFields.push("status");
 
   return projectQuery(selectedFields);
 };

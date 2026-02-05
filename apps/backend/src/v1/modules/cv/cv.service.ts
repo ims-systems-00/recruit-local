@@ -1,6 +1,6 @@
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateStatusQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { cvProjectQuery, populateStatusQuery } from "./cv.query";
+import { cvProjectQuery } from "./cv.query";
 import { NotFoundException } from "../../../common/helper";
 import { CV, CVInput } from "../../../models/cv.model";
 import { IListParams, ListQueryParams } from "@rl/types";
