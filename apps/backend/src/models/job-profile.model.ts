@@ -9,12 +9,12 @@ import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 
-export enum STATUS_ENUM {
-  VERIFIED = "verified",
-  UNVERIFIED = "unverified",
-  PENDING = "pending",
-  REJECTED = "rejected",
-}
+// export enum STATUS_ENUM {
+//   VERIFIED = "verified",
+//   UNVERIFIED = "unverified",
+//   PENDING = "pending",
+//   REJECTED = "rejected",
+// }
 
 export interface JobProfileInput extends IUserOwnedInput {
   headline?: string;
@@ -23,11 +23,11 @@ export interface JobProfileInput extends IUserOwnedInput {
   languages?: language[];
   kycDocumentUrl?: string;
   kycDocumentStorage?: AwsStorageTemplate;
+  statusId: Schema.Types.ObjectId;
 }
 
 export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, IBaseDoc {
   visibility: VISIBILITY;
-  status: STATUS_ENUM;
 }
 
 interface IJobProfileModel
@@ -71,10 +71,9 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       enum: Object.values(VISIBILITY),
       default: VISIBILITY.PRIVATE,
     },
-    status: {
-      type: String,
-      enum: Object.values(STATUS_ENUM),
-      default: STATUS_ENUM.PENDING,
+    statusId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.STATUS,
     },
     kycDocumentUrl: {
       type: String,

@@ -10,7 +10,8 @@
     "build:packages": "pnpm --filter @rl/types --filter @rl/authz build",
     "backend:dev": "pnpm --filter @rl/backend start:dev",
     "frontend:dev": "pnpm --filter @rl/frontend dev",
-    "start:dev": "concurrently --kill-others \"pnpm backend:dev\" \"pnpm frontend:dev\""
+    "start:dev": "concurrently --kill-others \"pnpm backend:dev\" \"pnpm frontend:dev\"",
+    "seed:dev": "pnpm --filter @rl/backend seed:dev"
   },
   "keywords": [],
   "author": "",

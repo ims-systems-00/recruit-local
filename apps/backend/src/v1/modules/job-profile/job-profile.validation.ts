@@ -41,6 +41,7 @@ export const updateBodySchema = Joi.object({
     .valid(...Object.values(VISIBILITY))
     .optional()
     .label("Visibility"),
+  statusId: Joi.string().custom(objectIdValidation).optional().label("Status ID"),
 });
 
 export const idParamsSchema = Joi.object({

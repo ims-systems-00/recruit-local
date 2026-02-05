@@ -3,7 +3,8 @@ import dotenv from "dotenv";
 dotenv.config();
 import { connectDB } from "../.config/database";
 
-import { userSeeder } from "./user.seeder";
+// import { userSeeder } from "./user.seeder";
+import { statusSeeder } from "./status.seeder";
 import { logger } from "../common/helper/logger";
 
 const runSeeders = async () => {
@@ -12,8 +13,8 @@ const runSeeders = async () => {
     logger.info(`Connected to ${process.env.NODE_ENV} database`);
 
     // Seeders to run
-    await userSeeder();
-
+    // await userSeeder();
+    await statusSeeder();
     logger.info("Seeding completed");
   } catch (error) {
     logger.error("Error connecting to MongoDB", error);
