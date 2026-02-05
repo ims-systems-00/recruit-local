@@ -30,6 +30,7 @@ const educationSchema = Joi.object({
 
 const experienceSchema = Joi.object({
   _id: subDocId,
+  jobTitle: Joi.string().required().label("Job Title"),
   company: Joi.string().required().label("Company"),
   location: Joi.string().optional().allow("").label("Location"),
   workMode: Joi.string().optional().allow("").label("Work Mode"),
@@ -67,9 +68,7 @@ export const createBodySchema = Joi.object({
   // Settings
   templateId: Joi.string().optional().label("Template ID"),
   colorProfile: Joi.string().optional().label("Color Profile"),
-  status: Joi.string()
-    .valid(...Object.values(CV_STATUS_ENUM))
-    .optional(),
+  statusId: Joi.string().custom(objectIdValidation).optional().label("Status"),
 });
 
 export const updateBodySchema = Joi.object({
@@ -94,7 +93,7 @@ export const updateBodySchema = Joi.object({
   // Settings
   templateId: Joi.string().optional(),
   colorProfile: Joi.string().optional(),
-  status: Joi.string()
+  statusId: Joi.string()
     .valid(...Object.values(CV_STATUS_ENUM))
     .optional(),
 });

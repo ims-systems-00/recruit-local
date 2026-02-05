@@ -6,6 +6,7 @@ import { EventRegistrationInput, EventRegistration } from "../../../models";
 export const eventRegistrationProjectionQuery = (): PipelineStage[] => {
   const fieldsToExclude: (keyof EventRegistrationInput | "__v")[] = ["__v"];
   const selectedFields = Object.keys(omit(EventRegistration.schema.paths, fieldsToExclude));
+  selectedFields.push("status");
 
   return projectQuery(selectedFields);
 };

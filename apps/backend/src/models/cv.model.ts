@@ -7,7 +7,7 @@ import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
-import { IExperience, IEducation, ISkill, IInterest, CV_STATUS_ENUM } from "@rl/types";
+import { IExperience, IEducation, ISkill, IInterest } from "@rl/types";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 
 export interface CVInput extends IUserOwnedInput, JobProfileInput {
@@ -25,7 +25,7 @@ export interface CVInput extends IUserOwnedInput, JobProfileInput {
   address?: string;
   templateId?: string;
   colorProfile?: string;
-  status: CV_STATUS_ENUM;
+  statusId: Schema.Types.ObjectId;
 }
 
 export interface ICVDoc extends CVInput, ISoftDeleteDoc, IBaseDoc {}
@@ -92,10 +92,9 @@ const cvSchema = new Schema<ICVDoc>(
     address: { type: String },
     templateId: { type: String },
     colorProfile: { type: String },
-    status: {
-      type: String,
-      enum: Object.values(CV_STATUS_ENUM),
-      default: CV_STATUS_ENUM.DRAFT,
+    statusId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.STATUS,
     },
   },
   {

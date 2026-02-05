@@ -4,7 +4,7 @@ const objectId = Joi.string().hex().length(24);
 
 export const createStatusBodySchema = Joi.object({
   collectionName: Joi.string().trim().max(100).required().label("Collection Name"),
-  collectionId: objectId.required().label("Collection ID"),
+  collectionId: objectId.optional().label("Collection ID"),
   label: Joi.string().trim().max(100).required().label("Status Label"),
   weight: Joi.number().integer().min(0).default(0).label("Status Weight"),
 });

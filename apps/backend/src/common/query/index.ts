@@ -44,3 +44,32 @@ export const onlyDeletedQuery = (): PipelineStage[] => {
     },
   ];
 };
+
+export const populateStatusQuery = (): PipelineStage[] => {
+  return [
+    {
+      $lookup: {
+        from: "statuses",
+        localField: "statusId",
+        foreignField: "_id",
+        as: "status",
+      },
+    },
+    {
+      $unwind: {
+        path: "$status",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $addFields: {
+        status: { $ifNull: ["$status.label", "unknown"] },
+      },
+    },
+    {
+      $project: {
+        statusLabel: 0,
+      },
+    },
+  ];
+};
