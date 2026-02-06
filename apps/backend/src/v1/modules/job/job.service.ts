@@ -2,9 +2,12 @@ import { Job, IJobInput } from "../../../models";
 import { getTenant } from "../tenant/tenant.service";
 import { NotFoundException } from "../../../common/helper";
 import { IListParams, ListQueryParams } from "@rl/types";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateStatusQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobProjectionQuery } from "./job.query";
+import * as StatusService from "../status/status.service";
+import { Schema } from "mongoose";
+import { modelNames } from "../../../models/constants";
 
 type IListJobParams = IListParams<IJobInput>;
 type IJobQueryParams = ListQueryParams<IJobInput>;
@@ -28,7 +31,12 @@ const _autoFill = async (tenantId: string) => {
 
 export const list = ({ query = {}, options }: IListJobParams) => {
   return Job.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...jobProjectionQuery()],
+    [
+      ...matchQuery(sanitizeQueryIds(query)),
+      ...excludeDeletedQuery(),
+      ...populateStatusQuery(),
+      ...jobProjectionQuery(),
+    ],
     options
   );
 };
@@ -37,6 +45,7 @@ export const getOne = async ({ query = {} }: IJobQueryParams) => {
   const jobs = await Job.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
+    ...populateStatusQuery(),
     ...jobProjectionQuery(),
   ]);
   if (jobs.length === 0) throw new NotFoundException("Job not found.");
@@ -45,7 +54,7 @@ export const getOne = async ({ query = {} }: IJobQueryParams) => {
 
 export const listSoftDeleted = async ({ query = {}, options }: IListJobParams) => {
   return Job.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...jobProjectionQuery()],
+    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...populateStatusQuery(), ...jobProjectionQuery()],
     options
   );
 };
@@ -54,6 +63,7 @@ export const getOneSoftDeleted = async ({ query = {} }: IListJobParams) => {
   const jobs = await Job.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
+    ...populateStatusQuery(),
     ...jobProjectionQuery(),
   ]);
   if (jobs.length === 0) throw new NotFoundException("Job not found in trash.");
@@ -68,6 +78,11 @@ export const create = async (payload: ICreateJobPayload) => {
     });
     payload.title = `Untitled Job ${numberOfJobs + 1}`;
   }
+
+  const status = await StatusService.getOne({ query: { label: "draft", collectionName: modelNames.JOB } });
+  if (!status) throw new NotFoundException("Default status 'Draft' not found for the tenant.");
+
+  payload.statusId = status._id as unknown as Schema.Types.ObjectId;
 
   // 2. Handle AutoFill
   if (payload.autoFill) {

@@ -5,7 +5,7 @@ import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/so
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
-import { baseSchemaOptions } from "./options/schema.options";
+// import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { IInterest } from "@rl/types";
 
@@ -25,7 +25,7 @@ const interestSchema = new Schema<IInterestDoc>(
     description: { type: String },
   },
   {
-    ...baseSchemaOptions,
+    // ...baseSchemaOptions,
   }
 );
 

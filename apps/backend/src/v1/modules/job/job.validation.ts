@@ -109,7 +109,6 @@ export const createBodySchema = Joi.object({
 
   // System
   keywords: Joi.array().items(Joi.string()).optional().label("Keywords"),
-  status: Joi.string().optional().label("Status"),
 });
 
 export const updateBodySchema = Joi.object({
@@ -164,7 +163,7 @@ export const updateBodySchema = Joi.object({
   skills: Joi.array().items(skillSchema).optional().label("Skills"),
 
   keywords: Joi.array().items(Joi.string()).optional().label("Keywords"),
-  status: Joi.string().optional().label("Status"),
+  statusId: Joi.string().custom(objectIdValidation).required().label("Status ID"),
 });
 
 export const idParamsSchema = Joi.object({

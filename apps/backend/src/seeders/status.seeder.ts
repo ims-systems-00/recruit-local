@@ -38,6 +38,27 @@ export const statusSeeder = async () => {
         label: "rejected",
         // weight: 1,
       },
+      // Job -  Statuses
+      {
+        collectionName: modelNames.JOB,
+        label: "open",
+        // weight: 1,
+      },
+      {
+        collectionName: modelNames.JOB,
+        label: "closed",
+        // weight: 1,
+      },
+      {
+        collectionName: modelNames.JOB,
+        label: "paused",
+        // weight: 1,
+      },
+      {
+        collectionName: modelNames.JOB,
+        label: "draft",
+        // weight: 1,
+      },
     ];
 
     await Promise.all(
