@@ -17,6 +17,27 @@ type IUpdateJobPayload = Partial<IJobInput> & {
   autoFill?: boolean;
 };
 
+const DEFAULT_JOB_BOARD_STATUS = [
+  {
+    collectionName: modelNames.JOB,
+    label: "pending",
+    weight: 100,
+    default: true,
+  },
+  {
+    collectionName: modelNames.JOB,
+    label: "interviewing",
+    weight: 200,
+    default: false,
+  },
+  {
+    collectionName: modelNames.JOB,
+    label: "rejected",
+    weight: 300,
+    default: false,
+  },
+];
+
 const _autoFill = async (tenantId: string) => {
   const tenant = await getTenant(tenantId);
   if (!tenant || !tenant.email || !tenant.phone || !tenant.description)
