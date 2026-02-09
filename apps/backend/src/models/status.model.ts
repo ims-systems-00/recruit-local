@@ -36,10 +36,11 @@ const statusSchema = new Schema<IStatusDoc>(
 );
 
 statusSchema.index(
-  { collectionName: 1, default: 1 },
+  { collectionName: 1, collectionId: 1, default: 1 },
   {
     unique: true,
     partialFilterExpression: { default: true },
+    background: true,
   }
 );
 

@@ -4,7 +4,7 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
-
+import { boardSettingsSchema, IBoardSettings } from "./schema/board-settings.schema";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import {
@@ -48,7 +48,7 @@ export interface IJobInput extends TenantInput {
   statusId: Schema.Types.ObjectId;
 }
 
-export interface IJobDoc extends IJobInput, ITenantDoc, ISoftDeleteDoc, IBaseDoc {
+export interface IJobDoc extends IJobInput, ITenantDoc, ISoftDeleteDoc, IBaseDoc, IBoardSettings {
   keywords?: string[];
 }
 
@@ -118,6 +118,8 @@ const jobSchema = new Schema<IJobDoc>(
   },
   {}
 );
+
+jobSchema.add(boardSettingsSchema);
 
 jobSchema.plugin(softDeletePlugin);
 jobSchema.plugin(mongoosePaginate);

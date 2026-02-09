@@ -6,7 +6,7 @@ import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateStatusQuery 
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobProjectionQuery } from "./job.query";
 import * as StatusService from "../status/status.service";
-import { Schema } from "mongoose";
+import { Schema, Types } from "mongoose";
 import { modelNames } from "../../../models/constants";
 
 type IListJobParams = IListParams<IJobInput>;
@@ -22,7 +22,7 @@ const DEFAULT_JOB_BOARD_STATUS = [
     collectionName: modelNames.JOB,
     label: "pending",
     weight: 100,
-    default: true,
+    default: false,
   },
   {
     collectionName: modelNames.JOB,
@@ -113,6 +113,16 @@ export const create = async (payload: ICreateJobPayload) => {
 
   let job = new Job(payload);
   job = await job.save();
+
+  const createdStatuses = await StatusService.createMany(
+    DEFAULT_JOB_BOARD_STATUS.map((status) => ({
+      ...status,
+      collectionId: job._id as unknown as Schema.Types.ObjectId,
+    }))
+  );
+
+  job.boardColumnOrder = createdStatuses.map((s) => s._id as Types.ObjectId);
+  await job.save();
 
   return job;
 };
