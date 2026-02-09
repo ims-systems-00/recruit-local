@@ -11,6 +11,7 @@ export interface IStatusInput {
   collectionId?: Schema.Types.ObjectId;
   label: string;
   weight?: number;
+  default: boolean;
 }
 
 export interface IStatusDoc extends IStatusInput, ISoftDeleteDoc {}
@@ -27,8 +28,17 @@ const statusSchema = new Schema<IStatusDoc>(
     collectionId: { type: Schema.Types.ObjectId, required: false, refPath: "collectionName" },
     label: { type: String, required: true },
     weight: { type: Number, default: 0 },
+    default: { type: Boolean, required: true, default: false },
   },
   { timestamps: true }
+);
+
+statusSchema.index(
+  { collectionName: 1, default: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { default: true },
+  }
 );
 
 statusSchema.plugin(softDeletePlugin);

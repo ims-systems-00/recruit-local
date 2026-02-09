@@ -17,7 +17,7 @@ export const statusSeeder = async () => {
     // Define your master statuses here
     // Note: We usually don't seed 'collectionId' unless checking for a specific system resource
     const statuses: IStatusInput[] = [
-      // Job Profile Statuses
+      // 1. Job Profile Statuses
       {
         collectionName: modelNames.JOB_PROFILE,
         label: "verified",
@@ -36,6 +36,33 @@ export const statusSeeder = async () => {
       {
         collectionName: modelNames.JOB_PROFILE,
         label: "rejected",
+        // weight: 1,
+      },
+      // 2. Job -  Statuses
+      {
+        collectionName: modelNames.JOB,
+        label: "open",
+        // weight: 1,
+      },
+      {
+        collectionName: modelNames.JOB,
+        label: "closed",
+        // weight: 1,
+      },
+      {
+        collectionName: modelNames.JOB,
+        label: "paused",
+        // weight: 1,
+      },
+      {
+        collectionName: modelNames.JOB,
+        label: "draft",
+        // weight: 1,
+      },
+      // 3. CV Statuses
+      {
+        collectionName: modelNames.CV,
+        label: "draft",
         // weight: 1,
       },
     ];

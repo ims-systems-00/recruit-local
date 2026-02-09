@@ -5,7 +5,6 @@ import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/so
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
-import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { ISkill } from "@rl/types";
 
@@ -25,7 +24,7 @@ const skillSchema = new Schema<ISkillDoc>(
     proficiencyLevel: { type: String },
     description: { type: String },
   },
-  { ...baseSchemaOptions }
+  {}
 );
 
 skillSchema.plugin(softDeletePlugin);

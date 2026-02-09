@@ -4,7 +4,7 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
-import { baseSchemaOptions } from "./options/schema.options";
+
 import { IBaseDoc } from "./interfaces/base.interface";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import {
@@ -45,11 +45,11 @@ export interface IJobInput extends TenantInput {
   minEducationalQualification?: Education;
   requiredDocuments?: REQUIRED_DOCUMENTS_ENUMS[];
   skills?: Skill[];
+  statusId: Schema.Types.ObjectId;
 }
 
 export interface IJobDoc extends IJobInput, ITenantDoc, ISoftDeleteDoc, IBaseDoc {
-  status?: string;
-  keywords?: string[]; // todo: keywords should be generated
+  keywords?: string[];
 }
 
 export interface IJobModel
@@ -109,15 +109,14 @@ const jobSchema = new Schema<IJobDoc>(
       ],
       default: [],
     },
-    status: { type: String },
+    statusId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.STATUS,
+      required: true,
+    },
     keywords: { type: [String], default: [] },
   },
-  {
-    ...baseSchemaOptions,
-    toJSON: {
-      virtuals: false,
-    },
-  }
+  {}
 );
 
 jobSchema.plugin(softDeletePlugin);

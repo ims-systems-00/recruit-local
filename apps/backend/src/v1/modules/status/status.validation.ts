@@ -7,6 +7,7 @@ export const createStatusBodySchema = Joi.object({
   collectionId: objectId.optional().label("Collection ID"),
   label: Joi.string().trim().max(100).required().label("Status Label"),
   weight: Joi.number().integer().min(0).default(0).label("Status Weight"),
+  default: Joi.boolean().default(false).label("Is Default Status"),
 });
 
 export const updateStatusBodySchema = Joi.object({
@@ -14,6 +15,7 @@ export const updateStatusBodySchema = Joi.object({
   collectionId: objectId.optional().label("Collection ID"),
   label: Joi.string().trim().max(100).optional().label("Status Label"),
   weight: Joi.number().integer().min(0).optional().label("Status Weight"),
+  default: Joi.boolean().optional().label("Is Default Status"),
 });
 
 export const statusListQuerySchema = Joi.object({
