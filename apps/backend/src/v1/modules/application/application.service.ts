@@ -56,15 +56,8 @@ export const create = async (payload: ApplicationInput) => {
   const job = await jobService.getOne({
     query: { _id: payload.jobId! },
   });
-  // check if boardId and statusId are valid if exists
-  const board = await boardService.getOne({
-    collectionId: job._id,
-  });
-  // get the first status of the board
 
-  // ! this is keeping in mind that they exist
-  payload.boardId = board._id as any;
-  payload.statusId = board.columnOrder[0] as any;
+  payload.statusId = job.boardColumnOrder[0];
 
   // get the status
   const status = await statusService.getOne({

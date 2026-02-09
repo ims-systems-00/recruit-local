@@ -12,6 +12,7 @@ export interface IStatusInput {
   label: string;
   weight?: number;
   default: boolean;
+  backgroundColor?: string;
 }
 
 export interface IStatusDoc extends IStatusInput, ISoftDeleteDoc {}
@@ -29,15 +30,17 @@ const statusSchema = new Schema<IStatusDoc>(
     label: { type: String, required: true },
     weight: { type: Number, default: 0 },
     default: { type: Boolean, required: true, default: false },
+    backgroundColor: { type: String, required: false, default: "#FFFFFF" },
   },
   { timestamps: true }
 );
 
 statusSchema.index(
-  { collectionName: 1, default: 1 },
+  { collectionName: 1, collectionId: 1, default: 1 },
   {
     unique: true,
     partialFilterExpression: { default: true },
+    background: true,
   }
 );
 
