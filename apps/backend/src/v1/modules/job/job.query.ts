@@ -6,6 +6,7 @@ import { IJobDoc, Job } from "../../../models";
 export const jobProjectionQuery = (): PipelineStage[] => {
   const fieldsToExclude: (keyof IJobDoc | "__v")[] = ["__v"];
   const selectedFields = Object.keys(omit(Job.schema.paths, fieldsToExclude));
+  selectedFields.push("status");
 
   return projectQuery(selectedFields);
 };

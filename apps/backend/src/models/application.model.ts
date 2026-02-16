@@ -50,7 +50,10 @@ applicationSchema.plugin(softDeletePlugin);
 applicationSchema.plugin(mongoosePaginate);
 applicationSchema.plugin(aggregatePaginate);
 applicationSchema.plugin(jobProfilePlugin);
-applicationSchema.plugin(boardablePlugin);
+applicationSchema.plugin(boardablePlugin, {
+  parentModelName: modelNames.JOB,
+  foreignKey: "jobId",
+});
 
 // --- Indexes ---
 applicationSchema.index({ jobId: 1, status: 1 });

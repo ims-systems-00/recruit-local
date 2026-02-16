@@ -4,9 +4,16 @@ const objectId = Joi.string().hex().length(24);
 
 export const createStatusBodySchema = Joi.object({
   collectionName: Joi.string().trim().max(100).required().label("Collection Name"),
-  collectionId: objectId.required().label("Collection ID"),
+  collectionId: objectId.optional().label("Collection ID"),
   label: Joi.string().trim().max(100).required().label("Status Label"),
   weight: Joi.number().integer().min(0).default(0).label("Status Weight"),
+  default: Joi.boolean().default(false).label("Is Default Status"),
+  backgroundColor: Joi.string()
+    .trim()
+    .max(7)
+    .pattern(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/)
+    .default("#FFFFFF")
+    .label("Background Color"),
 });
 
 export const updateStatusBodySchema = Joi.object({
@@ -14,6 +21,13 @@ export const updateStatusBodySchema = Joi.object({
   collectionId: objectId.optional().label("Collection ID"),
   label: Joi.string().trim().max(100).optional().label("Status Label"),
   weight: Joi.number().integer().min(0).optional().label("Status Weight"),
+  default: Joi.boolean().optional().label("Is Default Status"),
+  backgroundColor: Joi.string()
+    .trim()
+    .max(7)
+    .pattern(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/)
+    .optional()
+    .label("Background Color"),
 });
 
 export const statusListQuerySchema = Joi.object({

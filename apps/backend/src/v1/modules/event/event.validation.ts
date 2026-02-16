@@ -1,6 +1,6 @@
 import Joi, { CustomHelpers } from "joi";
 import mongoose from "mongoose";
-import { EVENT_STATUS_ENUMS, EVENT_MODE_ENUMS, EVENT_TYPE_ENUMS } from "@rl/types";
+import { EVENT_MODE_ENUMS, EVENT_TYPE_ENUMS } from "@rl/types";
 
 // --- Reusable Validators ---
 
@@ -68,11 +68,7 @@ export const createEventBodySchema = Joi.object({
   bannerImageSrc: Joi.string().uri().optional().label("Banner Image URL"),
   bannerImageStorage: awsStorageSchema.optional().label("Banner Image Storage"),
 
-  status: Joi.string()
-    .valid(...Object.values(EVENT_STATUS_ENUMS))
-    .default(EVENT_STATUS_ENUMS.UPCOMING)
-    .required()
-    .label("Status"),
+  statusId: Joi.string().custom(objectIdValidation).required().label("Status ID"),
 
   mode: Joi.string()
     .valid(...Object.values(EVENT_MODE_ENUMS))
@@ -111,9 +107,7 @@ export const updateEventBodySchema = Joi.object({
   bannerImageSrc: Joi.string().uri().optional(),
   bannerImageStorage: awsStorageSchema.optional(),
 
-  status: Joi.string()
-    .valid(...Object.values(EVENT_STATUS_ENUMS))
-    .optional(),
+  statusId: Joi.string().custom(objectIdValidation).optional(),
   mode: Joi.string()
     .valid(...Object.values(EVENT_MODE_ENUMS))
     .optional(),
@@ -129,9 +123,7 @@ export const eventListQuerySchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
   search: Joi.string().trim().optional().allow(""),
-  status: Joi.string()
-    .valid(...Object.values(EVENT_STATUS_ENUMS))
-    .optional(),
+  statusId: Joi.string().custom(objectIdValidation).optional(),
   type: Joi.string()
     .valid(...Object.values(EVENT_TYPE_ENUMS))
     .optional(),

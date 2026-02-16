@@ -8,9 +8,11 @@ type ModelName = (typeof modelNames)[keyof typeof modelNames];
 
 export interface IStatusInput {
   collectionName: ModelName;
-  collectionId: Schema.Types.ObjectId;
+  collectionId?: Schema.Types.ObjectId;
   label: string;
   weight?: number;
+  default: boolean;
+  backgroundColor?: string;
 }
 
 export interface IStatusDoc extends IStatusInput, ISoftDeleteDoc {}
@@ -24,11 +26,22 @@ interface IStatusModel
 const statusSchema = new Schema<IStatusDoc>(
   {
     collectionName: { type: String, required: true, enum: Object.values(modelNames) },
-    collectionId: { type: Schema.Types.ObjectId, required: true, refPath: "collectionName" },
+    collectionId: { type: Schema.Types.ObjectId, required: false, refPath: "collectionName" },
     label: { type: String, required: true },
     weight: { type: Number, default: 0 },
+    default: { type: Boolean, required: true, default: false },
+    backgroundColor: { type: String, required: false, default: "#FFFFFF" },
   },
   { timestamps: true }
+);
+
+statusSchema.index(
+  { collectionName: 1, collectionId: 1, default: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { default: true },
+    background: true,
+  }
 );
 
 statusSchema.plugin(softDeletePlugin);

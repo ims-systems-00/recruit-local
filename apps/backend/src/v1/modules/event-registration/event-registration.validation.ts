@@ -1,6 +1,5 @@
 import Joi, { CustomHelpers } from "joi";
 import mongoose from "mongoose";
-import { EventRegistrationStatusEnum } from "@rl/types";
 
 const objectIdValidation = (value: string, helpers: CustomHelpers) => {
   if (!mongoose.Types.ObjectId.isValid(value)) {
@@ -14,11 +13,7 @@ export const createEventRegistrationBodySchema = Joi.object({
 });
 
 export const updateEventRegistrationBodySchema = Joi.object({
-  status: Joi.string()
-    .valid(...Object.values(EventRegistrationStatusEnum))
-    .optional()
-    .label("Status"),
-
+  statusId: Joi.string().custom(objectIdValidation).required().label("Status ID"),
   feedback: Joi.string().trim().max(500).optional().allow("").label("Feedback"),
 });
 
@@ -27,10 +22,7 @@ export const eventRegistrationListQuerySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(10),
   eventId: Joi.string().custom(objectIdValidation).optional().label("Event Filter"),
   userId: Joi.string().custom(objectIdValidation).optional().label("User Filter"),
-  status: Joi.string()
-    .valid(...Object.values(EventRegistrationStatusEnum))
-    .optional()
-    .label("Status Filter"),
+  statusId: Joi.string().custom(objectIdValidation).optional().label("Status Filter"),
   search: Joi.string().trim().optional().allow(""),
   startDate: Joi.date().iso().optional(),
   endDate: Joi.date().iso().optional(),

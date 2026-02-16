@@ -7,6 +7,7 @@ export const cvProjectQuery = (): PipelineStage[] => {
   const fieldsToExclude: (keyof ICVDoc | "__v")[] = ["__v"];
 
   const selectedFields = Object.keys(omit(CV.schema.paths, fieldsToExclude));
+  selectedFields.push("status");
 
   return projectQuery(selectedFields);
 };
