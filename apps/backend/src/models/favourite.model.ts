@@ -3,12 +3,11 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { ITEM_TYPE_ENUMS } from "@rl/types";
 
 export interface IFavouriteInput {
   userId: Schema.Types.ObjectId;
   itemId: Schema.Types.ObjectId;
-  itemType: ITEM_TYPE_ENUMS;
+  itemType: typeof modelNames;
 }
 
 export interface IFavouriteDoc extends IFavouriteInput, ISoftDeleteDoc, Document {
@@ -32,15 +31,25 @@ const favouriteSchema = new Schema<IFavouriteDoc>(
     itemId: {
       type: Schema.Types.ObjectId,
       required: true,
+      refPath: "itemType",
     },
     itemType: {
       type: String,
-      enum: Object.values(ITEM_TYPE_ENUMS),
+      enum: Object.values(modelNames),
       required: true,
     },
   },
   {
     timestamps: true,
+  }
+);
+
+// Enforce uniqueness ONLY when the document is NOT deleted
+favouriteSchema.index(
+  { userId: 1, itemId: 1, itemType: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { "deleteMarker.status": false },
   }
 );
 

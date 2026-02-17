@@ -1,6 +1,6 @@
 import Joi, { CustomHelpers } from "joi";
 import mongoose from "mongoose";
-import { ITEM_TYPE_ENUMS } from "@rl/types";
+import { modelNames } from "../../../models/constants";
 
 const objectIdValidation = (value: string, helpers: CustomHelpers) => {
   if (!mongoose.Types.ObjectId.isValid(value)) {
@@ -12,14 +12,14 @@ const objectIdValidation = (value: string, helpers: CustomHelpers) => {
 export const createFavouriteBodySchema = Joi.object({
   itemId: Joi.string().custom(objectIdValidation).required().label("Item ID"),
   itemType: Joi.string()
-    .valid(...Object.values(ITEM_TYPE_ENUMS))
+    .valid(...Object.values(modelNames))
     .required()
     .label("Favourite Type"),
 });
 
 export const updateFavouriteBodySchema = Joi.object({
   itemType: Joi.string()
-    .valid(...Object.values(ITEM_TYPE_ENUMS))
+    .valid(...Object.values(modelNames))
     .optional()
     .label("Favourite Type"),
 });
@@ -33,7 +33,7 @@ export const favouriteListQuerySchema = Joi.object({
   itemId: Joi.string().custom(objectIdValidation).optional().label("Item Filter"),
 
   itemType: Joi.string()
-    .valid(...Object.values(ITEM_TYPE_ENUMS))
+    .valid(...Object.values(modelNames))
     .optional()
     .label("Type Filter"),
 
