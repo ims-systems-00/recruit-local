@@ -5,6 +5,7 @@ import RecruitDefaultLogo from '@/public/images/recruit_default_logo.png';
 import { Button } from '@/components/ui/button';
 import { Globe, Linkedin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import About from './sections/about';
 
 export default function Profile() {
   return (
@@ -67,7 +68,7 @@ export default function Profile() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="account">
-            Make changes to your account here.
+            <About />
           </TabsContent>
           <TabsContent value="password">Change your password here.</TabsContent>
         </Tabs>
