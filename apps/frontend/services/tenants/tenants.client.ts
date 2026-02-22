@@ -26,7 +26,7 @@ export function useCreateTanent() {
       }
       toast.success(res.data.message);
       form.reset();
-      router.push('/recruiter');
+      router.push('/recruiter/profile');
     },
     onError: () => {
       toast.error('Something went wrong. Please try again.');

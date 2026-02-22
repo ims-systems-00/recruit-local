@@ -25,11 +25,11 @@ export const useSystemPreparation = () => {
           return;
         }
         if (userType === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
-          router.push('/recruiter');
+          router.push('/recruiter/profile');
           return;
         }
         if (userType === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
-          router.push('/recruiter');
+          router.push('/recruiter/profile');
           return;
         }
         if (userType === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {

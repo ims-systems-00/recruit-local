@@ -9,6 +9,7 @@ import {
   Command,
   Frame,
   GalleryVerticalEnd,
+  ListTodo,
   Map,
   PieChart,
   Settings2,
@@ -58,22 +59,18 @@ const data = {
   ],
   navMain: [
     {
-      title: 'Playground',
+      title: 'Job Listing',
       url: '#',
-      icon: SquareTerminal,
+      icon: ListTodo,
       isActive: true,
       items: [
         {
-          title: 'History',
-          url: '#',
+          title: 'Lists',
+          url: '/recruiter/job-lists',
         },
         {
-          title: 'Starred',
-          url: '#',
-        },
-        {
-          title: 'Settings',
-          url: '#',
+          title: 'Create',
+          url: '/recruiter/job-lists/create',
         },
       ],
     },
