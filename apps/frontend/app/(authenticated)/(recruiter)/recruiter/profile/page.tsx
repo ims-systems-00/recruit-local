@@ -6,6 +6,38 @@ import { Button } from '@/components/ui/button';
 import { Globe, Linkedin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import About from './sections/about';
+import ServicesAndProducts from './sections/services-and-products';
+import Achievements from './sections/achievements';
+import CurrentRecruitment from './sections/current-recruitment';
+import Saves from './sections/saves';
+
+const tabs = [
+  {
+    value: 'about',
+    label: 'About',
+    component: <About />,
+  },
+  {
+    value: 'services-and-products',
+    label: 'Services and Products',
+    component: <ServicesAndProducts />,
+  },
+  {
+    value: 'achievements',
+    label: 'Achievements',
+    component: <Achievements />,
+  },
+  {
+    value: 'current-recruitment',
+    label: 'Current Recruitment',
+    component: <CurrentRecruitment />,
+  },
+  {
+    value: 'saves',
+    label: 'Saves',
+    component: <Saves />,
+  },
+];
 
 export default function Profile() {
   return (
@@ -52,25 +84,29 @@ export default function Profile() {
         </div>
       </header>
       <div className="px-spacing-4xl pb-spacing-4xl">
-        <Tabs defaultValue="account" className=" w-full gap-spacing-4xl ">
-          <TabsList className=" w-full bg-bg-gray-soft-secondary h-11 justify-start">
-            <TabsTrigger
-              value="account"
-              className=" px-spacing-lg text-label-md font-label-md-strong! data-[state=active]:shadow-sm flex-0 data-[state=active]:bg-bg-gray-soft-primary text-text-gray-quaternary dark:data-[state=active]:text-text-gray-secondary"
-            >
-              About
-            </TabsTrigger>
-            <TabsTrigger
-              value="password"
-              className="px-spacing-lg text-label-md font-label-md-strong! data-[state=active]:shadow-sm flex-0 data-[state=active]:bg-bg-gray-soft-primary text-text-gray-quaternary dark:data-[state=active]:text-text-gray-secondary"
-            >
-              Services and Products
-            </TabsTrigger>
+        <Tabs defaultValue={tabs[0].value} className="w-full gap-spacing-4xl">
+          <TabsList className="w-full bg-bg-gray-soft-secondary h-11 justify-start">
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="px-spacing-lg text-label-md font-label-md-strong! 
+                          data-[state=active]:shadow-sm 
+                          flex-0 
+                          data-[state=active]:bg-bg-gray-soft-primary 
+                          text-text-gray-quaternary 
+                          dark:data-[state=active]:text-text-gray-secondary"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
-          <TabsContent value="account">
-            <About />
-          </TabsContent>
-          <TabsContent value="password">Change your password here.</TabsContent>
+
+          {tabs.map((tab) => (
+            <TabsContent key={tab.value} value={tab.value}>
+              {tab.component}
+            </TabsContent>
+          ))}
         </Tabs>
       </div>
     </div>
