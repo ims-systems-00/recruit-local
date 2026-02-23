@@ -32,4 +32,5 @@ export const modelNames = {
   ACTION: "actions",
   BOARD: "boards",
   CARD: "cards",
+  POST: "posts",
 };
