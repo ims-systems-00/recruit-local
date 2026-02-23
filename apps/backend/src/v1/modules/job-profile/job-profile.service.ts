@@ -3,7 +3,6 @@ import { JobProfile, JobProfileInput } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateStatusQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-// Assuming this query file exists following your pattern
 import { jobProfileProjectQuery } from "./job-profile.query";
 import * as StatusService from "../status/status.service";
 import { modelNames } from "../../../models/constants";

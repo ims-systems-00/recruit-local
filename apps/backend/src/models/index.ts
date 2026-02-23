@@ -31,3 +31,4 @@ export * from "./action.model";
 export * from "./kanban-board.model";
 export * from "./application.model";
 export * from "./cv.model";
+export * from "./post.model";
