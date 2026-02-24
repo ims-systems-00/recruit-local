@@ -33,4 +33,5 @@ export const modelNames = {
   BOARD: "boards",
   CARD: "cards",
   POST: "posts",
+  REACTION: "reactions",
 };
