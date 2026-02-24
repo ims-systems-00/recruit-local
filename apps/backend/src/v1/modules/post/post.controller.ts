@@ -4,7 +4,14 @@ import { ApiResponse, ControllerParams, formatListResponse } from "../../../comm
 import * as postService from "./post.service";
 
 export const create = async ({ req }: ControllerParams) => {
-  const post = await postService.create(req.body);
+  const userId = req.session?.user?._id;
+  if (!userId) {
+    return new ApiResponse({
+      message: "Unauthorized",
+      statusCode: StatusCodes.UNAUTHORIZED,
+    });
+  }
+  const post = await postService.create({ ...req.body, userId });
 
   return new ApiResponse({
     message: "Post created.",
@@ -92,7 +99,7 @@ export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  await postService.softDelete({ query: { _id: req.params.id } });
+  await postService.softDelete({ _id: req.params.id });
 
   return new ApiResponse({
     message: "Post soft deleted.",
@@ -101,7 +108,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  await postService.restore({ query: { _id: req.params.id } });
+  await postService.restore({ _id: req.params.id });
 
   return new ApiResponse({
     message: "Post restored.",
@@ -110,7 +117,7 @@ export const restore = async ({ req }: ControllerParams) => {
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  await postService.hardDelete({ query: { _id: req.params.id } });
+  await postService.hardDelete({ _id: req.params.id });
 
   return new ApiResponse({
     message: "Post permanently deleted.",
