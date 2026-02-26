@@ -32,7 +32,8 @@ import skillAssessment from "../modules/skill-assessment/skill-assessment.route"
 import skillAssessmentResult from "../modules/skill-assessment-result/sar.route";
 import statusRoutes from "../modules/status/status.route";
 import actionRoutes from "../modules/action/action.route";
-import boardRoutes from "../modules/board/board.route";
+import postRoutes from "../modules/post/post.route";
+import reactionRoute from "../modules/reaction/reaction.route";
 
 const router = express.Router();
 
@@ -66,7 +67,8 @@ const getApiRoutes = () => {
   router.use("/skill-assessment-results", skillAssessmentResult);
   router.use("/statuses", statusRoutes);
   router.use("/actions", actionRoutes);
-  router.use("/boards", boardRoutes);
+  router.use("/posts", postRoutes);
+  router.use("/reactions", reactionRoute);
 
   return router;
 };
