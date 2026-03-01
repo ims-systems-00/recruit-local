@@ -16,7 +16,7 @@ export default function CreateJob() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
-                href="/recruiter/job-lists"
+                href="/recruiter/job/lists"
                 className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary"
               >
                 Job Listing

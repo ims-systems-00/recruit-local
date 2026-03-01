@@ -66,7 +66,7 @@ const data = {
       items: [
         {
           title: 'Lists',
-          url: '/recruiter/job-lists',
+          url: '/recruiter/job/lists',
         },
         {
           title: 'Create',
