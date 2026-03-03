@@ -1,10 +1,12 @@
-import { NotFoundException } from "../../../common/helper";
+import { NotFoundException, sanitizeQueryIds } from "../../../common/helper";
+import { Types } from "mongoose";
 import { IListUserParams } from "./user.interface";
 import { User, UserInput } from "../../../models";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 import { matchQuery, userProjectionQuery, excludeDeletedQuery } from "./user.query";
 import * as fileMediaService from "../file-media/file-media.service";
 import { VISIBILITY_ENUM } from "@rl/types";
+import { modelNames } from "../../../models/constants";
 
 export const listUser = ({ query = {}, options }: IListUserParams) => {
   const users = User.aggregatePaginate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()], {
@@ -15,7 +17,11 @@ export const listUser = ({ query = {}, options }: IListUserParams) => {
 };
 
 export const getUser = async ({ query = {} }: IListUserParams) => {
-  const users = await User.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()]);
+  const users = await User.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...userProjectionQuery(),
+  ]);
   if (users.length === 0) throw new NotFoundException("User not found.");
 
   return users[0];
@@ -90,7 +96,7 @@ export const updateUserProfileImage = async (id: string, payload: AwsStorageTemp
 
   const fileMedia = await fileMediaService.create({
     payload: {
-      collectionName: "User",
+      collectionName: modelNames.USER,
       collectionDocument: user._id,
       storageInformation: payload,
       visibility: VISIBILITY_ENUM.PUBLIC,
@@ -98,14 +104,18 @@ export const updateUserProfileImage = async (id: string, payload: AwsStorageTemp
   });
   const previousProfileImageStorage = user.profileImageId;
 
-  user.profileImageId = fileMedia._id;
-  await user.save();
+  await updateUser(id, {
+    profileImageId: new Types.ObjectId(fileMedia._id as string),
+  });
 
   if (previousProfileImageStorage) {
     await fileMediaService.hardDelete({
       query: { _id: previousProfileImageStorage },
     });
 
-    return user;
+    return {
+      profileImageId: fileMedia._id,
+      ...user,
+    };
   }
 };

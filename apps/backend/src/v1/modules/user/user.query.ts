@@ -47,7 +47,7 @@ export const userProjectionQuery = (): PipelineStage[] => {
     "role",
     "type",
     "emailVerificationStatus",
-    "profileImage",
+    "profileImageId",
     "createdAt",
     "updatedAt",
   ]);
