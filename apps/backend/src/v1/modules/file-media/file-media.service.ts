@@ -28,7 +28,6 @@ export const create = async ({ payload }: IFileMediaCreateParams) => {
   return fileMedia;
 };
 
-// This one was already using the object pattern perfectly!
 export const list = ({ query = {}, options }: IFileMediaListParams) => {
   const sanitizedQuery = sanitizeQueryIds(query);
   return FileMedia.aggregatePaginate(
