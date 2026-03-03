@@ -1,47 +1,65 @@
-import { Schema, model, Document, Model } from "mongoose";
-import { DocumentFolder } from "./document-folder.model";
-import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
-import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
-import { awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
-import { AwsStorageTemplate } from "./templates/aws-storage.template";
-import { modelNames } from "./constants";
+import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
+import mongoosePaginate from "mongoose-paginate-v2";
+import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
-export interface FileMediaInput extends TenantInput {
-  collectionName: string;
-  collectionDocument: Schema.Types.ObjectId;
-  storageInformation: AwsStorageTemplate;
+import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
+import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
+import { modelNames, ModelNames } from "./constants";
+
+export enum VISIBILITY_ENUM {
+  PUBLIC = "public",
+  PRIVATE = "private",
 }
 
-export interface IFileMediaDoc extends FileMediaInput, ITenantDoc, ISoftDeleteDoc, Document {
+export interface FileMediaInput {
+  collectionName: ModelNames;
+  collectionDocument: Types.ObjectId;
+  storageInformation: AwsStorageTemplate;
+  visibility: VISIBILITY_ENUM;
+}
+
+export interface IFileMediaDoc extends FileMediaInput, ISoftDeleteDoc, Document {
   createdAt: Date;
   updatedAt: Date;
 }
 
-interface IFileMediaModel extends Model<IFileMediaDoc>, ITenantModel<IFileMediaDoc>, ISoftDeleteModel<IFileMediaDoc> {}
+interface IFileMediaModel
+  extends Model<IFileMediaDoc>,
+    ISoftDeleteModel<IFileMediaDoc>,
+    PaginateModel<IFileMediaDoc>,
+    AggregatePaginateModel<IFileMediaDoc> {}
 
-// Create the file media schema
 const fileMediaSchema = new Schema<IFileMediaDoc>(
   {
     collectionName: {
       type: String,
       required: true,
+      index: true,
+      enum: Object.values(modelNames),
     },
     collectionDocument: {
       type: Schema.Types.ObjectId,
-      ref: DocumentFolder.modelName,
       required: true,
+      refPath: "collectionName",
     },
     storageInformation: awsStorageTemplateMongooseDefinition,
+    visibility: {
+      type: String,
+      enum: Object.values(VISIBILITY_ENUM),
+      required: true,
+      default: VISIBILITY_ENUM.PRIVATE,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// Apply plugins
-fileMediaSchema.plugin(tenantDataPlugin);
+// --- Plugins ---
 fileMediaSchema.plugin(softDeletePlugin);
+fileMediaSchema.plugin(mongoosePaginate);
+fileMediaSchema.plugin(aggregatePaginate);
 
-// Create and export the model
-const FileMedia = model<IFileMediaDoc, IFileMediaModel>(modelNames.FILE_MEDIA, fileMediaSchema);
-export { FileMedia };
+fileMediaSchema.index({ collectionDocument: 1, collectionName: 1 });
+
+export const FileMedia = model<IFileMediaDoc, IFileMediaModel>(modelNames.FILE_MEDIA, fileMediaSchema);
