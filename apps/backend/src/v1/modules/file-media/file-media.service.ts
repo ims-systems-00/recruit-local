@@ -103,9 +103,9 @@ export const hardDelete = async ({ query }: IFileMediaGetParams) => {
   if (!fileMedia) throw new NotFoundException("File and media not found to delete.");
 
   // todo: delete from s3. - probably moves this to a queue?
-  // const fileManager = new FileManager(s3Client);
-  // const { Bucket, Key } = fileMedia.storageInformation;
-  // fileManager.deleteFile({ Bucket, Key });
+  const fileManager = new FileManager(s3Client);
+  const { Bucket, Key } = fileMedia.storageInformation;
+  fileManager.deleteFile({ Bucket, Key });
 
   return fileMedia;
 };
