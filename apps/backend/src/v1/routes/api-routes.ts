@@ -3,9 +3,9 @@ import authRoutes from "../modules/authentication/auth.route";
 import tenantRoutes from "../modules/tenant/tenant.route";
 // import commentActivityRoutes from "../modules/comment-activity/comment-activity.route";
 
-// import fileMediaRoutes from "../modules/file-media/file-media.route";
-// import fileStorageRoutes from "../modules/file-storage/file-storage.route";
-// import notificationRoutes from "../modules/notification/notification.route";
+import fileMediaRoutes from "../modules/file-media/file-media.route";
+import fileStorageRoutes from "../modules/file-storage/file-storage.route";
+import notificationRoutes from "../modules/notification/notification.route";
 
 import invitationRoutes from "../modules/invitation/invitation.route";
 // import documentFolderRoutes from "../modules/document-folder/document-folder.route";
@@ -42,9 +42,9 @@ const getApiRoutes = () => {
   router.use(deserializeUser);
   router.use("/tenants", tenantRoutes);
   // router.use("/comment-activities", commentActivityRoutes);
-  // router.use("/file-medias", fileMediaRoutes);
-  // router.use("/file-storage", fileStorageRoutes);
-  // router.use("/notifications", notificationRoutes);
+  router.use("/file-medias", fileMediaRoutes);
+  router.use("/file-storage", fileStorageRoutes);
+  router.use("/notifications", notificationRoutes);
   router.use("/invitations", invitationRoutes);
   // router.use("/document-folders", documentFolderRoutes);
   router.use("/users", userRoutes);

@@ -1,9 +1,12 @@
-import { s3Client } from "../../../.config/s3.config";
-import { FileManager, NotFoundException } from "../../../common/helper";
+import { NotFoundException, sanitizeQueryIds } from "../../../common/helper";
+import { Types } from "mongoose";
 import { IListUserParams } from "./user.interface";
 import { User, UserInput } from "../../../models";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 import { matchQuery, userProjectionQuery, excludeDeletedQuery } from "./user.query";
+import * as fileMediaService from "../file-media/file-media.service";
+import { VISIBILITY_ENUM } from "@rl/types";
+import { modelNames } from "../../../models/constants";
 
 export const listUser = ({ query = {}, options }: IListUserParams) => {
   const users = User.aggregatePaginate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()], {
@@ -14,7 +17,11 @@ export const listUser = ({ query = {}, options }: IListUserParams) => {
 };
 
 export const getUser = async ({ query = {} }: IListUserParams) => {
-  const users = await User.aggregate([...matchQuery(query), ...excludeDeletedQuery(), ...userProjectionQuery()]);
+  const users = await User.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...userProjectionQuery(),
+  ]);
   if (users.length === 0) throw new NotFoundException("User not found.");
 
   return users[0];
@@ -67,6 +74,8 @@ export const softRemoveUser = async (id: string) => {
 export const hardRemoveUser = async (id: string) => {
   const user = await User.findOneAndDelete({ _id: id });
   return user;
+
+  // todo - delete all the files in s3 related to the user
 };
 
 export const restoreUser = async (id: string) => {
@@ -84,19 +93,29 @@ export const updateUserProfileImage = async (id: string, payload: AwsStorageTemp
   const user = await getUser({
     query: { _id: id },
   });
-  const fileManager = new FileManager(s3Client);
-  const previousProfileImageStorage = user.profileImageStorage;
 
-  const logoSrc = process.env.PUBLIC_MEDIA_BASE_URL + "/" + payload.Key;
-  user.profileImageSrc = logoSrc;
-  user.profileImageStorage = payload;
-  await user.save();
+  const fileMedia = await fileMediaService.create({
+    payload: {
+      collectionName: modelNames.USER,
+      collectionDocument: user._id,
+      storageInformation: payload,
+      visibility: VISIBILITY_ENUM.PUBLIC,
+    },
+  });
+  const previousProfileImageStorage = user.profileImageId;
 
-  // delete the previous file from s3
-  if (typeof previousProfileImageStorage?.Key === "string") {
-    const { Bucket, Key } = previousProfileImageStorage;
-    fileManager.deleteFile({ Bucket, Key });
+  await updateUser(id, {
+    profileImageId: new Types.ObjectId(fileMedia._id as string),
+  });
+
+  if (previousProfileImageStorage) {
+    await fileMediaService.hardDelete({
+      query: { _id: previousProfileImageStorage },
+    });
+
+    return {
+      profileImageId: fileMedia._id,
+      ...user,
+    };
   }
-
-  return user;
 };

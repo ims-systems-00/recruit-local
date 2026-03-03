@@ -1,10 +1,9 @@
-import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { passwordHashPlugin, PasswordHashInput, IPasswordHashDoc } from "./plugins/password-hash.plugin";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
-import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { EMAIL_VERIFICATION_STATUS_ENUMS, modelNames } from "./constants";
 import { USER_ROLE_ENUMS, ACCOUNT_TYPE_ENUMS } from "@rl/types";
 
@@ -19,8 +18,7 @@ export interface UserInput extends PasswordHashInput, TenantInput {
   firstName: string;
   lastName: string;
   email: string;
-  profileImageSrc?: string;
-  profileImageStorage?: AwsStorageTemplate;
+  profileImageId?: Types.ObjectId;
   role?: USER_ROLE_ENUMS;
   type?: ACCOUNT_TYPE_ENUMS;
 }
@@ -57,12 +55,9 @@ const userSchema = new Schema<IUserDoc>(
       unique: true,
       required: true,
     },
-    profileImageSrc: {
-      type: String,
-    },
-    profileImageStorage: {
-      type: Schema.Types.Mixed,
-      default: awsStorageTemplateMongooseDefinition,
+    profileImageId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.FILE_MEDIA,
     },
     type: {
       type: String,
