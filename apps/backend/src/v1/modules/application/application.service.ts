@@ -5,7 +5,6 @@ import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { applicationProjectionQuery } from "./application.query";
 import * as jobService from "../job/job.service";
-import * as boardService from "../board/board.service";
 import * as statusService from "../status/status.service";
 
 type IListApplicationParams = IListParams<ApplicationInput>;

@@ -204,7 +204,7 @@ export const restoreUser = async ({ req }: ControllerParams) => {
 
 export const updateUserProfileImage = async ({ req }: ControllerParams) => {
   const user = await userService.getUser({
-    query: sanitizeQueryIds({ _id: req.params.id }),
+    query: { _id: req.params.id },
   });
 
   const abilityBuilder = new UserAbilityBuilder(req.session);
