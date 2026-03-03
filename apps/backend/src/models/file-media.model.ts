@@ -1,24 +1,19 @@
 import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
-
+import { VISIBILITY_ENUM } from "@rl/types";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { modelNames, ModelNames } from "./constants";
 
-export enum VISIBILITY_ENUM {
-  PUBLIC = "public",
-  PRIVATE = "private",
-}
-
-export interface FileMediaInput {
+export interface IFileMediaInput {
   collectionName: ModelNames;
   collectionDocument: Types.ObjectId;
   storageInformation: AwsStorageTemplate;
   visibility: VISIBILITY_ENUM;
 }
 
-export interface IFileMediaDoc extends FileMediaInput, ISoftDeleteDoc, Document {
+export interface IFileMediaDoc extends IFileMediaInput, ISoftDeleteDoc, Document {
   createdAt: Date;
   updatedAt: Date;
 }

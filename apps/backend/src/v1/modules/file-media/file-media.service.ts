@@ -1,78 +1,111 @@
-import { S3Client } from "@aws-sdk/client-s3";
-import { NotFoundException, FileManager } from "../../../common/helper";
-import { IListFileMediaParams } from "./file-media.interface";
-import { FileMedia, FileMediaInput } from "../../../models";
+import { IListParams } from "@rl/types";
+import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import { NotFoundException, FileManager, sanitizeQueryIds } from "../../../common/helper";
+import { fileMediaProjectionQuery, fileMediaSrcQuery } from "./file-media.query";
+import { FileMedia, IFileMediaInput } from "../../../models";
+import { s3Client } from "../../../.config/s3.config";
 
-const s3Client = new S3Client({
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_ACCESS_KEY_SECRET,
-  },
-  region: "eu-west-2",
-});
+type IFileMediaListParams = IListParams<IFileMediaInput>;
+type IFileMediaQueryParams = Partial<IFileMediaInput & { _id: string }>;
 
-const populates = [
-  {
-    path: "collectionDocument",
-    select: "name type parentId storageInformation ownedBy",
-  },
-];
+export interface IFileMediaUpdateParams {
+  query: IFileMediaQueryParams;
+  payload: Partial<IFileMediaInput>;
+}
 
-export const listFileMedia = ({ query = {}, options }: IListFileMediaParams) => {
-  return FileMedia.paginateAndExcludeDeleted(query, { ...options, populate: populates });
+export interface IFileMediaGetParams {
+  query: IFileMediaQueryParams;
+}
+
+export interface IFileMediaCreateParams {
+  payload: IFileMediaInput;
+}
+
+export const create = async ({ payload }: IFileMediaCreateParams) => {
+  let fileMedia = new FileMedia(payload);
+  fileMedia = await fileMedia.save();
+
+  return fileMedia;
 };
 
-export const getFileMedia = async (id: string) => {
-  const fileMedia = await FileMedia.findOneWithExcludeDeleted({ _id: id });
-  if (!fileMedia) throw new NotFoundException("File and media not found.");
-
-  return fileMedia.populate(populates);
+// This one was already using the object pattern perfectly!
+export const list = ({ query = {}, options }: IFileMediaListParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  return FileMedia.aggregatePaginate(
+    [...matchQuery(sanitizedQuery), ...excludeDeletedQuery(), ...fileMediaProjectionQuery(), ...fileMediaSrcQuery()],
+    options
+  );
 };
 
-export const updateFileMedia = async (id: string, payload: Partial<FileMediaInput>) => {
-  await getFileMedia(id);
+export const listSoftDeleted = async ({ query = {} }: Partial<IFileMediaGetParams> = {}) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const fileMedias = await FileMedia.aggregate([
+    ...matchQuery(sanitizedQuery),
+    ...onlyDeletedQuery(),
+    ...fileMediaProjectionQuery(),
+    ...fileMediaSrcQuery(),
+  ]);
+  return fileMedias;
+};
+
+export const getOne = async ({ query }: IFileMediaGetParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const fileMedias = await FileMedia.aggregate([
+    ...matchQuery(sanitizedQuery),
+    ...excludeDeletedQuery(),
+    ...fileMediaProjectionQuery(),
+    ...fileMediaSrcQuery(),
+  ]);
+  if (fileMedias.length === 0) throw new NotFoundException("File and media not found.");
+  return fileMedias[0];
+};
+
+export const getOneSoftDeleted = async ({ query }: IFileMediaGetParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const fileMedias = await FileMedia.aggregate([
+    ...matchQuery(sanitizedQuery),
+    ...onlyDeletedQuery(),
+    ...fileMediaProjectionQuery(),
+    ...fileMediaSrcQuery(),
+  ]);
+  if (fileMedias.length === 0) throw new NotFoundException("File and media not found in trash.");
+  return fileMedias[0];
+};
+
+export const update = async ({ query, payload }: IFileMediaUpdateParams) => {
+  const fileMedia = await getOne({ query: sanitizeQueryIds(query) });
+
   const updatedFileMedia = await FileMedia.findOneAndUpdate(
-    { _id: id },
+    { _id: fileMedia._id },
     {
       $set: { ...payload },
     },
     { new: true }
   );
 
-  return updatedFileMedia.populate(populates);
+  return updatedFileMedia;
 };
 
-export const createFileMedia = async (payload: FileMediaInput) => {
-  let fileMedia = new FileMedia(payload);
-  fileMedia = await fileMedia.save();
-
-  return fileMedia.populate(populates);
+export const softDelete = async ({ query }: IFileMediaGetParams) => {
+  const fileMedia = await FileMedia.softDelete(sanitizeQueryIds(query));
+  if (!fileMedia.deleted) throw new NotFoundException("File and media not found to delete.");
+  return { deleted: fileMedia.deleted };
 };
 
-export const softRemoveFileMedia = async (id: string) => {
-  const fileMedia = await getFileMedia(id);
-  const { deleted } = await FileMedia.softDelete({ _id: id });
-
-  return { fileMedia, deleted };
-};
-
-export const hardRemoveFileMedia = async (id: string) => {
-  const fileMedia = await FileMedia.findOneWithExcludeDeleted({ _id: id });
-  if (!fileMedia) return null;
-  await FileMedia.findOneAndDelete({ _id: id });
-
-  const fileManager = new FileManager(s3Client);
-  const { storageInformation } = fileMedia;
-  fileManager.deleteFile({ Bucket: storageInformation.Bucket, Key: storageInformation.Key });
-
+export const restore = async ({ query }: IFileMediaGetParams) => {
+  const fileMedia = await FileMedia.restore(sanitizeQueryIds(query));
+  if (!fileMedia) throw new NotFoundException("File and media not found to restore.");
   return fileMedia;
 };
 
-export const restoreFileMedia = async (id: string) => {
-  const { restored } = await FileMedia.restore({ _id: id });
-  if (!restored) throw new NotFoundException("File and media not found in trash.");
+export const hardDelete = async ({ query }: IFileMediaGetParams) => {
+  const fileMedia = await FileMedia.findOneAndDelete(sanitizeQueryIds(query));
+  if (!fileMedia) throw new NotFoundException("File and media not found to delete.");
 
-  const fileMedia = await getFileMedia(id);
+  // todo: delete from s3. - probably moves this to a queue?
+  // const fileManager = new FileManager(s3Client);
+  // const { Bucket, Key } = fileMedia.storageInformation;
+  // fileManager.deleteFile({ Bucket, Key });
 
-  return { fileMedia, restored };
+  return fileMedia;
 };

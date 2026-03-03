@@ -16,3 +16,4 @@ export * from './event-registration';
 export * from './favourite';
 export * from './skill-assessment';
 export * from './reaction';
+export * from './file-media';
