@@ -7,7 +7,7 @@ export default function Home() {
       <div className=" max-w-2xl w-full">
         <RichTextEditor />
       </div>
-      <Button className="bg-primary">Click me</Button>
+      <Button className="bg-bg-brand-solid-primary">Click me</Button>
     </div>
   );
 }

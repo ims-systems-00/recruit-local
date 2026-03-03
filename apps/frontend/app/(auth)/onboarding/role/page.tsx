@@ -73,7 +73,7 @@ export default function Role() {
             </Button>
             <Button
               type="submit"
-              className="text-base bg-primary border-primary text-white rounded-lg h-10"
+              className="text-base bg-bg-brand-solid-primary border-primary text-white rounded-lg h-10"
             >
               Continue
             </Button>

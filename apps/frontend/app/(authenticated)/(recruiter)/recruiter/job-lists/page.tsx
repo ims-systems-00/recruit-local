@@ -101,7 +101,7 @@ export default function JobLists() {
                           UI/UX Designer Wanted – Join Our Creative Team!
                         </h4>
                       </div>
-                      <div className=" relative overflow-hidden bg-primary-extra-ighter h-25 rounded-lg flex justify-center items-center">
+                      <div className=" relative overflow-hidden bg-bg-brand-solid-primary-extra-ighter h-25 rounded-lg flex justify-center items-center">
                         <span className=" absolute left-0 top-0">
                           <svg
                             width="464"
