@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -38,6 +38,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export const userColumns: ColumnDef<User>[] = [
   {
@@ -133,6 +135,8 @@ export default function JobLists() {
     },
   ];
 
+  const [isListView, setIsListView] = useState(false);
+
   return (
     <div>
       <div className=" py-spacing-lg px-spacing-4xl border-b border-border-gray-secondary">
@@ -162,15 +166,27 @@ export default function JobLists() {
               <Plus />
               <span>Create New</span>
             </Button>
-            <div className=" border border-border-gray-primary  rounded-lg h-10 flex items-center divide-x divide-border-gray-primary">
-              <span className=" h-full w-[120px] flex justify-center gap-spacing-xs items-center text-text-gray-primary">
+            <div className=" border border-border-gray-primary bg-bg-gray-soft-primary overflow-hidden rounded-lg h-10 flex items-center divide-x divide-border-gray-primary">
+              <span
+                onClick={() => setIsListView(false)}
+                className={cn(
+                  ' h-full w-[120px] flex justify-center cursor-pointer gap-spacing-xs items-center text-text-gray-primary',
+                  !isListView && 'bg-bg-gray-soft-secondary',
+                )}
+              >
                 <LayoutGrid className=" size-4" />
 
                 <span className=" text-label-sm font-label-sm-strong! ">
                   Grid View
                 </span>
               </span>
-              <span className="h-full w-[120px] flex justify-center gap-spacing-xs items-center text-text-gray-primary">
+              <span
+                onClick={() => setIsListView(true)}
+                className={cn(
+                  'h-full w-[120px] flex justify-center cursor-pointer gap-spacing-xs items-center text-text-gray-primary',
+                  isListView && 'bg-bg-gray-soft-secondary',
+                )}
+              >
                 <TextAlignJustify className=" size-4" />
 
                 <span className=" text-label-sm font-label-sm-strong! ">
@@ -214,83 +230,90 @@ export default function JobLists() {
 
               {tabs.map((tab) => (
                 <TabsContent key={tab.value} value={tab.value}>
-                  <DataTable columns={userColumns} data={demoUsers} />
+                  {isListView ? (
+                    <DataTable columns={userColumns} data={demoUsers} />
+                  ) : (
+                    <div className=" grid grid-cols-2 gap-spacing-4xl">
+                      {[1, 2, 3].map((item) => (
+                        <div
+                          key={item}
+                          className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs"
+                        >
+                          <div className=" p-spacing-4xl space-y-spacing-4xl">
+                            <div className=" space-y-spacing-sm">
+                              <div className="flex justify-between items-center gap-spacing-4xl">
+                                <p className=" text-label-sm text-text-gray-tertiary">
+                                  XJ-486
+                                </p>
+                                <span>
+                                  <Ellipsis className="w-5 h-5 text-text-gray-primary" />
+                                </span>
+                              </div>
 
-                  <div className=" grid grid-cols-2 gap-spacing-4xl">
-                    {[1, 2, 3].map((item) => (
-                      <div
-                        key={item}
-                        className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs"
-                      >
-                        <div className=" p-spacing-4xl space-y-spacing-4xl">
-                          <div className=" space-y-spacing-sm">
-                            <div className="flex justify-between items-center gap-spacing-4xl">
-                              <p className=" text-label-sm text-text-gray-tertiary">
-                                XJ-486
-                              </p>
-                              <span>
-                                <Ellipsis className="w-5 h-5 text-text-gray-primary" />
-                              </span>
-                            </div>
+                              <Badge className=" text-label-sm font-label-sm-strong! text-others-fuchsia-dark bg-others-fuchsia-light">
+                                Archive
+                              </Badge>
 
-                            <div className=" space-y-spacing-2xs">
-                              <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-                                UI/UX Designer Wanted – Join Our Creative Team!
-                              </h4>
-                              <div className=" flex items-center gap-spacing-xs">
-                                <div className="flex items-center gap-spacing-2xs text-text-gray-tertiary">
-                                  <MapPin className=" text-fg-gray-tertiary size-4" />
-                                  <p className="text-body-sm ">
-                                    Shaw and Crompton, UK
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-spacing-2xs text-text-gray-tertiary">
-                                  <div className=" inline-block w-1.5 h-1.5 rounded-full bg-fg-gray-tertiary"></div>
-                                  <p className="text-body-sm ">Hybrid</p>
+                              <div className=" space-y-spacing-2xs">
+                                <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+                                  UI/UX Designer Wanted – Join Our Creative
+                                  Team!
+                                </h4>
+                                <div className=" flex items-center gap-spacing-xs">
+                                  <div className="flex items-center gap-spacing-2xs text-text-gray-tertiary">
+                                    <MapPin className=" text-fg-gray-tertiary size-4" />
+                                    <p className="text-body-sm ">
+                                      Shaw and Crompton, UK
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-spacing-2xs text-text-gray-tertiary">
+                                    <div className=" inline-block w-1.5 h-1.5 rounded-full bg-fg-gray-tertiary"></div>
+                                    <p className="text-body-sm ">Hybrid</p>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
 
-                          <div className=" flex justify-between items-center">
-                            <div className=" flex items-center gap-spacing-sm ">
-                              <p className="text-label-sm font-body-sm-strong!  text-text-gray-primary">
-                                Applied
-                              </p>
-                              <p className=" text-body-sm text-text-gray-tertiary">
-                                88
-                              </p>
-                            </div>
-                            <div className="flex items-center">
-                              {[1, 2, 3, 4].map((item) => (
-                                <Avatar
-                                  key={item}
-                                  className=" size-6 -ml-1.5 first:ml-0 border border-white"
-                                >
-                                  <AvatarImage
-                                    src="https://github.com/shadcn.png"
-                                    alt="@shadcn"
-                                  />
-                                  <AvatarFallback>CN</AvatarFallback>
+                            <div className=" flex justify-between items-center">
+                              <div className=" flex items-center gap-spacing-sm ">
+                                <p className="text-label-sm font-body-sm-strong!  text-text-gray-primary">
+                                  Applied
+                                </p>
+                                <p className=" text-body-sm text-text-gray-tertiary">
+                                  88
+                                </p>
+                              </div>
+                              <div className="flex items-center">
+                                {[1, 2, 3, 4].map((item) => (
+                                  <Avatar
+                                    key={item}
+                                    className=" size-6 -ml-1.5 first:ml-0 border border-white"
+                                  >
+                                    <AvatarImage
+                                      src="https://github.com/shadcn.png"
+                                      alt="@shadcn"
+                                    />
+                                    <AvatarFallback>CN</AvatarFallback>
+                                  </Avatar>
+                                ))}
+                                <Avatar className="-ml-1.5 size-6 bg-gray-200 border border-white text-body-xs">
+                                  <AvatarFallback>+7</AvatarFallback>
                                 </Avatar>
-                              ))}
-                              <Avatar className="-ml-1.5 size-6 bg-gray-200 border border-white text-body-xs">
-                                <AvatarFallback>+7</AvatarFallback>
-                              </Avatar>
+                              </div>
                             </div>
                           </div>
+                          <div className=" border-t border-border-gray-secondary flex justify-between items-center gap-2.5 px-spacing-4xl py-spacing-2xl">
+                            <p className=" text-body-sm text-text-gray-tertiary">
+                              Nov 26, 2025
+                            </p>
+                            <p className=" text-body-sm text-text-gray-tertiary">
+                              Active
+                            </p>
+                          </div>
                         </div>
-                        <div className=" border-t border-border-gray-secondary flex justify-between items-center gap-2.5 px-spacing-4xl py-spacing-2xl">
-                          <p className=" text-body-sm text-text-gray-tertiary">
-                            Nov 26, 2025
-                          </p>
-                          <p className=" text-body-sm text-text-gray-tertiary">
-                            Active
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </TabsContent>
               ))}
               <Pagination className="py-spacing-4xl">
