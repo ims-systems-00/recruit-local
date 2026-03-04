@@ -8,6 +8,16 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import EmptyStateSVG from '@/public/images/Empty_State.svg';
+
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 
 import {
   Pagination,
@@ -40,6 +50,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 export const userColumns: ColumnDef<User>[] = [
   {
@@ -314,6 +325,31 @@ export default function JobLists() {
                       ))}
                     </div>
                   )}
+                  <Empty className="border border-dashed p-spacing-4xl!">
+                    <EmptyHeader>
+                      <div className="">
+                        <Image
+                          className="max-h-50 max-w-[250px] w-[250px] h-50 rounded-full"
+                          alt="EmptyStateSVG"
+                          src={EmptyStateSVG}
+                          width={250}
+                          height={200}
+                        />
+                        <EmptyTitle className=" text-label-xl font-label-xs-strong! text-text-gray-primary">
+                          No Jobs are Post Yet!
+                        </EmptyTitle>
+                      </div>
+                      <EmptyDescription className=" text-label-md text-text-gray-quaternary">
+                        Currently, there are no job postings available.
+                      </EmptyDescription>
+                    </EmptyHeader>
+                    <EmptyContent>
+                      <Button className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!">
+                        <Plus />
+                        <span>Create New</span>
+                      </Button>
+                    </EmptyContent>
+                  </Empty>
                 </TabsContent>
               ))}
               <Pagination className="py-spacing-4xl">
