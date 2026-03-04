@@ -11,10 +11,7 @@ export const createBodySchema = Joi.object({
   jobId: Joi.string().custom(objectIdValidation).required().label("Job ID"),
   jobProfileId: Joi.string().custom(objectIdValidation).required().label("Job Profile ID"),
   coverLetter: Joi.string().optional().allow("").label("Cover Letter"),
-  // Resume File
-  resumeSrc: Joi.string().uri().optional().label("Resume Link"),
   resumeStorage: awsStorageSchema.optional().label("Resume File Data"),
-
   // Admin/Internal fields (optional on create)
   feedback: Joi.string().optional().allow("").label("Feedback"),
   appliedAt: Joi.date().optional().label("Applied Date"),
@@ -22,12 +19,8 @@ export const createBodySchema = Joi.object({
 
 export const updateBodySchema = Joi.object({
   statusId: Joi.string().custom(objectIdValidation).required().label("Status"),
-
   coverLetter: Joi.string().optional().allow("").label("Cover Letter"),
-
-  resumeSrc: Joi.string().uri().optional().allow("").label("Resume Link"),
   resumeStorage: awsStorageSchema.optional().label("Resume File Data"),
-
   feedback: Joi.string().optional().allow("").label("Feedback"),
   appliedAt: Joi.date().optional().label("Applied Date"),
 });

@@ -1,4 +1,5 @@
-import { IListParams } from "@rl/types";
+import { IListParams, VISIBILITY_ENUM } from "@rl/types";
+import { Types } from "mongoose";
 import { NotFoundException } from "../../../common/helper";
 import { ApplicationInput, Application } from "../../../models";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
@@ -6,9 +7,36 @@ import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../comm
 import { applicationProjectionQuery } from "./application.query";
 import * as jobService from "../job/job.service";
 import * as statusService from "../status/status.service";
+import * as FileMediaService from "../file-media/file-media.service";
+import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
+import { modelNames } from "../../../models/constants";
 
 type IListApplicationParams = IListParams<ApplicationInput>;
 type IApplicationQueryParams = Partial<ApplicationInput & { _id: string }>;
+
+export interface IApplicationUpdateParams {
+  query: IApplicationQueryParams;
+  payload: Partial<ApplicationInput> & { resumeStorage?: AwsStorageTemplate };
+}
+
+export interface IApplicationGetParams {
+  query: IApplicationQueryParams;
+}
+
+export interface IApplicationCreateParams {
+  payload: ApplicationInput & { resumeStorage?: AwsStorageTemplate };
+}
+
+export interface IApplicationStatusUpdateParams {
+  query: IApplicationQueryParams;
+  status: string;
+}
+
+export interface IMoveBoardItemParams {
+  itemId: string;
+  targetStatusId: string;
+  targetIndex: number;
+}
 
 export const list = ({ query = {}, options }: IListApplicationParams) => {
   const sanitizedQuery = sanitizeQueryIds(query);
@@ -18,7 +46,7 @@ export const list = ({ query = {}, options }: IListApplicationParams) => {
   );
 };
 
-export const listSoftDeleted = async (query = {}) => {
+export const listSoftDeleted = async ({ query = {} }: Partial<IApplicationGetParams> = {}) => {
   const sanitizedQuery = sanitizeQueryIds(query);
   const applications = await Application.aggregate([
     ...matchQuery(sanitizedQuery),
@@ -28,7 +56,7 @@ export const listSoftDeleted = async (query = {}) => {
   return applications;
 };
 
-export const getOne = async (query: IApplicationQueryParams) => {
+export const getOne = async ({ query }: IApplicationGetParams) => {
   const sanitizedQuery = sanitizeQueryIds(query);
   const applications = await Application.aggregate([
     ...matchQuery(sanitizedQuery),
@@ -39,7 +67,7 @@ export const getOne = async (query: IApplicationQueryParams) => {
   return applications[0];
 };
 
-export const getOneSoftDeleted = async (query: IApplicationQueryParams) => {
+export const getOneSoftDeleted = async ({ query }: IApplicationGetParams) => {
   const sanitizedQuery = sanitizeQueryIds(query);
   const applications = await Application.aggregate([
     ...matchQuery(sanitizedQuery),
@@ -50,7 +78,7 @@ export const getOneSoftDeleted = async (query: IApplicationQueryParams) => {
   return applications[0];
 };
 
-export const create = async (payload: ApplicationInput) => {
+export const create = async ({ payload }: IApplicationCreateParams) => {
   // check if job exists
   const job = await jobService.getOne({
     query: { _id: payload.jobId! },
@@ -67,50 +95,111 @@ export const create = async (payload: ApplicationInput) => {
   const merit = Math.floor(Math.random() * 10) + 1;
   payload.rank = merit + status.weight;
 
-  let application = new Application(payload);
+  const applicationId = new Types.ObjectId();
+  let resumeId = null;
+
+  if (payload.resumeStorage) {
+    const fileMedia = await FileMediaService.create({
+      payload: {
+        collectionName: modelNames.APPLICATION,
+        collectionDocument: applicationId,
+        storageInformation: payload.resumeStorage,
+        visibility: VISIBILITY_ENUM.PRIVATE,
+      },
+    });
+    resumeId = fileMedia._id;
+  }
+
+  const { resumeStorage, ...cleanPayload } = payload;
+
+  let application = new Application({
+    ...cleanPayload,
+    _id: applicationId,
+    resumeId: resumeId,
+  });
   application = await application.save();
 
   return application;
 };
 
-export const update = async (id: string, payload: Partial<ApplicationInput>) => {
+export const update = async ({ query, payload }: IApplicationUpdateParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+
+  const application = await getOne({ query: sanitizedQuery });
+
+  let updatedResumeId = application.resumeId;
+
+  if (payload.resumeStorage) {
+    const newFileMedia = await FileMediaService.create({
+      payload: {
+        collectionName: modelNames.APPLICATION,
+        collectionDocument: application._id,
+        storageInformation: payload.resumeStorage,
+        visibility: VISIBILITY_ENUM.PRIVATE,
+      },
+    });
+
+    updatedResumeId = newFileMedia._id;
+
+    if (application.resumeId) {
+      try {
+        await FileMediaService.hardDelete({
+          query: { _id: application.resumeId.toString() },
+        });
+      } catch (error) {
+        console.error(`Failed to delete old resume ${application.resumeId} for Application ${application._id}`, error);
+      }
+    }
+  }
+
+  const { resumeStorage, ...cleanPayload } = payload;
+
   const updatedApplication = await Application.findOneAndUpdate(
-    { _id: id },
+    { _id: application._id },
     {
-      $set: { ...payload },
+      $set: {
+        ...cleanPayload,
+        resumeId: updatedResumeId,
+      },
     },
     { new: true }
   );
+
   if (!updatedApplication) throw new NotFoundException("Application not found.");
+
   return updatedApplication;
 };
 
-export const softRemove = async (id: string) => {
-  const application = await getOne({ _id: id });
-  const { deleted } = await Application.softDelete({ _id: id });
+export const softRemove = async ({ query }: IApplicationGetParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const application = await getOne({ query: sanitizedQuery });
+  const { deleted } = await Application.softDelete({ _id: application._id });
 
   return { application, deleted };
 };
 
-export const hardRemove = async (id: string) => {
-  const application = await getOne({ _id: id });
-  await Application.findOneAndDelete({ _id: id });
+export const hardRemove = async ({ query }: IApplicationGetParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const application = await getOne({ query: sanitizedQuery });
+  await Application.findOneAndDelete({ _id: application._id });
 
   return application;
 };
 
-export const restore = async (id: string) => {
-  const { restored } = await Application.restore({ _id: id });
+export const restore = async ({ query }: IApplicationGetParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const application = await getOne({ query: sanitizedQuery });
+  const { restored } = await Application.restore({ _id: application._id });
   if (!restored) throw new NotFoundException("Application not found in trash.");
-
-  const application = await getOne({ _id: id });
 
   return { application, restored };
 };
 
-export const statusUpdate = async (id: string, status: string) => {
+export const statusUpdate = async ({ query, status }: IApplicationStatusUpdateParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const application = await getOne({ query: sanitizedQuery });
   const updatedApplication = await Application.findOneAndUpdate(
-    { _id: id },
+    { _id: application._id },
     {
       $set: { status },
     },
@@ -120,6 +209,6 @@ export const statusUpdate = async (id: string, status: string) => {
   return updatedApplication;
 };
 
-export const moveItemOnBoard = async (itemId: string, targetStatusId: string, targetIndex: number) => {
+export const moveItemOnBoard = async ({ itemId, targetStatusId, targetIndex }: IMoveBoardItemParams) => {
   return Application.moveToPosition(itemId, targetStatusId, targetIndex);
 };
