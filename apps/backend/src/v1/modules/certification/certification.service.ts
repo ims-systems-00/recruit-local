@@ -1,16 +1,29 @@
-import { IListParams } from "@rl/types";
-import { CertificationInput, Certification, ICertificationDoc } from "../../../models";
-import { FileManager, NotFoundException } from "../../../common/helper";
+import { IListParams, VISIBILITY_ENUM } from "@rl/types";
+import { CertificationInput, Certification } from "../../../models";
+import { NotFoundException } from "../../../common/helper";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
-import { s3Client } from "../../../.config/s3.config";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { certificationProjectionQuery } from "./certification.query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
+import * as FileMediaService from "../file-media/file-media.service";
+import { Types } from "mongoose";
+import { modelNames } from "../../../models/constants";
 
 type IListCertificationParams = IListParams<CertificationInput>;
-type IGetOneCertificationParams = Partial<ICertificationDoc>;
+type ICertificationQueryParams = Partial<CertificationInput & { _id: string }>;
 
-type CreatePayload = CertificationInput & AwsStorageTemplate;
+export interface ICertificationUpdateParams {
+  query: ICertificationQueryParams;
+  payload: Partial<CertificationInput> & { imageStorage?: AwsStorageTemplate };
+}
+
+export interface ICertificationGetParams {
+  query: ICertificationQueryParams;
+}
+
+export interface ICertificationCreateParams {
+  payload: CertificationInput & { imageStorage?: AwsStorageTemplate };
+}
 
 export const list = ({ query = {}, options }: IListCertificationParams) => {
   return Certification.aggregatePaginate(
@@ -19,7 +32,7 @@ export const list = ({ query = {}, options }: IListCertificationParams) => {
   );
 };
 
-export const getOne = async (query: IGetOneCertificationParams) => {
+export const getOne = async ({ query }: ICertificationGetParams) => {
   const certification = await Certification.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
@@ -36,7 +49,7 @@ export const listSoftDeleted = ({ query = {}, options }: IListCertificationParam
   );
 };
 
-export const getSoftDeletedOne = async (query: IGetOneCertificationParams) => {
+export const getSoftDeletedOne = async ({ query }: ICertificationGetParams) => {
   const certification = await Certification.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...certificationProjectionQuery(),
@@ -45,88 +58,108 @@ export const getSoftDeletedOne = async (query: IGetOneCertificationParams) => {
   return certification[0];
 };
 
-export const create = async (payload: CreatePayload) => {
-  let certification: ICertificationDoc;
-  if (payload.Key) {
-    const baseUrl = process.env.PUBLIC_MEDIA_BASE_URL?.replace(/\/$/, "");
-    const src = `${baseUrl}/${payload.Key}`;
-    certification = new Certification({
-      ...payload,
-      imageSrc: src,
-      imageStorage: {
-        Bucket: payload.Bucket,
-        Key: payload.Key,
-        Name: payload.Name,
+export const create = async ({ payload }: ICertificationCreateParams) => {
+  const certificationId = new Types.ObjectId();
+  let imageId = null;
+
+  if (payload.imageStorage) {
+    const fileMedia = await FileMediaService.create({
+      payload: {
+        collectionName: modelNames.CERTIFICATION,
+        collectionDocument: certificationId,
+        storageInformation: payload.imageStorage,
+        visibility: VISIBILITY_ENUM.PUBLIC,
       },
     });
-  } else {
-    certification = new Certification({ ...payload });
+    imageId = fileMedia._id;
   }
+
+  // 3. Strip raw AWS data and save the clean payload
+  const { imageStorage, ...cleanPayload } = payload;
+
+  let certification = new Certification({
+    ...cleanPayload,
+    _id: certificationId,
+    imageId: imageId,
+  });
 
   certification = await certification.save();
 
   return certification;
 };
 
-export const update = async (
-  query: IGetOneCertificationParams,
-  payload: Partial<CertificationInput> & AwsStorageTemplate
-) => {
-  const certification = await getOne(query);
-  const existingImageStorage = certification.imageStorage;
+export const update = async ({ query, payload }: ICertificationUpdateParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const certification = await getOne({ query: sanitizedQuery });
 
-  const { Key, Bucket, Name, ...fieldsToUpdate } = payload;
+  let updatedImageId = certification.imageId;
 
-  const fileManager = new FileManager(s3Client);
-  // If new image is provided, delete the old one from S3
-  if (Key && existingImageStorage) {
-    await fileManager.deleteFile({ Bucket: existingImageStorage.Bucket, Key: existingImageStorage.Key });
+  if (payload.imageStorage) {
+    const newFileMedia = await FileMediaService.create({
+      payload: {
+        collectionName: modelNames.CERTIFICATION,
+        collectionDocument: certification._id,
+        storageInformation: payload.imageStorage,
+        visibility: VISIBILITY_ENUM.PUBLIC,
+      },
+    });
+
+    updatedImageId = newFileMedia._id;
+
+    if (certification.imageId) {
+      try {
+        await FileMediaService.hardDelete({
+          query: { _id: certification.imageId.toString() },
+        });
+      } catch (error) {
+        console.error(
+          `Failed to delete old image ${certification.imageId} for Certification ${certification._id}`,
+          error
+        );
+      }
+    }
   }
 
-  // If new image is provided, update the imageSrc
-  if (Key) {
-    const src = process.env.PUBLIC_MEDIA_BASE_URL + "/" + Key;
-    fieldsToUpdate.imageSrc = src;
-    fieldsToUpdate.imageStorage = {
-      Bucket: Bucket,
-      Key: Key,
-      Name: Name,
-    };
-  }
+  const { imageStorage, ...cleanPayload } = payload;
+
   const updatedCertification = await Certification.findOneAndUpdate(
     { _id: certification._id },
-    { $set: fieldsToUpdate },
+    {
+      $set: {
+        ...cleanPayload,
+        imageId: updatedImageId,
+      },
+    },
     { new: true }
   );
 
   return updatedCertification;
 };
 
-export const softRemove = async (query: IGetOneCertificationParams) => {
+export const softRemove = async ({ query }: ICertificationGetParams) => {
   const { deleted } = await Certification.softDelete(query);
 
   return { deleted };
 };
 
-export const hardRemove = async (id: string) => {
-  const certification = await getOne({ _id: id });
-  // 2. If it exists and has a key, delete from S3
-  if (certification?.imageStorage?.Key) {
-    const fileManager = new FileManager(s3Client);
-    // Wrap in try/catch so DB deletion happens even if S3 fails
+export const hardDelete = async ({ query }: ICertificationGetParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const certification = await getSoftDeletedOne({ query: sanitizedQuery });
+
+  if (certification.imageId) {
     try {
-      await fileManager.deleteFile({
-        Bucket: certification.imageStorage.Bucket,
-        Key: certification.imageStorage.Key,
+      await FileMediaService.hardDelete({
+        query: { _id: certification.imageId.toString() },
       });
     } catch (error) {
-      console.error("Failed to delete file from S3:", error);
+      console.error("Failed to delete attached FileMedia:", error);
     }
   }
-  return await Certification.findOneAndDelete({ _id: id });
+
+  return await Certification.findOneAndDelete({ _id: certification._id });
 };
 
-export const restore = async (query: IGetOneCertificationParams) => {
+export const restore = async ({ query }: ICertificationGetParams) => {
   const { restored } = await Certification.restore(query);
   if (!restored) throw new NotFoundException("Certification not found in trash.");
 
