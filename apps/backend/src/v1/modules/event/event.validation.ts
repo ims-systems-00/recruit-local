@@ -64,8 +64,6 @@ export const createEventBodySchema = Joi.object({
   // Registration Deadline
   registrationEndDate: Joi.date().iso().max(Joi.ref("startDate")).required().label("Registration End Date"),
 
-  // Images
-  bannerImageSrc: Joi.string().uri().optional().label("Banner Image URL"),
   bannerImageStorage: awsStorageSchema.optional().label("Banner Image Storage"),
 
   statusId: Joi.string().custom(objectIdValidation).required().label("Status ID"),
@@ -104,7 +102,6 @@ export const updateEventBodySchema = Joi.object({
 
   registrationEndDate: Joi.date().iso().optional(),
 
-  bannerImageSrc: Joi.string().uri().optional(),
   bannerImageStorage: awsStorageSchema.optional(),
 
   statusId: Joi.string().custom(objectIdValidation).optional(),
