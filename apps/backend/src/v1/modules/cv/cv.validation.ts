@@ -56,7 +56,6 @@ export const createBodySchema = Joi.object({
   email: Joi.string().email().optional().label("Email"),
   phone: Joi.string().optional().label("Phone"),
   address: Joi.string().optional().label("Address"),
-  imageSrc: Joi.string().uri().optional().label("Image Source"),
   imageStorage: awsStorageSchema.optional(),
 
   // Arrays (Optional on create, but must follow schema if provided)
@@ -80,7 +79,6 @@ export const updateBodySchema = Joi.object({
   email: Joi.string().email().optional().allow("").label("Email"),
   phone: Joi.string().optional().allow("").label("Phone"),
   address: Joi.string().optional().allow("").label("Address"),
-  imageSrc: Joi.string().uri().optional().allow("").label("Image Source"),
   imageStorage: awsStorageSchema.optional(),
 
   // In the "Single Update" approach, passing these arrays replaces the existing ones.
