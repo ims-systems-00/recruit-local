@@ -19,6 +19,7 @@ export const list = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} applications.`
   //     );
 
+  // This already perfectly matches the { query, options } pattern!
   const results = await applicationService.list({ query, options });
   const { data, pagination } = formatListResponse(results);
 
@@ -32,13 +33,16 @@ export const list = async ({ req }: ControllerParams) => {
 };
 
 export const get = async ({ req }: ControllerParams) => {
-  const application = await applicationService.getOne(req.params.id);
   //   const ability = new UserAbilityBuilder(req.session);
-
   //   if (!ability.getAbility().can(AbilityAction.Read, UserAuthZEntity))
   //     throw new UnauthorizedException(
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} application.`
   //     );
+
+  // Updated to use the object parameter
+  const application = await applicationService.getOne({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Application retrieved.",
@@ -47,6 +51,7 @@ export const get = async ({ req }: ControllerParams) => {
     fieldName: "application",
   });
 };
+
 export const update = async ({ req }: ControllerParams) => {
   //   const ability = new UserAbilityBuilder(req.session);
   //   if (!ability.getAbility().can(AbilityAction.Update, UserAuthZEntity))
@@ -54,7 +59,11 @@ export const update = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} application.`
   //     );
 
-  const application = await applicationService.update(req.params.id, req.body);
+  // Updated to pass query and payload as properties of a single object
+  const application = await applicationService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Application updated.",
@@ -71,7 +80,10 @@ export const create = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} application.`
   //     );
 
-  const application = await applicationService.create(req.body);
+  // Updated to pass payload inside the object parameter
+  const application = await applicationService.create({
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Application created.",
@@ -88,11 +100,16 @@ export const softRemove = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} application.`
   //     );
 
-  await applicationService.softRemove(req.params.id);
+  // Updated to call softDelete and handle the destructured return
+  const { application, deleted } = await applicationService.softRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Application deleted.",
     statusCode: StatusCodes.OK,
+    data: { application, deleted },
+    fieldName: "application",
   });
 };
 
@@ -103,11 +120,16 @@ export const restore = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Restore} application.`
   //     );
 
-  await applicationService.restore(req.params.id);
+  // Updated to call restore using object parameters
+  const { application, restored } = await applicationService.restore({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Application restored.",
     statusCode: StatusCodes.OK,
+    data: { application, restored },
+    fieldName: "application",
   });
 };
 
@@ -118,11 +140,16 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.HardDelete} application.`
   //     );
 
-  await applicationService.hardRemove(req.params.id);
+  // Updated to call hardRemove
+  const application = await applicationService.hardRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Application permanently deleted.",
     statusCode: StatusCodes.OK,
+    data: application,
+    fieldName: "application",
   });
 };
 
@@ -133,7 +160,11 @@ export const statusUpdate = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} application.`
   //     );
 
-  const application = await applicationService.statusUpdate(req.params.id, req.body.status);
+  // Updated to use the new object parameter signature
+  const application = await applicationService.statusUpdate({
+    query: { _id: req.params.id },
+    status: req.body.status,
+  });
 
   return new ApiResponse({
     message: "Application status updated.",
@@ -144,8 +175,13 @@ export const statusUpdate = async ({ req }: ControllerParams) => {
 };
 
 export const moveItemOnBoard = async ({ req }: ControllerParams) => {
-  const itemId = req.params.id;
-  const application = await applicationService.moveItemOnBoard(itemId, req.body.targetStatusId, req.body.targetIndex);
+  // Updated to strictly map to IMoveBoardItemParams
+  const application = await applicationService.moveItemOnBoard({
+    itemId: req.params.id,
+    targetStatusId: req.body.targetStatusId,
+    targetIndex: req.body.targetIndex,
+  });
+
   return new ApiResponse({
     message: "Application moved on board.",
     statusCode: StatusCodes.OK,

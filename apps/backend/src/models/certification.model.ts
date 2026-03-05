@@ -1,22 +1,17 @@
-import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
-import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
-import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 
 export interface CertificationInput extends IUserOwnedInput, JobProfileInput {
   title: string;
   issuingOrganization: string;
   issueDate: Date;
-  imageSrc?: string;
-  imageStorage?: AwsStorageTemplate;
-
-  // todo: certification document storage (pdf, link, etc.), verification link
+  imageId?: Types.ObjectId;
 }
 
 export interface ICertificationDoc extends CertificationInput, IBaseDoc, ISoftDeleteDoc {}
@@ -32,12 +27,13 @@ const certificationSchema = new Schema<ICertificationDoc>(
     title: { type: String, required: true },
     issuingOrganization: { type: String, required: true },
     issueDate: { type: Date, required: true },
-    imageSrc: { type: String, required: false },
-    imageStorage: { type: Schema.Types.Mixed, default: awsStorageTemplateMongooseDefinition },
+    imageId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.FILE_MEDIA,
+      default: null,
+    },
   },
-  {
-    ...baseSchemaOptions,
-  }
+  {}
 );
 
 certificationSchema.plugin(softDeletePlugin);
