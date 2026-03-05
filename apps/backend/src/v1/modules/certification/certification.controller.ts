@@ -7,7 +7,7 @@ import * as certificationService from "./certification.service";
 
 export const list = async ({ req }: ControllerParams) => {
   const filter = new MongoQuery(req.query, {
-    searchFields: ["company", "position", "responsibilities"],
+    searchFields: ["title", "issuingOrganization"],
   }).build();
 
   const query = filter.getFilterQuery();
@@ -16,35 +16,38 @@ export const list = async ({ req }: ControllerParams) => {
   //   const ability = new UserAbilityBuilder(req.session);
   //   if (!ability.getAbility().can(AbilityAction.Read, UserAuthZEntity))
   //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} experiences.`
+  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} certifications.`
   //     );
 
   const results = await certificationService.list({ query, options });
   const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
-    message: "Experiences retrieved",
+    message: "Certifications retrieved",
     statusCode: StatusCodes.OK,
     data,
-    fieldName: "experiences",
+    fieldName: "certifications",
     pagination,
   });
 };
 
 export const get = async ({ req }: ControllerParams) => {
-  const experience = await certificationService.getOne(req.params.id);
+  // Updated to use the object parameter
+  const certification = await certificationService.getOne({
+    query: { _id: req.params.id },
+  });
 
   //   const ability = new UserAbilityBuilder(req.session);
   //   if (!ability.getAbility().can(AbilityAction.Read, UserAuthZEntity))
   //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} experience.`
+  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} certification.`
   //     );
 
   return new ApiResponse({
-    message: "Experience retrieved.",
+    message: "Certification retrieved.",
     statusCode: StatusCodes.OK,
-    data: experience,
-    fieldName: "experience",
+    data: certification,
+    fieldName: "certification",
   });
 };
 
@@ -52,16 +55,20 @@ export const update = async ({ req }: ControllerParams) => {
   //   const ability = new UserAbilityBuilder(req.session);
   //   if (!ability.getAbility().can(AbilityAction.Update, UserAuthZEntity))
   //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} experience.`
+  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} certification.`
   //     );
 
-  const experience = await certificationService.update(req.params.id, req.body);
+  // Updated to pass query and payload as properties of a single object
+  const certification = await certificationService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
 
   return new ApiResponse({
-    message: "Experience updated.",
+    message: "Certification updated.",
     statusCode: StatusCodes.OK,
-    data: experience,
-    fieldName: "experience",
+    data: certification,
+    fieldName: "certification",
   });
 };
 
@@ -69,16 +76,21 @@ export const create = async ({ req }: ControllerParams) => {
   //   const ability = new UserAbilityBuilder(req.session);
   //   if (!ability.getAbility().can(AbilityAction.Create, UserAuthZEntity))
   //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} experience.`
+  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} certification.`
   //     );
+
   const userId = req.session.user?._id;
-  const experience = await certificationService.create({ ...req.body, userId: userId });
+
+  // Updated to wrap the data inside the payload object
+  const certification = await certificationService.create({
+    payload: { ...req.body, userId: userId },
+  });
 
   return new ApiResponse({
-    message: "Experience created.",
+    message: "Certification created.",
     statusCode: StatusCodes.CREATED,
-    data: experience,
-    fieldName: "experience",
+    data: certification,
+    fieldName: "certification",
   });
 };
 
@@ -86,16 +98,19 @@ export const softRemove = async ({ req }: ControllerParams) => {
   //   const ability = new UserAbilityBuilder(req.session);
   //   if (!ability.getAbility().can(AbilityAction.Delete, UserAuthZEntity))
   //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} experience.`
+  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} certification.`
   //     );
 
-  await certificationService.softRemove(req.params.id);
+  // Updated to call softDelete
+  await certificationService.softRemove({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
-    message: "Experience deleted.",
+    message: "Certification deleted.",
     statusCode: StatusCodes.OK,
     data: null,
-    fieldName: "experience",
+    fieldName: "certification",
   });
 };
 
@@ -103,16 +118,19 @@ export const restore = async ({ req }: ControllerParams) => {
   //   const ability = new UserAbilityBuilder(req.session);
   //   if (!ability.getAbility().can(AbilityAction.Restore, UserAuthZEntity))
   //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Restore} experience.`
+  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Restore} certification.`
   //     );
 
-  const experience = await certificationService.restore(req.params.id);
+  // Updated to pass query object
+  const certification = await certificationService.restore({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
-    message: "Experience restored.",
+    message: "Certification restored.",
     statusCode: StatusCodes.OK,
-    data: experience,
-    fieldName: "experience",
+    data: certification,
+    fieldName: "certification",
   });
 };
 
@@ -120,15 +138,18 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   //   const ability = new UserAbilityBuilder(req.session);
   //   if (!ability.getAbility().can(AbilityAction.Delete, UserAuthZEntity))
   //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} experience.`
+  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} certification.`
   //     );
 
-  await certificationService.hardRemove(req.params.id);
+  // Updated to call hardDelete
+  await certificationService.hardDelete({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
-    message: "Experience permanently deleted.",
+    message: "Certification permanently deleted.",
     statusCode: StatusCodes.OK,
     data: null,
-    fieldName: "experience",
+    fieldName: "certification",
   });
 };
