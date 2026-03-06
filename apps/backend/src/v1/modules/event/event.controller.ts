@@ -77,7 +77,9 @@ export const create = async ({ req }: ControllerParams) => {
     req.body.organizers.push(tenantId);
   }
 
-  const event = await eventService.create(req.body);
+  const event = await eventService.create({
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Event created",
@@ -102,7 +104,8 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  await eventService.softRemove({
+  // Updated to call softDelete
+  await eventService.softDelete({
     query: { _id: req.params.id },
   });
 
@@ -113,7 +116,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  await eventService.hardRemove({
+  await eventService.hardDelete({
     query: { _id: req.params.id },
   });
 

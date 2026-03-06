@@ -1,14 +1,12 @@
-import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
-import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { IExperience, IEducation, ISkill, IInterest } from "@rl/types";
-import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 
 export interface CVInput extends IUserOwnedInput, JobProfileInput {
   title: string;
@@ -18,8 +16,7 @@ export interface CVInput extends IUserOwnedInput, JobProfileInput {
   skills?: ISkill[];
   interests?: IInterest[];
   name?: string;
-  imageSrc?: string;
-  imageStorage?: AwsStorageTemplate;
+  imageId?: Types.ObjectId;
   email?: string;
   phone?: string;
   address?: string;
@@ -85,8 +82,7 @@ const cvSchema = new Schema<ICVDoc>(
     interests: { type: [interestSchema], default: [] },
 
     name: { type: String },
-    imageSrc: { type: String },
-    imageStorage: { type: awsStorageTemplateMongooseDefinition },
+    imageId: { type: Schema.Types.ObjectId, ref: modelNames.FILE_MEDIA },
     email: { type: String },
     phone: { type: String },
     address: { type: String },
@@ -97,9 +93,7 @@ const cvSchema = new Schema<ICVDoc>(
       ref: modelNames.STATUS,
     },
   },
-  {
-    ...baseSchemaOptions,
-  }
+  {}
 );
 
 // --- Plugins ---

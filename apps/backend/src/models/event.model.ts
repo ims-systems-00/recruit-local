@@ -2,7 +2,6 @@ import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel }
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
-import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { modelNames } from "./constants";
 import { EVENT_MODE_ENUMS, EVENT_TYPE_ENUMS, VirtualEvent } from "@rl/types";
 
@@ -21,8 +20,7 @@ export interface EventInput {
   startTime: string;
   endDate: Date;
   endTime: string;
-  bannerImageSrc?: string;
-  bannerImageStorage?: AwsStorageTemplate;
+  bannerImageId?: Schema.Types.ObjectId;
   registrationEndDate: Date;
   statusId: Schema.Types.ObjectId;
   mode: EVENT_MODE_ENUMS;
@@ -86,12 +84,9 @@ const eventSchema = new Schema<IEventDoc>(
       type: String,
       required: true,
     },
-    bannerImageSrc: {
-      type: String,
-    },
-    bannerImageStorage: {
-      type: Schema.Types.Mixed,
-      default: awsStorageTemplateMongooseDefinition,
+    bannerImageId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.FILE_MEDIA,
     },
     registrationEndDate: {
       type: Date,

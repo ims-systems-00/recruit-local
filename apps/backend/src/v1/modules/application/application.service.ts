@@ -81,7 +81,7 @@ export const getOneSoftDeleted = async ({ query }: IApplicationGetParams) => {
 export const create = async ({ payload }: IApplicationCreateParams) => {
   // check if job exists
   const job = await jobService.getOne({
-    query: { _id: payload.jobId! },
+    query: { _id: payload.jobId!.toString() },
   });
 
   payload.statusId = job.boardColumnOrder[0];
