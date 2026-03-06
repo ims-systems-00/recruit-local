@@ -8,10 +8,6 @@ import {
   REQUIRED_DOCUMENTS_ENUMS,
 } from "@rl/types";
 
-// --- Sub-Schemas for Nested Objects ---
-
-// todo : awsStorageSchema can be moved to a common place
-// Validation for AwsStorageTemplate
 const awsStorageSchema = Joi.object({
   Name: Joi.string().required().label("Name"),
   Bucket: Joi.string().required().label("Bucket"),
@@ -32,7 +28,7 @@ const workingHoursSchema = Joi.object({
 }).label("Working Hours");
 
 const salarySchema = Joi.object({
-  mode: Joi.string().required().label("Salary Mode"), // Required in Mongoose Schema
+  mode: Joi.string().required().label("Salary Mode"),
   amount: Joi.number().optional().label("Salary Amount"),
   min: Joi.number().optional().label("Minimum Salary"),
   max: Joi.number().optional().label("Maximum Salary"),
@@ -49,10 +45,7 @@ const skillSchema = Joi.object({
   years: Joi.number().optional().label("Years of Experience"),
 }).label("Skill");
 
-// --- Main Schemas ---
-
 export const createBodySchema = Joi.object({
-  // Basic Info
   title: Joi.string().required().label("Title"),
   description: Joi.string().optional().label("Description"),
   email: Joi.string().email().optional().label("Email"),
@@ -68,11 +61,8 @@ export const createBodySchema = Joi.object({
   startDate: Joi.date().iso().optional().label("Start Date"),
   endDate: Joi.date().iso().min(Joi.ref("startDate")).optional().label("End Date"),
 
-  // Images & Files (Split Src/Storage)
-  bannerSrc: Joi.string().uri().optional().allow("").label("Banner Source"),
+  // Images & Files
   bannerStorage: awsStorageSchema.optional().label("Banner Storage"),
-
-  attachmentsSrc: Joi.array().items(Joi.string().uri()).optional().label("Attachments Source"),
   attachmentsStorage: Joi.array().items(awsStorageSchema).optional().label("Attachments Storage"),
 
   // Enums
@@ -125,10 +115,7 @@ export const updateBodySchema = Joi.object({
   startDate: Joi.date().iso().optional().label("Start Date"),
   endDate: Joi.date().iso().min(Joi.ref("startDate")).optional().label("End Date"),
 
-  bannerSrc: Joi.string().uri().optional().allow("").label("Banner Source"),
   bannerStorage: awsStorageSchema.optional().label("Banner Storage"),
-
-  attachmentsSrc: Joi.array().items(Joi.string().uri()).optional().label("Attachments Source"),
   attachmentsStorage: Joi.array().items(awsStorageSchema).optional().label("Attachments Storage"),
 
   workplace: Joi.string()

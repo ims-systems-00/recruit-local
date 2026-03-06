@@ -78,7 +78,10 @@ export const create = async ({ req }: ControllerParams) => {
 
   req.body.tenantId = tenantId;
 
-  const job = await jobService.create(req.body);
+  // Updated to pass payload strictly as an object property
+  const job = await jobService.create({
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Job created successfully.",
@@ -116,7 +119,8 @@ export const post = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  await jobService.softRemove({
+  // Updated to call softDelete
+  await jobService.softDelete({
     query: { _id: req.params.id },
   });
 
@@ -127,7 +131,8 @@ export const softRemove = async ({ req }: ControllerParams) => {
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  await jobService.hardRemove({
+  // Updated to call hardDelete
+  await jobService.hardDelete({
     query: { _id: req.params.id },
   });
 

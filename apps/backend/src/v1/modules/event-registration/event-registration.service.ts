@@ -62,8 +62,8 @@ export const create = async (payload: EventRegistrationInput) => {
     query: { collectionName: modelNames.EVENT_REGISTRATION, label: "pending" },
   });
   payload.statusId = statusExists._id as unknown as typeof payload.statusId;
-  // Uses the standardized signature from your Event service
-  const event = await getAEvent({ query: { _id: payload.eventId } });
+
+  const event = await getAEvent({ query: { _id: payload.eventId.toString() } });
 
   // Ensure date comparison is safe
   if (new Date(event.registrationEndDate) < new Date()) {

@@ -1,9 +1,8 @@
-import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { boardSettingsSchema, IBoardSettings } from "./schema/board-settings.schema";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
@@ -21,8 +20,7 @@ import {
 
 export interface IJobInput extends TenantInput {
   title?: string;
-  bannerSrc?: string;
-  bannerStorage?: AwsStorageTemplate;
+  bannerImageId?: Types.ObjectId;
   description?: string;
   email?: string;
   number?: string;
@@ -30,8 +28,7 @@ export interface IJobInput extends TenantInput {
   startDate?: Date;
   endDate?: Date;
   responsibility?: string;
-  attachmentsSrc?: string[];
-  attachmentsStorage?: AwsStorageTemplate[];
+  attachmentIds?: Types.ObjectId[];
   category?: string;
   vacancy?: number;
   location?: string;
@@ -45,7 +42,7 @@ export interface IJobInput extends TenantInput {
   minEducationalQualification?: Education;
   requiredDocuments?: REQUIRED_DOCUMENTS_ENUMS[];
   skills?: Skill[];
-  statusId: Schema.Types.ObjectId;
+  statusId: Types.ObjectId;
 }
 
 export interface IJobDoc extends IJobInput, ITenantDoc, ISoftDeleteDoc, IBaseDoc, IBoardSettings {
@@ -62,8 +59,13 @@ export interface IJobModel
 const jobSchema = new Schema<IJobDoc>(
   {
     title: { type: String },
-    bannerSrc: { type: String },
-    bannerStorage: { type: Schema.Types.Mixed, default: awsStorageTemplateMongooseDefinition },
+
+    bannerImageId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.FILE_MEDIA,
+      default: null,
+    },
+
     description: { type: String },
     email: { type: String },
     number: { type: String },
@@ -71,11 +73,14 @@ const jobSchema = new Schema<IJobDoc>(
     startDate: { type: Date },
     endDate: { type: Date },
     responsibility: { type: String },
-    attachmentsSrc: { type: [String], default: [] },
-    attachmentsStorage: {
-      type: [awsStorageTemplateMongooseDefinition],
-      default: [],
-    },
+
+    attachmentIds: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: modelNames.FILE_MEDIA,
+      },
+    ],
+
     category: { type: String },
     vacancy: { type: Number },
     location: { type: String },
