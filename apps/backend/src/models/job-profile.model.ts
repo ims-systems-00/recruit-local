@@ -1,29 +1,19 @@
-import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
-import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { modelNames } from "./constants";
 import { VISIBILITY, language } from "@rl/types";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
-import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
-
-// export enum STATUS_ENUM {
-//   VERIFIED = "verified",
-//   UNVERIFIED = "unverified",
-//   PENDING = "pending",
-//   REJECTED = "rejected",
-// }
 
 export interface JobProfileInput extends IUserOwnedInput {
   headline?: string;
   summary?: string;
   keywords?: string[];
   languages?: language[];
-  kycDocumentUrl?: string;
-  kycDocumentStorage?: AwsStorageTemplate;
-  statusId: Schema.Types.ObjectId;
+  kycDocumentId?: Types.ObjectId;
+  statusId: Types.ObjectId;
 }
 
 export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, IBaseDoc {
@@ -37,15 +27,10 @@ interface IJobProfileModel
     AggregatePaginateModel<IJobProfileDoc> {}
 
 // 1. Define the sub-schema
-const languageSchema = new Schema(
-  {
-    name: { type: String, required: true },
-    proficiencyLevel: { type: String, required: true },
-  },
-  {
-    ...baseSchemaOptions,
-  }
-);
+const languageSchema = new Schema({
+  name: { type: String, required: true },
+  proficiencyLevel: { type: String, required: true },
+});
 
 const jobProfileSchema = new Schema<IJobProfileDoc>(
   {
@@ -75,12 +60,10 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       type: Schema.Types.ObjectId,
       ref: modelNames.STATUS,
     },
-    kycDocumentUrl: {
-      type: String,
-    },
-    kycDocumentStorage: {
-      type: Schema.Types.Mixed,
-      default: awsStorageTemplateMongooseDefinition,
+    kycDocumentId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.FILE_MEDIA,
+      default: null,
     },
   },
   {

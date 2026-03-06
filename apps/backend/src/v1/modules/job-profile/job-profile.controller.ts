@@ -4,8 +4,9 @@ import { ApiResponse, ControllerParams, formatListResponse } from "../../../comm
 import * as jobProfileService from "./job-profile.service";
 
 export const list = async ({ req }: ControllerParams) => {
+  // Fixed: Updated search fields to match JobProfile model
   const filter = new MongoQuery(req.query, {
-    searchFields: ["title", "description"],
+    searchFields: ["headline", "summary"],
   }).build();
 
   const query = filter.getFilterQuery();
@@ -37,8 +38,9 @@ export const getOne = async ({ req }: ControllerParams) => {
 };
 
 export const listSoftDeleted = async ({ req }: ControllerParams) => {
+  // Fixed: Updated search fields to match JobProfile model
   const filter = new MongoQuery(req.query, {
-    searchFields: ["title", "description"],
+    searchFields: ["headline", "summary"],
   }).build();
 
   const query = filter.getFilterQuery();
@@ -87,7 +89,10 @@ export const create = async ({ req }: ControllerParams) => {
   const userId = req.session.user?._id;
   req.body.userId = userId;
 
-  const jobProfile = await jobProfileService.create(req.body);
+  // Updated to pass payload strictly as an object property
+  const jobProfile = await jobProfileService.create({
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Job Profile created.",
@@ -98,7 +103,8 @@ export const create = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  await jobProfileService.softRemove({
+  // Updated to call softDelete
+  await jobProfileService.softDelete({
     query: { _id: req.params.id },
   });
 
@@ -109,7 +115,8 @@ export const softRemove = async ({ req }: ControllerParams) => {
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  await jobProfileService.hardRemove({
+  // Updated to call hardDelete
+  await jobProfileService.hardDelete({
     query: { _id: req.params.id },
   });
 
