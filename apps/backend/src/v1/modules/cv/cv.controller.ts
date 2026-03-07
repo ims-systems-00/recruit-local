@@ -55,7 +55,10 @@ export const update = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} cv.`
   //     );
 
-  const cv = await cvService.update({ query: { _id: req.params.id }, payload: req.body });
+  const cv = await cvService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "CV updated.",
@@ -64,14 +67,20 @@ export const update = async ({ req }: ControllerParams) => {
     fieldName: "cv",
   });
 };
+
 export const create = async ({ req }: ControllerParams) => {
   //   const ability = new UserAbilityBuilder(req.session);
   //   if (!ability.getAbility().can(AbilityAction.Create, UserAuthZEntity))
   //     throw new UnauthorizedException(
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} cv.`
   //     );
+
   const userId = req.session.user?._id;
-  const cv = await cvService.create({ ...req.body, userId });
+
+  // Updated: wrapped req.body and userId inside the payload property!
+  const cv = await cvService.create({
+    payload: { ...req.body, userId },
+  });
 
   return new ApiResponse({
     message: "CV created successfully.",
@@ -88,7 +97,8 @@ export const softRemove = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} cv.`
   //     );
 
-  await cvService.softRemove({ query: { _id: req.params.id } });
+  // Updated: Renamed from softRemove to softDelete
+  await cvService.softDelete({ query: { _id: req.params.id } });
 
   return new ApiResponse({
     message: "CV removed successfully.",
@@ -118,7 +128,8 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.ForceDelete} cv.`
   //     );
 
-  await cvService.hardRemove({ query: { _id: req.params.id } });
+  // Updated: Renamed from hardRemove to hardDelete
+  await cvService.hardDelete({ query: { _id: req.params.id } });
 
   return new ApiResponse({
     message: "CV deleted permanently.",

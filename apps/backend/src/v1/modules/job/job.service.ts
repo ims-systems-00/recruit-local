@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { Job, IJobInput } from "../../../models";
 import { getTenant } from "../tenant/tenant.service";
 import { NotFoundException } from "../../../common/helper";
@@ -6,36 +7,41 @@ import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateStatusQuery 
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobProjectionQuery } from "./job.query";
 import * as StatusService from "../status/status.service";
-import { Schema, Types } from "mongoose";
+import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
+import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
+import { VISIBILITY_ENUM } from "@rl/types";
 
+// --- Standardized Parameter Interfaces ---
 type IListJobParams = IListParams<IJobInput>;
 type IJobQueryParams = ListQueryParams<IJobInput>;
 
-type ICreateJobPayload = IJobInput & { autoFill?: boolean };
-type IUpdateJobPayload = Partial<IJobInput> & {
-  autoFill?: boolean;
-};
+export interface IJobUpdateParams {
+  query: IJobQueryParams;
+  payload: Partial<IJobInput> & {
+    autoFill?: boolean;
+    bannerStorage?: AwsStorageTemplate;
+    attachmentsStorage?: AwsStorageTemplate[];
+  };
+}
+
+export interface IJobGetParams {
+  query: IJobQueryParams;
+}
+
+export interface IJobCreateParams {
+  payload: IJobInput & {
+    autoFill?: boolean;
+    bannerStorage?: AwsStorageTemplate;
+    attachmentsStorage?: AwsStorageTemplate[];
+  };
+}
+// -----------------------------------------
 
 const DEFAULT_JOB_BOARD_STATUS = [
-  {
-    collectionName: modelNames.JOB,
-    label: "pending",
-    weight: 100,
-    default: false,
-  },
-  {
-    collectionName: modelNames.JOB,
-    label: "interviewing",
-    weight: 200,
-    default: false,
-  },
-  {
-    collectionName: modelNames.JOB,
-    label: "rejected",
-    weight: 300,
-    default: false,
-  },
+  { collectionName: modelNames.JOB, label: "pending", weight: 100, default: false },
+  { collectionName: modelNames.JOB, label: "interviewing", weight: 200, default: false },
+  { collectionName: modelNames.JOB, label: "rejected", weight: 300, default: false },
 ];
 
 const _autoFill = async (tenantId: string) => {
@@ -62,7 +68,7 @@ export const list = ({ query = {}, options }: IListJobParams) => {
   );
 };
 
-export const getOne = async ({ query = {} }: IJobQueryParams) => {
+export const getOne = async ({ query = {} }: IJobGetParams) => {
   const jobs = await Job.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
@@ -80,7 +86,7 @@ export const listSoftDeleted = async ({ query = {}, options }: IListJobParams) =
   );
 };
 
-export const getOneSoftDeleted = async ({ query = {} }: IListJobParams) => {
+export const getOneSoftDeleted = async ({ query = {} }: IJobGetParams) => {
   const jobs = await Job.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
@@ -91,19 +97,16 @@ export const getOneSoftDeleted = async ({ query = {} }: IListJobParams) => {
   return jobs[0];
 };
 
-export const create = async (payload: ICreateJobPayload) => {
-  // 1. Handle Default Title
+export const create = async ({ payload }: IJobCreateParams) => {
   if (!payload.title) {
-    const numberOfJobs = await Job.countDocuments({
-      tenantId: payload.tenantId,
-    });
+    const numberOfJobs = await Job.countDocuments({ tenantId: payload.tenantId });
     payload.title = `Untitled Job ${numberOfJobs + 1}`;
   }
 
   const status = await StatusService.getOne({ query: { label: "draft", collectionName: modelNames.JOB } });
-  if (!status) throw new NotFoundException("Default status 'Draft' not found for the tenant.");
+  if (!status) throw new NotFoundException("Default status 'Draft' not found.");
 
-  payload.statusId = status._id as unknown as Schema.Types.ObjectId;
+  payload.statusId = status._id as Types.ObjectId;
 
   // 2. Handle AutoFill
   if (payload.autoFill) {
@@ -111,60 +114,196 @@ export const create = async (payload: ICreateJobPayload) => {
     payload = { ...payload, ...autoFillData };
   }
 
-  let job = new Job(payload);
+  // 3. Pre-generate the Job ID
+  const jobId = new Types.ObjectId();
+  let bannerImageId = null;
+  let attachmentIds: Types.ObjectId[] = [];
+
+  // 4. Intercept Single Banner Image
+  if (payload.bannerStorage) {
+    const fileMedia = await FileMediaService.create({
+      payload: {
+        collectionName: modelNames.JOB,
+        collectionDocument: jobId,
+        storageInformation: payload.bannerStorage,
+        visibility: VISIBILITY_ENUM.PUBLIC,
+      },
+    });
+    bannerImageId = fileMedia._id;
+  }
+
+  // 5. Intercept Multiple Attachments
+  if (payload.attachmentsStorage && payload.attachmentsStorage.length > 0) {
+    const attachmentPromises = payload.attachmentsStorage.map((storage) =>
+      FileMediaService.create({
+        payload: {
+          collectionName: modelNames.JOB,
+          collectionDocument: jobId,
+          storageInformation: storage,
+          visibility: VISIBILITY_ENUM.PUBLIC,
+        },
+      })
+    );
+    const createdAttachments = await Promise.all(attachmentPromises);
+    attachmentIds = createdAttachments.map((file: any) => file._id) as Types.ObjectId[];
+  }
+
+  const { bannerStorage, attachmentsStorage, autoFill, ...cleanPayload } = payload;
+
+  let job = new Job({
+    ...cleanPayload,
+    _id: jobId,
+    bannerImageId: bannerImageId,
+    attachmentIds: attachmentIds,
+  });
+
   job = await job.save();
 
-  const createdStatuses = await StatusService.createMany(
-    DEFAULT_JOB_BOARD_STATUS.map((status) => ({
-      ...status,
-      collectionId: job._id as unknown as Schema.Types.ObjectId,
-    }))
-  );
+  // FIX 1: Pass the collectionId as a string to avoid Schema.Types vs Types conflicts
+  const statusesToCreate = DEFAULT_JOB_BOARD_STATUS.map((boardStatus) => ({
+    ...boardStatus,
+    collectionId: job._id.toString() as any,
+  }));
 
-  job.boardColumnOrder = createdStatuses.map((s) => s._id as Types.ObjectId);
+  const createdStatuses = await StatusService.createMany(statusesToCreate);
+
+  job.boardColumnOrder = createdStatuses.map((s: any) => new Types.ObjectId(s._id.toString()));
   await job.save();
 
   return job;
 };
 
-export const update = async ({ query, payload }: { query: IJobQueryParams; payload: IUpdateJobPayload }) => {
-  if (payload.autoFill) {
-    const job = await getOne({ query });
-    const autoFillData = await _autoFill(job.tenantId!.toString());
+export const update = async ({ query, payload }: IJobUpdateParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const job = await getOne({ query: sanitizedQuery });
 
+  if (payload.autoFill) {
+    const autoFillData = await _autoFill(job.tenantId!.toString());
     payload = { ...payload, ...autoFillData };
-    delete payload.autoFill;
   }
 
-  const updatedJob = await Job.findOneAndUpdate(sanitizeQueryIds(query), { $set: payload }, { new: true });
+  let updatedBannerImageId = job.bannerImageId;
+  let updatedAttachmentIds = job.attachmentIds || [];
+
+  // A. Handle Single Banner Update
+  if (payload.bannerStorage) {
+    const newFileMedia = await FileMediaService.create({
+      payload: {
+        collectionName: modelNames.JOB,
+        collectionDocument: job._id,
+        storageInformation: payload.bannerStorage,
+        visibility: VISIBILITY_ENUM.PUBLIC,
+      },
+    });
+    updatedBannerImageId = newFileMedia._id;
+
+    if (job.bannerImageId) {
+      try {
+        await FileMediaService.hardDelete({ query: { _id: job.bannerImageId.toString() } });
+      } catch (error) {
+        console.error(`Failed to delete old banner image for Job ${job._id}`, error);
+      }
+    }
+  }
+
+  // B. Handle Attachments Update (Assuming replacement of all attachments if sent)
+  if (payload.attachmentsStorage) {
+    // 1. Delete old attachments
+    if (job.attachmentIds && job.attachmentIds.length > 0) {
+      try {
+        await Promise.all(
+          job.attachmentIds.map((id) => FileMediaService.hardDelete({ query: { _id: id.toString() } }))
+        );
+      } catch (error) {
+        console.error(`Failed to delete old attachments for Job ${job._id}`, error);
+      }
+    }
+
+    // 2. Create new attachments
+    const attachmentPromises = payload.attachmentsStorage.map((storage) =>
+      FileMediaService.create({
+        payload: {
+          collectionName: modelNames.JOB,
+          collectionDocument: job._id,
+          storageInformation: storage,
+          visibility: VISIBILITY_ENUM.PUBLIC,
+        },
+      })
+    );
+    const newAttachments = await Promise.all(attachmentPromises);
+    updatedAttachmentIds = newAttachments.map((file) => file._id);
+  }
+
+  const { bannerStorage, attachmentsStorage, autoFill, ...cleanPayload } = payload;
+
+  const updatedJob = await Job.findOneAndUpdate(
+    { _id: job._id },
+    {
+      $set: {
+        ...cleanPayload,
+        bannerImageId: updatedBannerImageId,
+        attachmentIds: updatedAttachmentIds,
+      },
+    },
+    { new: true }
+  );
 
   if (!updatedJob) throw new NotFoundException("Job not found.");
   return updatedJob;
 };
 
-export const softRemove = async ({ query }: { query: IJobQueryParams }) => {
+export const softDelete = async ({ query }: IJobGetParams) => {
   const { deleted } = await Job.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Job not found to delete.");
   return { deleted };
 };
 
-export const hardRemove = async ({ query }: { query: IJobQueryParams }) => {
-  const deletedJob = await Job.findOneAndDelete(sanitizeQueryIds(query));
+export const hardDelete = async ({ query }: IJobGetParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const job = await getOneSoftDeleted({ query: sanitizedQuery });
+
+  // 1. Delete single banner from S3
+  if (job.bannerImageId) {
+    try {
+      await FileMediaService.hardDelete({ query: { _id: job.bannerImageId.toString() } });
+    } catch (error) {
+      console.error("Failed to delete attached banner image for Job:", error);
+    }
+  }
+
+  // 2. Delete all attachments from S3 concurrently
+  if (job.attachmentIds && job.attachmentIds.length > 0) {
+    try {
+      await Promise.all(job.attachmentIds.map((id) => FileMediaService.hardDelete({ query: { _id: id.toString() } })));
+    } catch (error) {
+      console.error("Failed to delete attachments array for Job:", error);
+    }
+  }
+
+  const deletedJob = await Job.findOneAndDelete({ _id: job._id });
   if (!deletedJob) throw new NotFoundException("Job not found to delete.");
   return deletedJob;
 };
 
-export const restore = async ({ query }: { query: IJobQueryParams }) => {
+export const restore = async ({ query }: IJobGetParams) => {
   const { restored } = await Job.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Job not found in trash.");
   return { restored };
 };
 
-export const post = async ({ query }: { query: IJobQueryParams }) => {
-  const job = await getOne({ query });
+export const post = async ({ query }: IJobGetParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const job = await getOne({ query: sanitizedQuery });
   if (!job) throw new NotFoundException("Job not found.");
 
-  job.status = "Posted";
-  await job.save();
-  return job;
+  const postedStatus = await StatusService.getOne({ query: { label: "posted", collectionName: modelNames.JOB } });
+  if (!postedStatus) throw new NotFoundException("Status 'Posted' not found.");
+
+  const updatedJob = await Job.findOneAndUpdate(
+    { _id: job._id },
+    { $set: { statusId: postedStatus._id } },
+    { new: true }
+  );
+
+  return updatedJob;
 };
