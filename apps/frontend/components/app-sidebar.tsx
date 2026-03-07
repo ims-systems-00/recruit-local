@@ -70,7 +70,7 @@ const data = {
         },
         {
           title: 'Create',
-          url: '/recruiter/job-lists/create',
+          url: '/recruiter/job/create',
         },
       ],
     },

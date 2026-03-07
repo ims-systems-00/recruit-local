@@ -9,12 +9,18 @@ import {
   InputGroupInput,
   InputGroupTextarea,
 } from '@/components/ui/input-group';
+import { useFormContext } from 'react-hook-form';
+import { MultiStepJobFormValues } from '../job.schema';
 
-export default function JobInformationForm({
-  next,
-}: {
-  next: (step: number) => void;
-}) {
+export default function JobInformationForm({ next }: { next: () => void }) {
+  const {
+    register,
+    control,
+    formState: { errors },
+  } = useFormContext<MultiStepJobFormValues>();
+
+  console.log('errors', errors);
+
   return (
     <>
       <div className=" space-y-spacing-4xl">
@@ -51,14 +57,12 @@ export default function JobInformationForm({
                   <InputGroupInput
                     type="text"
                     placeholder=" Eg . UI/UX Designer Wanted – Join Our Creative Team!"
-                    //   {...register('firstName')}
+                    {...register('title')}
                   />
                 </InputGroup>
-                {/* {errors.firstName && (
-                    <p className="text-sm text-red-500">
-                      {errors.firstName.message}
-                    </p>
-                  )} */}
+                {errors.title && (
+                  <p className="text-sm text-red-500">{errors.title.message}</p>
+                )}
               </div>
             </div>
             <div className="space-y-spacing-xs ">
@@ -310,7 +314,7 @@ export default function JobInformationForm({
           Previous
         </Button>
         <Button
-          onClick={() => next(2)}
+          onClick={next}
           className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
         >
           Continue
