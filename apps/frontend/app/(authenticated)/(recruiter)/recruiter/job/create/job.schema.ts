@@ -89,7 +89,7 @@ export const stepTwoJobSchema = yup.object({
   //   Experience Level Missing
 
   //   Application Process
-  email: yup.string().email('Invalid email').required('req eamil'),
+  email: yup.string().email('Invalid email'),
   requiredDocuments: yup
     .array()
     .of(yup.string().oneOf(Object.values(REQUIRED_DOCUMENTS_ENUMS)))

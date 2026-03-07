@@ -138,8 +138,11 @@ export default function Preview({ prev }: { prev: (step: number) => void }) {
         >
           Previous
         </Button>
-        <Button className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!">
-          Continue
+        <Button
+          type="submit"
+          className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+        >
+          Post Now
         </Button>
       </div>
     </>

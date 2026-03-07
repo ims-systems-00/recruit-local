@@ -67,9 +67,15 @@ export function useCreateJob() {
 
   const mutation = useMutation({
     mutationFn: createJob,
-    onSuccess: () => {
+    onSuccess: (res) => {
+      console.log('res', res);
+      if (!res.success) {
+        toast.error(res.message);
+        return;
+      }
+
       toast.success('Registration completed');
-      router.push('/dashboard');
+      // router.push('/recruiter/job/lists');
     },
     onError: () => {
       toast.error('Something went wrong');
