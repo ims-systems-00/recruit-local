@@ -2,19 +2,13 @@ import { Schema, model, Model, PaginateModel, AggregatePaginateModel, Types } fr
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
-import { AwsStorageTemplate, awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
-
-export interface IPostImage {
-  src: string;
-  storage: AwsStorageTemplate;
-}
 
 export interface IPostInput extends IUserOwnedInput {
   title: string;
   content: string;
-  images?: IPostImage[];
+  imageIds?: Types.ObjectId[];
   tags: string[];
   statusId: Types.ObjectId;
 }
@@ -45,10 +39,10 @@ const postSchema = new Schema<IPostDoc>(
       type: String,
       required: true,
     },
-    images: [
+    imageIds: [
       {
-        src: { type: String, required: true },
-        storage: { type: awsStorageTemplateMongooseDefinition, required: true },
+        type: Schema.Types.ObjectId,
+        ref: modelNames.FILE_MEDIA,
       },
     ],
     tags: [{ type: String }],

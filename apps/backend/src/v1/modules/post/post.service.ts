@@ -1,13 +1,30 @@
-import { IListParams, ListQueryParams } from "@rl/types";
+import { Types } from "mongoose";
+import { IListParams, ListQueryParams, VISIBILITY_ENUM } from "@rl/types";
 import { Post, IPostInput } from "../../../models";
-import { FileManager, NotFoundException } from "../../../common/helper";
+import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateStatusQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { s3Client } from "../../../.config/s3.config";
 import { postProjectQuery } from "./post.query";
+import * as FileMediaService from "../file-media/file-media.service";
+import { modelNames } from "../../../models/constants";
+import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 
+// --- Standardized Parameter Interfaces ---
 type IListPostParams = IListParams<IPostInput>;
 type IPostQueryParams = ListQueryParams<IPostInput>;
+
+export interface IPostUpdateParams {
+  query: IPostQueryParams;
+  payload: Partial<IPostInput> & { imagesStorage?: AwsStorageTemplate[] };
+}
+
+export interface IPostGetParams {
+  query: IPostQueryParams;
+}
+
+export interface IPostCreateParams {
+  payload: IPostInput & { imagesStorage?: AwsStorageTemplate[] };
+}
 
 export const list = ({ query = {}, options }: IListPostParams) => {
   return Post.aggregatePaginate(
@@ -16,7 +33,7 @@ export const list = ({ query = {}, options }: IListPostParams) => {
   );
 };
 
-export const getOne = async ({ query = {} }: IListPostParams) => {
+export const getOne = async ({ query = {} }: IPostGetParams) => {
   const posts = await Post.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
@@ -34,7 +51,7 @@ export const listSoftDeleted = async ({ query = {}, options }: IListPostParams) 
   );
 };
 
-export const getOneSoftDeleted = async ({ query = {} }: IListPostParams) => {
+export const getOneSoftDeleted = async ({ query = {} }: IPostGetParams) => {
   const posts = await Post.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
@@ -45,82 +62,123 @@ export const getOneSoftDeleted = async ({ query = {} }: IListPostParams) => {
   return posts[0];
 };
 
-export const create = async (payload: IPostInput) => {
-  // Check if the payload includes images
-  if (payload.images && payload.images.length > 0) {
-    const baseUrl = process.env.PUBLIC_MEDIA_BASE_URL;
+export const create = async ({ payload }: IPostCreateParams) => {
+  const postId = new Types.ObjectId();
+  let imageIds: Types.ObjectId[] = [];
 
-    // Map over the array to attach the generated src to each image
-    payload.images = payload.images.map((image) => {
-      return {
-        ...image,
-        src: `${baseUrl}/${image.storage.Key}`,
-      };
-    });
+  if (payload.imagesStorage && payload.imagesStorage.length > 0) {
+    const imagePromises = payload.imagesStorage.map((storage) =>
+      FileMediaService.create({
+        payload: {
+          collectionName: modelNames.POST,
+          collectionDocument: postId,
+          storageInformation: storage,
+          visibility: VISIBILITY_ENUM.PUBLIC,
+        },
+      })
+    );
+    const createdImages = await Promise.all(imagePromises);
+
+    imageIds = createdImages.map((file: any) => file._id) as Types.ObjectId[];
   }
 
-  // Create the post with the newly formatted payload
-  const post = await Post.create(payload);
+  // 3. Strip raw AWS data and save
+  const { imagesStorage, ...cleanPayload } = payload;
+
+  // Ensure statusId is treated as a clean ObjectId
+  const finalStatusId = payload.statusId ? new Types.ObjectId(payload.statusId.toString()) : undefined;
+
+  let post = new Post({
+    ...cleanPayload,
+    _id: postId,
+    imageIds: imageIds,
+    statusId: finalStatusId || (cleanPayload as any).statusId,
+  });
+
+  post = await post.save();
   return post;
 };
 
-export const update = async (query: IPostQueryParams, payload: Partial<IPostInput>) => {
-  const post = await Post.findOne(sanitizeQueryIds(query));
-  if (!post) throw new NotFoundException("Post not found.");
+export const update = async ({ query, payload }: IPostUpdateParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const post = await getOne({ query: sanitizedQuery });
 
-  // Check if the update includes a new set of images
-  if (payload.images) {
-    const baseUrl = process.env.PUBLIC_MEDIA_BASE_URL;
-    const fileManager = new FileManager(s3Client);
+  let updatedImageIds = post.imageIds || [];
 
-    // Extract the S3 Keys of the current images
-    const oldImageKeys = post.images?.map((img) => img.storage.Key) || [];
-    const newImageKeys: string[] = [];
-
-    // Map through the new images to build the src and collect their keys
-    payload.images = payload.images.map((image) => {
-      newImageKeys.push(image.storage.Key);
-      return {
-        ...image,
-        src: `${baseUrl}/${image.storage.Key}`,
-      };
-    });
-
-    // Identify images that are in the database but NOT in the new payload
-    const keysToDelete = oldImageKeys.filter((key) => !newImageKeys.includes(key));
-
-    //Delete the orphaned images from S3
-    for (const key of keysToDelete) {
-      const oldImage = post.images?.find((img) => img.storage.Key === key);
-      if (oldImage && typeof oldImage.storage.Key === "string") {
-        fileManager.deleteFile({
-          Bucket: oldImage.storage.Bucket,
-          Key: oldImage.storage.Key,
-        });
+  if (payload.imagesStorage) {
+    if (post.imageIds && post.imageIds.length > 0) {
+      try {
+        await Promise.all(
+          post.imageIds.map((id: any) => FileMediaService.hardDelete({ query: { _id: id.toString() } }))
+        );
+      } catch (error) {
+        console.error(`Failed to delete old images for Post ${post._id}`, error);
       }
+    }
+
+    // 2. Create new images
+    const imagePromises = payload.imagesStorage.map((storage) =>
+      FileMediaService.create({
+        payload: {
+          collectionName: modelNames.POST,
+          collectionDocument: post._id,
+          storageInformation: storage,
+          visibility: VISIBILITY_ENUM.PUBLIC,
+        },
+      })
+    );
+    const newImages = await Promise.all(imagePromises);
+    updatedImageIds = newImages.map((file: any) => file._id) as Types.ObjectId[];
+  }
+
+  const { imagesStorage, ...cleanPayload } = payload;
+
+  // Clean up statusId if it's being updated
+  if (cleanPayload.statusId) {
+    cleanPayload.statusId = new Types.ObjectId(cleanPayload.statusId.toString()) as any;
+  }
+
+  const updatedPost = await Post.findOneAndUpdate(
+    { _id: post._id },
+    {
+      $set: {
+        ...cleanPayload,
+        imageIds: updatedImageIds,
+      },
+    },
+    { new: true }
+  );
+
+  if (!updatedPost) throw new NotFoundException("Post not found.");
+  return updatedPost;
+};
+
+export const softDelete = async ({ query }: IPostGetParams) => {
+  const { deleted } = await Post.softDelete(sanitizeQueryIds(query));
+  if (!deleted) throw new NotFoundException("Post not found to delete.");
+  return { deleted };
+};
+
+export const hardDelete = async ({ query }: IPostGetParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const post = await getOneSoftDeleted({ query: sanitizedQuery });
+
+  // Delete all attached images from S3 concurrently
+  if (post.imageIds && post.imageIds.length > 0) {
+    try {
+      await Promise.all(post.imageIds.map((id: any) => FileMediaService.hardDelete({ query: { _id: id.toString() } })));
+    } catch (error) {
+      console.error("Failed to delete images array for Post:", error);
     }
   }
 
-  post.set(payload);
-  await post.save();
-
-  return post;
+  const deletedPost = await Post.findOneAndDelete({ _id: post._id });
+  if (!deletedPost) throw new NotFoundException("Post not found to delete.");
+  return deletedPost;
 };
 
-export const softDelete = async (query: IPostQueryParams) => {
-  const post = await Post.findOneAndUpdate(sanitizeQueryIds(query), { deletedAt: new Date() }, { new: true });
-  if (!post) throw new NotFoundException("Post not found.");
-  return post;
-};
-
-export const restore = async (query: IPostQueryParams) => {
-  const post = await Post.findOneAndUpdate(sanitizeQueryIds(query), { deletedAt: null }, { new: true });
-  if (!post) throw new NotFoundException("Post not found in trash.");
-  return post;
-};
-
-export const hardDelete = async (query: IPostQueryParams) => {
-  const post = await Post.findOneAndDelete(sanitizeQueryIds(query));
-  if (!post) throw new NotFoundException("Post not found.");
-  return post;
+export const restore = async ({ query }: IPostGetParams) => {
+  const { restored } = await Post.restore(sanitizeQueryIds(query));
+  if (!restored) throw new NotFoundException("Post not found in trash.");
+  return { restored };
 };

@@ -1,23 +1,20 @@
 import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
 
+// Reusable validation for AwsStorageTemplate (added .unknown(true) to match your other schemas)
 export const awsStorageSchema = Joi.object({
   Name: Joi.string().required().label("Name"),
   Bucket: Joi.string().required().label("Bucket"),
   Key: Joi.string().required().label("Key"),
-});
+})
+  .unknown(true)
+  .label("Storage File");
 
 export const createPostBodySchema = Joi.object({
   title: Joi.string().required().label("Title"),
   content: Joi.string().required().label("Content"),
-  images: Joi.array()
-    .items(
-      Joi.object({
-        storage: awsStorageSchema.required().label("Storage Details"),
-      })
-    )
-    .optional()
-    .label("Images"),
+  imagesStorage: Joi.array().items(awsStorageSchema).optional().label("Images Storage"),
+
   tags: Joi.array().items(Joi.string()).optional().label("Tags"),
   statusId: Joi.string().custom(objectIdValidation).required().label("Status ID"),
 });
@@ -25,14 +22,9 @@ export const createPostBodySchema = Joi.object({
 export const updatePostBodySchema = Joi.object({
   title: Joi.string().optional().label("Title"),
   content: Joi.string().optional().label("Content"),
-  images: Joi.array()
-    .items(
-      Joi.object({
-        storage: awsStorageSchema.required().label("Storage Details"),
-      })
-    )
-    .optional()
-    .label("Images"),
+
+  imagesStorage: Joi.array().items(awsStorageSchema).optional().label("Images Storage"),
+
   tags: Joi.array().items(Joi.string()).optional().label("Tags"),
   statusId: Joi.string().custom(objectIdValidation).optional().label("Status ID"),
 });
