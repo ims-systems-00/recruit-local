@@ -205,11 +205,11 @@ export default function SignUpForm() {
               />
               <Label htmlFor="agreed" className="text-title text-sm">
                 I agree to the{' '}
-                <Link href={'/'} className="text-primary">
+                <Link href={'/'} className="text-text-brand-primary">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link href={'/'} className="text-primary">
+                <Link href={'/'} className="text-text-brand-primary">
                   Privacy Notice
                 </Link>
               </Label>

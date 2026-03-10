@@ -82,7 +82,7 @@ export default function Role() {
         <div className="flex justify-end">
           <p className="text-base text-body">
             In trouble?{' '}
-            <Link href={'/sign-up'} className="text-primary">
+            <Link href={'/sign-up'} className="text-text-brand-primary">
               Help is available
             </Link>{' '}
           </p>

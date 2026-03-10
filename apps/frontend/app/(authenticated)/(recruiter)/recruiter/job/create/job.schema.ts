@@ -6,6 +6,7 @@ import {
   PERIOD_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
 } from '@rl/types';
+import { isValidPhoneNumber } from 'react-phone-number-input';
 
 // AWS Storage
 export const awsStorageSchema = yup.object({
@@ -34,9 +35,10 @@ export const salarySchema = yup.object({
   amount: yup
     .number()
     .typeError('Salary must be a number')
-
-    .optional()
-    .default(undefined),
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .optional(),
   min: yup
     .number()
     .typeError('Min. Salary must be a number')
@@ -76,7 +78,10 @@ export const stepOneJobSchema = yup.object({
     .number()
     .typeError('Vacancy must be a number')
     .min(1, 'Vacancy must be at least 1')
-    .nullable(),
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .optional(),
   location: yup.string().nullable(),
   workplace: yup.string().oneOf(Object.values(WORKPLACE_ENUMS)).nullable(),
   workingDays: yup
@@ -93,7 +98,7 @@ export const stepOneJobSchema = yup.object({
   salary: salarySchema.nullable(),
   period: yup.string().oneOf(Object.values(PERIOD_ENUMS)).nullable(),
   description: yup.string().nullable(),
-  responsibility: yup.string().nullable(),
+  responsibility: yup.string().nullable().default(undefined),
   attachmentsStorage: yup.array().of(awsStorageSchema).nullable(),
 });
 
@@ -106,7 +111,7 @@ export const stepTwoJobSchema = yup.object({
   //   Experience Level Missing
 
   //   Application Process
-  email: yup.string().email('Invalid email'),
+  email: yup.string().email('Invalid email').default(undefined),
   requiredDocuments: yup
     .array()
     .of(yup.string().oneOf(Object.values(REQUIRED_DOCUMENTS_ENUMS)))
@@ -122,8 +127,15 @@ export const stepTwoJobSchema = yup.object({
 });
 
 export const stepThreeJobSchema = yup.object({
-  number: yup.string().nullable(),
-  aboutUs: yup.string().nullable(),
+  number: yup
+    .string()
+    .optional()
+    .test(
+      'is-valid-phone',
+      'Invalid phone number',
+      (value) => !value || isValidPhoneNumber(value),
+    ),
+  aboutUs: yup.string().nullable().default(undefined),
   autoFill: yup.boolean().nullable(),
 
   // category does not exists on ui

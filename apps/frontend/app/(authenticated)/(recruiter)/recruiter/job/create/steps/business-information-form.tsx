@@ -4,13 +4,15 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Folder, MailIcon } from 'lucide-react';
+import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
   InputGroupTextarea,
 } from '@/components/ui/input-group';
-import { Controller } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import {
   Select,
   SelectContent,
@@ -20,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { MultiStepJobFormValues } from '../job.schema';
 
 export default function BusinessInformationForm({
   prev,
@@ -28,6 +31,13 @@ export default function BusinessInformationForm({
   prev: (step: number) => void;
   next: (step: number) => void;
 }) {
+  const {
+    register,
+    control,
+    formState: { errors },
+    watch,
+    getValues,
+  } = useFormContext<MultiStepJobFormValues>();
   return (
     <>
       <div className=" space-y-spacing-4xl">
@@ -53,60 +63,66 @@ export default function BusinessInformationForm({
                 <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupInput
                     type="text"
-                    placeholder="elena@example.com"
-                    //   {...register('firstName')}
+                    placeholder="Eg. elena@example.com"
+                    {...register('email')}
                   />
                   <InputGroupAddon>
                     <MailIcon className=" text-fg-gray-tertiary" />
                   </InputGroupAddon>
                 </InputGroup>
-                {/* {errors.firstName && (
-                    <p className="text-sm text-red-500">
-                      {errors.firstName.message}
-                    </p>
-                  )} */}
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                )}
               </div>
             </div>
             <div className="space-y-spacing-xs">
               <Label className="text-label-sm font-label-sm-strong!">
-                Experience Level
+                Contact Number
               </Label>
 
               <div className=" space-y-2">
-                <Select>
-                  <SelectTrigger className="h-12! w-full rounded-lg shadow-xs border-border-gray-primary">
-                    <SelectValue placeholder="eg. Freshers (0 to 1)" />
-                  </SelectTrigger>
-
-                  <SelectContent className=" bg-white">
-                    <SelectGroup>
-                      <SelectItem value="employer">Employer</SelectItem>
-                      <SelectItem value="candidate">Candidate</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                {/* {errors.type && (
-                  <p className="text-sm text-red-500">{errors.type.message}</p>
-                )} */}
+                <Controller
+                  name="number"
+                  control={control}
+                  // rules={{
+                  //   validate: (value) =>
+                  //     isValidPhoneNumber(value || '') ||
+                  //     'Invalid contact number',
+                  // }}
+                  render={({ field }) => (
+                    <PhoneInput
+                      {...field}
+                      defaultCountry="GB"
+                      international
+                      placeholder="Enter contact number"
+                      className=" border h-12 rounded-lg shadow-xs border-border-gray-primary w-full"
+                    />
+                  )}
+                />
+                {errors.number && (
+                  <p className="text-sm text-red-500">
+                    {errors.number.message}
+                  </p>
+                )}
               </div>
             </div>
             <div className="space-y-spacing-xs col-span-2">
               <Label className=" text-label-sm font-label-sm-strong!">
-                Required Skills
+                About Us
               </Label>
               <div className=" space-y-2 ">
                 <InputGroup className="rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupTextarea
-                    placeholder="Write your skills here..."
-                    //   {...register('firstName')}
+                    placeholder="Write here..."
+                    {...register('aboutUs')}
                     className="min-h-[136px] "
                   />
                 </InputGroup>
-                {/* {errors.firstName && (
-                    <p className="text-sm text-red-500">
-                      {errors.firstName.message}
-                    </p>
-                  )} */}
+                {errors.aboutUs && (
+                  <p className="text-sm text-red-500">
+                    {errors.aboutUs.message}
+                  </p>
+                )}
               </div>
             </div>
           </div>
