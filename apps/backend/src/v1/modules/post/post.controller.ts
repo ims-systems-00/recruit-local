@@ -11,7 +11,11 @@ export const create = async ({ req }: ControllerParams) => {
       statusCode: StatusCodes.UNAUTHORIZED,
     });
   }
-  const post = await postService.create({ ...req.body, userId });
+
+  // Updated to pass payload explicitly
+  const post = await postService.create({
+    payload: { ...req.body, userId },
+  });
 
   return new ApiResponse({
     message: "Post created.",
@@ -22,7 +26,11 @@ export const create = async ({ req }: ControllerParams) => {
 };
 
 export const update = async ({ req }: ControllerParams) => {
-  const post = await postService.update({ _id: req.params.id }, req.body);
+  // Updated to pass query and payload explicitly
+  const post = await postService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Post updated.",
@@ -99,7 +107,10 @@ export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  await postService.softDelete({ _id: req.params.id });
+  // Updated to pass query explicitly
+  await postService.softDelete({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Post soft deleted.",
@@ -108,7 +119,10 @@ export const softRemove = async ({ req }: ControllerParams) => {
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  await postService.restore({ _id: req.params.id });
+  // Updated to pass query explicitly
+  await postService.restore({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Post restored.",
@@ -117,7 +131,10 @@ export const restore = async ({ req }: ControllerParams) => {
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  await postService.hardDelete({ _id: req.params.id });
+  // Updated to pass query explicitly
+  await postService.hardDelete({
+    query: { _id: req.params.id },
+  });
 
   return new ApiResponse({
     message: "Post permanently deleted.",
