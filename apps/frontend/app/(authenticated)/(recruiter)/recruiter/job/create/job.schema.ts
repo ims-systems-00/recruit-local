@@ -31,9 +31,26 @@ export const workingHoursSchema = yup.object({
 export const salarySchema = yup.object({
   // salary mode is missing in core constant
   mode: yup.string().required('Salary mode is required'),
-  amount: yup.number().nullable(),
-  min: yup.number().nullable(),
-  max: yup.number().nullable(),
+  amount: yup
+    .number()
+    .typeError('Salary must be a number')
+
+    .optional()
+    .default(undefined),
+  min: yup
+    .number()
+    .typeError('Min. Salary must be a number')
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .optional(),
+  max: yup
+    .number()
+    .typeError('Max. Salary must be a number')
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .optional(),
 });
 
 // Education
@@ -73,7 +90,7 @@ export const stepOneJobSchema = yup.object({
     .nullable(),
 
   // Job Description
-  salary: salarySchema.nullable().default(undefined),
+  salary: salarySchema.nullable(),
   period: yup.string().oneOf(Object.values(PERIOD_ENUMS)).nullable(),
   description: yup.string().nullable(),
   responsibility: yup.string().nullable(),

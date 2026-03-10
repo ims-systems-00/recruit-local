@@ -84,11 +84,12 @@ export default function JobInformationForm({ next }: { next: () => void }) {
     control,
     formState: { errors },
     watch,
+    getValues,
   } = useFormContext<MultiStepJobFormValues>();
 
   const salaryMode = watch('salary.mode');
 
-  console.log('errors', errors);
+  console.log('errors', watch('salary'));
 
   return (
     <>
