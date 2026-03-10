@@ -27,7 +27,6 @@ export interface ICVGetParams {
 export interface ICVCreateParams {
   payload: CVInput & { imageStorage?: AwsStorageTemplate };
 }
-// -----------------------------------------
 
 export const list = ({ query = {}, options }: IListCVParams) => {
   return CV.aggregatePaginate(
