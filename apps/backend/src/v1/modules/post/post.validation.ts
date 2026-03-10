@@ -1,7 +1,6 @@
 import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
 
-// Reusable validation for AwsStorageTemplate (added .unknown(true) to match your other schemas)
 export const awsStorageSchema = Joi.object({
   Name: Joi.string().required().label("Name"),
   Bucket: Joi.string().required().label("Bucket"),
@@ -13,6 +12,7 @@ export const awsStorageSchema = Joi.object({
 export const createPostBodySchema = Joi.object({
   title: Joi.string().required().label("Title"),
   content: Joi.string().required().label("Content"),
+
   imagesStorage: Joi.array().items(awsStorageSchema).optional().label("Images Storage"),
 
   tags: Joi.array().items(Joi.string()).optional().label("Tags"),
