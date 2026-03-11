@@ -1,4 +1,4 @@
-import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
@@ -6,7 +6,7 @@ import { modelNames, ModelNames } from "./constants";
 
 export interface IStatusInput {
   collectionName: ModelNames;
-  collectionId?: Schema.Types.ObjectId;
+  collectionId?: Types.ObjectId;
   label: string;
   weight?: number;
   default: boolean;

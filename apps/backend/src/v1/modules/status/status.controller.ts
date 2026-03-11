@@ -70,7 +70,10 @@ export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
 };
 
 export const create = async ({ req }: ControllerParams) => {
-  const status = await statusService.create(req.body);
+  // Updated to strictly pass payload object
+  const status = await statusService.create({
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Status created.",
@@ -95,7 +98,8 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  await statusService.softRemove({
+  // Updated to point to softDelete
+  await statusService.softDelete({
     query: { _id: req.params.id },
   });
 
@@ -106,7 +110,8 @@ export const softRemove = async ({ req }: ControllerParams) => {
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  await statusService.hardRemove({
+  // Updated to point to hardDelete
+  await statusService.hardDelete({
     query: { _id: req.params.id },
   });
 
