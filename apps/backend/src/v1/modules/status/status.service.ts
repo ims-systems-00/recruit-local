@@ -8,8 +8,27 @@ import { withTransaction } from "../../../common/helper/database-transaction";
 import { statusProjectionQuery } from "./status.query";
 import { IStatusDoc, IStatusInput, Status } from "../../../models";
 
+// --- Standardized Parameter Interfaces ---
 type IStatusListParams = IListParams<IStatusInput>;
 type IStatusQueryParams = ListQueryParams<IStatusInput>;
+
+export interface IStatusUpdateParams {
+  query: IStatusQueryParams;
+  payload: Partial<IStatusInput>;
+}
+
+export interface IStatusGetParams {
+  query: IStatusQueryParams;
+  session?: ClientSession;
+}
+
+export interface IStatusCreateParams {
+  payload: IStatusInput;
+}
+
+export interface IStatusCreateManyParams {
+  payloads: IStatusInput[];
+}
 
 export const list = ({ query = {}, options }: IStatusListParams) => {
   return Status.aggregatePaginate(
@@ -18,15 +37,13 @@ export const list = ({ query = {}, options }: IStatusListParams) => {
   );
 };
 
-export const getOne = async ({
-  query = {},
-  session,
-}: IStatusQueryParams & { session?: ClientSession }): Promise<IStatusDoc> => {
+export const getOne = async ({ query = {}, session }: IStatusGetParams): Promise<IStatusDoc> => {
   const status = await Status.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...statusProjectionQuery(),
-  ]).session(session);
+  ]).session(session || null);
+
   if (status.length === 0) throw new NotFoundException("Status not found.");
   return status[0];
 };
@@ -38,19 +55,19 @@ export const listSoftDeleted = async ({ query = {}, options }: IStatusListParams
   );
 };
 
-export const getOneSoftDeleted = async ({ query = {}, session }: IStatusListParams & { session?: ClientSession }) => {
+export const getOneSoftDeleted = async ({ query = {}, session }: IStatusGetParams) => {
   const status = await Status.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...statusProjectionQuery(),
-  ]).session(session);
+  ]).session(session || null);
+
   if (status.length === 0) throw new NotFoundException("Status not found in trash.");
   return status[0];
 };
 
-export const create = async (payload: IStatusInput) => {
+export const create = async ({ payload }: IStatusCreateParams) => {
   return withTransaction(async (session: ClientSession) => {
-    //  Only run update logic if this new status claims to be default
     if (payload.default === true) {
       const filter: any = {
         collectionName: payload.collectionName,
@@ -58,10 +75,8 @@ export const create = async (payload: IStatusInput) => {
       };
 
       if (payload.collectionId) {
-        // Specific Scope: Only unset defaults for this specific ID
         filter.collectionId = payload.collectionId;
       } else {
-        // Global Scope: Only unset defaults that are truly global (no ID)
         filter.collectionId = null;
       }
 
@@ -75,19 +90,16 @@ export const create = async (payload: IStatusInput) => {
   });
 };
 
-export const createMany = async (payloads: IStatusInput[]) => {
+export const createMany = async ({ payloads }: IStatusCreateManyParams) => {
   return withTransaction(async (session) => {
     const payloadsWithIds = payloads.map((p) => ({
       ...p,
       _id: new Types.ObjectId(),
     }));
 
-    // 2. Create Bulk Operations
-    // We use flatMap because one payload might need TWO operations (Unset old default + Insert new)
     const bulkOps = payloadsWithIds.flatMap((payload) => {
       const ops = [];
 
-      // If this new status claims to be the default, unset any existing default in that collection first
       if (payload.default === true) {
         const filter: any = {
           collectionName: payload.collectionName,
@@ -95,12 +107,11 @@ export const createMany = async (payloads: IStatusInput[]) => {
         };
 
         if (payload.collectionId) {
-          // CASE 1: SPECIFIC DEFAULT
           filter.collectionId = payload.collectionId;
         } else {
-          // CASE 2: GLOBAL DEFAULT
           filter.collectionId = null;
         }
+
         ops.push({
           updateMany: {
             filter: filter,
@@ -109,7 +120,6 @@ export const createMany = async (payloads: IStatusInput[]) => {
         });
       }
 
-      // Always insert the new status
       ops.push({
         insertOne: {
           document: payload,
@@ -127,40 +137,30 @@ export const createMany = async (payloads: IStatusInput[]) => {
   });
 };
 
-export const update = async ({ query, payload }: { query: IStatusQueryParams; payload: Partial<IStatusInput> }) => {
+export const update = async ({ query, payload }: IStatusUpdateParams) => {
   return withTransaction(async (session: ClientSession) => {
-    // 1. Fetch Existing to know current scope
     const existing = await Status.findOne(sanitizeQueryIds(query)).session(session);
     if (!existing) throw new NotFoundException("Status not found for update.");
 
-    // 2. Determine Target Scope (Merge Payload with Existing)
-    // If payload has a new name/ID, use it. Otherwise use existing.
     const targetCollectionName = payload.collectionName || existing.collectionName;
-
-    // Check if payload explicitly changes collectionId (could be null or an ID)
-    // We use !== undefined because payload.collectionId could be null (Global)
     const targetCollectionId = payload.collectionId !== undefined ? payload.collectionId : existing.collectionId;
 
-    // 3. Handle Default Logic with Scope
     if (payload.default === true) {
       const filter: any = {
         collectionName: targetCollectionName,
         default: true,
-        _id: { $ne: existing._id }, // Don't touch self
+        _id: { $ne: existing._id },
       };
 
       if (targetCollectionId) {
-        // Specific Scope
         filter.collectionId = targetCollectionId;
       } else {
-        // Global Scope
         filter.collectionId = null;
       }
 
       await Status.updateMany(filter, { $set: { default: false } }, { session });
     }
 
-    // 4. Perform the Update
     const updatedStatus = await Status.findOneAndUpdate(
       { _id: existing._id },
       { $set: payload },
@@ -171,12 +171,12 @@ export const update = async ({ query, payload }: { query: IStatusQueryParams; pa
   });
 };
 
-export const softRemove = async ({ query }: { query: IStatusQueryParams }) => {
+// Renamed to match the softDelete standard
+export const softDelete = async ({ query }: IStatusGetParams) => {
   const status = await Status.findOne(sanitizeQueryIds(query));
 
   if (!status) throw new NotFoundException("Status not found.");
 
-  // Guard: Prevent deletion of default status
   if (status.default) {
     throw new BadRequestException(
       `Cannot delete the default status for ${status.collectionName}. Please assign another status as default first.`
@@ -187,7 +187,24 @@ export const softRemove = async ({ query }: { query: IStatusQueryParams }) => {
   return { deleted };
 };
 
-export const restore = async ({ query }: { query: IStatusQueryParams }) => {
+// Renamed to match the hardDelete standard
+export const hardDelete = async ({ query, session }: IStatusGetParams) => {
+  return withTransaction(async (sessionTx) => {
+    const activeSession = session || sessionTx;
+
+    const status = await getOneSoftDeleted({
+      query,
+      session: activeSession,
+    });
+
+    if (!status) throw new NotFoundException("Status not found.");
+
+    await Status.deleteOne({ _id: status._id }).session(activeSession);
+    return status;
+  });
+};
+
+export const restore = async ({ query }: IStatusGetParams) => {
   return withTransaction(async (session) => {
     const existing = await Status.findOne(sanitizeQueryIds(query)).session(session);
     if (!existing) throw new NotFoundException("Status not found in trash.");
@@ -212,19 +229,5 @@ export const restore = async ({ query }: { query: IStatusQueryParams }) => {
     }
 
     return { restored };
-  });
-};
-
-export const hardRemove = async ({ query }: { query: IStatusQueryParams }) => {
-  return withTransaction(async (session) => {
-    const status = await getOneSoftDeleted({
-      query,
-      session,
-    });
-
-    if (!status) throw new NotFoundException("Status not found.");
-
-    await Status.deleteOne({ _id: status._id }).session(session);
-    return status;
   });
 };

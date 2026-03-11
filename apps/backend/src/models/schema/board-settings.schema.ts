@@ -1,8 +1,6 @@
-import { Schema, Types } from "mongoose";
-import { modelNames } from "../constants";
+import { Schema } from "mongoose";
 
 export interface IBoardSettings {
-  boardColumnOrder: Types.ObjectId[];
   boardBackground: string;
   boardSortBy?: string;
   boardSortOrder?: "asc" | "desc";
@@ -10,14 +8,6 @@ export interface IBoardSettings {
 
 export const boardSettingsSchema = new Schema<IBoardSettings>(
   {
-    boardColumnOrder: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: modelNames.STATUS,
-        required: true,
-      },
-    ],
-
     boardBackground: {
       type: String,
       default: "#ffffff",

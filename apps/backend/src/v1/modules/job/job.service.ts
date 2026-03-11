@@ -36,13 +36,6 @@ export interface IJobCreateParams {
     attachmentsStorage?: AwsStorageTemplate[];
   };
 }
-// -----------------------------------------
-
-const DEFAULT_JOB_BOARD_STATUS = [
-  { collectionName: modelNames.JOB, label: "pending", weight: 100, default: false },
-  { collectionName: modelNames.JOB, label: "interviewing", weight: 200, default: false },
-  { collectionName: modelNames.JOB, label: "rejected", weight: 300, default: false },
-];
 
 const _autoFill = async (tenantId: string) => {
   const tenant = await getTenant(tenantId);
@@ -159,16 +152,15 @@ export const create = async ({ payload }: IJobCreateParams) => {
 
   job = await job.save();
 
-  // FIX 1: Pass the collectionId as a string to avoid Schema.Types vs Types conflicts
-  const statusesToCreate = DEFAULT_JOB_BOARD_STATUS.map((boardStatus) => ({
-    ...boardStatus,
-    collectionId: job._id.toString() as any,
-  }));
-
-  const createdStatuses = await StatusService.createMany(statusesToCreate);
-
-  job.boardColumnOrder = createdStatuses.map((s: any) => new Types.ObjectId(s._id.toString()));
-  await job.save();
+  await StatusService.create({
+    payload: {
+      collectionName: modelNames.JOB,
+      collectionId: jobId,
+      label: "new",
+      weight: 100,
+      default: true,
+    },
+  });
 
   return job;
 };

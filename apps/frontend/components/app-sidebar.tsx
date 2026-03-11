@@ -72,6 +72,10 @@ const data = {
           title: 'Create',
           url: '/recruiter/job/create',
         },
+        {
+          title: 'Form',
+          url: '/recruiter/form',
+        },
       ],
     },
     {
