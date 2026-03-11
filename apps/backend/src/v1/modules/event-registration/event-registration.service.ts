@@ -83,7 +83,9 @@ export const update = async ({
   payload: Partial<EventRegistrationInput>;
 }) => {
   if (payload.statusId) {
-    const statusExists = await StatusService.getOne({ query: { _id: payload.statusId } });
+    const statusExists = await StatusService.getOne({
+      query: { _id: payload.statusId.toString() },
+    });
     if (statusExists.collectionName !== modelNames.EVENT_REGISTRATION)
       throw new NotFoundException("Status not found to associate with the event registration.");
   }

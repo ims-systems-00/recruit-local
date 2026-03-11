@@ -79,21 +79,24 @@ export const getOneSoftDeleted = async ({ query }: IApplicationGetParams) => {
 };
 
 export const create = async ({ payload }: IApplicationCreateParams) => {
-  // check if job exists
-  const job = await jobService.getOne({
+  await jobService.getOne({
     query: { _id: payload.jobId!.toString() },
   });
 
-  payload.statusId = job.boardColumnOrder[0];
-
-  // get the status
-  const status = await statusService.getOne({
-    query: { _id: payload.statusId },
+  const defaultStatus = await statusService.getOne({
+    query: {
+      collectionName: modelNames.JOB,
+      collectionId: payload.jobId!.toString(),
+      default: true,
+    },
   });
 
-  // create a random number 1 - 10
+  if (!defaultStatus) throw new NotFoundException("Default starting status for this job not found.");
+
+  payload.statusId = defaultStatus._id as Types.ObjectId;
+
   const merit = Math.floor(Math.random() * 10) + 1;
-  payload.rank = merit + status.weight;
+  payload.rank = merit;
 
   const applicationId = new Types.ObjectId();
   let resumeId = null;
@@ -117,6 +120,7 @@ export const create = async ({ payload }: IApplicationCreateParams) => {
     _id: applicationId,
     resumeId: resumeId,
   });
+
   application = await application.save();
 
   return application;
