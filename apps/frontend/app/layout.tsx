@@ -1,11 +1,18 @@
 import type { Metadata } from 'next';
-import { Poppins } from 'next/font/google';
+import { Inter, Poppins } from 'next/font/google';
 import './globals.css';
 import NextAuthProviders from '@/providers/next-auth-providers';
 import { ReactQueryProvider } from '@/providers/react-query-provider';
 import { Toaster } from '@/components/ui/sonner';
+import { AbilityProvider } from '@/authz/ability-provider';
 const poppins = Poppins({
   variable: '--font-poppins',
+  subsets: ['latin'],
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+});
+
+export const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
   weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
 });
@@ -22,9 +29,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${poppins.variable} antialiased`}>
+      <body className={`${poppins.variable} ${inter.variable} antialiased`}>
         <NextAuthProviders>
-          <ReactQueryProvider>{children}</ReactQueryProvider>
+          <ReactQueryProvider>
+            <AbilityProvider>{children}</AbilityProvider>
+          </ReactQueryProvider>
         </NextAuthProviders>
         <Toaster position="top-right" richColors />
       </body>

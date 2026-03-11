@@ -14,7 +14,7 @@ export default function LogoutPage() {
 
   return (
     <div className=" min-h-screen flex justify-center items-center bg-card">
-      <div className="shadow-regular rounded-md p-12 flex items-center gap-6">
+      <div className="shadow-regular rounded-md p-12 flex items-center gap-spacing-4xl">
         <div className="min-w-[145px] animate-spin animation-duration-[2s]">
           <Image
             className="max-h-[145px] max-w-[145px]"
@@ -24,8 +24,8 @@ export default function LogoutPage() {
             height={145}
           />
         </div>
-        <div className="flex items-center justify-center gap-6 flex-col">
-          <div className="flex flex-col items-center justify-center gap-3 min-w-[350px] max-w-[444px]">
+        <div className="flex items-center justify-center gap-spacing-4xl flex-col">
+          <div className="flex flex-col items-center justify-center gap-spacing-lg min-w-[350px] max-w-[444px]">
             <h3>Hang Tight</h3>
             <p className="text-center leading-6">
               The system is preparing your Profile please wait for while

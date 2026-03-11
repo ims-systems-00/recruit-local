@@ -27,6 +27,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useLogout } from '@/services/auth/auth.client';
+import { useRouter } from 'next/navigation';
 
 export function NavUser({
   user,
@@ -37,6 +38,7 @@ export function NavUser({
     avatar: string;
   };
 }) {
+  const router = useRouter();
   const { isMobile } = useSidebar();
 
   const { logout, isLoading } = useLogout();
@@ -62,7 +64,7 @@ export function NavUser({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg bg-bg-gray-soft-primary"
             side={isMobile ? 'bottom' : 'right'}
             align="end"
             sideOffset={4}
@@ -80,17 +82,14 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                className=" cursor-pointer"
+                onClick={() => router.push('/recruiter/profile')}
+              >
                 <BadgeCheck />
-                Account
+                Profile
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <CreditCard />

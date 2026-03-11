@@ -1,50 +1,58 @@
+'use client';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { ChevronRight, Ellipsis, Search, X } from 'lucide-react';
+import { ArrowRight, ChevronRight, Ellipsis, Search, X } from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 import JobSearchIcon from '@/public/images/jobSearch.svg';
 import { Input } from '@/components/ui/input';
 
-import { AppWindowIcon, CodeIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Can } from '@/authz/ability-context';
+import { AbilityAction } from '@rl/types';
+import { JobAuthZEntity } from '@rl/authz';
 
 export default function JobLists() {
   return (
     <div>
-      <header className="py-4 px-6 flex justify-between items-center">
-        <div className=" space-y-3">
-          <h3>Explore All Jobs</h3>
-          <p>Browse the full range of available opportunities</p>
-        </div>
-        <div className="min-w-[356px]">
-          <InputGroup className="max-w-[356px] h-10">
-            <InputGroupInput placeholder="Search..." />
-            <InputGroupAddon>
-              <Search />
-            </InputGroupAddon>
-          </InputGroup>
-        </div>
-      </header>
-      <div className="p-6 grid grid-cols-3 gap-6 ">
-        <div className=" col-span-2 p-5 bg-surface-lighter space-y-10 rounded-xl">
-          <div className="space-y-5">
-            <h4>Hi , Want to Hire talent?</h4>
+      <div className=" border-b border-border-gray-secondary">
+        <header className="p-spacing-4xl flex justify-between items-center">
+          <div className=" space-y-spacing-2xs">
+            <h3 className="text-text-gray-primary text-heading-sm font-heading-sm-strong!">
+              Explore All Jobs
+            </h3>
+            <p className=" text-text-gray-tertiary text-label-md">
+              Browse the full range of available opportunities
+            </p>
+          </div>
+          <div className="min-w-[356px]">
+            <InputGroup className="max-w-[356px] h-10">
+              <InputGroupInput placeholder="Search..." />
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+            </InputGroup>
+          </div>
+        </header>
+      </div>
+      <div className="p-spacing-4xl grid grid-cols-3 gap-spacing-4xl ">
+        <div className=" col-span-2 bg-surface-lighter space-y-spacing-4xl rounded-xl">
+          <div className="space-y-spacing-2xl border border-border-gray-secondary p-spacing-2xl rounded-lg">
+            <h4 className="text-text-gray-secondary text-label-lg font-label-lg-strong!">
+              Hi , Want to Hire talent?
+            </h4>
             <div className=" flex items-center gap-4">
               <div className="min-w-8">
                 <Image
-                  className="max-h-8 max-w-8"
+                  className="max-h-12 max-w-12"
                   alt="Fav"
                   src={JobSearchIcon}
-                  width={32}
-                  height={32}
+                  width={48}
+                  height={48}
                 />
               </div>
               <Input
@@ -54,172 +62,187 @@ export default function JobLists() {
               />
             </div>
           </div>
-          <Tabs defaultValue="active-jobs" className="w-full space-y-4">
-            <TabsList className="w-full bg-surface-lighter p-1 border border-border h-10">
+          <Tabs
+            defaultValue="active-jobs"
+            className="w-full space-y-spacing-2xl"
+          >
+            <TabsList className="w-full bg-bg-gray-soft-secondary p-1 border border-border-gray-secondary h-10">
               <TabsTrigger
                 value="active-jobs"
-                className="h-8 data-[state=active]:text-primary text-body"
+                className="h-8 data-[state=active]:bg-bg-gray-soft-primary data-[state=active]:text-text-gray-secondary text-text-gray-quaternary"
               >
                 Active Jobs
               </TabsTrigger>
               <TabsTrigger
                 value="archived-jobs"
-                className="h-8 data-[state=active]:text-primary text-body"
+                className="h-8 data-[state=active]:bg-bg-gray-soft-primary data-[state=active]:text-text-gray-secondary text-text-gray-quaternary"
               >
                 Archived jobs
               </TabsTrigger>
             </TabsList>
             <TabsContent value="active-jobs">
-              <div className="space-y-4">
+              <div className="space-y-spacing-4xl">
                 {[1, 2, 3].map((item) => (
                   <div
                     key={item}
-                    className="border border-border p-4 rounded-2xl bg-white space-y-3 shadow-sm"
+                    className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs"
                   >
-                    <div className="flex justify-between items-center gap-6">
-                      <p className="text-sm text-body">XJ-486</p>
-                      <div className="flex items-center gap-5">
-                        <span>
-                          <Ellipsis className="w-5 h-5 text-title" />
+                    <div className=" p-spacing-4xl space-y-spacing-4xl">
+                      <div className=" space-y-spacing-xs">
+                        <div className="flex justify-between items-center gap-spacing-4xl">
+                          <p className=" text-label-sm text-text-gray-tertiary">
+                            XJ-486
+                          </p>
+                          <span>
+                            <Ellipsis className="w-5 h-5 text-text-gray-primary" />
+                          </span>
+                        </div>
+                        <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+                          UI/UX Designer Wanted – Join Our Creative Team!
+                        </h4>
+                      </div>
+                      <div className=" relative overflow-hidden bg-bg-brand-solid-primary-extra-ighter h-25 rounded-lg flex justify-center items-center">
+                        <span className=" absolute left-0 top-0">
+                          <svg
+                            width="464"
+                            height="100"
+                            viewBox="0 0 464 100"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <g filter="url(#filter0_f_1760_103063)">
+                              <circle
+                                cx="121"
+                                cy="72"
+                                r="243"
+                                fill="#67C3E4"
+                                fillOpacity="0.26"
+                              />
+                            </g>
+                            <defs>
+                              <filter
+                                id="filter0_f_1760_103063"
+                                x="-222"
+                                y="-271"
+                                width="686"
+                                height="686"
+                                filterUnits="userSpaceOnUse"
+                                colorInterpolationFilters="sRGB"
+                              >
+                                <feFlood
+                                  floodOpacity="0"
+                                  result="BackgroundImageFix"
+                                />
+                                <feBlend
+                                  mode="normal"
+                                  in="SourceGraphic"
+                                  in2="BackgroundImageFix"
+                                  result="shape"
+                                />
+                                <feGaussianBlur
+                                  stdDeviation="50"
+                                  result="effect1_foregroundBlur_1760_103063"
+                                />
+                              </filter>
+                            </defs>
+                          </svg>
                         </span>
-                        <span>
-                          <X className="w-5 h-5 text-title" />
+                        <div className="relative z-10">
+                          <p className=" text-label-md font-label-md-strong! text-text-gray-primary">
+                            Wanna Join us?
+                          </p>
+                          <p className="text-body-xs text-text-gray-primary">
+                            Apply Now!!{' '}
+                          </p>
+                          <p className="text-body-xs text-text-gray-primary">
+                            www.BootTech/apply{' '}
+                          </p>
+                        </div>
+                        <span className=" absolute right-0 top-0">
+                          <svg
+                            width="442"
+                            height="100"
+                            viewBox="0 0 442 100"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <g filter="url(#filter0_f_1760_103062)">
+                              <circle
+                                cx="303.5"
+                                cy="26.5"
+                                r="203.5"
+                                fill="#017C89"
+                                fillOpacity="0.28"
+                              />
+                            </g>
+                            <defs>
+                              <filter
+                                id="filter0_f_1760_103062"
+                                x="0"
+                                y="-277"
+                                width="607"
+                                height="607"
+                                filterUnits="userSpaceOnUse"
+                                colorInterpolationFilters="sRGB"
+                              >
+                                <feFlood
+                                  floodOpacity="0"
+                                  result="BackgroundImageFix"
+                                />
+                                <feBlend
+                                  mode="normal"
+                                  in="SourceGraphic"
+                                  in2="BackgroundImageFix"
+                                  result="shape"
+                                />
+                                <feGaussianBlur
+                                  stdDeviation="50"
+                                  result="effect1_foregroundBlur_1760_103062"
+                                />
+                              </filter>
+                            </defs>
+                          </svg>
                         </span>
                       </div>
                     </div>
-                    <div className=" relative overflow-hidden bg-primary-extra-ighter h-32 rounded-lg flex justify-center items-center">
-                      <span className=" absolute left-0 top-0">
-                        <svg
-                          width="464"
-                          height="128"
-                          viewBox="0 0 464 128"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <g filter="url(#filter0_f_502_165672)">
-                            <circle
-                              cx="121"
-                              cy="72"
-                              r="243"
-                              fill="#67C3E4"
-                              fillOpacity="0.26"
-                            />
-                          </g>
-                          <defs>
-                            <filter
-                              id="filter0_f_502_165672"
-                              x="-222"
-                              y="-271"
-                              width="686"
-                              height="686"
-                              filterUnits="userSpaceOnUse"
-                              colorInterpolationFilters="sRGB"
+                    <div className=" border-t border-border-gray-secondary flex justify-between gap-2.5 px-spacing-4xl py-spacing-2xl">
+                      <div className="space-y-spacing-2xs flex-1">
+                        <p className="text-label-sm text-text-gray-tertiary">
+                          Applicants
+                        </p>
+                        <div className="flex items-center">
+                          {[1, 2, 3, 4].map((item) => (
+                            <Avatar
+                              key={item}
+                              className=" size-6 -ml-1.5 first:ml-0 border border-white"
                             >
-                              <feFlood
-                                floodOpacity="0"
-                                result="BackgroundImageFix"
+                              <AvatarImage
+                                src="https://github.com/shadcn.png"
+                                alt="@shadcn"
                               />
-                              <feBlend
-                                mode="normal"
-                                in="SourceGraphic"
-                                in2="BackgroundImageFix"
-                                result="shape"
-                              />
-                              <feGaussianBlur
-                                stdDeviation="50"
-                                result="effect1_foregroundBlur_502_165672"
-                              />
-                            </filter>
-                          </defs>
-                        </svg>
-                      </span>
-                      <div className="space-y-1.5 relative z-10">
-                        <p className="text-title">Wanna Join us?</p>
-                        <p className="text-xs text-title">Apply Now!! </p>
-                        <p className="text-xs text-title">
-                          www.BootTech/apply{' '}
+                              <AvatarFallback>CN</AvatarFallback>
+                            </Avatar>
+                          ))}
+                          <Avatar className="-ml-1.5 size-6 bg-gray-200 border border-white text-body-xs">
+                            <AvatarFallback>+7</AvatarFallback>
+                          </Avatar>
+                        </div>
+                      </div>
+                      <div className="flex-1 pl-2 border-l border-border-gray-secondary-alt space-y-spacing-2xs ">
+                        <p className="text-label-sm text-text-gray-tertiary">
+                          Applied
+                        </p>
+                        <p className=" text-body-sm font-body-sm-strong! text-text-gray-secondary">
+                          88
                         </p>
                       </div>
-                      <span className=" absolute right-0 top-0">
-                        <svg
-                          width="474"
-                          height="128"
-                          viewBox="0 0 474 128"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <g filter="url(#filter0_f_502_165671)">
-                            <circle
-                              cx="303.5"
-                              cy="26.5"
-                              r="203.5"
-                              fill="#017C89"
-                              fillOpacity="0.28"
-                            />
-                          </g>
-                          <defs>
-                            <filter
-                              id="filter0_f_502_165671"
-                              x="0"
-                              y="-277"
-                              width="607"
-                              height="607"
-                              filterUnits="userSpaceOnUse"
-                              colorInterpolationFilters="sRGB"
-                            >
-                              <feFlood
-                                floodOpacity="0"
-                                result="BackgroundImageFix"
-                              />
-                              <feBlend
-                                mode="normal"
-                                in="SourceGraphic"
-                                in2="BackgroundImageFix"
-                                result="shape"
-                              />
-                              <feGaussianBlur
-                                stdDeviation="50"
-                                result="effect1_foregroundBlur_502_165671"
-                              />
-                            </filter>
-                          </defs>
-                        </svg>
-                      </span>
-                    </div>
-                    <div className=" space-y-4">
-                      <h4>UI/UX Designer Wanted – Join Our Creative Team!</h4>
-                      <div className=" flex justify-between gap-2">
-                        <div className="space-y-3 flex-1">
-                          <p className="text-sm text-body">Applicants</p>
-                          <div className="flex items-center">
-                            {[1, 2, 3, 4].map((item) => (
-                              <Avatar
-                                key={item}
-                                className=" size-6 -ml-1.5 first:ml-0 border border-white"
-                              >
-                                <AvatarImage
-                                  src="https://github.com/shadcn.png"
-                                  alt="@shadcn"
-                                />
-                                <AvatarFallback>CN</AvatarFallback>
-                              </Avatar>
-                            ))}
-                            <Avatar className="-ml-1.5 size-6 bg-gray-200 border border-white text-xs">
-                              <AvatarFallback>+7</AvatarFallback>
-                            </Avatar>
-                          </div>
-                        </div>
-                        <div className="flex-1 pl-2 border-l border-border space-y-3 ">
-                          <p className="text-sm text-body">Applied</p>
-                          <p className="text-title">Applicants</p>
-                        </div>
-                        <div className="flex-1 pl-2 border-l border-border space-y-3">
-                          <p className="text-sm text-body">Posted</p>
-                          <div className="space-y-1">
-                            <p className="text-sm text-title ">Jan 19, 2022</p>
-                            <p className="text-xs">3:45 pm</p>
-                          </div>
-                        </div>
+                      <div className="flex-1 pl-2 border-l border-border-gray-secondary-alt space-y-spacing-2xs">
+                        <p className="text-label-sm text-text-gray-tertiary">
+                          Posted
+                        </p>
+                        <p className="text-body-sm font-body-sm-strong! text-text-gray-secondary ">
+                          2 hours ago
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -229,44 +252,52 @@ export default function JobLists() {
             <TabsContent value="archived-jobs"></TabsContent>
           </Tabs>
         </div>
-        <div className="bg-white rounded-xl p-6 space-y-6 border border-border h-fit">
-          <div className="space-y-3">
-            <h4>Profile Updated Applicants</h4>
-            <p className="text-sm">See who recently updated their profile</p>
+        <div className="bg-white rounded-xl p-spacing-4xl space-y-spacing-4xl border border-border-gray-secondary shadow-xs h-fit">
+          <div className="space-y-spacing-3xs">
+            <h4 className="text-label-lg font-label-lg-strong! text-text-gray-primary">
+              Profile Updated Applicants
+            </h4>
+            <p className=" text-body-sm text-text-gray-tertiary">
+              See who recently updated their profile
+            </p>
           </div>
-          <div className=" flex justify-between items-center gap-6">
+          <div className=" flex justify-between items-center gap-spacing-4xl">
             <div className="flex items-center gap-2">
-              <span className=" flex py-0.5 px-2.5 rounded-[6px] bg-white text-sm text-body">
+              <span className=" flex py-spacing-2xs px-spacing-md rounded-lg bg-bg-brand-solid-primary border border-border-brand text-label-xs font-label-xs-strong! text-text-white">
                 All
               </span>
-              <span className=" flex py-0.5 px-2.5 rounded-[6px] bg-card text-sm text-primary">
+              <span className=" flex py-spacing-2xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-xs font-label-xs-strong! text-text-gray-tertiary border border-border-primary">
                 Recent
               </span>
             </div>
-            <span className="text-sm text-title">See all</span>
+            <span className=" text-label-sm text-text-gray-tertiary">
+              See all
+            </span>
           </div>
-          <div className=" space-y-2">
+          <div className=" space-y-spacing-2xl">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
               <div
                 key={item}
-                className=" flex justify-between items-center gap-4 p-4 border-b-[0.5px] border-border-dark last:border-b-0"
+                className="flex w-full items-center gap-spacing-2xl  p-spacing-2xl 2xl:gap-4xl 2xl:p-spacing-4xl border border-border rounded-2xl"
               >
-                <div className="flex items-center gap-3">
-                  <Avatar className=" size-8">
-                    <AvatarImage
-                      src="https://github.com/shadcn.png"
-                      alt="@shadcn"
-                    />
-                    <AvatarFallback>CN</AvatarFallback>
-                  </Avatar>
-                  <div className=" space-y-2">
-                    <p className="text-title">Annette Black</p>
-                    <p className="text-sm">Applied on 15 May 2020 9:30 am</p>
+                <Avatar className=" size-12">
+                  <AvatarImage
+                    src="https://github.com/shadcn.png"
+                    alt="@shadcn"
+                  />
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
+                <div className=" space-y-spacing-3xs w-full">
+                  <div className=" flex justify-between items-start font-[600px] gap-4 w-full">
+                    <p className="text-text-gray-primary text-label-md font-label-md-strong!">
+                      Annette Black
+                    </p>
+                    <ArrowRight className="w-5 h-5 text-fg-secondary" />
                   </div>
+                  <p className="text-label-sm text-text-gray-tertiary">
+                    Applied on 15 May 2020 9:30 am
+                  </p>
                 </div>
-                <span className=" flex items-center justify-center border border-border h-6 w-6 rounded-lg bg-card">
-                  <ChevronRight className="w-5 h-5 text-body" />
-                </span>
               </div>
             ))}
           </div>

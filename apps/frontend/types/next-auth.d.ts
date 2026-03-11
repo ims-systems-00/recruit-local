@@ -9,7 +9,7 @@ declare module 'next-auth' {
       lastName: string;
       fullName: string;
       email: string;
-      emailVerificationStatus: boolean;
+      emailVerificationStatus: string;
       type: string;
     } & DefaultSession['user'];
 
@@ -23,7 +23,7 @@ declare module 'next-auth' {
     lastName: string;
     fullName: string;
     email: string;
-    emailVerificationStatus: boolean;
+    emailVerificationStatus: string;
     type: string;
     accessToken: string;
     refreshToken: string;
@@ -38,7 +38,7 @@ declare module 'next-auth/jwt' {
       lastName: string;
       fullName: string;
       email: string;
-      emailVerificationStatus: boolean;
+      emailVerificationStatus: string;
       type: string;
     };
     accessToken: string;

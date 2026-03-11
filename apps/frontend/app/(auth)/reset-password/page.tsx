@@ -12,8 +12,8 @@ import { MailIcon } from 'lucide-react';
 export default function ResetPassword() {
   return (
     <div className=" min-h-screen flex justify-center items-center bg-card">
-      <div className=" shadow-regular w-[692px] bg-card rounded-lg flex flex-col gap-y-8 p-12">
-        <div className="space-y-3">
+      <div className=" shadow-regular w-[692px] bg-card rounded-lg flex flex-col gap-y-spacing-5xl p-12">
+        <div className="space-y-spacing-lg">
           <h4>Reset Password</h4>
           <p>
             Please enter the email address associated with your account, and we
@@ -33,7 +33,7 @@ export default function ResetPassword() {
             </Button>
             <Button
               type="submit"
-              className="text-base bg-primary border-primary text-white rounded-lg h-10"
+              className="text-base bg-bg-brand-solid-primary border-primary text-white rounded-lg h-10"
             >
               Send
             </Button>

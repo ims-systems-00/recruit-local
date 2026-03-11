@@ -5,8 +5,8 @@ import CreateOrganizationForm from './create-organization-form';
 export default function CreateOrganization() {
   return (
     <div className=" min-h-screen flex justify-center items-center bg-card">
-      <div className=" shadow-regular w-[692px] bg-card rounded-lg flex flex-col gap-y-8 p-12">
-        <div className="space-y-3">
+      <div className=" shadow-regular w-[692px] bg-card rounded-lg flex flex-col gap-y-spacing-5xl p-12">
+        <div className="space-y-spacing-lg">
           <h4>Create Your Organization</h4>
           <p>
             Enter your organization name to begin. Setup can be completed later

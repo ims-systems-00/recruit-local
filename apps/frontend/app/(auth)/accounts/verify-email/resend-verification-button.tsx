@@ -10,7 +10,7 @@ export default function ResendVerificationButton() {
     <Button
       onClick={() => resend()}
       disabled={isLoading}
-      className=" min-w-[181px] text-base bg-primary border-primary text-white rounded-lg h-10"
+      className=" min-w-[181px] text-base bg-bg-brand-solid-primary border-primary text-white rounded-lg h-10"
     >
       Resend Verification
     </Button>

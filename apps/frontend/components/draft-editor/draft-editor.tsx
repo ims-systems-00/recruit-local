@@ -145,7 +145,7 @@ export default function DraftEditor() {
   };
 
   return (
-    <div className="space-y-3 w-full border rounded-lg p-3 bg-white">
+    <div className="space-y-spacing-lg w-full border rounded-lg p-spacing-lg bg-white">
       {/* EDITOR */}
       <div
         onClick={focusEditor}
@@ -163,7 +163,7 @@ export default function DraftEditor() {
       </div>
       {/* Toolbar */}
 
-      <div className="bg-card flex gap-3 items-center p-1.5 rounded min-h-8 flex-wrap">
+      <div className="bg-card flex gap-spacing-lg items-center p-1.5 rounded min-h-8 flex-wrap">
         <span onClick={() => toggleInline('BOLD')} className="cursor-pointer">
           <Bold className="w-4 h-4 text-title" />
         </span>
