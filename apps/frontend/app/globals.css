@@ -580,10 +580,6 @@
   h4 {
     @apply text-xl leading-6 font-medium text-text-gray-primary;
   }
-
-  p {
-    @apply text-base leading-[100%] text-text-gray-secondary;
-  }
 }
 
 @layer base {

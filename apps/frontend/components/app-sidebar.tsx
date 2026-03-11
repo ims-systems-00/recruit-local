@@ -11,6 +11,7 @@ import {
   GalleryVerticalEnd,
   ListTodo,
   Map,
+  Newspaper,
   PieChart,
   Settings2,
   SquareTerminal,
@@ -77,6 +78,11 @@ const data = {
           url: '/recruiter/form',
         },
       ],
+    },
+    {
+      title: 'News Feed',
+      url: '/recruiter/news-feed',
+      icon: Newspaper,
     },
     {
       title: 'Models',
