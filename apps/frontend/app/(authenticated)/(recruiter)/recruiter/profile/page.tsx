@@ -45,7 +45,7 @@ export default function Profile() {
       <header className=" p-spacing-4xl rounded-2xl">
         <div className=" h-[244px] relative">
           <Image
-            className="max-h-[244px] rounded-3xl w-full"
+            className="max-h-[244px] rounded-3xl w-full object-cover"
             alt="Logo"
             src={RecruitProfileDefault}
             height={244}
@@ -53,7 +53,7 @@ export default function Profile() {
 
           <div className=" w-40 h-40 absolute -bottom-[100px] left-0">
             <Image
-              className="max-h-40 max-w-40 w-40 h-40 rounded-full"
+              className="max-h-40 max-w-40 w-40 h-40 rounded-full "
               alt="Logo"
               src={RecruitDefaultLogo}
               width={160}
