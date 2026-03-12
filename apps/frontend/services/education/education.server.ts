@@ -10,29 +10,33 @@ import {
   educationCreateSchema,
   educationUpdateSchema,
   educationIdParamsSchema,
+  EducationListBackendResponse,
+  EducationItemBackendResponse,
+  EducationListFilters,
 } from './education.type';
 
-export async function getEducations(params?: {
-  page?: number;
-  limit?: number;
-  search?: string;
-}): Promise<EducationApiResponse<EducationListResponse>> {
+export async function getEducations(
+  params?: EducationListFilters,
+): Promise<EducationApiResponse<EducationListResponse>> {
   try {
-    const res = await axiosServer.get('/educations', {
-      params: {
-        page: params?.page || 1,
-        limit: params?.limit || 10,
-        search: params?.search,
+    const res = await axiosServer.get<EducationListBackendResponse>(
+      '/educations',
+      {
+        params: {
+          page: params?.page || 1,
+          limit: params?.limit || 10,
+          search: params?.search,
+        },
       },
-    });
+    );
     const backendResponse = res.data;
 
     return {
       success: true,
       data: {
         docs: backendResponse.educations || [],
-        pagination: backendResponse.pagination || {},
-      } as EducationListResponse,
+        pagination: backendResponse.pagination,
+      },
       message: backendResponse.message,
     };
   } catch (error) {
@@ -46,13 +50,14 @@ export async function getEducationById(
   try {
     await educationIdParamsSchema.validate({ id });
 
-    const res = await axiosServer.get(`/educations/${id}`);
+    const res =
+      await axiosServer.get<EducationItemBackendResponse>(`/educations/${id}`);
 
     const backendResponse = res.data;
 
     return {
       success: true,
-      data: backendResponse.education as EducationData,
+      data: backendResponse.education,
       message: backendResponse.message,
     };
   } catch (error) {
@@ -68,12 +73,15 @@ export async function createEducation(
       abortEarly: false,
     });
 
-    const res = await axiosServer.post('/educations', validatedData);
+    const res = await axiosServer.post<EducationItemBackendResponse>(
+      '/educations',
+      validatedData,
+    );
     const backendResponse = res.data;
 
     return {
       success: true,
-      data: backendResponse.education as EducationData,
+      data: backendResponse.education,
       message: backendResponse.message,
     };
   } catch (error) {
@@ -90,16 +98,17 @@ export async function updateEducation(
     const validatedData = await educationUpdateSchema.validate(payload, {
       abortEarly: false,
     });
-    console.log(validatedData);
 
-    const res = await axiosServer.put(`/educations/${id}`, payload);
-
+    const res = await axiosServer.put<EducationItemBackendResponse>(
+      `/educations/${id}`,
+      validatedData,
+    );
 
     const backendResponse = res.data;
 
     return {
       success: true,
-      data: backendResponse.education as EducationData,
+      data: backendResponse.education,
       message: backendResponse.message,
     };
   } catch (error) {
@@ -151,13 +160,15 @@ export async function restoreEducation(
   try {
     await educationIdParamsSchema.validate({ id });
 
-    const res = await axiosServer.put(`/educations/${id}/restore`);
+    const res = await axiosServer.put<EducationItemBackendResponse>(
+      `/educations/${id}/restore`,
+    );
 
     const backendResponse = res.data;
 
     return {
       success: true,
-      data: backendResponse.education as EducationData,
+      data: backendResponse.education,
       message: backendResponse.message,
     };
   } catch (error) {

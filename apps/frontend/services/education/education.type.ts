@@ -31,6 +31,12 @@ export type EducationCreateInput = yup.InferType<typeof educationCreateSchema>;
 export type EducationUpdateInput = yup.InferType<typeof educationUpdateSchema>;
 export type EducationIdParams = yup.InferType<typeof educationIdParamsSchema>;
 
+export type EducationListFilters = {
+  page?: number;
+  limit?: number;
+  search?: string;
+};
+
 // API Response types
 export type EducationData = {
   _id: string;
@@ -56,8 +62,21 @@ export type Pagination = {
   pagingCounter: number;
   hasPrevPage: boolean;
   hasNextPage: boolean;
-  prevPage?: number;
-  nextPage?: number;
+  prevPage?: number | null;
+  nextPage?: number | null;
+};
+
+export type EducationListBackendResponse = {
+  success: boolean;
+  educations: EducationData[];
+  pagination: Pagination;
+  message?: string;
+};
+
+export type EducationItemBackendResponse = {
+  success: boolean;
+  education: EducationData;
+  message?: string;
 };
 
 export type EducationListResponse = {
@@ -65,7 +84,7 @@ export type EducationListResponse = {
   pagination: Pagination;
 };
 
-export type SuccessResponse<T = any> = {
+export type SuccessResponse<T> = {
   success: true;
   data: T;
   message?: string;
@@ -76,4 +95,4 @@ export type ErrorResponse = {
   message: string;
 };
 
-export type EducationApiResponse<T = any> = SuccessResponse<T> | ErrorResponse;
+export type EducationApiResponse<T> = SuccessResponse<T> | ErrorResponse;

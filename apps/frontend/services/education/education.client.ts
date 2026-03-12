@@ -15,26 +15,23 @@ import type {
   EducationUpdateInput,
   EducationData,
   EducationListResponse,
+  EducationListFilters,
 } from './education.type';
 
 // Query keys
 export const educationKeys = {
   all: ['educations'] as const,
   lists: () => [...educationKeys.all, 'list'] as const,
-  list: (filters: { page?: number; limit?: number; search?: string }) =>
+  list: (filters: EducationListFilters) =>
     [...educationKeys.lists(), filters] as const,
   details: () => [...educationKeys.all, 'detail'] as const,
   detail: (id: string) => [...educationKeys.details(), id] as const,
 };
 
 // Hook to fetch list of educations
-export function useEducations(filters?: {
-  page?: number;
-  limit?: number;
-  search?: string;
-}) {
+export function useEducations(filters: EducationListFilters = {}) {
   const query = useQuery<EducationListResponse, Error>({
-    queryKey: educationKeys.list(filters || {}),
+    queryKey: educationKeys.list(filters),
     queryFn: async () => {
       const response = await getEducations(filters);
       if (!response.success) {
@@ -86,7 +83,7 @@ export function useCreateEducation() {
     mutationFn: (payload: EducationCreateInput) => createEducation(payload),
     onSuccess: (response) => {
       if (response.success) {
-        toast.success('Education created successfully');
+        toast.success(response.message || 'Education created successfully');
         queryClient.invalidateQueries({ queryKey: educationKeys.all });
       } else {
         toast.error(response.message);
@@ -118,7 +115,7 @@ export function useUpdateEducation() {
     }) => updateEducation(id, payload),
     onSuccess: (response) => {
       if (response.success) {
-        toast.success('Education updated successfully');
+        toast.success(response.message || 'Education updated successfully');
         queryClient.invalidateQueries({ queryKey: educationKeys.all });
       } else {
         toast.error(response.message);
@@ -144,7 +141,7 @@ export function useSoftDeleteEducation() {
     mutationFn: (id: string) => softDeleteEducation(id),
     onSuccess: (response) => {
       if (response.success) {
-        toast.success('Education removed successfully');
+        toast.success(response.message || 'Education removed successfully');
         queryClient.invalidateQueries({ queryKey: educationKeys.all });
       } else {
         toast.error(response.message);
@@ -170,7 +167,7 @@ export function useHardDeleteEducation() {
     mutationFn: (id: string) => hardDeleteEducation(id),
     onSuccess: (response) => {
       if (response.success) {
-        toast.success('Education permanently removed');
+        toast.success(response.message || 'Education permanently removed');
         queryClient.invalidateQueries({ queryKey: educationKeys.all });
       } else {
         toast.error(response.message);
@@ -196,7 +193,7 @@ export function useRestoreEducation() {
     mutationFn: (id: string) => restoreEducation(id),
     onSuccess: (response) => {
       if (response.success) {
-        toast.success('Education restored successfully');
+        toast.success(response.message || 'Education restored successfully');
         queryClient.invalidateQueries({ queryKey: educationKeys.all });
       } else {
         toast.error(response.message);
