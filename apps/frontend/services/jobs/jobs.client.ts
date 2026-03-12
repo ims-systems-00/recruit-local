@@ -67,8 +67,8 @@ export function useCreateJob() {
 
   const mutation = useMutation({
     mutationFn: createJob,
-    onSuccess: (res) => {
-      console.log('res', res);
+    onSuccess: (res, variables) => {
+      console.log('res', res, variables);
       if (!res.success) {
         toast.error(res.message);
         return;
@@ -86,8 +86,6 @@ export function useCreateJob() {
     const fields = stepFields[step as keyof typeof stepFields];
 
     const isValid = await trigger(fields);
-
-    console.log('error', isValid, fields);
 
     if (!isValid) return;
 

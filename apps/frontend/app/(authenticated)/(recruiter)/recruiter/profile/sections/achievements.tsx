@@ -62,10 +62,10 @@ export default function Achievements() {
                 DataSoft
               </p>
             </div>
-            <div className=" space-y-spacing-lg">
+            <div className=" space-y-spacing-lg w-full">
               <div>
                 <Image
-                  className="max-h-[186px] rounded-md w-full"
+                  className="max-h-[186px] 2xl:max-h-[250px] rounded-md w-full"
                   alt="AchievementsDefault"
                   src={AchievementsDefault}
                   height={186}

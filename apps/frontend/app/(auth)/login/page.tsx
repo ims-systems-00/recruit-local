@@ -104,7 +104,10 @@ export default function Login() {
                   />
                   <Label htmlFor="remember_me">Remember me</Label>
                 </div>
-                <Link href="/forget-password" className="text-primary text-sm">
+                <Link
+                  href="/forget-password"
+                  className="text-text-brand-primary text-sm"
+                >
                   Forget Password?
                 </Link>
               </div>

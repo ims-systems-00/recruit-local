@@ -580,10 +580,6 @@
   h4 {
     @apply text-xl leading-6 font-medium text-text-gray-primary;
   }
-
-  p {
-    @apply text-base leading-[100%] text-text-gray-secondary;
-  }
 }
 
 @layer base {
@@ -593,4 +589,20 @@
   body {
     @apply bg-bg-white text-text-gray-secondary;
   }
+}
+
+.PhoneInputCountry {
+  @apply px-spacing-xl border-r border-border-gray-primary mr-0!;
+}
+
+.PhoneInputInput {
+  @apply focus:outline-0 px-spacing-xl text-label-sm text-text-gray-quaternary;
+}
+
+.PhoneInputCountryIcon {
+  @apply w-5! h-5! rounded-full! shadow-none!;
+}
+
+.PhoneInputCountryIconImg {
+  @apply w-5! h-5! rounded-full! object-cover;
 }

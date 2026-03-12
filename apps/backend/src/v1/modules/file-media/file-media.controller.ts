@@ -63,14 +63,14 @@ export const create = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  const { deleted } = await fileMediaService.softDelete({
+  const fileMedia = await fileMediaService.softDelete({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "File and media moved to trash.",
     statusCode: StatusCodes.OK,
-    data: { deleted },
+    data: fileMedia,
     fieldName: "fileMedia",
   });
 };

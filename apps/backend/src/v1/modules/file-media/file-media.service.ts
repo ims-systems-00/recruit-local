@@ -88,18 +88,19 @@ export const update = async ({ query, payload }: IFileMediaUpdateParams) => {
 export const softDelete = async ({ query }: IFileMediaGetParams) => {
   const fileMedia = await FileMedia.softDelete(sanitizeQueryIds(query));
   if (!fileMedia.deleted) throw new NotFoundException("File and media not found to delete.");
-  return { deleted: fileMedia.deleted };
+  const deletedFileMedia = await getOneSoftDeleted({ query });
+  return deletedFileMedia;
 };
 
 export const restore = async ({ query }: IFileMediaGetParams) => {
-  const fileMedia = await FileMedia.restore(sanitizeQueryIds(query));
-  if (!fileMedia) throw new NotFoundException("File and media not found to restore.");
-  return fileMedia;
+  await FileMedia.restore(sanitizeQueryIds(query));
+  const restoredFileMedia = await getOne({ query });
+  return restoredFileMedia;
 };
 
 export const hardDelete = async ({ query }: IFileMediaGetParams) => {
-  const fileMedia = await FileMedia.findOneAndDelete(sanitizeQueryIds(query));
-  if (!fileMedia) throw new NotFoundException("File and media not found to delete.");
+  const fileMedia = await getOneSoftDeleted({ query });
+  await FileMedia.findOneAndDelete(sanitizeQueryIds(query));
 
   // todo: delete from s3. - probably moves this to a queue?
   const fileManager = new FileManager(s3Client);
