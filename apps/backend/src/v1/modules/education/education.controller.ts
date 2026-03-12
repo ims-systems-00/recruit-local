@@ -96,12 +96,14 @@ export const softRemove = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} education.`
   //     );
 
-  await educationService.softRemove({
+  const education = await educationService.softRemove({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Education removed successfully.",
+    data: education,
+    fieldName: "education",
     statusCode: StatusCodes.OK,
   });
 };
@@ -113,12 +115,14 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} education.`
   //     );
 
-  await educationService.hardRemove({
+  const education = await educationService.hardRemove({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Education permanently removed.",
+    data: education,
+    fieldName: "education",
     statusCode: StatusCodes.OK,
   });
 };

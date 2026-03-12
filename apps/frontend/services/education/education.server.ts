@@ -123,12 +123,13 @@ export async function softDeleteEducation(
     // Validate ID
     await educationIdParamsSchema.validate({ id });
 
-    await axiosServer.delete(`/educations/${id}/soft`);
+    const res = await axiosServer.delete(`/educations/${id}/soft`);
+    const backendResponse = res.data;
 
     return {
       success: true,
-      data: undefined,
-      message: 'Education removed successfully',
+      data: backendResponse.education,
+      message: backendResponse.message,
     };
   } catch (error) {
     return handleServerError(error, 'Failed to remove education');
@@ -142,12 +143,13 @@ export async function hardDeleteEducation(
     // Validate ID
     await educationIdParamsSchema.validate({ id });
 
-    await axiosServer.delete(`/educations/${id}/hard`);
+    const res = await axiosServer.delete(`/educations/${id}/hard`);
+    const backendResponse = res.data;
 
     return {
       success: true,
-      data: undefined,
-      message: 'Education permanently removed',
+      data: backendResponse.education,
+      message: backendResponse.message,
     };
   } catch (error) {
     return handleServerError(error, 'Failed to permanently remove education');
