@@ -81,9 +81,7 @@ export async function createExperience(
 			API_ENDPOINT,
 			validatedData,
 		);
-		const backendResponse = await experienceItemResponseSchema.validate(res.data, {
-			stripUnknown: true,
-		});
+		const backendResponse = res.data;
 
 		return {
 			success: true,
@@ -110,9 +108,7 @@ export async function updateExperience(
 			validatedData,
 		);
 
-		const backendResponse = await experienceItemResponseSchema.validate(res.data, {
-			stripUnknown: true,
-		});
+		const backendResponse = res.data;
 
 		return {
 			success: true,
@@ -131,9 +127,7 @@ export async function softDeleteExperience(
 		await experienceIdParamsSchema.validate({ id });
 
 		const res = await axiosServer.delete(`${API_ENDPOINT}/${id}/soft`);
-		const backendResponse = await experienceItemResponseSchema.validate(res.data, {
-			stripUnknown: true,
-		});
+		const backendResponse = res.data;
 
 		return {
 			success: true,
@@ -152,9 +146,7 @@ export async function hardDeleteExperience(
 		await experienceIdParamsSchema.validate({ id });
 
 		const res = await axiosServer.delete(`${API_ENDPOINT}/${id}/hard`);
-		const backendResponse = await experienceItemResponseSchema.validate(res.data, {
-			stripUnknown: true,
-		});
+		const backendResponse = res.data;
 
 		return {
 			success: true,
@@ -176,9 +168,7 @@ export async function restoreExperience(
 			`${API_ENDPOINT}/${id}/restore`,
 		);
 
-		const backendResponse = await experienceItemResponseSchema.validate(res.data, {
-			stripUnknown: true,
-		});
+		const backendResponse = res.data;
 
 		return {
 			success: true,

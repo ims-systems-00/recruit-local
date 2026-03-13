@@ -82,9 +82,7 @@ export async function createEducation(
       API_ENDPOINT,
       validatedData,
     );
-    const backendResponse = await educationItemResponseSchema.validate(res.data, {
-      stripUnknown: true,
-    });
+    const backendResponse = res.data;
 
     return {
       success: true,
@@ -111,9 +109,7 @@ export async function updateEducation(
       validatedData,
     );
 
-    const backendResponse = await educationItemResponseSchema.validate(res.data, {
-      stripUnknown: true,
-    });
+   const backendResponse = res.data;
 
     return {
       success: true,
@@ -133,9 +129,7 @@ export async function softDeleteEducation(
     await educationIdParamsSchema.validate({ id });
 
     const res = await axiosServer.delete(`${API_ENDPOINT}/${id}/soft`);
-    const backendResponse = await educationItemResponseSchema.validate(res.data, {
-      stripUnknown: true,
-    });
+    const backendResponse = res.data;
 
     return {
       success: true,
@@ -155,9 +149,7 @@ export async function hardDeleteEducation(
     await educationIdParamsSchema.validate({ id });
 
     const res = await axiosServer.delete(`${API_ENDPOINT}/${id}/hard`);
-    const backendResponse = await educationItemResponseSchema.validate(res.data, {
-      stripUnknown: true,
-    });
+    const backendResponse = res.data;
 
     return {
       success: true,
@@ -178,10 +170,8 @@ export async function restoreEducation(
     const res = await axiosServer.put<EducationItemBackendResponse>(
       `${API_ENDPOINT}/${id}/restore`,
     );
-
-    const backendResponse = await educationItemResponseSchema.validate(res.data, {
-      stripUnknown: true,
-    });
+    
+    const backendResponse = res.data;
 
     return {
       success: true,
