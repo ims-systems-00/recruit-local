@@ -10,15 +10,17 @@ import {
 	ExperienceItemBackendResponse,
 	ExperienceListFilters,
 } from './experience.type';
-import { experienceCreateSchema, experienceIdParamsSchema, experienceUpdateSchema } from './experience.validation';
+import { experienceCreateSchema, experienceIdParamsSchema, experienceItemResponseSchema, experienceListResponseSchema, experienceUpdateSchema } from './experience.validation';
 import { ApiResponse } from '@/types/api';
+
+const API_ENDPOINT = '/experiences';
 
 export async function getExperiences(
 	params?: ExperienceListFilters,
 ): Promise<ApiResponse<ExperienceListResponse>> {
 	try {
 		const res = await axiosServer.get<ExperienceListBackendResponse>(
-			'/experiences',
+			API_ENDPOINT,
 			{
 				params: {
 					page: params?.page || 1,
@@ -27,7 +29,9 @@ export async function getExperiences(
 				},
 			},
 		);
-		const backendResponse = res.data;
+		const backendResponse = await experienceListResponseSchema.validate(res.data, {
+			stripUnknown: true,
+		});
 
 		return {
 			success: true,
@@ -49,9 +53,11 @@ export async function getExperienceById(
 		await experienceIdParamsSchema.validate({ id });
 
 		const res =
-			await axiosServer.get<ExperienceItemBackendResponse>(`/experiences/${id}`);
+			await axiosServer.get<ExperienceItemBackendResponse>(`${API_ENDPOINT}/${id}`);
 
-		const backendResponse = res.data;
+		const backendResponse = await experienceItemResponseSchema.validate(res.data, {
+			stripUnknown: true,
+		});
 
 		return {
 			success: true,
@@ -72,10 +78,12 @@ export async function createExperience(
 		});
 
 		const res = await axiosServer.post<ExperienceItemBackendResponse>(
-			'/experiences',
+			API_ENDPOINT,
 			validatedData,
 		);
-		const backendResponse = res.data;
+		const backendResponse = await experienceItemResponseSchema.validate(res.data, {
+			stripUnknown: true,
+		});
 
 		return {
 			success: true,
@@ -98,11 +106,13 @@ export async function updateExperience(
 		});
 
 		const res = await axiosServer.put<ExperienceItemBackendResponse>(
-			`/experiences/${id}`,
+			`${API_ENDPOINT}/${id}`,
 			validatedData,
 		);
 
-		const backendResponse = res.data;
+		const backendResponse = await experienceItemResponseSchema.validate(res.data, {
+			stripUnknown: true,
+		});
 
 		return {
 			success: true,
@@ -116,12 +126,14 @@ export async function updateExperience(
 
 export async function softDeleteExperience(
 	id: string,
-): Promise<ApiResponse<void>> {
+): Promise<ApiResponse<ExperienceData>> {
 	try {
 		await experienceIdParamsSchema.validate({ id });
 
-		const res = await axiosServer.delete(`/experiences/${id}/soft`);
-		const backendResponse = res.data;
+		const res = await axiosServer.delete(`${API_ENDPOINT}/${id}/soft`);
+		const backendResponse = await experienceItemResponseSchema.validate(res.data, {
+			stripUnknown: true,
+		});
 
 		return {
 			success: true,
@@ -135,12 +147,14 @@ export async function softDeleteExperience(
 
 export async function hardDeleteExperience(
 	id: string,
-): Promise<ApiResponse<void>> {
+): Promise<ApiResponse<ExperienceData>> {
 	try {
 		await experienceIdParamsSchema.validate({ id });
 
-		const res = await axiosServer.delete(`/experiences/${id}/hard`);
-		const backendResponse = res.data;
+		const res = await axiosServer.delete(`${API_ENDPOINT}/${id}/hard`);
+		const backendResponse = await experienceItemResponseSchema.validate(res.data, {
+			stripUnknown: true,
+		});
 
 		return {
 			success: true,
@@ -159,7 +173,7 @@ export async function restoreExperience(
 		await experienceIdParamsSchema.validate({ id });
 
 		const res = await axiosServer.put<ExperienceItemBackendResponse>(
-			`/experiences/${id}/restore`,
+			`${API_ENDPOINT}/${id}/restore`,
 		);
 
 		const backendResponse = res.data;

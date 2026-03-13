@@ -2,25 +2,25 @@
 import { axiosServer } from '@/lib/http/axios.server';
 import { handleServerError } from '@/lib/http/handleServerError';
 import {
-  EducationApiResponse,
   EducationData,
   EducationListResponse,
   EducationCreateInput,
   EducationUpdateInput,
-  educationCreateSchema,
-  educationUpdateSchema,
-  educationIdParamsSchema,
   EducationListBackendResponse,
   EducationItemBackendResponse,
   EducationListFilters,
 } from './education.type';
+import { ApiResponse } from '@/types/api';
+import { educationCreateSchema, educationIdParamsSchema, educationItemResponseSchema, educationListResponseSchema, educationUpdateSchema } from './education.validation';
+
+const API_ENDPOINT = '/educations';
 
 export async function getEducations(
   params?: EducationListFilters,
-): Promise<EducationApiResponse<EducationListResponse>> {
+): Promise<ApiResponse<EducationListResponse>> {
   try {
     const res = await axiosServer.get<EducationListBackendResponse>(
-      '/educations',
+      API_ENDPOINT,
       {
         params: {
           page: params?.page || 1,
@@ -29,7 +29,10 @@ export async function getEducations(
         },
       },
     );
-    const backendResponse = res.data;
+
+    const backendResponse = await educationListResponseSchema.validate(res.data, {
+      stripUnknown: true,
+    });
 
     return {
       success: true,
@@ -46,14 +49,16 @@ export async function getEducations(
 
 export async function getEducationById(
   id: string,
-): Promise<EducationApiResponse<EducationData>> {
+): Promise<ApiResponse<EducationData>> {
   try {
     await educationIdParamsSchema.validate({ id });
 
     const res =
-      await axiosServer.get<EducationItemBackendResponse>(`/educations/${id}`);
+      await axiosServer.get<EducationItemBackendResponse>(`${API_ENDPOINT}/${id}`);
 
-    const backendResponse = res.data;
+    const backendResponse = await educationItemResponseSchema.validate(res.data, {
+      stripUnknown: true,
+    });
 
     return {
       success: true,
@@ -67,17 +72,19 @@ export async function getEducationById(
 
 export async function createEducation(
   payload: EducationCreateInput,
-): Promise<EducationApiResponse<EducationData>> {
+): Promise<ApiResponse<EducationData>> {
   try {
     const validatedData = await educationCreateSchema.validate(payload, {
       abortEarly: false,
     });
 
     const res = await axiosServer.post<EducationItemBackendResponse>(
-      '/educations',
+      API_ENDPOINT,
       validatedData,
     );
-    const backendResponse = res.data;
+    const backendResponse = await educationItemResponseSchema.validate(res.data, {
+      stripUnknown: true,
+    });
 
     return {
       success: true,
@@ -92,7 +99,7 @@ export async function createEducation(
 export async function updateEducation(
   id: string,
   payload: EducationUpdateInput,
-): Promise<EducationApiResponse<EducationData>> {
+): Promise<ApiResponse<EducationData>> {
   try {
     await educationIdParamsSchema.validate({ id });
     const validatedData = await educationUpdateSchema.validate(payload, {
@@ -100,11 +107,13 @@ export async function updateEducation(
     });
 
     const res = await axiosServer.put<EducationItemBackendResponse>(
-      `/educations/${id}`,
+      `${API_ENDPOINT}/${id}`,
       validatedData,
     );
 
-    const backendResponse = res.data;
+    const backendResponse = await educationItemResponseSchema.validate(res.data, {
+      stripUnknown: true,
+    });
 
     return {
       success: true,
@@ -118,13 +127,15 @@ export async function updateEducation(
 
 export async function softDeleteEducation(
   id: string,
-): Promise<EducationApiResponse<void>> {
+): Promise<ApiResponse<EducationData>> {
   try {
     // Validate ID
     await educationIdParamsSchema.validate({ id });
 
-    const res = await axiosServer.delete(`/educations/${id}/soft`);
-    const backendResponse = res.data;
+    const res = await axiosServer.delete(`${API_ENDPOINT}/${id}/soft`);
+    const backendResponse = await educationItemResponseSchema.validate(res.data, {
+      stripUnknown: true,
+    });
 
     return {
       success: true,
@@ -138,13 +149,15 @@ export async function softDeleteEducation(
 
 export async function hardDeleteEducation(
   id: string,
-): Promise<EducationApiResponse<void>> {
+): Promise<ApiResponse<EducationData>> {
   try {
     // Validate ID
     await educationIdParamsSchema.validate({ id });
 
-    const res = await axiosServer.delete(`/educations/${id}/hard`);
-    const backendResponse = res.data;
+    const res = await axiosServer.delete(`${API_ENDPOINT}/${id}/hard`);
+    const backendResponse = await educationItemResponseSchema.validate(res.data, {
+      stripUnknown: true,
+    });
 
     return {
       success: true,
@@ -158,15 +171,17 @@ export async function hardDeleteEducation(
 
 export async function restoreEducation(
   id: string,
-): Promise<EducationApiResponse<EducationData>> {
+): Promise<ApiResponse<EducationData>> {
   try {
     await educationIdParamsSchema.validate({ id });
 
     const res = await axiosServer.put<EducationItemBackendResponse>(
-      `/educations/${id}/restore`,
+      `${API_ENDPOINT}/${id}/restore`,
     );
 
-    const backendResponse = res.data;
+    const backendResponse = await educationItemResponseSchema.validate(res.data, {
+      stripUnknown: true,
+    });
 
     return {
       success: true,
