@@ -76,7 +76,7 @@ export const getOneSoftDeleted = async ({ query = {} }: IJobProfileGetParams) =>
 
 export const create = async ({ payload }: IJobProfileCreateParams) => {
   const statusExists = await StatusService.getOne({
-    query: { collectionName: modelNames.JOB_PROFILE, label: "unverified" },
+    query: { collectionName: modelNames.JOB_PROFILE, default: true },
   });
 
   if (!statusExists) {
@@ -166,8 +166,9 @@ export const update = async ({ query, payload }: IJobProfileUpdateParams) => {
 
 export const softDelete = async ({ query }: IJobProfileGetParams) => {
   const { deleted } = await JobProfile.softDelete(sanitizeQueryIds(query));
+  const jobProfile = await getOneSoftDeleted({ query: sanitizeQueryIds(query) });
   if (!deleted) throw new NotFoundException("Job Profile not found to delete.");
-  return { deleted };
+  return jobProfile;
 };
 
 export const hardDelete = async ({ query }: IJobProfileGetParams) => {
@@ -185,11 +186,12 @@ export const hardDelete = async ({ query }: IJobProfileGetParams) => {
 
   const deletedJobProfile = await JobProfile.findOneAndDelete({ _id: jobProfile._id });
   if (!deletedJobProfile) throw new NotFoundException("Job Profile not found to delete.");
-  return deletedJobProfile;
+  return jobProfile;
 };
 
 export const restore = async ({ query }: IJobProfileGetParams) => {
   const { restored } = await JobProfile.restore(sanitizeQueryIds(query));
+  const jobProfile = await getOne({ query: sanitizeQueryIds(query) });
   if (!restored) throw new NotFoundException("Job Profile not found in trash.");
-  return { restored };
+  return jobProfile;
 };

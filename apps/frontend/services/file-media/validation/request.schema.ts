@@ -4,7 +4,7 @@ import {
   storageInformationSchema,
   validModelNames,
   validVisibilities,
-} from './shared.schema';
+} from '@/services/shared';
 
 // GET/PUT/DELETE /:id
 export const idParamsSchema = yup.object({

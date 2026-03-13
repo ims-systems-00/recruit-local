@@ -104,37 +104,41 @@ export const create = async ({ req }: ControllerParams) => {
 
 export const softRemove = async ({ req }: ControllerParams) => {
   // Updated to call softDelete
-  await jobProfileService.softDelete({
+  const jobProfile = await jobProfileService.softDelete({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Job profile moved to trash.",
     statusCode: StatusCodes.OK,
+    data: jobProfile,
+    fieldName: "jobProfile",
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
   // Updated to call hardDelete
-  await jobProfileService.hardDelete({
+  const jobProfile = await jobProfileService.hardDelete({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Job Profile permanently deleted.",
     statusCode: StatusCodes.OK,
+    data: jobProfile,
+    fieldName: "jobProfile",
   });
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  const result = await jobProfileService.restore({
+  const jobProfile = await jobProfileService.restore({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Job profile restored from trash.",
     statusCode: StatusCodes.OK,
-    data: result,
+    data: jobProfile,
     fieldName: "jobProfile",
   });
 };
