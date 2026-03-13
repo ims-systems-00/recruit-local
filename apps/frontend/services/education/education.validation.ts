@@ -1,4 +1,5 @@
 import * as yup from 'yup';
+import { paginationSchema } from '../shared';
 
 // Yup schemas for validation
 export const educationCreateSchema = yup.object({
@@ -46,19 +47,6 @@ export const educationSchema = yup.object({
     createdAt: yup.string().required(),
     updatedAt: yup.string().required(),
     deletedAt: yup.string().optional(),
-});
-
-export const paginationSchema = yup.object({
-    totalDocs: yup.number().required(),
-    limit: yup.number().required(),
-    totalPages: yup.number().required(),
-    page: yup.number().required(),
-    pagingCounter: yup.number().required(),
-    hasPrevPage: yup.boolean().required(),
-    hasNextPage: yup.boolean().required(),
-    prevPage: yup.number().nullable().defined(),
-    nextPage: yup.number().nullable().defined(),
-    total: yup.number().optional(),
 });
 
 export const educationListResponseSchema = yup.object({
