@@ -63,17 +63,20 @@ export const update = async ({
 export const softRemove = async ({ query }: { query: IEducationQueryParams }) => {
   const { deleted } = await Education.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Education Profile not found to delete.");
-  return { deleted };
+  const result = await getOneSoftDeleted({ query });
+  return result;
 };
 
 export const hardRemove = async ({ query }: { query: IEducationQueryParams }) => {
+  const result = await getOneSoftDeleted({ query });
   const deletedEducation = await Education.findOneAndDelete(sanitizeQueryIds(query));
   if (!deletedEducation) throw new NotFoundException("Education Profile not found to delete.");
-  return deletedEducation;
+  return result;
 };
 
 export const restore = async ({ query }: { query: IEducationQueryParams }) => {
   const { restored } = await Education.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Education Profile not found in trash.");
-  return { restored };
+  const result = await getOne({ query });
+  return result;
 };
