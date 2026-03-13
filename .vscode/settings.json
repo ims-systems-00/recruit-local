@@ -25,5 +25,8 @@
     "verificationtokens"
   ],
   "cSpell.flagWords": [],
-  "cSpell.caseSensitive": true
+  "cSpell.caseSensitive": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  }
 }

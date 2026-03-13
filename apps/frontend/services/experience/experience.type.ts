@@ -1,35 +1,8 @@
 import * as yup from 'yup';
 import { WORKPLACE_ENUMS, EMPLOYMENT_TYPE } from '@rl/types';
+import { experienceCreateSchema, experienceIdParamsSchema, experienceUpdateSchema } from './experience.validation';
+import { Pagination } from '@/types/api';
 
-// Yup schemas for validation
-export const experienceCreateSchema = yup.object({
-  jobProfileId: yup.string().required('Job Profile ID is required'),
-  company: yup.string().required('Company is required'),
-  jobTitle: yup.string().required('Job Title is required'),
-  location: yup.string().optional(),
-  workplace: yup.string().oneOf(Object.values(WORKPLACE_ENUMS)).optional(),
-  employmentType: yup.string().oneOf(Object.values(EMPLOYMENT_TYPE)).optional(),
-  startDate: yup.string().optional(),
-  endDate: yup.string().optional(),
-  description: yup.string().optional(),
-  isActive: yup.boolean().optional(),
-});
-
-export const experienceUpdateSchema = yup.object({
-  company: yup.string().optional(),
-  jobTitle: yup.string().optional(),
-  location: yup.string().optional(),
-  workplace: yup.string().oneOf(Object.values(WORKPLACE_ENUMS)).optional(),
-  employmentType: yup.string().oneOf(Object.values(EMPLOYMENT_TYPE)).optional(),
-  startDate: yup.string().optional(),
-  endDate: yup.string().optional(),
-  description: yup.string().optional(),
-  isActive: yup.boolean().optional(),
-});
-
-export const experienceIdParamsSchema = yup.object({
-  id: yup.string().required('ID is required'),
-});
 
 // TypeScript types
 export type ExperienceCreateInput = yup.InferType<typeof experienceCreateSchema>;
@@ -61,18 +34,6 @@ export type ExperienceData = {
   deletedAt?: string;
 };
 
-export type Pagination = {
-  totalDocs: number;
-  limit: number;
-  page: number;
-  totalPages: number;
-  pagingCounter: number;
-  hasPrevPage: boolean;
-  hasNextPage: boolean;
-  prevPage?: number | null;
-  nextPage?: number | null;
-};
-
 export type ExperienceListBackendResponse = {
   success: boolean;
   experiences: ExperienceData[];
@@ -91,15 +52,4 @@ export type ExperienceListResponse = {
   pagination: Pagination;
 };
 
-export type SuccessResponse<T> = {
-  success: true;
-  data: T;
-  message?: string;
-};
 
-export type ErrorResponse = {
-  success: false;
-  message: string;
-};
-
-export type ExperienceApiResponse<T> = SuccessResponse<T> | ErrorResponse;

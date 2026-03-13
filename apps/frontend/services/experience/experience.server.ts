@@ -2,22 +2,20 @@
 import { axiosServer } from '@/lib/http/axios.server';
 import { handleServerError } from '@/lib/http/handleServerError';
 import {
-	ExperienceApiResponse,
 	ExperienceData,
 	ExperienceListResponse,
 	ExperienceCreateInput,
 	ExperienceUpdateInput,
-	experienceCreateSchema,
-	experienceUpdateSchema,
-	experienceIdParamsSchema,
 	ExperienceListBackendResponse,
 	ExperienceItemBackendResponse,
 	ExperienceListFilters,
 } from './experience.type';
+import { experienceCreateSchema, experienceIdParamsSchema, experienceUpdateSchema } from './experience.validation';
+import { ApiResponse } from '@/types/api';
 
 export async function getExperiences(
 	params?: ExperienceListFilters,
-): Promise<ExperienceApiResponse<ExperienceListResponse>> {
+): Promise<ApiResponse<ExperienceListResponse>> {
 	try {
 		const res = await axiosServer.get<ExperienceListBackendResponse>(
 			'/experiences',
@@ -46,7 +44,7 @@ export async function getExperiences(
 
 export async function getExperienceById(
 	id: string,
-): Promise<ExperienceApiResponse<ExperienceData>> {
+): Promise<ApiResponse<ExperienceData>> {
 	try {
 		await experienceIdParamsSchema.validate({ id });
 
@@ -67,7 +65,7 @@ export async function getExperienceById(
 
 export async function createExperience(
 	payload: ExperienceCreateInput,
-): Promise<ExperienceApiResponse<ExperienceData>> {
+): Promise<ApiResponse<ExperienceData>> {
 	try {
 		const validatedData = await experienceCreateSchema.validate(payload, {
 			abortEarly: false,
@@ -92,7 +90,7 @@ export async function createExperience(
 export async function updateExperience(
 	id: string,
 	payload: ExperienceUpdateInput,
-): Promise<ExperienceApiResponse<ExperienceData>> {
+): Promise<ApiResponse<ExperienceData>> {
 	try {
 		await experienceIdParamsSchema.validate({ id });
 		const validatedData = await experienceUpdateSchema.validate(payload, {
@@ -118,7 +116,7 @@ export async function updateExperience(
 
 export async function softDeleteExperience(
 	id: string,
-): Promise<ExperienceApiResponse<void>> {
+): Promise<ApiResponse<void>> {
 	try {
 		await experienceIdParamsSchema.validate({ id });
 
@@ -137,7 +135,7 @@ export async function softDeleteExperience(
 
 export async function hardDeleteExperience(
 	id: string,
-): Promise<ExperienceApiResponse<void>> {
+): Promise<ApiResponse<void>> {
 	try {
 		await experienceIdParamsSchema.validate({ id });
 
@@ -156,7 +154,7 @@ export async function hardDeleteExperience(
 
 export async function restoreExperience(
 	id: string,
-): Promise<ExperienceApiResponse<ExperienceData>> {
+): Promise<ApiResponse<ExperienceData>> {
 	try {
 		await experienceIdParamsSchema.validate({ id });
 
