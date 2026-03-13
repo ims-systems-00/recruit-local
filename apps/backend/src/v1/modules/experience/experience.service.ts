@@ -68,17 +68,20 @@ export const update = async ({
 export const softRemove = async ({ query }: { query: IExperienceQueryParams }) => {
   const { deleted } = await Experience.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Experience not found to delete.");
-  return { deleted };
+  const result = await getOneSoftDeleted({ query });
+  return result;
 };
 
 export const hardRemove = async ({ query }: { query: IExperienceQueryParams }) => {
+  const result = await getOneSoftDeleted({ query });
   const deletedExperience = await Experience.findOneAndDelete(sanitizeQueryIds(query));
   if (!deletedExperience) throw new NotFoundException("Experience not found to delete.");
-  return deletedExperience;
+  return result;
 };
 
 export const restore = async ({ query }: { query: IExperienceQueryParams }) => {
   const { restored } = await Experience.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Experience not found in trash.");
-  return { restored };
+  const result = await getOne({ query });
+  return result;
 };

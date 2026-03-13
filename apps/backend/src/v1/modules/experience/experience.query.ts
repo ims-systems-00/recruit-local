@@ -3,8 +3,8 @@ import { AbilityAction } from "@rl/types";
 import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
 import { PipelineStage } from "mongoose";
 import { projectQuery } from "../../../common/query";
-import { Event, IEventDoc } from "../../../models";
 import { omit } from "lodash";
+import { Experience, IExperienceDoc } from "../../../models";
 
 export const roleScopedSecurityQuery = (ability: ReturnType<UserAbilityBuilder["getAbility"]>) => {
   // Get the raw query from CASL
@@ -14,9 +14,9 @@ export const roleScopedSecurityQuery = (ability: ReturnType<UserAbilityBuilder["
 
 // event queries
 export const experienceProjectionQuery = (): PipelineStage[] => {
-  const fieldsToExclude: (keyof IEventDoc | "__v")[] = ["__v"];
+  const fieldsToExclude: (keyof IExperienceDoc | "__v")[] = ["__v"];
 
-  const selectedFields = Object.keys(omit(Event.schema.paths, fieldsToExclude));
+  const selectedFields = Object.keys(omit(Experience.schema.paths, fieldsToExclude));
 
   return projectQuery(selectedFields);
 };

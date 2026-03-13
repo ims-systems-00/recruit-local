@@ -100,23 +100,27 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  await experienceService.softRemove({
+  const experience = await experienceService.softRemove({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Experience moved to trash.",
+    data: experience,
+    fieldName: "experience",  
     statusCode: StatusCodes.OK,
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  await experienceService.hardRemove({
+  const experience = await experienceService.hardRemove({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Experience permanently deleted successfully.",
+    data: experience,
+    fieldName: "experience",
     statusCode: StatusCodes.OK,
   });
 };
