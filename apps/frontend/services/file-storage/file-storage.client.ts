@@ -94,7 +94,6 @@ export function useDeleteFileStorage() {
 
 /**
  * Utility hook to handle the direct-to-S3 PUT upload process.
- * (Optional but highly recommended since you need to actually upload the file after getting the URL)
  */
 export function useDirectUpload() {
   const mutation = useMutation({
