@@ -1,5 +1,6 @@
 import { EMPLOYMENT_TYPE, WORKPLACE_ENUMS } from '@rl/types';
 import * as yup from 'yup';
+import { paginationSchema } from '../shared';
 
 // Yup schemas for validation
 export const experienceCreateSchema = yup.object({
@@ -29,19 +30,6 @@ export const experienceUpdateSchema = yup.object({
 
 export const experienceIdParamsSchema = yup.object({
   id: yup.string().required('ID is required'),
-});
-
-export const paginationSchema = yup.object({
-    totalDocs: yup.number().required(),
-    limit: yup.number().required(),
-    totalPages: yup.number().required(),
-    page: yup.number().required(),
-    pagingCounter: yup.number().required(),
-    hasPrevPage: yup.boolean().required(),
-    hasNextPage: yup.boolean().required(),
-    prevPage: yup.number().nullable().defined(),
-    nextPage: yup.number().nullable().defined(),
-    total: yup.number().optional(),
 });
 
 export const experienceSchema = yup.object({
