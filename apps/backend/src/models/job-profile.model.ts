@@ -71,8 +71,8 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
     toJSON: {
       virtuals: true,
       transform: (_doc, ret) => {
-        ret.id = ret._id;
-        delete ret._id;
+        // ret.id = ret._id;
+        // delete ret._id;
         return ret;
       },
     },

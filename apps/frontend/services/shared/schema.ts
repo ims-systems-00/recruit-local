@@ -22,3 +22,16 @@ export const deleteMarkerSchema = yup.object({
   deletedAt: yup.string().nullable().default(null),
   dateScheduled: yup.string().nullable().default(null),
 });
+
+export const paginationSchema = yup.object({
+  totalDocs: yup.number().required(),
+  limit: yup.number().required(),
+  totalPages: yup.number().required(),
+  page: yup.number().required(),
+  pagingCounter: yup.number().required(),
+  hasPrevPage: yup.boolean().required(),
+  hasNextPage: yup.boolean().required(),
+  prevPage: yup.number().nullable().defined(),
+  nextPage: yup.number().nullable().defined(),
+  total: yup.number().optional(),
+});
