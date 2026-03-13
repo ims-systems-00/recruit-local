@@ -176,7 +176,9 @@ export async function restoreExperience(
 			`${API_ENDPOINT}/${id}/restore`,
 		);
 
-		const backendResponse = res.data;
+		const backendResponse = await experienceItemResponseSchema.validate(res.data, {
+			stripUnknown: true,
+		});
 
 		return {
 			success: true,
