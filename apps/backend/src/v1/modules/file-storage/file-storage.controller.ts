@@ -14,20 +14,21 @@ export const getSignedUrlForUpload = async ({ req }: ControllerParams) => {
   const filename = req.header("x-file-name");
   const storageType = req.header("x-storage-type") as string;
   let bucket = process.env.AWS_PRIVATE_MEDIA_BUCKET;
-  let viewSrc = null;
+  let baseUrl = null;
 
   if (storageType === "public") {
     bucket = process.env.AWS_PUBLIC_MEDIA_BUCKET;
-    viewSrc = process.env.PUBLIC_MEDIA_BASE_URL + "/";
+    baseUrl = process.env.PUBLIC_MEDIA_BASE_URL + "/";
   }
 
   const fileManager = new FileManager(s3Client);
   const results = await fileManager.getSignedUrlForUpload(filename, bucket);
+  const viewSrc = baseUrl ? baseUrl + results.metaInfo.Key : null;
 
   return new ApiResponse({
     message: "URL signed for upload: " + filename,
     statusCode: StatusCodes.OK,
-    data: { ...results, viewSrc: viewSrc + results.metaInfo.Key },
+    data: { ...results, viewSrc },
     fieldName: "fileStorage",
   });
 };
