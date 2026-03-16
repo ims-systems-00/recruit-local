@@ -15,7 +15,7 @@ interface UseTableCellProps<T> {
 }
 
 // Hook with generic type for value
-export function useTableCell<T>({ defaultValue = "", onSave = async () => {} }: UseTableCellProps<T>) {
+export function useTableCell<T>({ defaultValue = "", onSave = async () => { } }: UseTableCellProps<T>) {
   const [value, setValue] = useState<T | "">(defaultValue);
   const [autoSaved, setAutoSaved] = useState<STATUS>(STATUS.DEFAULT);
 
@@ -38,7 +38,6 @@ export function useTableCell<T>({ defaultValue = "", onSave = async () => {} }: 
           await onSave(value);
         }
         controlSaveState(STATUS.SAVE_SUCCESS);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         controlSaveState(STATUS.SAVE_FAIL);
       } finally {
