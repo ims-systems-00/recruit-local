@@ -159,7 +159,8 @@ export const update = async ({ query, payload }: IEventUpdateParams) => {
 export const softDelete = async ({ query }: IEventGetParams) => {
   const { deleted } = await Event.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Event not found to delete.");
-  return { deleted };
+  const result = await getOneSoftDeleted({ query: sanitizeQueryIds(query) });
+  return result;
 };
 
 export const hardDelete = async ({ query }: IEventGetParams) => {
@@ -176,11 +177,12 @@ export const hardDelete = async ({ query }: IEventGetParams) => {
 
   const deletedEvent = await Event.findOneAndDelete({ _id: event._id });
   if (!deletedEvent) throw new NotFoundException("Event not found to delete.");
-  return deletedEvent;
+  return event;
 };
 
 export const restore = async ({ query }: IEventGetParams) => {
   const { restored } = await Event.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Event not found in trash.");
-  return { restored };
+  const result = await getOne({ query: sanitizeQueryIds(query) });
+  return result;
 };

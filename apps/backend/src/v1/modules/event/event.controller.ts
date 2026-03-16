@@ -105,36 +105,40 @@ export const update = async ({ req }: ControllerParams) => {
 
 export const softRemove = async ({ req }: ControllerParams) => {
   // Updated to call softDelete
-  await eventService.softDelete({
+  const event = await eventService.softDelete({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: `Event ${req.params.id} moved to trash.`,
     statusCode: StatusCodes.OK,
+    data: event,
+    fieldName: "event",
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  await eventService.hardDelete({
+  const event = await eventService.hardDelete({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: `Event ${req.params.id} permanently removed.`,
     statusCode: StatusCodes.OK,
+    data: event,
+    fieldName: "event",
   });
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  const result = await eventService.restore({
+  const event = await eventService.restore({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: `Event ${req.params.id} restored.`,
     statusCode: StatusCodes.OK,
-    data: result,
+    data: event,
     fieldName: "event",
   });
 };
