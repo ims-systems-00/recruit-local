@@ -138,8 +138,8 @@ export const update = async ({ query, payload }: ICertificationUpdateParams) => 
 
 export const softRemove = async ({ query }: ICertificationGetParams) => {
   const { deleted } = await Certification.softDelete(query);
-
-  return { deleted };
+  const result = await getSoftDeletedOne({ query });
+  return result;
 };
 
 export const hardDelete = async ({ query }: ICertificationGetParams) => {
@@ -156,12 +156,14 @@ export const hardDelete = async ({ query }: ICertificationGetParams) => {
     }
   }
 
-  return await Certification.findOneAndDelete({ _id: certification._id });
+  const deletedCertification = await Certification.findOneAndDelete({ _id: certification._id });
+  if (!deletedCertification) throw new NotFoundException("Certification not found to delete.");
+  return certification;
 };
 
 export const restore = async ({ query }: ICertificationGetParams) => {
   const { restored } = await Certification.restore(query);
   if (!restored) throw new NotFoundException("Certification not found in trash.");
-
-  return { restored };
+  const result = await getOne({ query });
+  return result;
 };
