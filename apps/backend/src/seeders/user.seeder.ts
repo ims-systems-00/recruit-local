@@ -1,7 +1,7 @@
 import { User } from "../models";
 import { EMAIL_VERIFICATION_STATUS_ENUMS } from "../models/constants";
 import { logger } from "../common/helper/logger";
-import { USER_TYPE_ENUMS } from "@rl/types";
+import { ACCOUNT_TYPE_ENUMS } from "@rl/types";
 
 const validateEnv = () => {
   if (!process.env.ADMIN_USER_EMAIL || !process.env.ADMIN_USER_PASSWORD) {
@@ -28,7 +28,7 @@ export const userSeeder = async () => {
         lastName: "User",
         email: process.env.ADMIN_USER_EMAIL as string,
         password: process.env.ADMIN_USER_PASSWORD as string,
-        type: USER_TYPE_ENUMS.ADMIN,
+        type: ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN,
         emailVerificationStatus: EMAIL_VERIFICATION_STATUS_ENUMS.VERIFIED,
       },
     ];

@@ -1,6 +1,6 @@
-import { InteractionInput } from "../../../models";
+import { IActionInput } from "../../../models";
 
-export type Query = Partial<InteractionInput & { _id: string }>;
+export type Query = Partial<IActionInput & { _id: string }>;
 
 export interface IOptions {
   page?: number;
