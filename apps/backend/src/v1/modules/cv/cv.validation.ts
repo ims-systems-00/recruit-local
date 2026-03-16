@@ -33,12 +33,12 @@ const experienceSchema = Joi.object({
   jobTitle: Joi.string().required().label("Job Title"),
   company: Joi.string().required().label("Company"),
   location: Joi.string().optional().allow("").label("Location"),
-  workMode: Joi.string().optional().allow("").label("Work Mode"),
+  workplace: Joi.string().optional().allow("").label("Workplace"),
   employmentType: Joi.string().optional().allow("").label("Employment Type"),
-  position: Joi.string().required().label("Position"),
   startDate: Joi.date().required().label("Start Date"),
   endDate: Joi.date().optional().allow(null).label("End Date"),
   description: Joi.string().optional().allow("").label("Experience Description"),
+  isActive: Joi.boolean().optional().label("Is Active"),
 });
 
 const interestSchema = Joi.object({
@@ -67,7 +67,6 @@ export const createBodySchema = Joi.object({
   // Settings
   templateId: Joi.string().optional().label("Template ID"),
   colorProfile: Joi.string().optional().label("Color Profile"),
-  statusId: Joi.string().custom(objectIdValidation).optional().label("Status"),
 });
 
 export const updateBodySchema = Joi.object({

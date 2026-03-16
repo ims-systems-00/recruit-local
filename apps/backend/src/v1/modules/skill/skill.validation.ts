@@ -4,11 +4,13 @@ import { objectIdValidation } from "../../../common/helper/validate";
 export const createBodySchema = Joi.object({
   jobProfileId: Joi.string().custom(objectIdValidation).required().label("Job Profile ID"),
   name: Joi.string().min(2).max(50).required(),
+  proficiencyLevel: Joi.string().optional(),
   description: Joi.string().max(500).optional(),
 });
 
 export const updateBodySchema = Joi.object({
   name: Joi.string().min(2).max(50).optional(),
+  proficiencyLevel: Joi.string().optional(),
   description: Joi.string().max(500).optional(),
 });
 

@@ -25,13 +25,16 @@ export interface CVInput extends IUserOwnedInput, JobProfileInput {
   statusId: Schema.Types.ObjectId;
 }
 
-export interface ICVDoc extends CVInput, ISoftDeleteDoc, IBaseDoc {}
+export interface ICVDoc extends CVInput, ISoftDeleteDoc, IBaseDoc {
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 interface ICVModel
   extends Model<ICVDoc>,
-    ISoftDeleteModel<ICVDoc>,
-    PaginateModel<ICVDoc>,
-    AggregatePaginateModel<ICVDoc> {}
+  ISoftDeleteModel<ICVDoc>,
+  PaginateModel<ICVDoc>,
+  AggregatePaginateModel<ICVDoc> { }
 
 const skillSchema = new Schema<ISkill>({
   name: { type: String, required: true },
@@ -93,7 +96,9 @@ const cvSchema = new Schema<ICVDoc>(
       ref: modelNames.STATUS,
     },
   },
-  {}
+  {
+    timestamps: true,
+  }
 );
 
 // --- Plugins ---

@@ -102,14 +102,14 @@ export const softRemove = async ({ req }: ControllerParams) => {
   //     );
 
   // Updated to call softDelete
-  await certificationService.softRemove({
+  const certification = await certificationService.softRemove({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Certification deleted.",
     statusCode: StatusCodes.OK,
-    data: null,
+    data: certification,
     fieldName: "certification",
   });
 };
@@ -142,14 +142,14 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   //     );
 
   // Updated to call hardDelete
-  await certificationService.hardDelete({
+  const certification = await certificationService.hardDelete({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Certification permanently deleted.",
     statusCode: StatusCodes.OK,
-    data: null,
+    data: certification,
     fieldName: "certification",
   });
 };

@@ -3,7 +3,7 @@ import { AbilityAction } from "@rl/types";
 import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
 import { PipelineStage } from "mongoose";
 import { projectQuery } from "../../../common/query";
-import { Event, IEventDoc } from "../../../models";
+import { Certification, ICertificationDoc } from "../../../models";
 import { omit } from "lodash";
 
 export const roleScopedSecurityQuery = (ability: ReturnType<UserAbilityBuilder["getAbility"]>) => {
@@ -12,11 +12,11 @@ export const roleScopedSecurityQuery = (ability: ReturnType<UserAbilityBuilder["
   return query;
 };
 
-// event queries
+// certification queries
 export const certificationProjectionQuery = (): PipelineStage[] => {
-  const fieldsToExclude: (keyof IEventDoc | "__v")[] = ["__v"];
+  const fieldsToExclude: (keyof ICertificationDoc | "__v")[] = ["__v"];
 
-  const selectedFields = Object.keys(omit(Event.schema.paths, fieldsToExclude));
+  const selectedFields = Object.keys(omit(Certification.schema.paths, fieldsToExclude));
 
   return projectQuery(selectedFields);
 };

@@ -16,7 +16,7 @@ export const createBodySchema = Joi.object({
 });
 
 export const updateBodySchema = Joi.object({
-  name: Joi.string().optional().label("Name"),
+  title: Joi.string().optional().label("Title"),
   issuingOrganization: Joi.string().optional().label("Issuing Organization"),
   issueDate: Joi.date().optional().label("Issue Date"),
   imageStorage: awsStorageSchema.optional().label("Image File Data"),
