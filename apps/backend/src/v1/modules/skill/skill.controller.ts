@@ -100,36 +100,40 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  await skillService.softRemove({
+  const skill = await skillService.softRemove({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Skill moved to trash.",
     statusCode: StatusCodes.OK,
+    data: skill,
+    fieldName: "skill",
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  await skillService.hardRemove({
+  const skill = await skillService.hardRemove({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Skill permanently deleted.",
     statusCode: StatusCodes.OK,
+    data: skill,
+    fieldName: "skill",
   });
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  const result = await skillService.restore({
+  const skill = await skillService.restore({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Skill restored from trash.",
     statusCode: StatusCodes.OK,
-    data: result,
+    data: skill,
     fieldName: "skill",
   });
 };

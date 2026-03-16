@@ -25,7 +25,6 @@ export async function getExperiences(
 				params: {
 					page: params?.page || 1,
 					limit: params?.limit || 10,
-					search: params?.search,
 				},
 			},
 		);
