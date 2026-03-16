@@ -58,17 +58,20 @@ export const update = async ({ query, payload }: { query: ISkillQueryParams; pay
 export const softRemove = async ({ query }: { query: ISkillQueryParams }) => {
   const { deleted } = await Skill.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Skill not found to delete.");
-  return { deleted };
+  const result = await getOneSoftDeleted({ query });
+  return result;
 };
 
 export const hardRemove = async ({ query }: { query: ISkillQueryParams }) => {
+  const result = await getOneSoftDeleted({ query });
   const deletedSkill = await Skill.findOneAndDelete(sanitizeQueryIds(query));
   if (!deletedSkill) throw new NotFoundException("Skill not found to delete.");
-  return deletedSkill;
+  return result;
 };
 
 export const restore = async ({ query }: { query: ISkillQueryParams }) => {
   const { restored } = await Skill.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Skill not found in trash.");
-  return { restored };
+  const result = await getOne({ query });
+  return result;
 };
