@@ -101,16 +101,6 @@ export async function createCv(
             message: validatedResponse.message || 'CV created successfully',
         };
     } catch (error) {
-        console.error('!!! CREATE CV ERROR !!!');
-
-        // This will loop through Yup's inner array and print the exact field and message!
-        if (error.inner && error.inner.length > 0) {
-            error.inner.forEach((err: any) => {
-                console.error(`❌ Field: ${err.path} | Error: ${err.message}`);
-            });
-        } else {
-            console.error(error);
-        }
         return handleServerError(error, 'Failed to create CV');
     }
 }
