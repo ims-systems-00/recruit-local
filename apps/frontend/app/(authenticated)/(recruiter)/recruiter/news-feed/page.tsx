@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
+import NewsFeedPost from './sections/news-feed-post';
 
 export default function NewsFeedPage() {
   return (
@@ -77,27 +78,7 @@ export default function NewsFeedPage() {
                   height={48}
                 />
               </div>
-              <div className=" space-y-spacing-2xl w-full">
-                <Input
-                  className=" focus-visible:ring-0! w-full h-12 rounded-lg text-label-md placeholder:text-text-gray-tertiary text-text-gray-secondary"
-                  type="text"
-                  placeholder="Write a post for in Newsfeed"
-                />
-                <div className=" flex items-center gap-spacing-lg">
-                  <div className=" flex gap-spacing-2xs items-center">
-                    <ImageIcon className=" w-4 h-4 text-fg-gray-secondary" />
-                    <span className=" text-label-sm text-text-gray-quaternary">
-                      Media
-                    </span>
-                  </div>
-                  <div className=" flex gap-spacing-2xs items-center">
-                    <TextInitial className=" w-4 h-4 text-fg-gray-secondary" />
-                    <span className=" text-label-sm text-text-gray-quaternary">
-                      Article
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <NewsFeedPost />
             </div>
           </div>
 
