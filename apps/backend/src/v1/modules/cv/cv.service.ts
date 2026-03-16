@@ -66,15 +66,8 @@ export const getOneSoftDeleted = async ({ query = {} }: ICVGetParams) => {
 };
 
 export const create = async ({ payload }: ICVCreateParams) => {
-  const statusId = payload.statusId;
-  if (!statusId) throw new NotFoundException("Status ID is required for the CV.");
-
-  const status = await StatusService.getOne({ query: { _id: statusId.toString() } });
+  const status = await StatusService.getOne({ query: { default: true, collectionName: modelNames.CV } });
   if (!status) throw new NotFoundException("Status not found for the CV.");
-
-  if (status.collectionName !== modelNames.CV) {
-    throw new NotFoundException("Invalid status for the CV.");
-  }
 
   // 1. Pre-generate the CV ID
   const cvId = new Types.ObjectId();
