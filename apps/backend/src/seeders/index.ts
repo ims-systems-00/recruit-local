@@ -4,7 +4,7 @@ dotenv.config();
 import { connectDB } from "../.config/database";
 
 // import { userSeeder } from "./user.seeder";
-import { statusSeeder } from "./status.seeder";
+// import { statusSeeder } from "./status.seeder";
 import { logger } from "../common/helper/logger";
 
 const runSeeders = async () => {
@@ -14,7 +14,7 @@ const runSeeders = async () => {
 
     // Seeders to run
     // await userSeeder();
-    await statusSeeder();
+    // await statusSeeder();
     logger.info("Seeding completed");
   } catch (error) {
     logger.error("Error connecting to MongoDB", error);

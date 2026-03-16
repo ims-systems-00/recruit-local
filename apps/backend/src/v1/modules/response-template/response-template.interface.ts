@@ -1,13 +1,13 @@
-import { ResponseTemplateInput } from "../../../models";
+// import { ResponseTemplateInput } from "../../../models";
 
-export type Query = Partial<ResponseTemplateInput & { _id: string }>;
+// export type Query = Partial<ResponseTemplateInput & { _id: string }>;
 
-export interface IOptions {
-  page?: number;
-  limit?: number;
-}
+// export interface IOptions {
+//   page?: number;
+//   limit?: number;
+// }
 
-export interface IListCoCParams {
-  query: Query;
-  options?: IOptions;
-}
+// export interface IListCoCParams {
+//   query: Query;
+//   options?: IOptions;
+// }
