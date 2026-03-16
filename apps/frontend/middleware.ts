@@ -22,6 +22,8 @@ export async function middleware(request: NextRequest) {
   if (!token && url.pathname.startsWith('/recruiter')) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
-
+  if (!token && url.pathname.startsWith('/system-preparation')) {
+    return NextResponse.redirect(new URL('/logout', request.url));
+  }
   return NextResponse.next();
 }
