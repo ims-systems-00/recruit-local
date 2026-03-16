@@ -1,13 +1,16 @@
 import * as yup from 'yup';
 import type { Pagination, PaginatedResponse, ApiResponse } from '@/types/api';
 import {
-  deleteMarkerSchema,
-  storageInformationSchema,
+
   createBodySchema,
   updateBodySchema,
   idParamsSchema,
   fileMediaSchema,
 } from './validation';
+import {
+  deleteMarkerSchema,
+  storageInformationSchema,
+} from "../shared"
 
 // --- INFERRED TYPES FROM SCHEMAS ---
 export type StorageInformation = yup.InferType<typeof storageInformationSchema>;
