@@ -13,36 +13,35 @@ import {
   PERIOD_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
   WorkingHours,
-  Education,
-  Skill,
-  Salary,
 } from "@rl/types";
 
 export interface IJobInput extends TenantInput {
   title?: string;
-  bannerImageId?: Types.ObjectId;
-  description?: string;
+  description?: string; // about
+  responsibility?: string;
+  // contact info
   email?: string;
   number?: string;
   aboutUs?: string;
+
   startDate?: Date;
   endDate?: Date;
-  responsibility?: string;
+  yearOfExperience?: number;
   attachmentIds?: Types.ObjectId[];
   category?: string;
   vacancy?: number;
   location?: string;
+  locationAdditionalInfo?: string;
   workplace?: WORKPLACE_ENUMS;
-  workingDays?: WORKING_DAYS_ENUMS[];
+  workingDays?: number;
   weekends?: WORKING_DAYS_ENUMS[];
   workingHours?: WorkingHours;
   employmentType?: EMPLOYMENT_TYPE;
-  salary?: Salary;
+  salary?: number;
   period?: PERIOD_ENUMS;
-  minEducationalQualification?: Education;
   requiredDocuments?: REQUIRED_DOCUMENTS_ENUMS[];
-  skills?: Skill[];
   statusId: Types.ObjectId;
+  formId?: Types.ObjectId;
 }
 
 export interface IJobDoc extends IJobInput, ITenantDoc, ISoftDeleteDoc, IBaseDoc, IBoardSettings {
@@ -59,19 +58,13 @@ export interface IJobModel
 const jobSchema = new Schema<IJobDoc>(
   {
     title: { type: String },
-
-    bannerImageId: {
-      type: Schema.Types.ObjectId,
-      ref: modelNames.FILE_MEDIA,
-      default: null,
-    },
-
     description: { type: String },
     email: { type: String },
     number: { type: String },
     aboutUs: { type: String },
     startDate: { type: Date },
     endDate: { type: Date },
+    yearOfExperience: { type: Number },
     responsibility: { type: String },
 
     attachmentIds: [
@@ -84,40 +77,27 @@ const jobSchema = new Schema<IJobDoc>(
     category: { type: String },
     vacancy: { type: Number },
     location: { type: String },
+    locationAdditionalInfo: { type: String },
     workplace: { type: String, enum: Object.values(WORKPLACE_ENUMS) },
-    workingDays: { type: [String], enum: Object.values(WORKING_DAYS_ENUMS) },
+    workingDays: { type: Number },
     weekends: { type: [String], enum: Object.values(WORKING_DAYS_ENUMS) },
     workingHours: {
       startTime: { type: String },
       endTime: { type: String },
     },
     employmentType: { type: String, enum: Object.values(EMPLOYMENT_TYPE) },
-    salary: {
-      mode: { type: String, required: true },
-      amount: { type: Number },
-      min: { type: Number },
-      max: { type: Number },
-    },
+    salary: { type: Number },
     period: { type: String, enum: Object.values(PERIOD_ENUMS) },
-    minEducationalQualification: {
-      degree: { type: String },
-      fieldOfStudy: { type: String },
-      gpa: { type: String },
-    },
+
     requiredDocuments: { type: [String], enum: Object.values(REQUIRED_DOCUMENTS_ENUMS) },
-    skills: {
-      type: [
-        {
-          name: { type: String },
-          years: { type: Number },
-        },
-      ],
-      default: [],
-    },
     statusId: {
       type: Schema.Types.ObjectId,
       ref: modelNames.STATUS,
       required: true,
+    },
+    formId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.FORM,
     },
     keywords: { type: [String], default: [] },
   },
@@ -125,7 +105,6 @@ const jobSchema = new Schema<IJobDoc>(
 );
 
 jobSchema.add(boardSettingsSchema);
-
 jobSchema.plugin(softDeletePlugin);
 jobSchema.plugin(mongoosePaginate);
 jobSchema.plugin(aggregatePaginate);

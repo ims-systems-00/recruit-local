@@ -9,7 +9,7 @@ import { modelNames } from "./constants";
 export interface FormSubmissionInput extends TenantInput {
   formId: Schema.Types.ObjectId;
   submittedBy?: Schema.Types.ObjectId;
-  collectionName: string; // will have to decide the enum values. maybe audits tenants and users
+  collectionName: string;
   collectionDocument: Schema.Types.ObjectId;
 }
 
