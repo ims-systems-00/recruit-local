@@ -6,6 +6,7 @@ import { modelNames } from "./constants";
 import { boardSettingsSchema, IBoardSettings } from "./schema/board-settings.schema";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
+
 import {
   WORKPLACE_ENUMS,
   WORKING_DAYS_ENUMS,
