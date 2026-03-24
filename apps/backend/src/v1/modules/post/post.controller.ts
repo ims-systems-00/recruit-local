@@ -108,36 +108,42 @@ export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
 
 export const softRemove = async ({ req }: ControllerParams) => {
   // Updated to pass query explicitly
-  await postService.softDelete({
+  const post = await postService.softDelete({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Post soft deleted.",
     statusCode: StatusCodes.OK,
+    data: post,
+    fieldName: "post",
   });
 };
 
 export const restore = async ({ req }: ControllerParams) => {
   // Updated to pass query explicitly
-  await postService.restore({
+  const post = await postService.restore({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Post restored.",
     statusCode: StatusCodes.OK,
+    data: post,
+    fieldName: "post",
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
   // Updated to pass query explicitly
-  await postService.hardDelete({
+  const post = await postService.hardDelete({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Post permanently deleted.",
     statusCode: StatusCodes.OK,
+    data: post,
+    fieldName: "post",
   });
 };
