@@ -183,8 +183,9 @@ export const softDelete = async ({ query }: IStatusGetParams) => {
     );
   }
 
-  const { deleted } = await Status.softDelete({ _id: status._id });
-  return { deleted };
+  await Status.softDelete({ _id: status._id });
+  const result = await getOneSoftDeleted({ query });
+  return result;
 };
 
 // Renamed to match the hardDelete standard
@@ -222,12 +223,12 @@ export const restore = async ({ query }: IStatusGetParams) => {
 
     const hasDefault = await Status.findOne(defaultFilter).session(session);
 
-    const { restored } = await Status.restore(sanitizeQueryIds(query));
+    await Status.restore(sanitizeQueryIds(query));
 
     if (existing.default && hasDefault) {
       await Status.updateOne({ _id: existing._id }, { $set: { default: false } }).session(session);
     }
 
-    return { restored };
+    return existing;
   });
 };
