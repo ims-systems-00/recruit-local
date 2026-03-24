@@ -20,30 +20,18 @@ const workingHoursSchema = Joi.object({
   startTime: Joi.string()
     .pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
     .optional()
-    .label("Start Time"), // Validates HH:MM
+    .label("Start Time"),
   endTime: Joi.string()
     .pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
     .optional()
     .label("End Time"),
 }).label("Working Hours");
 
-const salarySchema = Joi.object({
-  mode: Joi.string().required().label("Salary Mode"),
-  amount: Joi.number().optional().label("Salary Amount"),
-  min: Joi.number().optional().label("Minimum Salary"),
-  max: Joi.number().optional().label("Maximum Salary"),
-}).label("Salary");
-
 const educationSchema = Joi.object({
   degree: Joi.string().optional().label("Degree"),
   fieldOfStudy: Joi.string().optional().label("Field of Study"),
   gpa: Joi.string().optional().label("GPA"),
 }).label("Education");
-
-const skillSchema = Joi.object({
-  name: Joi.string().required().label("Skill Name"),
-  years: Joi.number().optional().label("Years of Experience"),
-}).label("Skill");
 
 export const createBodySchema = Joi.object({
   title: Joi.string().required().label("Title"),
@@ -70,10 +58,7 @@ export const createBodySchema = Joi.object({
     .valid(...Object.values(WORKPLACE_ENUMS))
     .optional()
     .label("Workplace"),
-  workingDays: Joi.array()
-    .items(Joi.string().valid(...Object.values(WORKING_DAYS_ENUMS)))
-    .optional()
-    .label("Working Days"),
+  workingDays: Joi.number().optional().label("Working Days"),
   weekends: Joi.array()
     .items(Joi.string().valid(...Object.values(WORKING_DAYS_ENUMS)))
     .optional()
@@ -93,10 +78,8 @@ export const createBodySchema = Joi.object({
 
   // Nested Complex Objects
   workingHours: workingHoursSchema.optional(),
-  salary: salarySchema.optional(),
+  salary: Joi.number().optional().label("Salary"),
   minEducationalQualification: educationSchema.optional(),
-  skills: Joi.array().items(skillSchema).optional().label("Skills"),
-
   // System
   keywords: Joi.array().items(Joi.string()).optional().label("Keywords"),
 });
@@ -122,10 +105,7 @@ export const updateBodySchema = Joi.object({
     .valid(...Object.values(WORKPLACE_ENUMS))
     .optional()
     .label("Workplace"),
-  workingDays: Joi.array()
-    .items(Joi.string().valid(...Object.values(WORKING_DAYS_ENUMS)))
-    .optional()
-    .label("Working Days"),
+  workingDays: Joi.number().optional().label("Working Days"),
   weekends: Joi.array()
     .items(Joi.string().valid(...Object.values(WORKING_DAYS_ENUMS)))
     .optional()
@@ -145,10 +125,8 @@ export const updateBodySchema = Joi.object({
     .label("Required Documents"),
 
   workingHours: workingHoursSchema.optional(),
-  salary: salarySchema.optional(),
+  salary: Joi.number().optional().label("Salary"),
   minEducationalQualification: educationSchema.optional(),
-  skills: Joi.array().items(skillSchema).optional().label("Skills"),
-
   keywords: Joi.array().items(Joi.string()).optional().label("Keywords"),
   statusId: Joi.string().custom(objectIdValidation).required().label("Status ID"),
 });

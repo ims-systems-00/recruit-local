@@ -8,12 +8,12 @@ import { modelNames } from "./constants";
 // Main FormElementInput interface
 export interface FormElementInput extends TenantInput {
   formId: Schema.Types.ObjectId;
-  type: string;
-  headElement?: boolean;
+  type: string; // todo - enum
+  headElement?: boolean; // todo -remove
   attributes?: Record<string, unknown>;
   nextElementId?: Schema.Types.ObjectId;
   previousElementId?: Schema.Types.ObjectId;
-  parentElementId?: Schema.Types.ObjectId;
+  parentElementId?: Schema.Types.ObjectId; // todo -remove
 }
 
 // FormElement document interface
