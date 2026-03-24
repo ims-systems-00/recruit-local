@@ -66,28 +66,34 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  await reactionService.softRemove({ _id: req.params.id });
+  const reaction = await reactionService.softRemove({ _id: req.params.id });
 
   return new ApiResponse({
     message: "Reaction soft deleted.",
     statusCode: StatusCodes.OK,
+    data: reaction,
+    fieldName: "reaction",
   });
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  await reactionService.restore({ _id: req.params.id });
+  const reaction = await reactionService.restore({ _id: req.params.id });
 
   return new ApiResponse({
     message: "Reaction restored.",
     statusCode: StatusCodes.OK,
+    data: reaction,
+    fieldName: "reaction",
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  await reactionService.hardRemove({ _id: req.params.id });
+  const reaction = await reactionService.hardRemove({ _id: req.params.id });
 
   return new ApiResponse({
     message: "Reaction permanently deleted.",
     statusCode: StatusCodes.OK,
+    data: reaction,
+    fieldName: "reaction",
   });
 };
