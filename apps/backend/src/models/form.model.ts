@@ -1,24 +1,22 @@
-import { Schema, model, Document, Model } from "mongoose";
+import { Schema, model, Document, Model, Types } from "mongoose";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
-import { FORM_STATUS_ENUMS, FORM_USAGES_TYPE_ENUMS, TENANT_WITH_STANDARD_ENUMS, modelNames } from "./constants";
-import { User } from "./user.model";
+import { modelNames } from "./constants";
 
 export interface FormInput extends TenantInput {
+  collectionName: (typeof modelNames)[keyof typeof modelNames];
+  collectionId: Types.ObjectId;
   title: string;
   description?: string;
-  status?: FORM_STATUS_ENUMS;
   theme?: string;
-  usagesType?: FORM_USAGES_TYPE_ENUMS;
-  availableForTenantWithStandards?: TENANT_WITH_STANDARD_ENUMS[];
 }
 
 export interface IFormDoc extends FormInput, ITenantDoc, ISoftDeleteDoc, Document {
   createdAt?: Date;
   updatedAt?: Date;
-  createdBy?: Schema.Types.ObjectId;
+  createdBy?: Types.ObjectId;
   submissionCount?: number;
-  collaboration?: Schema.Types.ObjectId[];
+  collaboration?: Types.ObjectId[];
 }
 
 interface IFormModel extends Model<IFormDoc>, ITenantModel<IFormDoc>, ISoftDeleteModel<IFormDoc> {}
@@ -26,15 +24,18 @@ interface IFormModel extends Model<IFormDoc>, ITenantModel<IFormDoc>, ISoftDelet
 // Create the Form schema
 const schema = new Schema<IFormDoc>(
   {
+    collectionName: {
+      type: String,
+      required: true,
+      enum: Object.values(modelNames),
+    },
+    collectionId: { type: Schema.Types.ObjectId, required: true, refPath: "collectionName" },
     title: { type: String, required: true },
     description: { type: String },
-    status: { type: String, enum: Object.values(FORM_STATUS_ENUMS), default: FORM_STATUS_ENUMS.DRAFT },
     theme: { type: String },
-    createdBy: { type: Schema.Types.ObjectId, ref: User.modelName },
+    createdBy: { type: Schema.Types.ObjectId, ref: modelNames.USER },
     submissionCount: { type: Number, default: 0 },
-    collaboration: [{ type: Schema.Types.ObjectId, ref: User.modelName }],
-    usagesType: { type: String, enum: Object.values(FORM_USAGES_TYPE_ENUMS) },
-    availableForTenantWithStandards: [{ type: String, enum: Object.values(TENANT_WITH_STANDARD_ENUMS) }],
+    collaboration: [{ type: Schema.Types.ObjectId, ref: modelNames.USER }],
   },
   {
     timestamps: true,
