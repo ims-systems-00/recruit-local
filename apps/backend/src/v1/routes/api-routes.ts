@@ -12,7 +12,7 @@ import notificationRoutes from "../modules/notification/notification.route";
 import userRoutes from "../modules/user/user.route";
 // import taskRoutes from "../modules/task/task.route";
 
-// import formBuilderRoutes from "../modules/forms/forms.routes";
+import formBuilderRoutes from "../modules/forms/forms.routes";
 
 import { deserializeUser } from "../../common/middlewares";
 // import responseTemplateRoutes from "../modules/response-template/response-template.route";
@@ -49,7 +49,7 @@ const getApiRoutes = () => {
   // router.use("/document-folders", documentFolderRoutes);
   router.use("/users", userRoutes);
   // router.use("/tasks", taskRoutes);
-  // router.use("/forms", formBuilderRoutes);
+  router.use("/forms", formBuilderRoutes);
   // router.use("/response-templates", responseTemplateRoutes);
   router.use("/job-profiles", jobProfileRoutes);
   router.use("/educations", educationRoutes);

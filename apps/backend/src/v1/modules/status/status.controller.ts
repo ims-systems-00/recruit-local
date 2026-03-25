@@ -99,37 +99,41 @@ export const update = async ({ req }: ControllerParams) => {
 
 export const softRemove = async ({ req }: ControllerParams) => {
   // Updated to point to softDelete
-  await statusService.softDelete({
+  const status = await statusService.softDelete({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Status moved to trash.",
     statusCode: StatusCodes.OK,
+    data: status,
+    fieldName: "status",
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
   // Updated to point to hardDelete
-  await statusService.hardDelete({
+  const status = await statusService.hardDelete({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Status permanently deleted.",
     statusCode: StatusCodes.OK,
+    data: status,
+    fieldName: "status",
   });
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  const result = await statusService.restore({
+  const status = await statusService.restore({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Status restored from trash.",
     statusCode: StatusCodes.OK,
-    data: result,
+    data: status,
     fieldName: "status",
   });
 };

@@ -156,7 +156,8 @@ export const update = async ({ query, payload }: IPostUpdateParams) => {
 export const softDelete = async ({ query }: IPostGetParams) => {
   const { deleted } = await Post.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Post not found to delete.");
-  return { deleted };
+  const result = await getOneSoftDeleted({ query: sanitizeQueryIds(query) });
+  return result;
 };
 
 export const hardDelete = async ({ query }: IPostGetParams) => {
@@ -180,5 +181,6 @@ export const hardDelete = async ({ query }: IPostGetParams) => {
 export const restore = async ({ query }: IPostGetParams) => {
   const { restored } = await Post.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Post not found in trash.");
-  return { restored };
+  const result = await getOne({ query: sanitizeQueryIds(query) });
+  return result;
 };
