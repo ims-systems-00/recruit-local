@@ -1,6 +1,6 @@
 import Joi, { CustomHelpers } from "joi";
 import mongoose from "mongoose";
-import { FORM_STATUS_ENUMS } from "../../../../models/constants";
+import { modelNames } from "../../../../models/constants";
 
 // Custom validation for MongoDB ObjectId
 const objectIdValidation = (value: string, helpers: CustomHelpers) => {
@@ -11,25 +11,28 @@ const objectIdValidation = (value: string, helpers: CustomHelpers) => {
 };
 
 export const createBodySchema = Joi.object({
+  collectionName: Joi.string()
+    .valid(...Object.values(modelNames))
+    .required()
+    .label("Collection Name"),
+  collectionId: Joi.string().custom(objectIdValidation).required().label("Collection ID"),
+
   title: Joi.string().required().max(50).label("Title"),
-  description: Joi.string().max(255).label("Description"),
-  status: Joi.string()
-    .valid(...Object.values(FORM_STATUS_ENUMS))
-    .label("Status"),
-  theme: Joi.string().max(50).label("Theme"),
-  usagesType: Joi.string().label("Usages Type"),
-  availableForTenantWithStandards: Joi.array().items(Joi.string()).label("Available For Tenant With Standards"),
+  description: Joi.string().max(255).allow("", null).label("Description"),
+  theme: Joi.string().max(50).allow("", null).label("Theme"),
+  collaboration: Joi.array().items(Joi.string().custom(objectIdValidation)).label("Collaboration"),
 });
 
 export const updateBodySchema = Joi.object({
+  collectionName: Joi.string()
+    .valid(...Object.values(modelNames))
+    .label("Collection Name"),
+  collectionId: Joi.string().custom(objectIdValidation).label("Collection ID"),
+
   title: Joi.string().max(50).label("Title"),
-  description: Joi.string().max(255).label("Description"),
-  status: Joi.string()
-    .valid(...Object.values(FORM_STATUS_ENUMS))
-    .label("Status"),
-  theme: Joi.string().max(50).label("Theme"),
-  usagesType: Joi.string().label("Usages Type"),
-  availableForTenantWithStandards: Joi.array().items(Joi.string()).label("Available For Tenant With Standards"),
+  description: Joi.string().max(255).allow("", null).label("Description"),
+  theme: Joi.string().max(50).allow("", null).label("Theme"),
+  collaboration: Joi.array().items(Joi.string().custom(objectIdValidation)).label("Collaboration"),
 });
 
 export const idParamsSchema = Joi.object({
