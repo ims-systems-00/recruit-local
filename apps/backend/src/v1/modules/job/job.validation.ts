@@ -128,7 +128,7 @@ export const updateBodySchema = Joi.object({
   salary: Joi.number().optional().label("Salary"),
   minEducationalQualification: educationSchema.optional(),
   keywords: Joi.array().items(Joi.string()).optional().label("Keywords"),
-  statusId: Joi.string().custom(objectIdValidation).required().label("Status ID"),
+  statusId: Joi.string().custom(objectIdValidation).optional().label("Status ID"),
 });
 
 export const idParamsSchema = Joi.object({
