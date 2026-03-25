@@ -63,17 +63,20 @@ export const update = async ({
 export const softRemove = async ({ query }: { query: IFavouriteQueryParams }) => {
   const { deleted } = await Favourite.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Favourite not found to delete.");
-  return { deleted };
+  const result = await getOneSoftDeleted({ query });
+  return result;
 };
 
 export const hardRemove = async ({ query }: { query: IFavouriteQueryParams }) => {
+  const result = await getOneSoftDeleted({ query });
   const deletedFavourite = await Favourite.findOneAndDelete(sanitizeQueryIds(query));
   if (!deletedFavourite) throw new NotFoundException("Favourite not found to delete.");
-  return deletedFavourite;
+  return result;
 };
 
 export const restore = async ({ query }: { query: IFavouriteQueryParams }) => {
   const { restored } = await Favourite.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Favourite not found in trash.");
-  return { restored };
+  const result = await getOne({ query });
+  return result;
 };
