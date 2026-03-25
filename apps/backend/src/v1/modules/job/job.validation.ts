@@ -6,6 +6,7 @@ import {
   EMPLOYMENT_TYPE,
   PERIOD_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
+  JOBS_STATUS_ENUMS,
 } from "@rl/types";
 
 const awsStorageSchema = Joi.object({
@@ -128,7 +129,10 @@ export const updateBodySchema = Joi.object({
   salary: Joi.number().optional().label("Salary"),
   minEducationalQualification: educationSchema.optional(),
   keywords: Joi.array().items(Joi.string()).optional().label("Keywords"),
-  statusId: Joi.string().custom(objectIdValidation).required().label("Status ID"),
+  status: Joi.string()
+    .valid(...Object.values(JOBS_STATUS_ENUMS))
+    .optional()
+    .label("Status"),
 });
 
 export const idParamsSchema = Joi.object({
