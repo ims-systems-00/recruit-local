@@ -13,14 +13,21 @@ import {
   ISession,
   IAbilityBuilder,
   AbilityAction,
+  JOBS_STATUS_ENUMS,
 } from '@rl/types';
 
 export class JobAuthZEntity {
   public readonly tenantId: string | null;
-  public readonly statusId: string | null;
-  constructor({ tenantId }: { tenantId?: string | null }) {
+  public readonly status: JOBS_STATUS_ENUMS;
+  constructor({
+    tenantId,
+    status,
+  }: {
+    tenantId?: string | null;
+    status?: JOBS_STATUS_ENUMS;
+  }) {
     this.tenantId = tenantId ?? null;
-    this.statusId = null;
+    this.status = status ?? JOBS_STATUS_ENUMS.DRAFT;
   }
 }
 
@@ -58,7 +65,9 @@ export class JobAbilityBuilder implements IAbilityBuilder {
     }
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
-      builder.can(AbilityAction.Read, JobAuthZEntity);
+      builder.can(AbilityAction.Read, JobAuthZEntity, {
+        status: JOBS_STATUS_ENUMS.OPEN,
+      });
     }
 
     return builder.build({

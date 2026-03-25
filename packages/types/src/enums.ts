@@ -452,12 +452,6 @@ export enum REQUIRED_DOCUMENTS_ENUMS {
   CERTIFICATES = 'certificates',
 }
 
-export enum JOBS_STATUS_ENUMS {
-  DRAFT = 'draft',
-  POSTED = 'posted',
-  CLOSED = 'closed',
-}
-
 export enum CV_STATUS_ENUM {
   DRAFT = 'draft',
   PUBLISHED = 'published',

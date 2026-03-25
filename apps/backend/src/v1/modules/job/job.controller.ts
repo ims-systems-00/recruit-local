@@ -15,7 +15,7 @@ export const list = async ({ req }: ControllerParams) => {
   }
 
   const filter = new MongoQuery(req.query, {
-    searchFields: ["title", "company", "location"],
+    searchFields: ["title", "description", "company", "location"],
   }).build();
 
   const userSearchQuery = filter.getFilterQuery();
@@ -98,28 +98,6 @@ export const update = async ({ req }: ControllerParams) => {
 
   return new ApiResponse({
     message: "Job updated.",
-    statusCode: StatusCodes.OK,
-    data: job,
-    fieldName: "job",
-  });
-};
-
-export const post = async ({ req }: ControllerParams) => {
-  const abilityBuilder = new JobAbilityBuilder(req.session);
-  const ability = abilityBuilder.getAbility();
-
-  const existingJob = await jobService.getOne({ query: { _id: req.params.id } });
-
-  if (!existingJob || !ability.can(AbilityAction.Update, new JobAuthZEntity(existingJob))) {
-    throw new UnauthorizedException("You do not have permission to post/publish this job.");
-  }
-
-  const job = await jobService.post({
-    query: { _id: req.params.id },
-  });
-
-  return new ApiResponse({
-    message: "Job posted successfully.",
     statusCode: StatusCodes.OK,
     data: job,
     fieldName: "job",

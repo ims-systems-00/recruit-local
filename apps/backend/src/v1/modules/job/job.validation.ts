@@ -6,6 +6,7 @@ import {
   EMPLOYMENT_TYPE,
   PERIOD_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
+  JOBS_STATUS_ENUMS,
 } from "@rl/types";
 
 const awsStorageSchema = Joi.object({
@@ -44,13 +45,13 @@ export const createBodySchema = Joi.object({
   vacancy: Joi.number().integer().min(1).optional().label("Vacancy"),
   location: Joi.string().optional().label("Location"),
   responsibility: Joi.string().optional().label("Responsibility"),
+  yearOfExperience: Joi.number().integer().min(0).optional().label("Years of Experience"),
 
   // Dates
   startDate: Joi.date().iso().optional().label("Start Date"),
   endDate: Joi.date().iso().min(Joi.ref("startDate")).optional().label("End Date"),
 
   // Images & Files
-  bannerStorage: awsStorageSchema.optional().label("Banner Storage"),
   attachmentsStorage: Joi.array().items(awsStorageSchema).optional().label("Attachments Storage"),
 
   // Enums
@@ -79,7 +80,6 @@ export const createBodySchema = Joi.object({
   // Nested Complex Objects
   workingHours: workingHoursSchema.optional(),
   salary: Joi.number().optional().label("Salary"),
-  minEducationalQualification: educationSchema.optional(),
   // System
   keywords: Joi.array().items(Joi.string()).optional().label("Keywords"),
 });
@@ -97,10 +97,8 @@ export const updateBodySchema = Joi.object({
   autoFill: Joi.boolean().optional().label("Auto Fill"),
   startDate: Joi.date().iso().optional().label("Start Date"),
   endDate: Joi.date().iso().min(Joi.ref("startDate")).optional().label("End Date"),
-
-  bannerStorage: awsStorageSchema.optional().label("Banner Storage"),
   attachmentsStorage: Joi.array().items(awsStorageSchema).optional().label("Attachments Storage"),
-
+  yearOfExperience: Joi.number().integer().min(0).optional().label("Years of Experience"),
   workplace: Joi.string()
     .valid(...Object.values(WORKPLACE_ENUMS))
     .optional()
@@ -128,7 +126,11 @@ export const updateBodySchema = Joi.object({
   salary: Joi.number().optional().label("Salary"),
   minEducationalQualification: educationSchema.optional(),
   keywords: Joi.array().items(Joi.string()).optional().label("Keywords"),
-  statusId: Joi.string().custom(objectIdValidation).optional().label("Status ID"),
+
+  status: Joi.string()
+    .valid(...Object.values(JOBS_STATUS_ENUMS))
+    .optional()
+    .label("Job Status"),
 });
 
 export const idParamsSchema = Joi.object({
