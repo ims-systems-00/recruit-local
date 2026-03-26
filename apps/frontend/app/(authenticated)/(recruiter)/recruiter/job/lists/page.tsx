@@ -165,7 +165,7 @@ export default function JobLists() {
       <div className=" p-spacing-4xl">
         <div className=" flex justify-between items-center gap-spacing-2xl">
           <div className=" space-y-spacing-2xs">
-            <h3 className=" text-body-lg font-body-lg-strong! text-text-gray-primary">
+            <h3 className=" text-body-xl font-body-xl-strong! text-text-gray-primary">
               Create a job post
             </h3>
             <p className=" capitalize text-label-sm text-text-gray-tertiary">
@@ -209,10 +209,10 @@ export default function JobLists() {
         </div>
 
         <div className=" py-spacing-4xl">
-          <div className=" border border-border-gray-primary rounded-2xl overflow-hidden">
+          <div className=" overflow-hidden">
             <Tabs
               defaultValue={tabs[0].value}
-              className="p-spacing-4xl w-full gap-spacing-4xl"
+              className="w-full gap-spacing-4xl"
             >
               <div className=" flex justify-between items-center gap-spacing-4xl">
                 <TabsList className="bg-bg-gray-soft-secondary h-11 justify-start">
@@ -240,7 +240,14 @@ export default function JobLists() {
               </div>
 
               {tabs.map((tab) => (
-                <TabsContent key={tab.value} value={tab.value}>
+                <TabsContent
+                  key={tab.value}
+                  value={tab.value}
+                  className={cn(
+                    isListView &&
+                      ' overflow-hidden rounded-2xl border border-border-gray-primary',
+                  )}
+                >
                   {isListView ? (
                     <DataTable columns={userColumns} data={demoUsers} />
                   ) : (
@@ -325,7 +332,8 @@ export default function JobLists() {
                       ))}
                     </div>
                   )}
-                  <Empty className="border border-dashed p-spacing-4xl!">
+
+                  {/* <Empty className="border border-dashed p-spacing-4xl!">
                     <EmptyHeader>
                       <div className="">
                         <Image
@@ -349,55 +357,61 @@ export default function JobLists() {
                         <span>Create New</span>
                       </Button>
                     </EmptyContent>
-                  </Empty>
+                  </Empty> */}
+
+                  <Pagination
+                    className={cn(
+                      'py-spacing-4xl',
+                      isListView && 'px-spacing-4xl border-t',
+                    )}
+                  >
+                    <PaginationContent className=" justify-between w-full">
+                      <PaginationItem>
+                        <PaginationPrevious
+                          className=" border border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
+                          href="#"
+                        />
+                      </PaginationItem>
+                      <div className=" flex items-center gap-x-spacing-xs ">
+                        <PaginationItem>
+                          <PaginationLink
+                            className=" w-10 h-10 rounded-lg flex justify-center items-center"
+                            href="#"
+                          >
+                            1
+                          </PaginationLink>
+                        </PaginationItem>
+                        <PaginationItem>
+                          <PaginationLink
+                            className=" w-10 h-10 border-0 rounded-lg flex justify-center items-center bg-bg-gray-soft-secondary"
+                            href="#"
+                            isActive
+                          >
+                            2
+                          </PaginationLink>
+                        </PaginationItem>
+                        <PaginationItem>
+                          <PaginationLink
+                            className=" w-10 h-10 rounded-lg flex justify-center items-center"
+                            href="#"
+                          >
+                            3
+                          </PaginationLink>
+                        </PaginationItem>
+                        <PaginationItem>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      </div>
+                      <PaginationItem>
+                        <PaginationNext
+                          className=" border border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
+                          href="#"
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </TabsContent>
               ))}
-              <Pagination className="py-spacing-4xl">
-                <PaginationContent className=" justify-between w-full">
-                  <PaginationItem>
-                    <PaginationPrevious
-                      className=" border border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
-                      href="#"
-                    />
-                  </PaginationItem>
-                  <div className=" flex items-center gap-x-spacing-xs ">
-                    <PaginationItem>
-                      <PaginationLink
-                        className=" w-10 h-10 rounded-lg flex justify-center items-center"
-                        href="#"
-                      >
-                        1
-                      </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink
-                        className=" w-10 h-10 border-0 rounded-lg flex justify-center items-center bg-bg-gray-soft-secondary"
-                        href="#"
-                        isActive
-                      >
-                        2
-                      </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink
-                        className=" w-10 h-10 rounded-lg flex justify-center items-center"
-                        href="#"
-                      >
-                        3
-                      </PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  </div>
-                  <PaginationItem>
-                    <PaginationNext
-                      className=" border border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
-                      href="#"
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
             </Tabs>
           </div>
         </div>
