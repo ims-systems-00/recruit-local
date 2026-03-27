@@ -73,17 +73,20 @@ export const update = async ({
 export const softRemove = async (query: IReactionQueryParams) => {
   const reaction = await Reaction.findOneAndUpdate(sanitizeQueryIds(query), { deletedAt: new Date() }, { new: true });
   if (!reaction) throw new NotFoundException("Reaction not found.");
-  return reaction;
+  const result = await getOneSoftDeleted({ query });
+  return result;
 };
 
 export const restore = async (query: IReactionQueryParams) => {
   const reaction = await Reaction.findOneAndUpdate(sanitizeQueryIds(query), { deletedAt: null }, { new: true });
   if (!reaction) throw new NotFoundException("Reaction not found in trash.");
-  return reaction;
+  const result = await getOne({ query });
+  return result;
 };
 
 export const hardRemove = async (query: IReactionQueryParams) => {
   const reaction = await Reaction.findOneAndDelete(sanitizeQueryIds(query));
   if (!reaction) throw new NotFoundException("Reaction not found.");
-  return reaction;
+  const result = await getOneSoftDeleted({ query });
+  return result;
 };

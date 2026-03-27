@@ -9,7 +9,7 @@ import { jobProjectionQuery } from "./job.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
-import { VISIBILITY_ENUM } from "@rl/types";
+import { VISIBILITY_ENUM, JOBS_STATUS_ENUMS } from "@rl/types";
 
 // --- Standardized Parameter Interfaces ---
 type IListJobParams = IListParams<IJobInput>;

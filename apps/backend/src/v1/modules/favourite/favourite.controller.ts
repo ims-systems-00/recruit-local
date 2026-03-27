@@ -2,6 +2,7 @@ import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 import * as favouriteService from "./favourite.service";
+import { result } from "lodash";
 
 export const list = async ({ req }: ControllerParams) => {
   const filter = new MongoQuery(req.query, {
@@ -107,36 +108,40 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  await favouriteService.softRemove({
+  const result = await favouriteService.softRemove({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Favourite moved to trash",
     statusCode: StatusCodes.OK,
+    data: result,
+    fieldName: "favourite",
   });
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  await favouriteService.hardRemove({
+  const result = await favouriteService.hardRemove({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Favourite permanently deleted",
     statusCode: StatusCodes.OK,
+    data: result,
+    fieldName: "favourite",
   });
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  const restoredFavourite = await favouriteService.restore({
+  const result = await favouriteService.restore({
     query: { _id: req.params.id },
   });
 
   return new ApiResponse({
     message: "Favourite restored",
     statusCode: StatusCodes.OK,
-    data: restoredFavourite,
+    data: result,
     fieldName: "favourite",
   });
 };
