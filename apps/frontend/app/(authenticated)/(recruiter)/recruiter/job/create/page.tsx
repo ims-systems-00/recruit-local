@@ -32,13 +32,8 @@ export default function CreateJob() {
         </Breadcrumb>
       </div>
 
-      <div className=" p-spacing-4xl">
-        <h3 className=" text-body-lg font-body-lg-strong! text-text-gray-primary">
-          Create a job post
-        </h3>
-        <div className=" py-spacing-4xl">
-          <CreateForm />
-        </div>
+      <div className=" px-spacing-4xl">
+        <CreateForm />
       </div>
     </div>
   );
