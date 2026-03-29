@@ -8,6 +8,7 @@ import Preview from './preview/preview';
 import { useCreateJob } from '@/services/jobs/jobs.client';
 import { FormProvider } from 'react-hook-form';
 import { StepsSidebar } from './steps-sidebar';
+import AdditionalQueries from './steps/additional-queries';
 
 const steps = [
   { id: 1, label: 'Job Information' },
@@ -24,14 +25,15 @@ export default function CreateForm() {
           onSubmit={onSubmit}
           className=" flex flex-col gap-y-spacing-6xl flex-1 pt-spacing-4xl"
         >
-          {step === 1 && <JobInformationForm next={nextStep} />}
+          {/* {step === 1 && <JobInformationForm next={nextStep} />} */}
           {step === 2 && (
             <ReviewJobDescriptionForm prev={prevStep} next={nextStep} />
           )}
           {step === 3 && (
             <BusinessInformationForm prev={prevStep} next={nextStep} />
           )}
-          {step === 4 && <Preview prev={prevStep} />}
+          {step === 1 && <AdditionalQueries prev={prevStep} next={nextStep} />}
+          {step === 5 && <Preview prev={prevStep} />}
         </form>
       </FormProvider>
       {/* <Stepper steps={steps} currentStep={step} className="mb-12" /> */}
