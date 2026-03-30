@@ -29,3 +29,10 @@ export type WorkingHours = {
   startTime: string; // "09:00"
   endTime: string; // "17:00"
 };
+
+export enum JOBS_STATUS_ENUMS {
+  DRAFT = 'draft',
+  OPEN = 'open',
+  EVALUATION = 'evaluation',
+  ARCHIVED = 'archived',
+}

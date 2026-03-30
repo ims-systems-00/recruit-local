@@ -16,28 +16,25 @@ import {
   JOBS_STATUS_ENUMS,
 } from '@rl/types';
 
-export class JobAuthZEntity {
-  public readonly tenantId: string | null;
-  public readonly status: JOBS_STATUS_ENUMS;
+export class CvAuthZEntity {
+  public readonly jobProfileId: string | null;
+  public readonly status: JOBS_STATUS_ENUMS; // todo - cv status
   constructor({
-    tenantId,
+    jobProfileId,
     status,
   }: {
-    tenantId?: string | null;
+    jobProfileId?: string | null;
     status?: JOBS_STATUS_ENUMS;
   }) {
-    this.tenantId = tenantId ?? null;
+    this.jobProfileId = jobProfileId ?? null;
     this.status = status ?? JOBS_STATUS_ENUMS.DRAFT;
   }
 }
 
-type ClaimAbility = PureAbility<
-  AbilityTuple,
-  MongoQuery<typeof JobAuthZEntity>
->;
+type ClaimAbility = PureAbility<AbilityTuple, MongoQuery<typeof CvAuthZEntity>>;
 const ClaimAbility = PureAbility as AbilityClass<ClaimAbility>;
 
-export class JobAbilityBuilder implements IAbilityBuilder {
+export class CvAbilityBuilder implements IAbilityBuilder {
   private abilityBuilder: AbilityBuilder<ClaimAbility>;
   private session: ISession;
 
@@ -50,22 +47,22 @@ export class JobAbilityBuilder implements IAbilityBuilder {
     const builder = this.abilityBuilder;
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
-      builder.can(AbilityAction.Manage, JobAuthZEntity);
+      builder.can(AbilityAction.Manage, CvAuthZEntity);
     }
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
-      builder.can(AbilityAction.Create, JobAuthZEntity);
-      builder.can(AbilityAction.Read, JobAuthZEntity);
-      builder.can(AbilityAction.Update, JobAuthZEntity, {
-        tenantId: this.session.tenantId,
+      builder.can(AbilityAction.Create, CvAuthZEntity);
+      builder.can(AbilityAction.Read, CvAuthZEntity);
+      builder.can(AbilityAction.Update, CvAuthZEntity, {
+        jobProfileId: this.session.tenantId, // todo - change
       });
-      builder.can(AbilityAction.SoftDelete, JobAuthZEntity, {
-        tenantId: this.session.tenantId,
+      builder.can(AbilityAction.SoftDelete, CvAuthZEntity, {
+        jobProfileId: this.session.tenantId, // todo - change
       });
     }
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
-      builder.can(AbilityAction.Read, JobAuthZEntity, {
+      builder.can(AbilityAction.Read, CvAuthZEntity, {
         status: JOBS_STATUS_ENUMS.OPEN,
       });
     }

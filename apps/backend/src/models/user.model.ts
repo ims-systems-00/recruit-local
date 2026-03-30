@@ -6,15 +6,15 @@ import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/so
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import { EMAIL_VERIFICATION_STATUS_ENUMS, modelNames } from "./constants";
 import { USER_ROLE_ENUMS, ACCOUNT_TYPE_ENUMS } from "@rl/types";
+import { IJobProfileModel, JobProfileInput, IJobProfileDoc, jobProfilePlugin } from "./plugins/jobProfile.plugin";
 
-// Define an interface for User input
 /*
-@description UserInput interface
-@fields
-- role: system role of the user
-- type: tenant role of the user
+  @description UserInput interface
+  @fields
+  - role: system role of the user
+  - type: tenant role of the user
 */
-export interface UserInput extends PasswordHashInput, TenantInput {
+export interface UserInput extends PasswordHashInput, TenantInput, JobProfileInput {
   firstName: string;
   lastName: string;
   email: string;
@@ -24,7 +24,7 @@ export interface UserInput extends PasswordHashInput, TenantInput {
 }
 
 // Define an interface for User document
-export interface IUserDoc extends UserInput, IPasswordHashDoc, ITenantDoc, ISoftDeleteDoc, Document {
+export interface IUserDoc extends UserInput, IPasswordHashDoc, ITenantDoc, IJobProfileDoc, ISoftDeleteDoc, Document {
   fullName: string;
   emailVerificationStatus: EMAIL_VERIFICATION_STATUS_ENUMS;
   createdAt: Date;
@@ -37,7 +37,8 @@ interface IUserModel
     ISoftDeleteModel<IUserDoc>,
     PaginateModel<IUserDoc>,
     AggregatePaginateModel<IUserDoc>,
-    ITenantModel<IUserDoc> {}
+    ITenantModel<IUserDoc>,
+    IJobProfileModel<IUserDoc> {}
 
 // Define the schema for User
 const userSchema = new Schema<IUserDoc>(
@@ -94,6 +95,7 @@ userSchema.plugin(passwordHashPlugin);
 userSchema.plugin(softDeletePlugin);
 userSchema.plugin(mongoosePaginate);
 userSchema.plugin(aggregatePaginate);
+userSchema.plugin(jobProfilePlugin);
 
 // Define the User model
 const User = model<IUserDoc, IUserModel>(modelNames.USER, userSchema);

@@ -13,8 +13,8 @@ import {
   EMPLOYMENT_TYPE,
   PERIOD_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
-  JOBS_STATUS_ENUMS,
   WorkingHours,
+  JOBS_STATUS_ENUMS,
 } from "@rl/types";
 
 export interface IJobInput extends TenantInput {
@@ -42,7 +42,7 @@ export interface IJobInput extends TenantInput {
   salary?: number;
   period?: PERIOD_ENUMS;
   requiredDocuments?: REQUIRED_DOCUMENTS_ENUMS[];
-  status?: JOBS_STATUS_ENUMS;
+  status: JOBS_STATUS_ENUMS;
   formId?: Types.ObjectId;
 }
 
@@ -92,11 +92,7 @@ const jobSchema = new Schema<IJobDoc>(
     period: { type: String, enum: Object.values(PERIOD_ENUMS) },
 
     requiredDocuments: { type: [String], enum: Object.values(REQUIRED_DOCUMENTS_ENUMS) },
-    status: {
-      type: String,
-      enum: Object.values(JOBS_STATUS_ENUMS),
-      default: JOBS_STATUS_ENUMS.DRAFT,
-    },
+    status: { type: String, enum: Object.values(JOBS_STATUS_ENUMS), default: JOBS_STATUS_ENUMS.DRAFT },
     formId: {
       type: Schema.Types.ObjectId,
       ref: modelNames.FORM,
