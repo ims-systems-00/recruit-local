@@ -45,7 +45,7 @@ export class TenantAbilityBuilder implements IAbilityBuilder {
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
       builder.can(AbilityAction.Manage, TenantAuthZEntity, {
-        _id: this.session.user.tenantId,
+        _id: this.session.tenantId,
       });
     }
 

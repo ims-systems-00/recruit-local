@@ -1,20 +1,35 @@
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
+import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
 import * as jobProfileService from "./job-profile.service";
 import { updateUser } from "../user";
 import { Schema } from "mongoose";
+import { JobProfileAbilityBuilder, JobProfileAuthZEntity } from "@rl/authz";
+import { AbilityAction } from "@rl/types";
+import { jobProfileRoleScopedSecurityQuery } from "./job-profile.query";
 
 export const list = async ({ req }: ControllerParams) => {
-  // Fixed: Updated search fields to match JobProfile model
+  const abilityBuilder = new JobProfileAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  if (!ability.can(AbilityAction.Read, JobProfileAuthZEntity)) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read job profiles.`);
+  }
+
   const filter = new MongoQuery(req.query, {
     searchFields: ["headline", "summary"],
   }).build();
 
-  const query = filter.getFilterQuery();
+  const userSearchQuery = filter.getFilterQuery();
   const options = filter.getQueryOptions();
 
-  const results = await jobProfileService.list({ query, options });
+  const securityQuery = jobProfileRoleScopedSecurityQuery(ability);
+
+  const finalQuery = {
+    $and: [userSearchQuery, securityQuery],
+  };
+
+  const results = await jobProfileService.list({ query: finalQuery, options });
   const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
@@ -27,9 +42,16 @@ export const list = async ({ req }: ControllerParams) => {
 };
 
 export const getOne = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new JobProfileAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
   const jobProfile = await jobProfileService.getOne({
     query: { _id: req.params.id },
   });
+
+  if (!jobProfile || !ability.can(AbilityAction.Read, new JobProfileAuthZEntity(jobProfile))) {
+    throw new UnauthorizedException("You do not have permission to view this job profile.");
+  }
 
   return new ApiResponse({
     message: "Job Profile retrieved.",
@@ -40,15 +62,27 @@ export const getOne = async ({ req }: ControllerParams) => {
 };
 
 export const listSoftDeleted = async ({ req }: ControllerParams) => {
-  // Fixed: Updated search fields to match JobProfile model
+  const abilityBuilder = new JobProfileAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  if (!ability.can(AbilityAction.Read, JobProfileAuthZEntity)) {
+    throw new UnauthorizedException("You are not authorized to read deleted job profiles.");
+  }
+
   const filter = new MongoQuery(req.query, {
     searchFields: ["headline", "summary"],
   }).build();
 
-  const query = filter.getFilterQuery();
+  const userSearchQuery = filter.getFilterQuery();
   const options = filter.getQueryOptions();
 
-  const results = await jobProfileService.listSoftDeleted({ query, options });
+  const securityQuery = jobProfileRoleScopedSecurityQuery(ability);
+
+  const finalQuery = {
+    $and: [userSearchQuery, securityQuery],
+  };
+
+  const results = await jobProfileService.listSoftDeleted({ query: finalQuery, options });
   const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
@@ -61,9 +95,16 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
 };
 
 export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new JobProfileAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
   const jobProfile = await jobProfileService.getOneSoftDeleted({
     query: { _id: req.params.id },
   });
+
+  if (!jobProfile || !ability.can(AbilityAction.Read, new JobProfileAuthZEntity(jobProfile))) {
+    throw new UnauthorizedException("You do not have permission to view this deleted job profile.");
+  }
 
   return new ApiResponse({
     message: "Deleted job profile retrieved.",
@@ -74,6 +115,18 @@ export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
 };
 
 export const update = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new JobProfileAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  // Fetch first to check ownership properties
+  const existingJobProfile = await jobProfileService.getOne({
+    query: { _id: req.params.id },
+  });
+
+  if (!existingJobProfile || !ability.can(AbilityAction.Update, new JobProfileAuthZEntity(existingJobProfile))) {
+    throw new UnauthorizedException("User is not authorized to update this job profile.");
+  }
+
   const jobProfile = await jobProfileService.update({
     query: { _id: req.params.id },
     payload: req.body,
@@ -88,6 +141,13 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const create = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new JobProfileAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  if (!ability.can(AbilityAction.Create, JobProfileAuthZEntity)) {
+    throw new UnauthorizedException("You are not authorized to create a job profile.");
+  }
+
   const userId = req.session.user?._id;
   req.body.userId = userId;
 
@@ -99,7 +159,6 @@ export const create = async ({ req }: ControllerParams) => {
     });
   }
 
-  // Updated to pass payload strictly as an object property
   const jobProfile = await jobProfileService.create({
     payload: req.body,
   });
@@ -117,7 +176,17 @@ export const create = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  // Updated to call softDelete
+  const abilityBuilder = new JobProfileAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  const existingJobProfile = await jobProfileService.getOne({
+    query: { _id: req.params.id },
+  });
+
+  if (!existingJobProfile || !ability.can(AbilityAction.Delete, new JobProfileAuthZEntity(existingJobProfile))) {
+    throw new UnauthorizedException("You do not have permission to move this job profile to trash.");
+  }
+
   const jobProfile = await jobProfileService.softDelete({
     query: { _id: req.params.id },
   });
@@ -131,7 +200,18 @@ export const softRemove = async ({ req }: ControllerParams) => {
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  // Updated to call hardDelete
+  const abilityBuilder = new JobProfileAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  // Fetching from trash to ensure we have the entity data for CASL ownership checks
+  const existingJobProfile = await jobProfileService.getOneSoftDeleted({
+    query: { _id: req.params.id },
+  });
+
+  if (!existingJobProfile || !ability.can(AbilityAction.Delete, new JobProfileAuthZEntity(existingJobProfile))) {
+    throw new UnauthorizedException("You do not have permission to permanently delete this job profile.");
+  }
+
   const jobProfile = await jobProfileService.hardDelete({
     query: { _id: req.params.id },
   });
@@ -145,6 +225,17 @@ export const hardRemove = async ({ req }: ControllerParams) => {
 };
 
 export const restore = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new JobProfileAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  const existingJobProfile = await jobProfileService.getOneSoftDeleted({
+    query: { _id: req.params.id },
+  });
+
+  if (!existingJobProfile || !ability.can(AbilityAction.Update, new JobProfileAuthZEntity(existingJobProfile))) {
+    throw new UnauthorizedException("You do not have permission to restore this job profile.");
+  }
+
   const jobProfile = await jobProfileService.restore({
     query: { _id: req.params.id },
   });
