@@ -195,13 +195,17 @@ export default function AdditionalQueries({
       </div>
 
       {/* Footer nav */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
-        <Button variant="outline" className="px-6">
+      <div className="flex py-spacing-2xl justify-end mt-spacing-4xl gap-spacing-sm">
+        <Button
+          variant="outline"
+          onClick={() => prev(2)}
+          className=" border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
+        >
           Previous
         </Button>
         <Button
-          //   onClick={onContinue}
-          className="bg-pink-500 hover:bg-pink-600 text-white px-6"
+          onClick={() => next(4)}
+          className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
         >
           Continue
         </Button>

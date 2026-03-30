@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Stepper } from './stepper';
 import JobInformationForm from './steps/job-information-form';
 import ReviewJobDescriptionForm from './steps/review-job-description-form';
-import BusinessInformationForm from './steps/business-information-form';
+import JobDescriptionForm from './steps/job-description-form';
 import Preview from './preview/preview';
 import { useCreateJob } from '@/services/jobs/jobs.client';
 import { FormProvider } from 'react-hook-form';
@@ -25,19 +25,17 @@ export default function CreateForm() {
           onSubmit={onSubmit}
           className=" flex flex-col gap-y-spacing-6xl flex-1 pt-spacing-4xl"
         >
-          {/* {step === 1 && <JobInformationForm next={nextStep} />} */}
-          {step === 2 && (
+          {step === 1 && <JobInformationForm next={nextStep} />}
+          {/* {step === 2 && (
             <ReviewJobDescriptionForm prev={prevStep} next={nextStep} />
-          )}
-          {step === 3 && (
-            <BusinessInformationForm prev={prevStep} next={nextStep} />
-          )}
-          {step === 1 && <AdditionalQueries prev={prevStep} next={nextStep} />}
-          {step === 5 && <Preview prev={prevStep} />}
+          )} */}
+          {step === 2 && <JobDescriptionForm prev={prevStep} next={nextStep} />}
+          {step === 3 && <AdditionalQueries prev={prevStep} next={nextStep} />}
+          {step === 4 && <Preview prev={prevStep} />}
         </form>
       </FormProvider>
       {/* <Stepper steps={steps} currentStep={step} className="mb-12" /> */}
-      <StepsSidebar currentStep={step} />
+      {step !== 4 && <StepsSidebar currentStep={step} />}
     </div>
   );
 }

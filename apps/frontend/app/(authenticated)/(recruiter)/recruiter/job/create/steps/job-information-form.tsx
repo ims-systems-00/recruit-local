@@ -1,11 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
+
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Folder } from 'lucide-react';
+import { CalendarDays, Folder, MailIcon, MapPinIcon } from 'lucide-react';
 import {
   InputGroup,
+  InputGroupAddon,
   InputGroupInput,
   InputGroupTextarea,
 } from '@/components/ui/input-group';
@@ -38,6 +41,14 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from '@/components/ui/combobox';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 export const EMPLOYMENT_TYPE_OPTIONS = [
   { label: 'Full Time', value: EMPLOYMENT_TYPE.FULL_TIME },
@@ -87,14 +98,15 @@ export default function JobInformationForm({ next }: { next: () => void }) {
     getValues,
   } = useFormContext<MultiStepJobFormValues>();
 
-  const salaryMode = watch('salary.mode');
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState<Date | undefined>(undefined);
 
-  console.log('errors', watch('salary'));
+  const salaryMode = watch('salary.mode');
 
   return (
     <>
       <div className=" space-y-spacing-4xl">
-        <div className="space-y-spacing-2xl">
+        {/* <div className="space-y-spacing-2xl">
           <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
             Banner of Job (optional)
           </p>
@@ -112,20 +124,20 @@ export default function JobInformationForm({ next }: { next: () => void }) {
               <p>Supported Format: SVG, JPG, PNG (up to 10mb)</p>
             </div>
           </div>
-        </div>
+        </div> */}
         <div className="space-y-spacing-2xl">
-          <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+          <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
             Basic Information
           </p>
-          <div className="grid grid-cols-2 gap-spacing-sm">
+          <div className="grid grid-cols-2 gap-spacing-2xl">
             <div className="space-y-spacing-xs col-span-2">
-              <Label className=" text-label-sm font-label-sm-strong!">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                 Job Title
               </Label>
               <div className=" space-y-2">
                 <InputGroup
                   className={cn(
-                    'h-12 rounded-lg shadow-xs border-border-gray-primary',
+                    'h-10 rounded-lg shadow-xs border-border-gray-primary',
                     errors.title && ' border-border-error-primary',
                   )}
                 >
@@ -144,7 +156,7 @@ export default function JobInformationForm({ next }: { next: () => void }) {
               </div>
             </div>
             <div className="space-y-spacing-xs ">
-              <Label className=" text-label-sm font-label-sm-strong!">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                 Employ Type
               </Label>
 
@@ -157,7 +169,7 @@ export default function JobInformationForm({ next }: { next: () => void }) {
                       value={field.value || ''}
                       onValueChange={field.onChange}
                     >
-                      <SelectTrigger className="h-12! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
+                      <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
                         <SelectValue placeholder="Eg. Full Time" />
                       </SelectTrigger>
 
@@ -181,46 +193,7 @@ export default function JobInformationForm({ next }: { next: () => void }) {
               </div>
             </div>
             <div className="space-y-spacing-xs ">
-              <Label className=" text-label-sm font-label-sm-strong!">
-                Job Title
-              </Label>
-              <div className=" space-y-2">
-                <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
-                  <InputGroupInput
-                    type="text"
-                    placeholder=" Eg . UI/UX Designer Wanted – Join Our Creative Team!"
-                    //   {...register('firstName')}
-                  />
-                </InputGroup>
-                {/* {errors.firstName && (
-                    <p className="text-xs text-text-error-primary">
-                      {errors.firstName.message}
-                    </p>
-                  )} */}
-              </div>
-            </div>
-            <div className="space-y-spacing-xs ">
-              <Label className=" text-label-sm font-label-sm-strong!">
-                Number of vacancy
-              </Label>
-              <div className=" space-y-2">
-                <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
-                  <InputGroupInput
-                    type="number"
-                    placeholder="05"
-                    className=" placeholder:text-text-gray-quaternary"
-                    {...register('vacancy')}
-                  />
-                </InputGroup>
-                {errors.vacancy && (
-                  <p className="text-xs text-text-error-primary">
-                    {errors.vacancy.message}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="space-y-spacing-xs ">
-              <Label className=" text-label-sm font-label-sm-strong!">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                 Work palace
               </Label>
               <div className=" space-y-2">
@@ -232,7 +205,7 @@ export default function JobInformationForm({ next }: { next: () => void }) {
                       value={field.value || ''}
                       onValueChange={field.onChange}
                     >
-                      <SelectTrigger className="h-12! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
+                      <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
                         <SelectValue placeholder="Eg. Remote" />
                       </SelectTrigger>
 
@@ -255,15 +228,15 @@ export default function JobInformationForm({ next }: { next: () => void }) {
                 )}
               </div>
             </div>
-            <div className="space-y-spacing-xs col-span-2">
-              <Label className=" text-label-sm font-label-sm-strong!">
-                Location
+            <div className="space-y-spacing-xs ">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                Year of Experience
               </Label>
               <div className=" space-y-2">
-                <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
+                <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupInput
-                    type="text"
-                    placeholder="www.googleMap.com"
+                    type="number"
+                    placeholder="10"
                     //   {...register('firstName')}
                   />
                 </InputGroup>
@@ -275,7 +248,168 @@ export default function JobInformationForm({ next }: { next: () => void }) {
               </div>
             </div>
             <div className="space-y-spacing-xs ">
-              <Label className=" text-label-sm font-label-sm-strong!">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                Number of vacancy
+              </Label>
+              <div className=" space-y-2">
+                <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
+                  <InputGroupInput
+                    type="number"
+                    placeholder="05"
+                    className=" placeholder:text-text-gray-quaternary"
+                    {...register('vacancy')}
+                  />
+                </InputGroup>
+                {errors.vacancy && (
+                  <p className="text-xs text-text-error-primary">
+                    {errors.vacancy.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-spacing-xs ">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                Salary Type
+              </Label>
+              <div className=" space-y-2">
+                <Controller
+                  name="salary.mode"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || ''}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
+                        <SelectValue placeholder="Eg. Fixed" />
+                      </SelectTrigger>
+
+                      <SelectContent className=" bg-white">
+                        <SelectGroup>
+                          {SALARY_MODE_OPTIONS.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.salary?.mode && (
+                  <p className="text-xs text-text-error-primary">
+                    {errors.salary?.mode?.message}
+                  </p>
+                )}
+              </div>
+            </div>
+            {salaryMode === 'negotiable' ? (
+              <>
+                <div className="space-y-spacing-xs ">
+                  <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Min. Salary
+                  </Label>
+                  <div className=" space-y-2">
+                    <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
+                      <InputGroupInput
+                        type="number"
+                        placeholder="Eg. 100"
+                        {...register('salary.min')}
+                      />
+                    </InputGroup>
+                    {errors.salary?.min && (
+                      <p className="text-xs text-text-error-primary">
+                        {errors.salary?.min.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-spacing-xs ">
+                  <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Max. Salary
+                  </Label>
+                  <div className=" space-y-2">
+                    <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
+                      <InputGroupInput
+                        type="number"
+                        placeholder="Eg. 500"
+                        {...register('salary.max')}
+                      />
+                    </InputGroup>
+                    {errors.salary?.max && (
+                      <p className="text-xs text-text-error-primary">
+                        {errors.salary?.max.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-spacing-xs ">
+                <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  Salary
+                </Label>
+                <div className=" space-y-2">
+                  <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
+                    <InputGroupInput
+                      type="number"
+                      placeholder="Eg. 300"
+                      {...register('salary.amount')}
+                    />
+                  </InputGroup>
+                  {errors.salary?.amount && (
+                    <p className="text-xs text-text-error-primary">
+                      {errors.salary?.amount.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div
+              className={cn(
+                'space-y-spacing-xs ',
+                salaryMode !== 'negotiable' && ' col-span-2',
+              )}
+            >
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                Period
+              </Label>
+              <div className=" space-y-2">
+                <Controller
+                  name="period"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || ''}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
+                        <SelectValue placeholder="Eg. Hourly" />
+                      </SelectTrigger>
+
+                      <SelectContent className=" bg-white">
+                        <SelectGroup>
+                          {PERIOD_OPTIONS.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.period && (
+                  <p className="text-xs text-text-error-primary">
+                    {errors.period.message}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="space-y-spacing-xs ">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                 Working Days
               </Label>
               <div className=" space-y-2">
@@ -292,7 +426,7 @@ export default function JobInformationForm({ next }: { next: () => void }) {
                     >
                       <ComboboxChips
                         ref={workingDaysAnchor}
-                        className="w-full focus-within:ring-0! min-h-12! rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary"
+                        className="w-full focus-within:ring-0! min-h-10! rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary"
                       >
                         <ComboboxValue>
                           {(values: string[]) => (
@@ -342,7 +476,7 @@ export default function JobInformationForm({ next }: { next: () => void }) {
               </div>
             </div>
             <div className="space-y-spacing-xs ">
-              <Label className=" text-label-sm font-label-sm-strong!">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                 Weekends
               </Label>
               <div className=" space-y-2">
@@ -359,7 +493,7 @@ export default function JobInformationForm({ next }: { next: () => void }) {
                     >
                       <ComboboxChips
                         ref={weekendsAnchor}
-                        className="w-full focus-within:ring-0! min-h-12! rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary"
+                        className="w-full focus-within:ring-0! min-h-10! rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary"
                       >
                         <ComboboxValue>
                           {(values: string[]) => (
@@ -406,210 +540,212 @@ export default function JobInformationForm({ next }: { next: () => void }) {
                 )}
               </div>
             </div>
+
+            <div className="space-y-spacing-xs ">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                Working Hours{' '}
+              </Label>
+              <div className=" space-y-2 ">
+                <div className="flex items-end gap-spacing-lg">
+                  <Input
+                    type="time"
+                    step="1"
+                    defaultValue="10:30:00"
+                    className=" h-10  appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none rounded-lg shadow-xs border-border-gray-primary"
+                  />
+                  <span>To</span>
+                  <Input
+                    type="time"
+                    step="1"
+                    defaultValue="10:30:00"
+                    className=" h-10 appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none rounded-lg shadow-xs border-border-gray-primary"
+                  />
+                </div>
+                {/* {errors.weekends && (
+                  <p className="text-xs text-text-error-primary">
+                    {errors.weekends.message}
+                  </p>
+                )} */}
+              </div>
+            </div>
+
+            <div className="space-y-spacing-xs ">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                Application End Date
+              </Label>
+              <div className=" space-y-2">
+                <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        id="date"
+                        className="justify-start font-normal px-2 border-0 w-full"
+                      >
+                        {date ? date.toLocaleDateString() : 'Select date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto overflow-hidden p-0 bg-white"
+                      align="start"
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        defaultMonth={date}
+                        captionLayout="dropdown"
+                        onSelect={(date) => {
+                          setDate(date);
+                          setOpen(false);
+                        }}
+                        className="bg-white! w-[300px]"
+                        classNames={{
+                          selected:
+                            'bg-bg-brand-solid-primary w-10 h-10 rounded-lg text-white text-label-sm',
+                          day: ' w-10 h-10 rounded-lg text-text-gray-secondary text-label-sm hover:bg-bg-brand-solid-primary hover:text-white',
+                          weekday:
+                            'text-text-gray-secondary text-label-sm h-10 w-10 flex items-center justify-center',
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <InputGroupAddon>
+                    <CalendarDays className=" text-fg-gray-tertiary" />
+                  </InputGroupAddon>
+                </InputGroup>
+                {errors.vacancy && (
+                  <p className="text-xs text-text-error-primary">
+                    {errors.vacancy.message}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
         <div className="space-y-spacing-2xl">
-          <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-            Job Description
-          </p>
-          <div className="grid grid-cols-2 gap-spacing-sm">
-            <div className="space-y-spacing-xs ">
-              <Label className=" text-label-sm font-label-sm-strong!">
-                Salary Type
-              </Label>
-              <div className=" space-y-2">
-                <Controller
-                  name="salary.mode"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value || ''}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="h-12! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
-                        <SelectValue placeholder="Eg. Fixed" />
-                      </SelectTrigger>
-
-                      <SelectContent className=" bg-white">
-                        <SelectGroup>
-                          {SALARY_MODE_OPTIONS.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.salary?.mode && (
-                  <p className="text-xs text-text-error-primary">
-                    {errors.salary?.mode?.message}
-                  </p>
-                )}
-              </div>
+          <div className=" flex items-center justify-between">
+            <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
+              Organization Information
+            </p>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="autofill"
+                className=" data-[state=checked]:bg-bg-brand-solid-primary data-[state=checked]:text-text-white data-[state=checked]:border-bg-brand-solid-primary"
+              />
+              <Label htmlFor="autofill">Auto Fill From organization</Label>
             </div>
-            {salaryMode === 'negotiable' ? (
-              <>
-                <div className="space-y-spacing-xs ">
-                  <Label className=" text-label-sm font-label-sm-strong!">
-                    Min. Salary
-                  </Label>
-                  <div className=" space-y-2">
-                    <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
-                      <InputGroupInput
-                        type="number"
-                        placeholder="Eg. 100"
-                        {...register('salary.min')}
-                      />
-                    </InputGroup>
-                    {errors.salary?.min && (
-                      <p className="text-xs text-text-error-primary">
-                        {errors.salary?.min.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-spacing-xs ">
-                  <Label className=" text-label-sm font-label-sm-strong!">
-                    Max. Salary
-                  </Label>
-                  <div className=" space-y-2">
-                    <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
-                      <InputGroupInput
-                        type="number"
-                        placeholder="Eg. 500"
-                        {...register('salary.max')}
-                      />
-                    </InputGroup>
-                    {errors.salary?.max && (
-                      <p className="text-xs text-text-error-primary">
-                        {errors.salary?.max.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="space-y-spacing-xs ">
-                <Label className=" text-label-sm font-label-sm-strong!">
-                  Salary
-                </Label>
-                <div className=" space-y-2">
-                  <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
-                    <InputGroupInput
-                      type="number"
-                      placeholder="Eg. 300"
-                      {...register('salary.amount')}
-                    />
-                  </InputGroup>
-                  {errors.salary?.amount && (
-                    <p className="text-xs text-text-error-primary">
-                      {errors.salary?.amount.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div
-              className={cn(
-                'space-y-spacing-xs ',
-                salaryMode !== 'negotiable' && ' col-span-2',
-              )}
-            >
-              <Label className=" text-label-sm font-label-sm-strong!">
-                Period
-              </Label>
-              <div className=" space-y-2">
-                <Controller
-                  name="period"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value || ''}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="h-12! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
-                        <SelectValue placeholder="Eg. Hourly" />
-                      </SelectTrigger>
-
-                      <SelectContent className=" bg-white">
-                        <SelectGroup>
-                          {PERIOD_OPTIONS.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.period && (
-                  <p className="text-xs text-text-error-primary">
-                    {errors.period.message}
-                  </p>
-                )}
-              </div>
-            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-spacing-2xl">
             <div className="space-y-spacing-xs col-span-2">
-              <Label className=" text-label-sm font-label-sm-strong!">
-                About the Role
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                About Us
               </Label>
               <div className=" space-y-2 ">
                 <InputGroup className="rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupTextarea
-                    placeholder="Write your message here..."
+                    placeholder="Write here..."
                     {...register('aboutUs')}
                     className="min-h-[136px] "
                   />
                 </InputGroup>
                 {errors.aboutUs && (
-                  <p className="text-xs text-text-error-primary">
+                  <p className="text-sm text-red-500">
                     {errors.aboutUs.message}
                   </p>
                 )}
               </div>
             </div>
-            <div className="space-y-spacing-xs col-span-2">
-              <Label className=" text-label-sm font-label-sm-strong!">
-                Key Responsibility
+            <div className="space-y-spacing-xs">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                Email
               </Label>
-              <div className=" space-y-2 ">
-                <InputGroup className="rounded-lg shadow-xs border-border-gray-primary">
-                  <InputGroupTextarea
-                    placeholder="Write your message here..."
-                    {...register('responsibility')}
-                    className="min-h-[136px] "
+              <div className=" space-y-2">
+                <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
+                  <InputGroupInput
+                    type="text"
+                    placeholder="Eg. elena@example.com"
+                    {...register('email')}
                   />
+                  <InputGroupAddon>
+                    <MailIcon className=" text-fg-gray-tertiary" />
+                  </InputGroupAddon>
                 </InputGroup>
-                {errors.responsibility && (
-                  <p className="text-xs text-text-error-primary">
-                    {errors.responsibility.message}
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                )}
+              </div>
+            </div>
+            <div className="space-y-spacing-xs">
+              <Label className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                Contact Number
+              </Label>
+
+              <div className=" space-y-2">
+                <Controller
+                  name="number"
+                  control={control}
+                  // rules={{
+                  //   validate: (value) =>
+                  //     isValidPhoneNumber(value || '') ||
+                  //     'Invalid contact number',
+                  // }}
+                  render={({ field }) => (
+                    <PhoneInput
+                      {...field}
+                      defaultCountry="GB"
+                      international
+                      placeholder="Enter contact number"
+                      className=" border h-10 rounded-lg shadow-xs border-border-gray-primary w-full"
+                    />
+                  )}
+                />
+                {errors.number && (
+                  <p className="text-sm text-red-500">
+                    {errors.number.message}
                   </p>
                 )}
               </div>
             </div>
-            <div className="space-y-spacing-xs col-span-2">
-              <Label className=" text-label-sm font-label-sm-strong!">
-                Related Attachment
+            <div className="space-y-spacing-xs">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                Location
               </Label>
-              <div className=" space-y-2 ">
-                <div className=" w-full p-spacing-4xl rounded-2xl border border-dashed border-border-gray-secondary flex flex-col justify-center items-center gap-spacing-lg">
-                  <div className=" w-10 h-10 border border-others-brand-light flex justify-center items-center  bg-others-brand-brand-zero rounded-lg">
-                    <Folder className="text-others-brand-dark fill-others-brand-dark " />
-                  </div>
-                  <div className=" space-y-spacing-xs text-label-sm text-center">
-                    <p>
-                      <span className=" text-text-brand-secondary font-label-sm-strong!">
-                        Drag & Drop
-                      </span>{' '}
-                      or Choose File to Upload
-                    </p>
-                    <p>Supported Format: SVG, JPG, PNG (up to 10mb)</p>
-                  </div>
-                </div>
+              <div className=" space-y-2">
+                <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
+                  <InputGroupInput
+                    type="text"
+                    placeholder="www.googleMap.com"
+                    {...register('location')}
+                  />
+                  <InputGroupAddon>
+                    <MapPinIcon className=" text-fg-gray-tertiary" />
+                  </InputGroupAddon>
+                </InputGroup>
+                {errors.location && (
+                  <p className="text-sm text-red-500">
+                    {errors.location.message}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="space-y-spacing-xs">
+              <Label className=" text-label-sm  text-text-gray-secondary">
+                <span className="font-label-sm-strong!">
+                  Additional Information of location
+                </span>{' '}
+                (Optional)
+              </Label>
+              <div className=" space-y-2">
+                <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
+                  <InputGroupInput
+                    type="text"
+                    placeholder="Eg. elena@example.com"
+                    {...register('email')}
+                  />
+                </InputGroup>
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                )}
               </div>
             </div>
           </div>
