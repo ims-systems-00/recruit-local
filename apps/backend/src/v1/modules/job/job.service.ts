@@ -88,8 +88,6 @@ export const create = async ({ payload }: IJobCreateParams) => {
     payload.title = `Untitled Job ${numberOfJobs + 1}`;
   }
 
-  payload.status = JOBS_STATUS_ENUMS.DRAFT;
-
   // 2. Handle AutoFill
   if (payload.autoFill) {
     const autoFillData = await _autoFill(payload.tenantId!.toString());
@@ -98,21 +96,7 @@ export const create = async ({ payload }: IJobCreateParams) => {
 
   // 3. Pre-generate the Job ID
   const jobId = new Types.ObjectId();
-  let bannerImageId = null;
   let attachmentIds: Types.ObjectId[] = [];
-
-  // 4. Intercept Single Banner Image
-  if (payload.bannerStorage) {
-    const fileMedia = await FileMediaService.create({
-      payload: {
-        collectionName: modelNames.JOB,
-        collectionDocument: jobId,
-        storageInformation: payload.bannerStorage,
-        visibility: VISIBILITY_ENUM.PUBLIC,
-      },
-    });
-    bannerImageId = fileMedia._id;
-  }
 
   // 5. Intercept Multiple Attachments
   if (payload.attachmentsStorage && payload.attachmentsStorage.length > 0) {
@@ -130,12 +114,11 @@ export const create = async ({ payload }: IJobCreateParams) => {
     attachmentIds = createdAttachments.map((file: any) => file._id) as Types.ObjectId[];
   }
 
-  const { bannerStorage, attachmentsStorage, autoFill, ...cleanPayload } = payload;
+  const { attachmentsStorage, autoFill, ...cleanPayload } = payload;
 
   let job = new Job({
     ...cleanPayload,
     _id: jobId,
-    bannerImageId: bannerImageId,
     attachmentIds: attachmentIds,
   });
 
@@ -153,33 +136,9 @@ export const update = async ({ query, payload }: IJobUpdateParams) => {
     payload = { ...payload, ...autoFillData };
   }
 
-  let updatedBannerImageId = job.bannerImageId;
   let updatedAttachmentIds = job.attachmentIds || [];
 
-  // A. Handle Single Banner Update
-  if (payload.bannerStorage) {
-    const newFileMedia = await FileMediaService.create({
-      payload: {
-        collectionName: modelNames.JOB,
-        collectionDocument: job._id,
-        storageInformation: payload.bannerStorage,
-        visibility: VISIBILITY_ENUM.PUBLIC,
-      },
-    });
-    updatedBannerImageId = newFileMedia._id;
-
-    if (job.bannerImageId) {
-      try {
-        await FileMediaService.hardDelete({ query: { _id: job.bannerImageId.toString() } });
-      } catch (error) {
-        console.error(`Failed to delete old banner image for Job ${job._id}`, error);
-      }
-    }
-  }
-
-  // B. Handle Attachments Update (Assuming replacement of all attachments if sent)
   if (payload.attachmentsStorage) {
-    // 1. Delete old attachments
     if (job.attachmentIds && job.attachmentIds.length > 0) {
       try {
         await Promise.all(
@@ -205,14 +164,13 @@ export const update = async ({ query, payload }: IJobUpdateParams) => {
     updatedAttachmentIds = newAttachments.map((file) => file._id);
   }
 
-  const { bannerStorage, attachmentsStorage, autoFill, ...cleanPayload } = payload;
+  const { attachmentsStorage, autoFill, ...cleanPayload } = payload;
 
   const updatedJob = await Job.findOneAndUpdate(
     { _id: job._id },
     {
       $set: {
         ...cleanPayload,
-        bannerImageId: updatedBannerImageId,
         attachmentIds: updatedAttachmentIds,
       },
     },
@@ -233,16 +191,6 @@ export const hardDelete = async ({ query }: IJobGetParams) => {
   const sanitizedQuery = sanitizeQueryIds(query);
   const job = await getOneSoftDeleted({ query: sanitizedQuery });
 
-  // 1. Delete single banner from S3
-  if (job.bannerImageId) {
-    try {
-      await FileMediaService.hardDelete({ query: { _id: job.bannerImageId.toString() } });
-    } catch (error) {
-      console.error("Failed to delete attached banner image for Job:", error);
-    }
-  }
-
-  // 2. Delete all attachments from S3 concurrently
   if (job.attachmentIds && job.attachmentIds.length > 0) {
     try {
       await Promise.all(job.attachmentIds.map((id) => FileMediaService.hardDelete({ query: { _id: id.toString() } })));
@@ -262,16 +210,6 @@ export const restore = async ({ query }: IJobGetParams) => {
   return { restored };
 };
 
-export const post = async ({ query }: IJobGetParams) => {
-  const sanitizedQuery = sanitizeQueryIds(query);
-  const job = await getOne({ query: sanitizedQuery });
-  if (!job) throw new NotFoundException("Job not found.");
-
-  const updatedJob = await Job.findOneAndUpdate(
-    { _id: job._id },
-    { $set: { status: JOBS_STATUS_ENUMS.POSTED } },
-    { new: true }
-  );
-
-  return updatedJob;
-};
+/*
+ - 
+*/

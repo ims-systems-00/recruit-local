@@ -13,12 +13,21 @@ import {
   ISession,
   IAbilityBuilder,
   AbilityAction,
+  JOBS_STATUS_ENUMS,
 } from '@rl/types';
 
 export class JobAuthZEntity {
   public readonly tenantId: string | null;
-  constructor({ tenantId }: { tenantId?: string | null }) {
+  public readonly status: JOBS_STATUS_ENUMS;
+  constructor({
+    tenantId,
+    status,
+  }: {
+    tenantId?: string | null;
+    status?: JOBS_STATUS_ENUMS;
+  }) {
     this.tenantId = tenantId ?? null;
+    this.status = status ?? JOBS_STATUS_ENUMS.DRAFT;
   }
 }
 
@@ -40,18 +49,25 @@ export class JobAbilityBuilder implements IAbilityBuilder {
   getAbility(): AnyAbility {
     const builder = this.abilityBuilder;
 
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
+      builder.can(AbilityAction.Manage, JobAuthZEntity);
+    }
+
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
-      builder.can(AbilityAction.Manage, JobAuthZEntity, {
+      builder.can(AbilityAction.Create, JobAuthZEntity);
+      builder.can(AbilityAction.Read, JobAuthZEntity);
+      builder.can(AbilityAction.Update, JobAuthZEntity, {
+        tenantId: this.session.tenantId,
+      });
+      builder.can(AbilityAction.SoftDelete, JobAuthZEntity, {
         tenantId: this.session.tenantId,
       });
     }
 
-    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
-      builder.can(AbilityAction.Read, JobAuthZEntity);
-    }
-
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
-      builder.can(AbilityAction.Read, JobAuthZEntity);
+      builder.can(AbilityAction.Read, JobAuthZEntity, {
+        status: JOBS_STATUS_ENUMS.OPEN,
+      });
     }
 
     return builder.build({
