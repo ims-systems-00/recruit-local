@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { Job, IJobInput } from "../../../models";
-import { getTenant } from "../tenant/tenant.service";
+import { getOne as getTenant } from "../tenant/tenant.service";
 import { NotFoundException } from "../../../common/helper";
 import { IListParams, ListQueryParams } from "@rl/types";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
@@ -9,7 +9,7 @@ import { jobProjectionQuery } from "./job.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
-import { VISIBILITY_ENUM, JOBS_STATUS_ENUMS } from "@rl/types";
+import { VISIBILITY_ENUM } from "@rl/types";
 
 // --- Standardized Parameter Interfaces ---
 type IListJobParams = IListParams<IJobInput>;
@@ -37,7 +37,7 @@ export interface IJobCreateParams {
 }
 
 const _autoFill = async (tenantId: string) => {
-  const tenant = await getTenant(tenantId);
+  const tenant = await getTenant({ query: { _id: tenantId } });
   if (!tenant || !tenant.email || !tenant.phone || !tenant.description)
     throw new NotFoundException("Organization data not found for auto fill.");
 

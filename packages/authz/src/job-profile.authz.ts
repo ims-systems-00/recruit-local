@@ -15,7 +15,7 @@ import {
   AbilityAction,
 } from '@rl/types';
 
-export class TenantAuthZEntity {
+export class JobProfileAuthZEntity {
   public readonly _id: string | null;
   constructor({ _id }: { _id: string | null }) {
     this._id = _id ?? null;
@@ -24,11 +24,11 @@ export class TenantAuthZEntity {
 
 type ClaimAbility = PureAbility<
   AbilityTuple,
-  MongoQuery<typeof TenantAuthZEntity>
+  MongoQuery<typeof JobProfileAuthZEntity>
 >;
 const ClaimAbility = PureAbility as AbilityClass<ClaimAbility>;
 
-export class TenantAbilityBuilder implements IAbilityBuilder {
+export class JobProfileAbilityBuilder implements IAbilityBuilder {
   private abilityBuilder: AbilityBuilder<ClaimAbility>;
   private session: ISession;
 
@@ -40,12 +40,12 @@ export class TenantAbilityBuilder implements IAbilityBuilder {
     const builder = this.abilityBuilder;
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
-      builder.can(AbilityAction.Manage, TenantAuthZEntity);
+      builder.can(AbilityAction.Manage, JobProfileAuthZEntity);
     }
 
-    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
-      builder.can(AbilityAction.Manage, TenantAuthZEntity, {
-        _id: this.session.tenantId,
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+      builder.can(AbilityAction.Manage, JobProfileAuthZEntity, {
+        _id: this.session.jobProfileId,
       });
     }
 

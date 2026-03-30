@@ -1,15 +1,15 @@
 import express from "express";
 import {
-  listTenant,
-  getTenant,
-  createTenant,
-  hardRemoveTenant,
-  softRemoveTenant,
-  restoreTenant,
-  updateTenant,
-  updateTenantLogo,
-  bulkRemoveTenants,
-  getAllUsersByTenantId,
+  list,
+  get,
+  create,
+  hardRemove,
+  softRemove,
+  restore,
+  update,
+  updateLogo,
+  bulkRemove,
+  // getAllUsersByTenantId,
 } from "./tenant.controller";
 import { handleController } from "../../../common/helper";
 import { validate } from "../../../common/middlewares";
@@ -27,20 +27,20 @@ const router = express.Router();
 const validateBody = validate("body");
 const validateParams = validate("params");
 
-router.get("/", handleController(listTenant));
-router.get("/:id", validateParams(idParamsSchema), handleController(getTenant));
-router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(updateTenant));
+router.get("/", handleController(list));
+router.get("/:id", validateParams(idParamsSchema), handleController(get));
+router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));
 router.put(
   "/:id/logo/:logoStorage",
   validateParams(logoUpdateParamsSchema),
   validateBody(logoUpdateBodySchema),
-  handleController(updateTenantLogo)
+  handleController(updateLogo)
 );
-router.post("/", validateBody(createBodySchema), handleController(createTenant));
-router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemoveTenant));
-router.delete("/:id/hard", validateParams(idParamsSchema), handleController(hardRemoveTenant));
-router.put("/:id/restore", validateParams(idParamsSchema), handleController(restoreTenant));
-router.post("/bulk-delete-ops/", validateBody(bulkDeleteBodySchema), handleController(bulkRemoveTenants));
-router.get("/:id/users", validateParams(idParamsSchema), handleController(getAllUsersByTenantId));
+router.post("/", validateBody(createBodySchema), handleController(create));
+router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemove));
+router.delete("/:id/hard", validateParams(idParamsSchema), handleController(hardRemove));
+router.put("/:id/restore", validateParams(idParamsSchema), handleController(restore));
+router.post("/bulk-delete-ops/", validateBody(bulkDeleteBodySchema), handleController(bulkRemove));
+// router.get("/:id/users", validateParams(idParamsSchema), handleController(getAllUsersByTenantId));
 
 export default router;

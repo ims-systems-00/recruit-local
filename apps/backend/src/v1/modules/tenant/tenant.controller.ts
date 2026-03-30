@@ -1,31 +1,35 @@
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-// import { TenantAbilityBuilder, TenantAuthZEntity } from "@rl/authz";
+import { TenantAbilityBuilder, TenantAuthZEntity } from "@rl/authz";
 import { AbilityAction, USER_ROLE_ENUMS } from "@rl/types";
 import { StatusCodes } from "http-status-codes";
-import mongoose from "mongoose";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
 import * as tenantService from "./tenant.service";
 import { updateUser } from "../user/user.service";
+import { tenantRoleScopedSecurityQuery } from "./tenant.query";
 
-export const listTenant = async ({ req }: ControllerParams) => {
+export const list = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new TenantAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  if (!ability.can(AbilityAction.Read, TenantAuthZEntity)) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read tenants.`);
+  }
+
   const filter = new MongoQuery(req.query, {
     searchFields: ["name"],
     strictObjectIdMatch: true,
   }).build();
 
-  let query = filter.getFilterQuery();
+  const userSearchQuery = filter.getFilterQuery();
   const options = filter.getQueryOptions();
 
-  // const ability = new TenantAbilityBuilder(req.session);
-  // if (!ability.getAbility().can(AbilityAction.Read, TenantAuthZEntity))
-  //   throw new UnauthorizedException(
-  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} tenants.`
-  //   );
-  // if (req.session.user.type === USER_TYPE_ENUMS.ADMIN) {
-  //   query = { ...query, _id: new mongoose.Types.ObjectId(req.session.tenantId) };
-  // }
-  // console.log("query", query);
-  const results = await tenantService.listTenant({ query, options });
+  const securityQuery = tenantRoleScopedSecurityQuery(ability);
+
+  const finalQuery = {
+    $and: [userSearchQuery, securityQuery],
+  };
+
+  const results = await tenantService.list({ query: finalQuery, options });
   const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
@@ -37,14 +41,15 @@ export const listTenant = async ({ req }: ControllerParams) => {
   });
 };
 
-export const getTenant = async ({ req }: ControllerParams) => {
-  const tenant = await tenantService.getTenant(req.params.id);
+export const get = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new TenantAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
 
-  // const ability = new TenantAbilityBuilder(req.session);
-  // if (!ability.getAbility().can(AbilityAction.Read, TenantAuthZEntity))
-  //   throw new UnauthorizedException(
-  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} tenants.`
-  //   );
+  const tenant = await tenantService.getOne({ query: { _id: req.params.id } });
+
+  if (!tenant || !ability.can(AbilityAction.Read, new TenantAuthZEntity({ _id: tenant._id?.toString() }))) {
+    throw new UnauthorizedException("You do not have permission to view this organisation.");
+  }
 
   return new ApiResponse({
     message: "Organisation retrieved.",
@@ -54,27 +59,27 @@ export const getTenant = async ({ req }: ControllerParams) => {
   });
 };
 
-export const updateTenant = async ({ req }: ControllerParams) => {
+export const update = async ({ req }: ControllerParams) => {
   if (!req?.params?.id) {
     throw new Error("Tenant ID is required");
   }
 
-  // const existingTenant = await tenantService.getTenant(req.params.id);
-  // const ability = new TenantAbilityBuilder(req.session);
+  const abilityBuilder = new TenantAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
 
-  // if (
-  //   !ability.getAbility().can(
-  //     AbilityAction.Update,
-  //     new TenantAuthZEntity({
-  //       _id: existingTenant?._id as string,
-  //     })
-  //   )
-  // )
-  //   throw new UnauthorizedException(
-  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} tenants.`
-  //   );
+  const existingTenant = await tenantService.getOne({ query: { _id: req.params.id } });
 
-  const tenant = await tenantService.updateTenant(req.params.id, req.body);
+  if (
+    !existingTenant ||
+    !ability.can(AbilityAction.Update, new TenantAuthZEntity({ _id: existingTenant._id?.toString() }))
+  ) {
+    throw new UnauthorizedException(`User is not authorized to update this organisation.`);
+  }
+
+  const tenant = await tenantService.update({
+    query: { _id: req.params.id },
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Organisation updated.",
@@ -84,29 +89,30 @@ export const updateTenant = async ({ req }: ControllerParams) => {
   });
 };
 
-export const updateTenantLogo = async ({ req }: ControllerParams) => {
-  const logoStorage = req.params["logoStorage"];
+export const updateLogo = async ({ req }: ControllerParams) => {
+  const logoStorage = req.params["logoStorage"] as "logoSquareStorage" | "logoRectangleStorage";
 
   if (!req?.params?.id) {
     throw new Error("Tenant ID is required");
   }
 
-  // const existingTenant = await tenantService.getTenant(req.params.id);
-  // const ability = new TenantAbilityBuilder(req.session);
+  const abilityBuilder = new TenantAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
 
-  // if (
-  //   !ability.getAbility().can(
-  //     AbilityAction.Update,
-  //     new TenantAuthZEntity({
-  //       _id: existingTenant?._id as string,
-  //     })
-  //   )
-  // )
-  //   throw new UnauthorizedException(
-  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} tenants.`
-  //   );
+  const existingTenant = await tenantService.getOne({ query: { _id: req.params.id } });
 
-  const tenant = await tenantService.updateTenantLogo(req.params.id, logoStorage, req.body);
+  if (
+    !existingTenant ||
+    !ability.can(AbilityAction.Update, new TenantAuthZEntity({ _id: existingTenant._id?.toString() }))
+  ) {
+    throw new UnauthorizedException(`User is not authorized to update this organisation's logo.`);
+  }
+
+  const tenant = await tenantService.updateLogo({
+    query: { _id: req.params.id },
+    logoStorage,
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Organisation logo updated.",
@@ -116,16 +122,20 @@ export const updateTenantLogo = async ({ req }: ControllerParams) => {
   });
 };
 
-export const createTenant = async ({ req }: ControllerParams) => {
-  // const ability = new TenantAbilityBuilder(req.session);
-  // if (!ability.getAbility().can(AbilityAction.Create, TenantAuthZEntity))
-  //   throw new UnauthorizedException(
-  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} tenants.`
-  //   );
+export const create = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new TenantAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
 
-  const tenant = await tenantService.createTenant(req.body);
-
+  if (!ability.can(AbilityAction.Create, TenantAuthZEntity)) {
+    throw new UnauthorizedException("You are not authorized to create organisations.");
+  }
   const user = req.session.user!;
+
+  if (req.session.tenantId) {
+    throw new UnauthorizedException("You already belong to an organisation. Cannot create another one.");
+  }
+
+  const tenant = await tenantService.create({ payload: req.body });
 
   await updateUser(user._id.toString(), {
     tenantId: tenant.id,
@@ -140,14 +150,20 @@ export const createTenant = async ({ req }: ControllerParams) => {
   });
 };
 
-export const softRemoveTenant = async ({ req }: ControllerParams) => {
-  // const ability = new TenantAbilityBuilder(req.session);
-  // if (!ability.getAbility().can(AbilityAction.Delete, TenantAuthZEntity))
-  //   throw new UnauthorizedException(
-  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} tenants.`
-  //   );
+export const softRemove = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new TenantAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
 
-  const { tenant, deleted } = await tenantService.softRemoveTenant(req.params.id);
+  const existingTenant = await tenantService.getOne({ query: { _id: req.params.id } });
+
+  if (
+    !existingTenant ||
+    !ability.can(AbilityAction.Delete, new TenantAuthZEntity({ _id: existingTenant._id?.toString() }))
+  ) {
+    throw new UnauthorizedException("You do not have permission to delete this organisation.");
+  }
+
+  const { tenant, deleted } = await tenantService.softDelete({ query: { _id: req.params.id } });
 
   return new ApiResponse({
     message: `${deleted} organisation(s) moved to trash.`,
@@ -157,14 +173,15 @@ export const softRemoveTenant = async ({ req }: ControllerParams) => {
   });
 };
 
-export const hardRemoveTenant = async ({ req }: ControllerParams) => {
-  // const ability = new TenantAbilityBuilder(req.session);
-  // if (!ability.getAbility().can(AbilityAction.Delete, TenantAuthZEntity))
-  //   throw new UnauthorizedException(
-  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} tenants.`
-  //   );
+export const hardRemove = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new TenantAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
 
-  const tenant = await tenantService.hardRemoveTenant(req.params.id);
+  if (!ability.can(AbilityAction.Delete, new TenantAuthZEntity({ _id: req.params.id }))) {
+    throw new UnauthorizedException("You do not have permission to permanently delete this organisation.");
+  }
+
+  const tenant = await tenantService.hardDelete({ query: { _id: req.params.id } });
 
   return new ApiResponse({
     message: "Organisation removed.",
@@ -174,14 +191,15 @@ export const hardRemoveTenant = async ({ req }: ControllerParams) => {
   });
 };
 
-export const bulkRemoveTenants = async ({ req }: ControllerParams) => {
-  // const ability = new TenantAbilityBuilder(req.session);
-  // if (!ability.getAbility().can(AbilityAction.Delete, TenantAuthZEntity))
-  //   throw new UnauthorizedException(
-  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} tenants.`
-  //   );
+export const bulkRemove = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new TenantAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
 
-  const deleteResponse = await tenantService.bulkRemoveTenants(req.body.ids);
+  if (!ability.can(AbilityAction.Delete, TenantAuthZEntity)) {
+    throw new UnauthorizedException("You are not authorized to perform bulk deletions on organisations.");
+  }
+
+  const deleteResponse = await tenantService.bulkHardDelete({ ids: req.body.ids });
 
   return new ApiResponse({
     message: "Organisations removed.",
@@ -194,14 +212,15 @@ export const bulkRemoveTenants = async ({ req }: ControllerParams) => {
   });
 };
 
-export const restoreTenant = async ({ req }: ControllerParams) => {
-  // const ability = new TenantAbilityBuilder(req.session);
-  // if (!ability.getAbility().can(AbilityAction.Create, TenantAuthZEntity))
-  //   throw new UnauthorizedException(
-  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} tenants.`
-  //   );
+export const restore = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new TenantAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
 
-  const { tenant, restored } = await tenantService.restoreTenant(req.params.id);
+  if (!ability.can(AbilityAction.Update, new TenantAuthZEntity({ _id: req.params.id }))) {
+    throw new UnauthorizedException("You do not have permission to restore this organisation.");
+  }
+
+  const { tenant, restored } = await tenantService.restore({ query: { _id: req.params.id } });
 
   return new ApiResponse({
     message: `${restored} organisation restored.`,
@@ -211,32 +230,35 @@ export const restoreTenant = async ({ req }: ControllerParams) => {
   });
 };
 
-export const getAllUsersByTenantId = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["fullName"],
-    strictObjectIdMatch: true,
-  }).build();
+// export const getAllUsersByTenantId = async ({ req }: ControllerParams) => {
+//   const abilityBuilder = new TenantAbilityBuilder(req.session);
+//   const ability = abilityBuilder.getAbility();
 
-  const query = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
+//   if (!ability.can(AbilityAction.Read, new TenantAuthZEntity({ _id: req.params.id }))) {
+//     throw new UnauthorizedException("You do not have permission to view users for this organisation.");
+//   }
 
-  // const ability = new TenantAbilityBuilder(req.session);
-  // if (!ability.getAbility().can(AbilityAction.Read, TenantAuthZEntity))
-  //   throw new UnauthorizedException(
-  //     `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} tenants.`
-  //   );
+//   const filter = new MongoQuery(req.query, {
+//     searchFields: ["fullName"],
+//     strictObjectIdMatch: true,
+//   }).build();
 
-  const results = await tenantService.getAllUsersByTenantId({
-    query: { ...query, tenantId: new mongoose.Types.ObjectId(req.params.id) },
-    options,
-  });
-  const { data, pagination } = formatListResponse(results);
+//   const query = filter.getFilterQuery();
+//   const options = filter.getQueryOptions();
 
-  return new ApiResponse({
-    message: "Users retrieved.",
-    statusCode: StatusCodes.OK,
-    data,
-    pagination,
-    fieldName: "users",
-  });
-};
+//   // Note: ensure this service function is uncommented in tenant.service.ts
+//   const results = await tenantService.getAllUsersByTenantId({
+//     query: { ...query, tenantId: new mongoose.Types.ObjectId(req.params.id) },
+//     options,
+//   });
+
+//   const { data, pagination } = formatListResponse(results);
+
+//   return new ApiResponse({
+//     message: "Users retrieved.",
+//     statusCode: StatusCodes.OK,
+//     data,
+//     pagination,
+//     fieldName: "users",
+//   });
+// };
