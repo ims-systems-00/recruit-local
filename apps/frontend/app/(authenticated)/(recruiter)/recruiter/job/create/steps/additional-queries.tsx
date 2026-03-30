@@ -65,7 +65,6 @@ export default function AdditionalQueries({
   prev: (step: number) => void;
   next: (step: number) => void;
 }) {
-  const [currentStep] = useState(3);
   const [cards, setCards] = useState<QueryCard[]>(INITIAL_CARDS);
 
   const addCard = (type: QueryType) => {

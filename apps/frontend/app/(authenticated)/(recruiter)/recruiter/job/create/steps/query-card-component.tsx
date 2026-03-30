@@ -196,6 +196,7 @@ export function QueryCardComponent({
               e.stopPropagation();
               onDuplicate(card.id);
             }}
+            type="button"
             className="text-fg-gray-secondary cursor-pointer hover:text-text-brand-secondary"
           >
             <Copy className="w-4 h-4 " />
@@ -205,6 +206,7 @@ export function QueryCardComponent({
               e.stopPropagation();
               onDelete(card.id);
             }}
+            type="button"
             className="text-fg-gray-secondary hover:text-text-brand-secondary  cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
