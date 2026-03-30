@@ -2,6 +2,8 @@ import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 import * as jobProfileService from "./job-profile.service";
+import { updateUser } from "../user";
+import { Schema } from "mongoose";
 
 export const list = async ({ req }: ControllerParams) => {
   // Fixed: Updated search fields to match JobProfile model
@@ -89,9 +91,21 @@ export const create = async ({ req }: ControllerParams) => {
   const userId = req.session.user?._id;
   req.body.userId = userId;
 
+  // check if user already has a job profile
+  if (req.session.jobProfileId) {
+    return new ApiResponse({
+      message: "User already has a job profile.",
+      statusCode: StatusCodes.BAD_REQUEST,
+    });
+  }
+
   // Updated to pass payload strictly as an object property
   const jobProfile = await jobProfileService.create({
     payload: req.body,
+  });
+
+  await updateUser(req.session.user?._id.toString(), {
+    jobProfileId: jobProfile._id as Schema.Types.ObjectId,
   });
 
   return new ApiResponse({

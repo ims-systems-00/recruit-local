@@ -40,20 +40,13 @@ export class TenantAbilityBuilder implements IAbilityBuilder {
     const builder = this.abilityBuilder;
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
-      builder.can(AbilityAction.Read, TenantAuthZEntity, {
-        _id: this.session.tenantId,
-      });
-      builder.can(AbilityAction.Update, TenantAuthZEntity, {
-        _id: this.session.tenantId,
-      });
-    }
-
-    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       builder.can(AbilityAction.Manage, TenantAuthZEntity);
     }
 
-    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
-      // builder.can(AbilityAction.Manage, TenantAuthZEntity);
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
+      builder.can(AbilityAction.Manage, TenantAuthZEntity, {
+        _id: this.session.user.tenantId,
+      });
     }
 
     return builder.build({
