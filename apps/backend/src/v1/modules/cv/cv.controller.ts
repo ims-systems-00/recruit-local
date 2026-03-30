@@ -1,25 +1,33 @@
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
-import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
-import { AbilityAction, ACCOUNT_TYPE_ENUMS } from "@rl/types";
+import { CvAbilityBuilder, CvAuthZEntity } from "@rl/authz";
+import { AbilityAction } from "@rl/types";
 import * as cvService from "./cv.service";
+import { cvRoleScopedSecurityQuery } from "./cv.query";
 
 export const list = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new CvAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  if (!ability.can(AbilityAction.Read, CvAuthZEntity)) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read CVs.`);
+  }
+
   const filter = new MongoQuery(req.query, {
     searchFields: ["title", "summary", "skills"],
   }).build();
 
-  const query = filter.getFilterQuery();
+  const userSearchQuery = filter.getFilterQuery();
   const options = filter.getQueryOptions();
 
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Read, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} cvs.`
-  //     );
+  const securityQuery = cvRoleScopedSecurityQuery(ability);
 
-  const results = await cvService.list({ query, options });
+  const finalQuery = {
+    $and: [userSearchQuery, securityQuery],
+  };
+
+  const results = await cvService.list({ query: finalQuery, options });
   const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
@@ -32,13 +40,14 @@ export const list = async ({ req }: ControllerParams) => {
 };
 
 export const get = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new CvAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
   const cv = await cvService.getOne({ query: { _id: req.params.id } });
 
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Read, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Read} cv.`
-  //     );
+  if (!cv || !ability.can(AbilityAction.Read, new CvAuthZEntity(cv))) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read this CV.`);
+  }
 
   return new ApiResponse({
     message: "CV retrieved.",
@@ -49,11 +58,15 @@ export const get = async ({ req }: ControllerParams) => {
 };
 
 export const update = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Update, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Update} cv.`
-  //     );
+  const abilityBuilder = new CvAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  // Fetch the existing CV first to check ownership properties
+  const existingCv = await cvService.getOne({ query: { _id: req.params.id } });
+
+  if (!existingCv || !ability.can(AbilityAction.Update, new CvAuthZEntity(existingCv))) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to update this CV.`);
+  }
 
   const cv = await cvService.update({
     query: { _id: req.params.id },
@@ -69,11 +82,12 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const create = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Create, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} cv.`
-  //     );
+  const abilityBuilder = new CvAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  if (!ability.can(AbilityAction.Create, CvAuthZEntity)) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create a CV.`);
+  }
 
   const userId = req.session.user?._id;
 
@@ -91,13 +105,15 @@ export const create = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Delete, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} cv.`
-  //     );
+  const abilityBuilder = new CvAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
 
-  // Updated: Renamed from softRemove to softDelete
+  const existingCv = await cvService.getOne({ query: { _id: req.params.id } });
+
+  if (!existingCv || !ability.can(AbilityAction.Delete, new CvAuthZEntity(existingCv))) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to delete this CV.`);
+  }
+
   await cvService.softDelete({ query: { _id: req.params.id } });
 
   return new ApiResponse({
@@ -107,11 +123,16 @@ export const softRemove = async ({ req }: ControllerParams) => {
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Restore, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Restore} cv.`
-  //     );
+  const abilityBuilder = new CvAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  // Must fetch from trash to perform the ownership check!
+  const existingCv = await cvService.getOneSoftDeleted({ query: { _id: req.params.id } });
+
+  // Note: Using AbilityAction.Update for restore based on standard CASL patterns (or AbilityAction.Restore if you have it in your enum)
+  if (!existingCv || !ability.can(AbilityAction.Update, new CvAuthZEntity(existingCv))) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to restore this CV.`);
+  }
 
   await cvService.restore({ query: { _id: req.params.id } });
 
@@ -122,13 +143,15 @@ export const restore = async ({ req }: ControllerParams) => {
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.ForceDelete, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.ForceDelete} cv.`
-  //     );
+  const abilityBuilder = new CvAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
 
-  // Updated: Renamed from hardRemove to hardDelete
+  const existingCv = await cvService.getOneSoftDeleted({ query: { _id: req.params.id } });
+
+  if (!existingCv || !ability.can(AbilityAction.Delete, new CvAuthZEntity(existingCv))) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to permanently delete this CV.`);
+  }
+
   await cvService.hardDelete({ query: { _id: req.params.id } });
 
   return new ApiResponse({

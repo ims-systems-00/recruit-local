@@ -6,7 +6,7 @@ import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { IBaseDoc } from "./interfaces/base.interface";
-import { IExperience, IEducation, ISkill, IInterest } from "@rl/types";
+import { IExperience, IEducation, ISkill, IInterest, CV_STATUS_ENUM } from "@rl/types";
 
 export interface CVInput extends IUserOwnedInput, JobProfileInput {
   title: string;
@@ -22,7 +22,7 @@ export interface CVInput extends IUserOwnedInput, JobProfileInput {
   address?: string;
   templateId?: string;
   colorProfile?: string;
-  statusId: Schema.Types.ObjectId;
+  status: CV_STATUS_ENUM;
 }
 
 export interface ICVDoc extends CVInput, ISoftDeleteDoc, IBaseDoc {
@@ -91,10 +91,7 @@ const cvSchema = new Schema<ICVDoc>(
     address: { type: String },
     templateId: { type: String },
     colorProfile: { type: String },
-    statusId: {
-      type: Schema.Types.ObjectId,
-      ref: modelNames.STATUS,
-    },
+    status: { type: String, enum: Object.values(CV_STATUS_ENUM) },
   },
   {
     timestamps: true,

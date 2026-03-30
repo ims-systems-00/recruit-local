@@ -5,7 +5,6 @@ import { cvProjectQuery } from "./cv.query";
 import { NotFoundException } from "../../../common/helper";
 import { CV, CVInput } from "../../../models/cv.model";
 import { IListParams, ListQueryParams } from "@rl/types";
-import * as StatusService from "../status/status.service";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { VISIBILITY_ENUM } from "@rl/types";
@@ -66,9 +65,6 @@ export const getOneSoftDeleted = async ({ query = {} }: ICVGetParams) => {
 };
 
 export const create = async ({ payload }: ICVCreateParams) => {
-  const status = await StatusService.getOne({ query: { default: true, collectionName: modelNames.CV } });
-  if (!status) throw new NotFoundException("Status not found for the CV.");
-
   // 1. Pre-generate the CV ID
   const cvId = new Types.ObjectId();
   let imageId = null;
@@ -86,7 +82,6 @@ export const create = async ({ payload }: ICVCreateParams) => {
     imageId = fileMedia._id;
   }
 
-  // 3. Strip raw AWS data and save the clean payload
   const { imageStorage, ...cleanPayload } = payload;
 
   let cv = new CV({
@@ -102,16 +97,6 @@ export const create = async ({ payload }: ICVCreateParams) => {
 export const update = async ({ query, payload }: ICVUpdateParams) => {
   const sanitizedQuery = sanitizeQueryIds(query);
 
-  if (payload.statusId) {
-    const status = await StatusService.getOne({ query: { _id: payload.statusId.toString() } });
-    if (!status) throw new NotFoundException("Status not found for the CV.");
-
-    if (status.collectionName !== modelNames.CV) {
-      throw new NotFoundException("Invalid status for the CV.");
-    }
-  }
-
-  // 1. Fetch the existing CV to see if it already has an image attached
   const cv = await getOne({ query: sanitizedQuery });
   let updatedImageId = cv.imageId;
 
