@@ -4,14 +4,21 @@ import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedExceptio
 import * as jobProfileService from "./job-profile.service";
 import { updateUser } from "../user";
 import { Schema } from "mongoose";
-import { JobProfileAbilityBuilder, JobProfileAuthZEntity } from "@rl/authz";
+import { JobProfileAbilityBuilder, JobProfileAuthZEntity, ALL_JOB_PROFILE_FIELDS } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import { jobProfileRoleScopedSecurityQuery } from "./job-profile.query";
+import { permittedFieldsOf } from "@casl/ability/extra";
+import pick from "lodash/pick";
+import { IJobProfileDoc } from "../../../models";
+
+// Defines the options for CASL to extract permitted fields.
+const caslFieldOptions = { fieldsFrom: (rule) => rule.fields || ALL_JOB_PROFILE_FIELDS };
 
 export const list = async ({ req }: ControllerParams) => {
   const abilityBuilder = new JobProfileAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
+  // Broad Check: Can this user read job profiles in general?
   if (!ability.can(AbilityAction.Read, JobProfileAuthZEntity)) {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read job profiles.`);
   }
@@ -23,6 +30,7 @@ export const list = async ({ req }: ControllerParams) => {
   const userSearchQuery = filter.getFilterQuery();
   const options = filter.getQueryOptions();
 
+  // Apply row-level security: only fetch profiles this user is allowed to see (e.g., only verified profiles for employers)
   const securityQuery = jobProfileRoleScopedSecurityQuery(ability);
 
   const finalQuery = {
@@ -32,10 +40,21 @@ export const list = async ({ req }: ControllerParams) => {
   const results = await jobProfileService.list({ query: finalQuery, options });
   const { data, pagination } = formatListResponse(results);
 
+  //  Field-Level Security (Sanitization)
+  // Iterate over each document and strip out fields the user isn't allowed to see (like kycDocumentId for Employers)
+  const safeData = data.map((profile: IJobProfileDoc) => {
+    const authZEntity = new JobProfileAuthZEntity({
+      _id: profile._id.toString(),
+      status: profile.status,
+    });
+    const allowedFields = permittedFieldsOf(ability, AbilityAction.Read, authZEntity, caslFieldOptions);
+    return pick(profile.toJSON ? profile.toJSON() : profile, allowedFields);
+  });
+
   return new ApiResponse({
     message: "Job Profiles retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: safeData,
     fieldName: "jobProfiles",
     pagination,
   });
@@ -49,14 +68,25 @@ export const getOne = async ({ req }: ControllerParams) => {
     query: { _id: req.params.id },
   });
 
-  if (!jobProfile || !ability.can(AbilityAction.Read, new JobProfileAuthZEntity(jobProfile))) {
+  //  Instance Check: Does the user have permission to view THIS specific job profile?
+  const authZEntity = new JobProfileAuthZEntity({
+    _id: jobProfile?._id.toString() ?? null,
+    status: jobProfile?.status,
+  });
+  if (!jobProfile || !ability.can(AbilityAction.Read, authZEntity)) {
     throw new UnauthorizedException("You do not have permission to view this job profile.");
   }
+
+  // Field-Level Security: Get the array of fields this user is allowed to read on this specific profile
+  const allowedFields = permittedFieldsOf(ability, AbilityAction.Read, authZEntity, caslFieldOptions);
+
+  // Convert Mongoose doc to plain JSON, then pick only the allowed fields
+  const safeJobProfile = pick(jobProfile.toJSON(), allowedFields);
 
   return new ApiResponse({
     message: "Job Profile retrieved.",
     statusCode: StatusCodes.OK,
-    data: jobProfile,
+    data: safeJobProfile,
     fieldName: "jobProfile",
   });
 };
@@ -65,6 +95,7 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
   const abilityBuilder = new JobProfileAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
+  //  Broad Check: Can this user read deleted job profiles? (Typically only Admins)
   if (!ability.can(AbilityAction.Read, JobProfileAuthZEntity)) {
     throw new UnauthorizedException("You are not authorized to read deleted job profiles.");
   }
@@ -85,10 +116,20 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
   const results = await jobProfileService.listSoftDeleted({ query: finalQuery, options });
   const { data, pagination } = formatListResponse(results);
 
+  //  Field-Level Security (Sanitization) for deleted items
+  const safeData = data.map((profile: IJobProfileDoc) => {
+    const authZEntity = new JobProfileAuthZEntity({
+      _id: profile._id.toString(),
+      status: profile.status,
+    });
+    const allowedFields = permittedFieldsOf(ability, AbilityAction.Read, authZEntity, caslFieldOptions);
+    return pick(profile.toJSON ? profile.toJSON() : profile, allowedFields);
+  });
+
   return new ApiResponse({
     message: "Soft deleted job profiles retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: safeData,
     fieldName: "jobProfiles",
     pagination,
   });
@@ -102,14 +143,23 @@ export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
     query: { _id: req.params.id },
   });
 
-  if (!jobProfile || !ability.can(AbilityAction.Read, new JobProfileAuthZEntity(jobProfile))) {
+  //  Instance Check: Can the user view this specific deleted profile?
+  const authZEntity = new JobProfileAuthZEntity({
+    _id: jobProfile?._id.toString() ?? null,
+    status: jobProfile?.status,
+  });
+  if (!jobProfile || !ability.can(AbilityAction.Read, authZEntity)) {
     throw new UnauthorizedException("You do not have permission to view this deleted job profile.");
   }
+
+  //  Field-Level Security: Ensure we don't leak restricted fields even on deleted documents
+  const allowedFields = permittedFieldsOf(ability, AbilityAction.Read, authZEntity, caslFieldOptions);
+  const safeJobProfile = pick(jobProfile.toJSON(), allowedFields);
 
   return new ApiResponse({
     message: "Deleted job profile retrieved.",
     statusCode: StatusCodes.OK,
-    data: jobProfile,
+    data: safeJobProfile,
     fieldName: "jobProfile",
   });
 };
@@ -123,7 +173,17 @@ export const update = async ({ req }: ControllerParams) => {
     query: { _id: req.params.id },
   });
 
-  if (!existingJobProfile || !ability.can(AbilityAction.Update, new JobProfileAuthZEntity(existingJobProfile))) {
+  // Instance Check: Is the user allowed to update this specific profile? (E.g., Are they the owner?)
+  if (
+    !existingJobProfile ||
+    !ability.can(
+      AbilityAction.Update,
+      new JobProfileAuthZEntity({
+        _id: existingJobProfile._id.toString(),
+        status: existingJobProfile.status,
+      })
+    )
+  ) {
     throw new UnauthorizedException("User is not authorized to update this job profile.");
   }
 
@@ -144,6 +204,7 @@ export const create = async ({ req }: ControllerParams) => {
   const abilityBuilder = new JobProfileAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
+  // Broad Check: Is the user role allowed to create a job profile?
   if (!ability.can(AbilityAction.Create, JobProfileAuthZEntity)) {
     throw new UnauthorizedException("You are not authorized to create a job profile.");
   }
@@ -151,7 +212,7 @@ export const create = async ({ req }: ControllerParams) => {
   const userId = req.session.user?._id;
   req.body.userId = userId;
 
-  // check if user already has a job profile
+  // Check if user already has a job profile
   if (req.session.jobProfileId) {
     return new ApiResponse({
       message: "User already has a job profile.",
@@ -183,7 +244,17 @@ export const softRemove = async ({ req }: ControllerParams) => {
     query: { _id: req.params.id },
   });
 
-  if (!existingJobProfile || !ability.can(AbilityAction.Delete, new JobProfileAuthZEntity(existingJobProfile))) {
+  // Instance Check: Is the user allowed to delete this specific profile?
+  if (
+    !existingJobProfile ||
+    !ability.can(
+      AbilityAction.Delete,
+      new JobProfileAuthZEntity({
+        _id: existingJobProfile._id.toString(),
+        status: existingJobProfile.status,
+      })
+    )
+  ) {
     throw new UnauthorizedException("You do not have permission to move this job profile to trash.");
   }
 
@@ -208,7 +279,17 @@ export const hardRemove = async ({ req }: ControllerParams) => {
     query: { _id: req.params.id },
   });
 
-  if (!existingJobProfile || !ability.can(AbilityAction.Delete, new JobProfileAuthZEntity(existingJobProfile))) {
+  // Instance Check: Is the user allowed to permanently delete this?
+  if (
+    !existingJobProfile ||
+    !ability.can(
+      AbilityAction.Delete,
+      new JobProfileAuthZEntity({
+        _id: existingJobProfile._id.toString(),
+        status: existingJobProfile.status,
+      })
+    )
+  ) {
     throw new UnauthorizedException("You do not have permission to permanently delete this job profile.");
   }
 
@@ -232,7 +313,17 @@ export const restore = async ({ req }: ControllerParams) => {
     query: { _id: req.params.id },
   });
 
-  if (!existingJobProfile || !ability.can(AbilityAction.Update, new JobProfileAuthZEntity(existingJobProfile))) {
+  // Instance Check: Is the user allowed to restore this profile? (Typically requires Update permissions)
+  if (
+    !existingJobProfile ||
+    !ability.can(
+      AbilityAction.Update,
+      new JobProfileAuthZEntity({
+        _id: existingJobProfile._id.toString(),
+        status: existingJobProfile.status,
+      })
+    )
+  ) {
     throw new UnauthorizedException("You do not have permission to restore this job profile.");
   }
 

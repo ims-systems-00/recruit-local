@@ -16,6 +16,24 @@ import {
   JOB_PROFILE_STATUS_ENUM,
 } from '@rl/types';
 
+export const ALL_JOB_PROFILE_FIELDS = [
+  '_id',
+  'userId',
+  'headline',
+  'summary',
+  'keywords',
+  'languages',
+  'visibility',
+  'status',
+  'kycDocumentId',
+  'createdAt',
+  'updatedAt',
+];
+
+const EMPLOYER_ALLOWED_FIELDS = ALL_JOB_PROFILE_FIELDS.filter(
+  (field) => field !== 'kycDocumentId',
+);
+
 export class JobProfileAuthZEntity {
   public readonly _id: string | null;
   public readonly status?: JOB_PROFILE_STATUS_ENUM;
@@ -59,9 +77,14 @@ export class JobProfileAbilityBuilder implements IAbilityBuilder {
     }
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
-      builder.can(AbilityAction.Manage, JobProfileAuthZEntity, {
-        status: JOB_PROFILE_STATUS_ENUM.VERIFIED,
-      });
+      builder.can(
+        AbilityAction.Read,
+        JobProfileAuthZEntity,
+        EMPLOYER_ALLOWED_FIELDS,
+        {
+          status: JOB_PROFILE_STATUS_ENUM.VERIFIED,
+        },
+      );
     }
 
     return builder.build({
