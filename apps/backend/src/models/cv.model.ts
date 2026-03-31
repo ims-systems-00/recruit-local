@@ -91,7 +91,7 @@ const cvSchema = new Schema<ICVDoc>(
     address: { type: String },
     templateId: { type: String },
     colorProfile: { type: String },
-    status: { type: String, enum: Object.values(CV_STATUS_ENUM) },
+    status: { type: String, enum: Object.values(CV_STATUS_ENUM), default: CV_STATUS_ENUM.DRAFT },
   },
   {
     timestamps: true,

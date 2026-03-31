@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateStatusQuery } from "../../../common/query";
+import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { cvProjectQuery } from "./cv.query";
 import { NotFoundException } from "../../../common/helper";
@@ -29,7 +29,7 @@ export interface ICVCreateParams {
 
 export const list = ({ query = {}, options }: IListCVParams) => {
   return CV.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...populateStatusQuery(), ...cvProjectQuery()],
+    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...cvProjectQuery()],
     options
   );
 };
@@ -38,7 +38,6 @@ export const getOne = async ({ query = {} }: ICVGetParams) => {
   const cvs = await CV.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
-    ...populateStatusQuery(),
     ...cvProjectQuery(),
   ]);
   if (cvs.length === 0) throw new NotFoundException("CV not found.");
@@ -47,19 +46,14 @@ export const getOne = async ({ query = {} }: ICVGetParams) => {
 
 export const listSoftDeleted = async ({ query = {}, options }: IListCVParams) => {
   const cvs = await CV.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...populateStatusQuery(), ...cvProjectQuery()],
+    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...cvProjectQuery()],
     options
   );
   return cvs;
 };
 
 export const getOneSoftDeleted = async ({ query = {} }: ICVGetParams) => {
-  const cvs = await CV.aggregate([
-    ...matchQuery(sanitizeQueryIds(query)),
-    ...onlyDeletedQuery(),
-    ...populateStatusQuery(),
-    ...cvProjectQuery(),
-  ]);
+  const cvs = await CV.aggregate([...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...cvProjectQuery()]);
   if (cvs.length === 0) throw new NotFoundException("CV not found in trash.");
   return cvs[0];
 };
@@ -148,13 +142,13 @@ export const update = async ({ query, payload }: ICVUpdateParams) => {
 export const softDelete = async ({ query }: ICVGetParams) => {
   const { deleted } = await CV.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("CV not found to delete.");
-  return { deleted };
+  const cv = await getOneSoftDeleted({ query: sanitizeQueryIds(query) });
+  return { cv };
 };
 
-// Renamed from hardRemove for consistency
 export const hardDelete = async ({ query }: ICVGetParams) => {
   const sanitizedQuery = sanitizeQueryIds(query);
-  const cv = await getOneSoftDeleted({ query: sanitizedQuery }); // Usually only hard delete from trash
+  const cv = await getOneSoftDeleted({ query: sanitizedQuery });
 
   // Delegate S3 deletion to the FileMediaService
   if (cv.imageId) {
@@ -169,11 +163,12 @@ export const hardDelete = async ({ query }: ICVGetParams) => {
 
   const deletedCV = await CV.findOneAndDelete({ _id: cv._id });
   if (!deletedCV) throw new NotFoundException("CV not found to delete.");
-  return deletedCV;
+  return { cv: deletedCV };
 };
 
 export const restore = async ({ query }: ICVGetParams) => {
   const { restored } = await CV.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("CV not found in trash.");
-  return { restored };
+  const cv = await getOne({ query: sanitizeQueryIds(query) });
+  return { cv };
 };

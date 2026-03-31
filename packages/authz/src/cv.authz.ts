@@ -52,12 +52,27 @@ export class CvAbilityBuilder implements IAbilityBuilder {
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
       builder.can(AbilityAction.Create, CvAuthZEntity);
-      builder.can(AbilityAction.Read, CvAuthZEntity);
+
+      // can read his own cvs.
+      builder.can(AbilityAction.Read, CvAuthZEntity, {
+        jobProfileId: this.session.jobProfileId,
+      });
+      // Can read anyone else's CVs ONLY IF they are published
+      builder.can(AbilityAction.Read, CvAuthZEntity, {
+        status: CV_STATUS_ENUM.PUBLISHED,
+      });
       builder.can(AbilityAction.Update, CvAuthZEntity, {
-        jobProfileId: this.session.tenantId,
+        jobProfileId: this.session.jobProfileId,
       });
       builder.can(AbilityAction.SoftDelete, CvAuthZEntity, {
-        jobProfileId: this.session.tenantId,
+        jobProfileId: this.session.jobProfileId,
+      });
+      builder.can(AbilityAction.Restore, CvAuthZEntity, {
+        jobProfileId: this.session.jobProfileId,
+      });
+
+      builder.can(AbilityAction.HardDelete, CvAuthZEntity, {
+        jobProfileId: this.session.jobProfileId,
       });
     }
 
