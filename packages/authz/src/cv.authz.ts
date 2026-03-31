@@ -13,21 +13,21 @@ import {
   ISession,
   IAbilityBuilder,
   AbilityAction,
-  JOBS_STATUS_ENUMS,
+  CV_STATUS_ENUM,
 } from '@rl/types';
 
 export class CvAuthZEntity {
   public readonly jobProfileId: string | null;
-  public readonly status: JOBS_STATUS_ENUMS; // todo - cv status
+  public readonly status: CV_STATUS_ENUM;
   constructor({
     jobProfileId,
     status,
   }: {
     jobProfileId?: string | null;
-    status?: JOBS_STATUS_ENUMS;
+    status?: CV_STATUS_ENUM;
   }) {
     this.jobProfileId = jobProfileId ?? null;
-    this.status = status ?? JOBS_STATUS_ENUMS.DRAFT;
+    this.status = status ?? CV_STATUS_ENUM.DRAFT;
   }
 }
 
@@ -50,20 +50,20 @@ export class CvAbilityBuilder implements IAbilityBuilder {
       builder.can(AbilityAction.Manage, CvAuthZEntity);
     }
 
-    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
       builder.can(AbilityAction.Create, CvAuthZEntity);
       builder.can(AbilityAction.Read, CvAuthZEntity);
       builder.can(AbilityAction.Update, CvAuthZEntity, {
-        jobProfileId: this.session.tenantId, // todo - change
+        jobProfileId: this.session.tenantId,
       });
       builder.can(AbilityAction.SoftDelete, CvAuthZEntity, {
-        jobProfileId: this.session.tenantId, // todo - change
+        jobProfileId: this.session.tenantId,
       });
     }
 
-    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
       builder.can(AbilityAction.Read, CvAuthZEntity, {
-        status: JOBS_STATUS_ENUMS.OPEN,
+        status: CV_STATUS_ENUM.PUBLISHED,
       });
     }
 
