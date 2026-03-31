@@ -3,7 +3,7 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { VISIBILITY, language } from "@rl/types";
+import { VISIBILITY, language, JOB_PROFILE_STATUS_ENUM } from "@rl/types";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { IBaseDoc } from "./interfaces/base.interface";
 
@@ -13,7 +13,7 @@ export interface JobProfileInput extends IUserOwnedInput {
   keywords?: string[];
   languages?: language[];
   kycDocumentId?: Types.ObjectId;
-  statusId: Types.ObjectId;
+  status: JOB_PROFILE_STATUS_ENUM;
 }
 
 export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, IBaseDoc {
@@ -56,9 +56,10 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       enum: Object.values(VISIBILITY),
       default: VISIBILITY.PRIVATE,
     },
-    statusId: {
-      type: Schema.Types.ObjectId,
-      ref: modelNames.STATUS,
+    status: {
+      type: String,
+      enum: Object.values(JOB_PROFILE_STATUS_ENUM),
+      default: JOB_PROFILE_STATUS_ENUM.UNVERIFIED,
     },
     kycDocumentId: {
       type: Schema.Types.ObjectId,
