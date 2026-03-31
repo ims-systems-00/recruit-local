@@ -110,15 +110,17 @@ export const softRemove = async ({ req }: ControllerParams) => {
 
   const existingCv = await cvService.getOne({ query: { _id: req.params.id } });
 
-  if (!existingCv || !ability.can(AbilityAction.Delete, new CvAuthZEntity(existingCv))) {
+  if (!existingCv || !ability.can(AbilityAction.SoftDelete, new CvAuthZEntity(existingCv))) {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to delete this CV.`);
   }
 
-  await cvService.softDelete({ query: { _id: req.params.id } });
+  const { cv } = await cvService.softDelete({ query: { _id: req.params.id } });
 
   return new ApiResponse({
     message: "CV removed successfully.",
     statusCode: StatusCodes.OK,
+    data: { cv },
+    fieldName: "cv",
   });
 };
 
@@ -129,16 +131,17 @@ export const restore = async ({ req }: ControllerParams) => {
   // Must fetch from trash to perform the ownership check!
   const existingCv = await cvService.getOneSoftDeleted({ query: { _id: req.params.id } });
 
-  // Note: Using AbilityAction.Update for restore based on standard CASL patterns (or AbilityAction.Restore if you have it in your enum)
-  if (!existingCv || !ability.can(AbilityAction.Update, new CvAuthZEntity(existingCv))) {
+  if (!existingCv || !ability.can(AbilityAction.Restore, new CvAuthZEntity(existingCv))) {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to restore this CV.`);
   }
 
-  await cvService.restore({ query: { _id: req.params.id } });
+  const { cv } = await cvService.restore({ query: { _id: req.params.id } });
 
   return new ApiResponse({
     message: "CV restored successfully.",
     statusCode: StatusCodes.OK,
+    data: { cv },
+    fieldName: "cv",
   });
 };
 
@@ -148,14 +151,16 @@ export const hardRemove = async ({ req }: ControllerParams) => {
 
   const existingCv = await cvService.getOneSoftDeleted({ query: { _id: req.params.id } });
 
-  if (!existingCv || !ability.can(AbilityAction.Delete, new CvAuthZEntity(existingCv))) {
+  if (!existingCv || !ability.can(AbilityAction.HardDelete, new CvAuthZEntity(existingCv))) {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to permanently delete this CV.`);
   }
 
-  await cvService.hardDelete({ query: { _id: req.params.id } });
+  const { cv } = await cvService.hardDelete({ query: { _id: req.params.id } });
 
   return new ApiResponse({
     message: "CV deleted permanently.",
     statusCode: StatusCodes.OK,
+    data: { cv },
+    fieldName: "cv",
   });
 };
