@@ -46,6 +46,7 @@ export const list = async ({ req }: ControllerParams) => {
     const authZEntity = new JobProfileAuthZEntity({
       _id: profile._id.toString(),
       status: profile.status,
+      visibility: profile.visibility,
     });
     const allowedFields = permittedFieldsOf(ability, AbilityAction.Read, authZEntity, caslFieldOptions);
     return pick(profile.toJSON ? profile.toJSON() : profile, allowedFields);
@@ -68,10 +69,10 @@ export const getOne = async ({ req }: ControllerParams) => {
     query: { _id: req.params.id },
   });
 
-  //  Instance Check: Does the user have permission to view THIS specific job profile?
   const authZEntity = new JobProfileAuthZEntity({
     _id: jobProfile?._id.toString() ?? null,
     status: jobProfile?.status,
+    visibility: jobProfile?.visibility,
   });
   if (!jobProfile || !ability.can(AbilityAction.Read, authZEntity)) {
     throw new UnauthorizedException("You do not have permission to view this job profile.");
@@ -121,6 +122,7 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
     const authZEntity = new JobProfileAuthZEntity({
       _id: profile._id.toString(),
       status: profile.status,
+      visibility: profile.visibility,
     });
     const allowedFields = permittedFieldsOf(ability, AbilityAction.Read, authZEntity, caslFieldOptions);
     return pick(profile.toJSON ? profile.toJSON() : profile, allowedFields);
@@ -143,10 +145,10 @@ export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
     query: { _id: req.params.id },
   });
 
-  //  Instance Check: Can the user view this specific deleted profile?
   const authZEntity = new JobProfileAuthZEntity({
     _id: jobProfile?._id.toString() ?? null,
     status: jobProfile?.status,
+    visibility: jobProfile?.visibility,
   });
   if (!jobProfile || !ability.can(AbilityAction.Read, authZEntity)) {
     throw new UnauthorizedException("You do not have permission to view this deleted job profile.");
@@ -181,6 +183,7 @@ export const update = async ({ req }: ControllerParams) => {
       new JobProfileAuthZEntity({
         _id: existingJobProfile._id.toString(),
         status: existingJobProfile.status,
+        visibility: existingJobProfile.visibility,
       })
     )
   ) {
@@ -252,6 +255,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
       new JobProfileAuthZEntity({
         _id: existingJobProfile._id.toString(),
         status: existingJobProfile.status,
+        visibility: existingJobProfile.visibility,
       })
     )
   ) {
@@ -287,6 +291,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
       new JobProfileAuthZEntity({
         _id: existingJobProfile._id.toString(),
         status: existingJobProfile.status,
+        visibility: existingJobProfile.visibility,
       })
     )
   ) {
@@ -321,6 +326,7 @@ export const restore = async ({ req }: ControllerParams) => {
       new JobProfileAuthZEntity({
         _id: existingJobProfile._id.toString(),
         status: existingJobProfile.status,
+        visibility: existingJobProfile.visibility,
       })
     )
   ) {

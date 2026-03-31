@@ -6,6 +6,7 @@ import {
   PureAbility,
   buildMongoQueryMatcher,
   MongoQuery,
+  fieldPatternMatcher,
 } from '@casl/ability';
 
 import {
@@ -14,6 +15,7 @@ import {
   IAbilityBuilder,
   AbilityAction,
   JOB_PROFILE_STATUS_ENUM,
+  VISIBILITY,
 } from '@rl/types';
 
 export const ALL_JOB_PROFILE_FIELDS = [
@@ -30,22 +32,28 @@ export const ALL_JOB_PROFILE_FIELDS = [
   'updatedAt',
 ];
 
+const EMPLOYER_EXCLUDED_FIELDS = ['kycDocumentId', 'status', 'visibility'];
+
 const EMPLOYER_ALLOWED_FIELDS = ALL_JOB_PROFILE_FIELDS.filter(
-  (field) => field !== 'kycDocumentId',
+  (field) => !EMPLOYER_EXCLUDED_FIELDS.includes(field),
 );
 
 export class JobProfileAuthZEntity {
   public readonly _id: string | null;
   public readonly status?: JOB_PROFILE_STATUS_ENUM;
+  public visibility?: VISIBILITY;
   constructor({
     _id,
     status,
+    visibility,
   }: {
     _id: string | null;
     status?: JOB_PROFILE_STATUS_ENUM;
+    visibility?: VISIBILITY;
   }) {
     this._id = _id ?? null;
     this.status = status;
+    this.visibility = visibility;
   }
 }
 
@@ -83,12 +91,14 @@ export class JobProfileAbilityBuilder implements IAbilityBuilder {
         EMPLOYER_ALLOWED_FIELDS,
         {
           status: JOB_PROFILE_STATUS_ENUM.VERIFIED,
+          visibility: VISIBILITY.PUBLIC,
         },
       );
     }
 
     return builder.build({
       conditionsMatcher: buildMongoQueryMatcher(),
+      fieldMatcher: fieldPatternMatcher,
     });
   }
 }
