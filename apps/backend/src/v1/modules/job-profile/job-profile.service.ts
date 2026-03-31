@@ -5,7 +5,6 @@ import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateStatusQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobProfileProjectQuery } from "./job-profile.query";
-import * as StatusService from "../status/status.service";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
@@ -75,16 +74,6 @@ export const getOneSoftDeleted = async ({ query = {} }: IJobProfileGetParams) =>
 };
 
 export const create = async ({ payload }: IJobProfileCreateParams) => {
-  const statusExists = await StatusService.getOne({
-    query: { collectionName: modelNames.JOB_PROFILE, default: true },
-  });
-
-  if (!statusExists) {
-    throw new NotFoundException("Default 'unverified' status not found.");
-  }
-
-  payload.statusId = new Types.ObjectId(statusExists._id.toString());
-
   const jobProfileId = new Types.ObjectId();
   let kycDocumentId = null;
   if (payload.kycDocumentStorage) {
@@ -113,14 +102,6 @@ export const create = async ({ payload }: IJobProfileCreateParams) => {
 
 export const update = async ({ query, payload }: IJobProfileUpdateParams) => {
   const sanitizedQuery = sanitizeQueryIds(query);
-
-  if (payload.statusId) {
-    const statusExists = await StatusService.getOne({
-      query: { _id: payload.statusId.toString(), collectionName: modelNames.JOB_PROFILE },
-    });
-    if (!statusExists) throw new NotFoundException("Status not found.");
-    payload.statusId = new Types.ObjectId(statusExists._id.toString());
-  }
 
   const jobProfile = await getOne({ query: sanitizedQuery });
   let updatedKycDocumentId = jobProfile.kycDocumentId;
