@@ -11,6 +11,8 @@ import React, { useState } from 'react';
 import ApplicantsChart from './applicants-chart';
 import HiringChart from './hiring-chart';
 import ExperienceChart from './experience-chart';
+import DefaultImgForJobOverview from '@/public/images/DefaultImgForJobOverview.png';
+import Image from 'next/image';
 
 export default function Overview() {
   const [isMonthView, setIsMonthView] = useState(false);
@@ -147,14 +149,36 @@ export default function Overview() {
         <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs p-spacing-4xl space-y-spacing-4xl">
           <div className=" flex items-center justify-between gap-spacing-3xl">
             <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-              Applications
+              New Applicants this Week
             </h4>
-            <span>
-              <EllipsisVertical className="w-5 h-5 text-text-gray-primary" />
-            </span>
           </div>
-          <div>
-            <ApplicantsChart />
+          <div className=" space-y-spacing-2xl">
+            <p className=" text-label-sm font-label-sm-strong! text-text-gray-primary">
+              Candidates
+            </p>
+            <div className=" space-y-spacing-2xl max-h-[265px] overflow-y-auto">
+              {[1, 2, 3, 4, 5].map((item) => (
+                <div key={item} className=" flex items-center justify-between">
+                  <div className=" flex items-center gap-spacing-lg">
+                    <div className=" min-w-10">
+                      <Image
+                        className="max-h-10 max-w-10 w-10 h-10 rounded-full "
+                        alt="Logo"
+                        src={DefaultImgForJobOverview}
+                        width={40}
+                        height={40}
+                      />
+                    </div>
+                    <p className=" text-label-sm font-label-sm-strong! text-text-gray-primary">
+                      Helena Sia
+                    </p>
+                  </div>
+                  <span className=" text-label-xs font-label-xs-strong! text-text-gray-secondary">
+                    View More
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
