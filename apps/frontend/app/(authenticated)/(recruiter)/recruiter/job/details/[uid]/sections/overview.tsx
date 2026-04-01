@@ -19,7 +19,9 @@ export default function Overview() {
   return (
     <div className=" space-y-spacing-4xl">
       <div className=" flex justify-between items-center">
-        <p className=" text-label-lg text-text-gray-secondary">Overview</p>
+        <p className=" text-label-xl font-label-xl-strong! text-text-gray-secondary">
+          Overview
+        </p>
         <div className=" border border-border-gray-primary bg-bg-gray-soft-primary overflow-hidden rounded-lg h-10 flex items-center divide-x divide-border-gray-primary">
           <span
             onClick={() => setIsMonthView(false)}

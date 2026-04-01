@@ -22,7 +22,7 @@ export default function RecruiterLayout({
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className=" min-w-0">
         <div className="flex flex-1 flex-col gap-spacing-4xl">{children}</div>
       </SidebarInset>
     </SidebarProvider>

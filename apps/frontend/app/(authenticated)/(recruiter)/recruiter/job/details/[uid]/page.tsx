@@ -10,6 +10,7 @@ import {
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Overview from './sections/overview';
+import Applicants from './sections/applicants';
 const tabs = [
   {
     value: 'overview',
@@ -24,7 +25,7 @@ const tabs = [
   {
     value: 'applicants',
     label: 'Applicants',
-    component: <p>applicants</p>,
+    component: <Applicants />,
   },
 
   {
@@ -60,7 +61,7 @@ export default function JobDetailsPage() {
 
       <div className=" p-spacing-4xl space-y-spacing-4xl">
         <div className=" space-y-spacing-2xs">
-          <h3 className=" text-body-lg font-body-lg-strong! text-text-gray-primary">
+          <h3 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
             UI/UX Designer Wanted – Join Our Creative Team!
           </h3>
           <p className=" capitalize text-label-sm text-text-gray-tertiary">
