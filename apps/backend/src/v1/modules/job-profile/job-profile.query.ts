@@ -11,10 +11,15 @@ export const jobProfileRoleScopedSecurityQuery = (ability: ReturnType<JobProfile
   return query;
 };
 
-export const jobProfileProjectQuery = (): PipelineStage[] => {
-  const fieldsToExclude: (keyof IJobProfileDoc | "__v")[] = ["__v"];
-  const selectedFields = Object.keys(omit(JobProfile.schema.paths, fieldsToExclude));
-  selectedFields.push("status");
+export const jobProfileProjectQuery = (allowedFields?: string[]): PipelineStage[] => {
+  let selectedFields: string[] = [];
 
+  // If allowedFields are provided and not empty, use them
+  if (allowedFields && allowedFields.length > 0) {
+    selectedFields = [...allowedFields];
+  } else {
+    const fieldsToExclude: (keyof IJobProfileDoc | "__v")[] = ["__v"];
+    selectedFields = Object.keys(omit(JobProfile.schema.paths, fieldsToExclude));
+  }
   return projectQuery(selectedFields);
 };

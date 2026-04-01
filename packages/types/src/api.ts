@@ -12,4 +12,5 @@ export type ListQueryParams<T> = FilterQuery<T> & {
 export interface IListParams<T> {
   query: ListQueryParams<T>;
   options?: IOptions;
+  allowedFields?: string[];
 }
