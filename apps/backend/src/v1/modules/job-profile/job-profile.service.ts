@@ -1,67 +1,54 @@
 import { Types } from "mongoose";
-import { IListParams, ListQueryParams, VISIBILITY_ENUM } from "@rl/types";
-import { JobProfile, JobProfileInput } from "../../../models";
+import { VISIBILITY_ENUM } from "@rl/types";
+import { JobProfile } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobProfileProjectQuery } from "./job-profile.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
-import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
+import {
+  IJobProfileCreateParams,
+  IJobProfileGetParams,
+  IJobProfileUpdateParams,
+  IListJobProfileParams,
+} from "./job-profile.interface";
 
-// --- Standardized Parameter Interfaces ---
-type IListJobProfileParams = IListParams<JobProfileInput>;
-type IJobProfileQueryParams = ListQueryParams<JobProfileInput>;
-
-export interface IJobProfileUpdateParams {
-  query: IJobProfileQueryParams;
-  payload: Partial<JobProfileInput> & { kycDocumentStorage?: AwsStorageTemplate };
-}
-
-export interface IJobProfileGetParams {
-  query: IJobProfileQueryParams;
-}
-
-export interface IJobProfileCreateParams {
-  payload: JobProfileInput & { kycDocumentStorage?: AwsStorageTemplate };
-}
-// -----------------------------------------
-
-export const list = ({ query = {}, options }: IListJobProfileParams) => {
+export const list = ({ query = {}, options, allowedFields }: IListJobProfileParams) => {
   return JobProfile.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...jobProfileProjectQuery()],
+    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...jobProfileProjectQuery(allowedFields)],
     options
   );
 };
 
-export const getOne = async ({ query = {} }: IJobProfileGetParams) => {
+export const getOne = async ({ query = {}, allowedFields }: IJobProfileGetParams) => {
   const jobProfiles = await JobProfile.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
-    ...jobProfileProjectQuery(),
+    ...jobProfileProjectQuery(allowedFields),
   ]);
   if (jobProfiles.length === 0) throw new NotFoundException("Job Profile not found.");
   return jobProfiles[0];
 };
 
-export const listSoftDeleted = async ({ query = {}, options }: IListJobProfileParams) => {
+export const listSoftDeleted = async ({ query = {}, options, allowedFields }: IListJobProfileParams) => {
   return JobProfile.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...jobProfileProjectQuery()],
+    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...jobProfileProjectQuery(allowedFields)],
     options
   );
 };
 
-export const getOneSoftDeleted = async ({ query = {} }: IJobProfileGetParams) => {
+export const getOneSoftDeleted = async ({ query = {}, allowedFields }: IJobProfileGetParams) => {
   const jobProfiles = await JobProfile.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
-    ...jobProfileProjectQuery(),
+    ...jobProfileProjectQuery(allowedFields),
   ]);
   if (jobProfiles.length === 0) throw new NotFoundException("Job Profile not found in trash.");
   return jobProfiles[0];
 };
 
-export const create = async ({ payload }: IJobProfileCreateParams) => {
+export const create = async ({ payload, allowedFields }: IJobProfileCreateParams) => {
   const jobProfileId = new Types.ObjectId();
   let kycDocumentId = null;
   if (payload.kycDocumentStorage) {
@@ -78,17 +65,21 @@ export const create = async ({ payload }: IJobProfileCreateParams) => {
 
   const { kycDocumentStorage, ...cleanPayload } = payload;
 
-  let jobProfile = new JobProfile({
+  const jobProfile = new JobProfile({
     ...cleanPayload,
     _id: jobProfileId,
     kycDocumentId: kycDocumentId,
   });
 
-  jobProfile = await jobProfile.save();
-  return jobProfile;
+  await jobProfile.save();
+
+  return getOne({
+    query: { _id: jobProfileId } as any,
+    allowedFields,
+  });
 };
 
-export const update = async ({ query, payload }: IJobProfileUpdateParams) => {
+export const update = async ({ query, payload, allowedFields }: IJobProfileUpdateParams) => {
   const sanitizedQuery = sanitizeQueryIds(query);
 
   const jobProfile = await getOne({ query: sanitizedQuery });
@@ -106,7 +97,6 @@ export const update = async ({ query, payload }: IJobProfileUpdateParams) => {
 
     updatedKycDocumentId = newFileMedia._id;
 
-    // Hard delete old KYC document to ensure it's removed from S3
     if (jobProfile.kycDocumentId) {
       try {
         await FileMediaService.hardDelete({ query: { _id: jobProfile.kycDocumentId.toString() } });
@@ -126,25 +116,31 @@ export const update = async ({ query, payload }: IJobProfileUpdateParams) => {
         kycDocumentId: updatedKycDocumentId,
       },
     },
-    { new: true }
+    {
+      new: true,
+      select: allowedFields, // Mongoose native projection
+    }
   );
 
   if (!updatedJobProfile) throw new NotFoundException("Job Profile not found.");
   return updatedJobProfile;
 };
 
-export const softDelete = async ({ query }: IJobProfileGetParams) => {
+export const softDelete = async ({ query, allowedFields }: IJobProfileGetParams) => {
   const { deleted } = await JobProfile.softDelete(sanitizeQueryIds(query));
-  const jobProfile = await getOneSoftDeleted({ query: sanitizeQueryIds(query) });
+
+  // Return sanitized document using allowedFields
+  const jobProfile = await getOneSoftDeleted({ query: sanitizeQueryIds(query), allowedFields });
   if (!deleted) throw new NotFoundException("Job Profile not found to delete.");
   return jobProfile;
 };
 
-export const hardDelete = async ({ query }: IJobProfileGetParams) => {
+export const hardDelete = async ({ query, allowedFields }: IJobProfileGetParams) => {
   const sanitizedQuery = sanitizeQueryIds(query);
-  const jobProfile = await getOneSoftDeleted({ query: sanitizedQuery });
 
-  // Delegate S3 deletion securely to FileMediaService
+  // Fetch sanitized document before deleting it
+  const jobProfile = await getOneSoftDeleted({ query: sanitizedQuery, allowedFields });
+
   if (jobProfile.kycDocumentId) {
     try {
       await FileMediaService.hardDelete({ query: { _id: jobProfile.kycDocumentId.toString() } });
@@ -158,9 +154,11 @@ export const hardDelete = async ({ query }: IJobProfileGetParams) => {
   return jobProfile;
 };
 
-export const restore = async ({ query }: IJobProfileGetParams) => {
+export const restore = async ({ query, allowedFields }: IJobProfileGetParams) => {
   const { restored } = await JobProfile.restore(sanitizeQueryIds(query));
-  const jobProfile = await getOne({ query: sanitizeQueryIds(query) });
+
+  // Return sanitized document using allowedFields
+  const jobProfile = await getOne({ query: sanitizeQueryIds(query), allowedFields });
   if (!restored) throw new NotFoundException("Job Profile not found in trash.");
   return jobProfile;
 };
