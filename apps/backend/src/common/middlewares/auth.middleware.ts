@@ -45,6 +45,7 @@ export const deserializeUser = catchAsync(async (req: Request, res: Response, ne
       role: currentUser.role,
     },
     tenantId: currentUser.tenantId?.toString(),
+    jobProfileId: currentUser.jobProfileId?.toString(),
   };
 
   next();

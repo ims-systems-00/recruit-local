@@ -71,8 +71,6 @@ export const createBodySchema = Joi.object({
 
 export const updateBodySchema = Joi.object({
   title: Joi.string().optional().label("CV Title"),
-  jobProfileId: Joi.string().custom(objectIdValidation).optional().label("Job Profile ID"),
-
   summary: Joi.string().optional().allow("").label("Summary"),
   name: Joi.string().optional().allow("").label("Name"),
   email: Joi.string().email().optional().allow("").label("Email"),
@@ -90,9 +88,10 @@ export const updateBodySchema = Joi.object({
   // Settings
   templateId: Joi.string().optional(),
   colorProfile: Joi.string().optional(),
-  statusId: Joi.string()
+  status: Joi.string()
     .valid(...Object.values(CV_STATUS_ENUM))
-    .optional(),
+    .optional()
+    .label("CV Status"),
 });
 
 export const idParamsSchema = Joi.object({

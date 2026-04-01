@@ -18,3 +18,4 @@ export * from './skill-assessment';
 export * from './reaction';
 export * from './file-media';
 export * from './model-names';
+export * from './cv';
