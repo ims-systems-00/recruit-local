@@ -24,13 +24,9 @@ const tabs = [
   {
     value: 'applicants',
     label: 'Applicants',
-    component: <p>Hello</p>,
+    component: <p>applicants</p>,
   },
-  {
-    value: 'kanban-board',
-    label: 'Kanban board',
-    component: <p>Hello</p>,
-  },
+
   {
     value: 'interview-schedule',
     label: 'Interview Schedule',

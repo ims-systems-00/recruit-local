@@ -2,11 +2,15 @@
 import { cn } from '@/lib/utils';
 import {
   Ellipsis,
+  EllipsisVertical,
   LayoutGrid,
   TextAlignJustify,
   TrendingUp,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import ApplicantsChart from './applicants-chart';
+import HiringChart from './hiring-chart';
+import ExperienceChart from './experience-chart';
 
 export default function Overview() {
   const [isMonthView, setIsMonthView] = useState(false);
@@ -50,7 +54,7 @@ export default function Overview() {
               Total Application
             </p>
             <span>
-              <Ellipsis className="w-5 h-5 text-text-gray-primary" />
+              <EllipsisVertical className="w-5 h-5 text-text-gray-primary" />
             </span>
           </div>
           <div className=" flex items-end justify-between gap-spacing-3xl">
@@ -72,7 +76,7 @@ export default function Overview() {
               New Applicants
             </p>
             <span>
-              <Ellipsis className="w-5 h-5 text-text-gray-primary" />
+              <EllipsisVertical className="w-5 h-5 text-text-gray-primary" />
             </span>
           </div>
           <div className=" flex items-end justify-between gap-spacing-3xl">
@@ -86,6 +90,71 @@ export default function Overview() {
               </div>
               <span>vs previous week</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className=" grid grid-cols-2 gap-spacing-4xl">
+        <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs p-spacing-4xl space-y-spacing-4xl">
+          <div className=" flex items-center justify-between gap-spacing-3xl">
+            <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+              Applications
+            </h4>
+            <span>
+              <EllipsisVertical className="w-5 h-5 text-text-gray-primary" />
+            </span>
+          </div>
+          <div>
+            <ApplicantsChart />
+          </div>
+        </div>
+
+        <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs p-spacing-4xl space-y-spacing-4xl">
+          <div className=" flex items-center justify-between gap-spacing-3xl">
+            <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+              Hiring Activity
+            </h4>
+            <span>
+              <EllipsisVertical className="w-5 h-5 text-text-gray-primary" />
+            </span>
+          </div>
+          <div>
+            <HiringChart />
+          </div>
+        </div>
+      </div>
+      <div className=" grid grid-cols-2 gap-spacing-4xl">
+        <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs p-spacing-4xl space-y-spacing-4xl">
+          <div className=" flex items-start justify-between gap-spacing-3xl">
+            <div>
+              <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+                Interviewer Experience
+              </h4>
+              <p className=" text-body-sm text-text-gray-tertiary">
+                Displays how candidates move through each stage of the
+                interview.
+              </p>
+            </div>
+            <span>
+              <EllipsisVertical className="w-5 h-5 text-text-gray-primary" />
+            </span>
+          </div>
+          <div>
+            <ExperienceChart />
+          </div>
+        </div>
+
+        <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs p-spacing-4xl space-y-spacing-4xl">
+          <div className=" flex items-center justify-between gap-spacing-3xl">
+            <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+              Applications
+            </h4>
+            <span>
+              <EllipsisVertical className="w-5 h-5 text-text-gray-primary" />
+            </span>
+          </div>
+          <div>
+            <ApplicantsChart />
           </div>
         </div>
       </div>
