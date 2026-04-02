@@ -11,9 +11,12 @@ import {
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Kanban from './kanban/kanban';
+import ApplicantKanbanView from './applicant-kanban-view';
+import ApplicantListsView from './applicant-lists-view';
 
 export default function Applicants() {
-  const [isMonthView, setIsMonthView] = useState(false);
+  const [isListView, setIsListView] = useState(false);
+
   return (
     <div className="space-y-spacing-4xl">
       {/* header section */}
@@ -27,10 +30,10 @@ export default function Applicants() {
           </Button>
           <div className=" border border-border-gray-primary bg-bg-gray-soft-primary overflow-hidden rounded-lg h-10 flex items-center divide-x divide-border-gray-primary">
             <span
-              onClick={() => setIsMonthView(false)}
+              onClick={() => setIsListView(false)}
               className={cn(
                 ' h-full min-w-[120px] px-spacing-xl flex justify-center cursor-pointer gap-spacing-xs items-center text-text-gray-primary',
-                !isMonthView && 'bg-bg-gray-soft-secondary',
+                !isListView && 'bg-bg-gray-soft-secondary',
               )}
             >
               <LayoutGrid className=" size-4" />
@@ -40,10 +43,10 @@ export default function Applicants() {
               </span>
             </span>
             <span
-              onClick={() => setIsMonthView(true)}
+              onClick={() => setIsListView(true)}
               className={cn(
                 'h-full min-w-[120px] px-spacing-xl flex justify-center cursor-pointer gap-spacing-xs items-center text-text-gray-primary',
-                isMonthView && 'bg-bg-gray-soft-secondary',
+                isListView && 'bg-bg-gray-soft-secondary',
               )}
             >
               <TextAlignJustify className=" size-4" />
@@ -57,7 +60,7 @@ export default function Applicants() {
       </div>
       {/* content part  */}
       <div className="">
-        <Kanban />
+        {isListView ? <ApplicantListsView /> : <ApplicantKanbanView />}
       </div>
     </div>
   );
