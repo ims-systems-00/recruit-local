@@ -252,7 +252,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
     type: existingUser?.type,
   });
 
-  if (!existingUser || !ability.can(AbilityAction.Delete, authZEntity)) {
+  if (!existingUser || !ability.can(AbilityAction.SoftDelete, authZEntity)) {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to delete user.`);
   }
 
@@ -284,7 +284,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
     type: existingUser?.type,
   });
 
-  if (!existingUser || !ability.can(AbilityAction.Delete, authZEntity)) {
+  if (!existingUser || !ability.can(AbilityAction.HardDelete, authZEntity)) {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to delete user.`);
   }
 
@@ -316,7 +316,7 @@ export const restore = async ({ req }: ControllerParams) => {
     type: existingUser?.type,
   });
 
-  if (!existingUser || !ability.can(AbilityAction.Update, authZEntity)) {
+  if (!existingUser || !ability.can(AbilityAction.Restore, authZEntity)) {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to restore user.`);
   }
 
