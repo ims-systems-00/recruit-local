@@ -2,14 +2,15 @@ import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
 import * as jobProfileService from "./job-profile.service";
-import { updateUser } from "../user";
-import { Schema } from "mongoose";
+import { update as updateUser } from "../user";
 import { JobProfileAbilityBuilder, JobProfileAuthZEntity, ALL_JOB_PROFILE_FIELDS } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import { jobProfileRoleScopedSecurityQuery } from "./job-profile.query";
 import { permittedFieldsOf } from "@casl/ability/extra";
 
-const caslFieldOptions = { fieldsFrom: (rule: any) => rule.fields || ALL_JOB_PROFILE_FIELDS };
+const caslFieldOptions = {
+  fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_PROFILE_FIELDS,
+};
 
 export const list = async ({ req }: ControllerParams) => {
   const abilityBuilder = new JobProfileAbilityBuilder(req.session);
@@ -184,8 +185,10 @@ export const create = async ({ req }: ControllerParams) => {
     allowedFields,
   });
 
-  await updateUser(req.session.user?._id.toString(), {
-    jobProfileId: jobProfile._id as Schema.Types.ObjectId,
+  await updateUser({
+    query: { _id: req.session.user?._id },
+    payload: { jobProfileId: jobProfile._id },
+    // allowedFields: ["jobProfileId"],
   });
 
   return new ApiResponse({

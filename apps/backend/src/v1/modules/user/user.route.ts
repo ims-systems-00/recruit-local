@@ -1,11 +1,14 @@
 import express from "express";
 import {
-  listUser,
-  getUser,
-  hardRemoveUser,
-  softRemoveUser,
-  restoreUser,
-  updateUser,
+  list,
+  getOne,
+  create,
+  update,
+  softRemove,
+  hardRemove,
+  restore,
+  listSoftDeleted,
+  getOneSoftDeleted,
   updateUserProfileImage,
 } from "./user.controller";
 import { handleController } from "../../../common/helper";
@@ -17,12 +20,24 @@ const router = express.Router();
 const validateBody = validate("body");
 const validateParams = validate("params");
 
-router.get("/", handleController(listUser));
-router.get("/:id", validateParams(idParamsSchema), handleController(getUser));
-router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(updateUser));
-router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemoveUser));
-router.delete("/:id/hard", validateParams(idParamsSchema), handleController(hardRemoveUser));
-router.put("/:id/restore", validateParams(idParamsSchema), handleController(restoreUser));
+// List & Create
+router.get("/", handleController(list));
+router.post("/", handleController(create));
+
+// Trash (Must come before /:id routes)
+router.get("/trash", handleController(listSoftDeleted));
+router.get("/trash/:id", validateParams(idParamsSchema), handleController(getOneSoftDeleted));
+
+// Read & Update
+router.get("/:id", validateParams(idParamsSchema), handleController(getOne));
+router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));
+
+// Deletion & Restoration
+router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemove));
+router.delete("/:id/hard", validateParams(idParamsSchema), handleController(hardRemove));
+router.put("/:id/restore", validateParams(idParamsSchema), handleController(restore));
+
+// Custom
 router.put(
   "/:id/profile-image",
   validateParams(idParamsSchema),

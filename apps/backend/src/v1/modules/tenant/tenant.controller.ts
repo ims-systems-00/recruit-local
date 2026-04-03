@@ -4,7 +4,7 @@ import { AbilityAction, USER_ROLE_ENUMS } from "@rl/types";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
 import * as tenantService from "./tenant.service";
-import { updateUser } from "../user/user.service";
+import { update as updateUser } from "../user/user.service";
 import { tenantRoleScopedSecurityQuery } from "./tenant.query";
 
 export const list = async ({ req }: ControllerParams) => {
@@ -137,9 +137,18 @@ export const create = async ({ req }: ControllerParams) => {
 
   const tenant = await tenantService.create({ payload: req.body });
 
-  await updateUser(user._id.toString(), {
-    tenantId: tenant.id,
-    role: USER_ROLE_ENUMS.ADMIN,
+  // await updateUser(user._id.toString(), {
+  //   tenantId: tenant.id,
+  //   role: USER_ROLE_ENUMS.ADMIN,
+  // });
+
+  await updateUser({
+    query: { _id: user._id.toString() },
+    payload: {
+      tenantId: tenant.id,
+      role: USER_ROLE_ENUMS.ADMIN,
+    },
+    allowedFields: ["tenantId", "role"],
   });
 
   return new ApiResponse({
