@@ -606,3 +606,9 @@
 .PhoneInputCountryIconImg {
   @apply w-5! h-5! rounded-full! object-cover;
 }
+
+/* fullcalender css */
+
+.fc-daygrid-day-frame {
+  @apply min-h-[135px]! min-w-40 max-w-40 max-h-[135px] p-spacing-sm;
+}

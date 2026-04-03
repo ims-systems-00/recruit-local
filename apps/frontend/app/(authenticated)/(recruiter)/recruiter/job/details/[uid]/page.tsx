@@ -11,6 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Overview from './sections/overview';
 import Applicants from './sections/applicants';
+import InterviewSchedule from './sections/interview-schedule';
 const tabs = [
   {
     value: 'overview',
@@ -31,7 +32,7 @@ const tabs = [
   {
     value: 'interview-schedule',
     label: 'Interview Schedule',
-    component: <p>Hello</p>,
+    component: <InterviewSchedule />,
   },
 ];
 
