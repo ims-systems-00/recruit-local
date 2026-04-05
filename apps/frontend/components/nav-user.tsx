@@ -28,18 +28,15 @@ import {
 } from '@/components/ui/sidebar';
 import { useLogout } from '@/services/auth/auth.client';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/services/user/user.client';
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
-}) {
+export function NavUser() {
   const router = useRouter();
   const { isMobile } = useSidebar();
+
+  const { user } = useAuth();
+
+  console.log('user', user);
 
   const { logout, isLoading } = useLogout();
 
@@ -57,7 +54,9 @@ export function NavUser({
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">
+                  {user.firstName} {user.lastName}
+                </span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -76,7 +75,9 @@ export function NavUser({
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">
+                    {user.firstName} {user.lastName}
+                  </span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>
@@ -90,14 +91,6 @@ export function NavUser({
               >
                 <BadgeCheck />
                 Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
