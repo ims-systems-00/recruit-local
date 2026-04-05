@@ -80,4 +80,11 @@ export const MOCK_EVENTS: CalendarEvent[] = [
     color: 'pink',
     avatar: 'RT',
   },
+  {
+    id: '11',
+    title: 'Sprint Planning 2',
+    start: new Date(Y, M, 6, 9, 0),
+    end: new Date(Y, M, 6, 9, 20),
+    color: 'default',
+  },
 ];

@@ -609,6 +609,38 @@
 
 /* fullcalender css */
 
+.fc-day-other {
+  @apply bg-bg-gray-soft-secondary;
+}
+
 .fc-daygrid-day-frame {
   @apply min-h-[135px]! min-w-40 max-w-40 max-h-[135px] p-spacing-sm;
+}
+
+.fc-col-header-cell {
+  @apply py-spacing-sm! text-label-xs font-label-xs-strong! text-text-gray-quaternary;
+}
+
+.fc-daygrid-day-top {
+  @apply flex-row! text-label-xs font-label-xs-strong! text-text-gray-secondary;
+}
+
+.fc-day-other .fc-daygrid-day-top {
+  @apply text-text-gray-quinary opacity-100!;
+}
+
+.fc-day-today {
+  @apply bg-transparent!;
+}
+
+.fc-day-today .fc-daygrid-day-top {
+  @apply text-text-brand-primary;
+}
+
+.fc-daygrid-day-bottom {
+  @apply text-label-xs! font-label-xs-strong! text-text-gray-quaternary;
+}
+
+.fc-timegrid-slot {
+  @apply h-10!;
 }

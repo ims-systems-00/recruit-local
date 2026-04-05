@@ -76,6 +76,7 @@ function InterviewSchedule() {
             const event = arg.event.extendedProps as CalendarEvent;
             return <EventChip event={event} />;
           }}
+          slotDuration="00:30:00"
         />
       </div>
     </div>
