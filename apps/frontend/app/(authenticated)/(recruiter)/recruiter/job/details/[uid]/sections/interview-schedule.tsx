@@ -68,7 +68,8 @@ function InterviewSchedule() {
           headerToolbar={false}
           events={events}
           allDaySlot={false} // ✅ removes all-day row
-          dayMaxEvents={2}
+          dayMaxEvents={1}
+          eventMaxStack={1}
           datesSet={(arg) => {
             setCurrentDate(arg.startStr);
           }}
@@ -77,6 +78,14 @@ function InterviewSchedule() {
             return <EventChip event={event} />;
           }}
           slotDuration="00:30:00"
+          moreLinkContent={(arg) => {
+            return (
+              <p className=" text-label-xs flex items-center justify-center">
+                +{arg.num} more
+              </p>
+            );
+          }}
+          moreLinkClassNames={'h-fit'}
         />
       </div>
     </div>
