@@ -1,5 +1,10 @@
 'use client';
-import { AnyAbility, buildMongoQueryMatcher, PureAbility } from '@casl/ability';
+import {
+  AnyAbility,
+  buildMongoQueryMatcher,
+  PureAbility,
+  fieldPatternMatcher,
+} from '@casl/ability';
 import { useCallback } from 'react';
 import { AbilityContext, ability } from './ability-context';
 import {
@@ -28,8 +33,9 @@ export const AbilityProvider = ({
       ...userAbility.getAbility().rules,
       ...jobAbility.getAbility().rules,
     ];
-    const appAbilities = new PureAbility(appRules, {
+    const appAbilities = new PureAbility(appRules as any, {
       conditionsMatcher: buildMongoQueryMatcher(),
+      fieldMatcher: fieldPatternMatcher,
     });
     return appAbilities;
   }, [session]);

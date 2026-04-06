@@ -9,7 +9,7 @@
     "format": "prettier --write .",
     "build:backend": "pnpm --filter @rl/backend build",
     "build:frontend": "pnpm --filter @rl/frontend build",
-    "build:packages": "pnpm --filter @rl/types --filter @rl/authz build",
+    "build:packages": "pnpm --filter @rl/types --filter @rl/authz --filter @rl/utils build",
     "backend:dev": "pnpm --filter @rl/backend start:dev",
     "frontend:dev": "pnpm --filter @rl/frontend dev",
     "start:dev": "concurrently --kill-others \"pnpm backend:dev\" \"pnpm frontend:dev\"",
