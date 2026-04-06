@@ -11,8 +11,8 @@ interface IResults {
   pagingCounter: number;
   hasPrevPage: boolean;
   hasNextPage: boolean;
-  prevPage?: number;
-  nextPage?: number;
+  prevPage?: number | null;
+  nextPage?: number | null;
 }
 
 export const formatListResponse = (results: IResults) => {
@@ -56,7 +56,7 @@ export const trimQuery = (queryData: QueryData): QueryData => {
 
   function deepTrim(obj: any): any {
     const keys = Object.keys(obj);
-    for (let key of keys) {
+    for (const key of keys) {
       if (isObject(obj[key])) {
         deepTrim(obj[key]);
       } else {

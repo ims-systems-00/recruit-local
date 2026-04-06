@@ -77,6 +77,14 @@ export class UnauthorizedException extends ApiError {
     });
   }
 }
+export class ForbiddenException extends ApiError {
+  constructor(message = "Forbidden.") {
+    super(message, {
+      httpStatusCode: StatusCodes.FORBIDDEN,
+      httpReasonPhrase: ReasonPhrases.FORBIDDEN,
+    });
+  }
+}
 
 export class TooManyRequestsException extends ApiError {
   constructor(message = "Too many requests.") {
