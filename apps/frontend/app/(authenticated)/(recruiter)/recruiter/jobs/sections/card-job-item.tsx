@@ -11,6 +11,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Switch } from '@/components/ui/switch';
+import { JOBS_STATUS_ENUMS } from '@rl/types';
 
 export default function CardJobItem({ job }: { job: JobData }) {
   return (
@@ -95,7 +97,15 @@ export default function CardJobItem({ job }: { job: JobData }) {
         <p className=" text-body-sm text-text-gray-tertiary">
           {formatDate(job?.startDate) || 'N/A'}
         </p>
-        <p className=" text-body-sm text-text-gray-tertiary">Active</p>
+        <div className=" flex items-center gap-spacing-sm ">
+          <Switch
+            // checked={job.status === JOBS_STATUS_ENUMS.OPEN ? true : false}
+            // onCheckedChange={(v) => onUpdate(card.id, { required: v })}
+            onClick={(e) => e.stopPropagation()}
+            className=" bg-bg-gray-soft-quaternary data-[state=checked]:bg-bg-brand-solid-primary"
+          />
+          <p className=" text-body-sm text-text-gray-tertiary">Active</p>
+        </div>
       </div>
     </div>
   );
