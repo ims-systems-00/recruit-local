@@ -48,7 +48,7 @@ export const stepFields: Record<number, FieldPath<MultiStepJobFormValues>[]> = {
   3: ['number', 'aboutUs', 'autoFill', 'category', 'keywords'],
 };
 
-export function useCreateJob() {
+export function useUpdateJob() {
   const router = useRouter();
   const [step, setStep] = useState(1);
 
@@ -106,6 +106,36 @@ export function useCreateJob() {
     prevStep,
     onSubmit,
     methods,
+    isLoading: mutation.isPending,
+  };
+}
+
+export function useCreateJob() {
+  const router = useRouter();
+
+  const mutation = useMutation({
+    mutationFn: createJob,
+    onSuccess: (res, variables) => {
+      console.log('res', res, variables);
+      if (!res.success) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success(res.message || 'Registration completed');
+      // router.push('/recruiter/job/lists');
+    },
+    onError: () => {
+      toast.error('Something went wrong');
+    },
+  });
+
+  const onSubmit = (data: { title: 'Untitled Title' }) => {
+    mutation.mutate(data);
+  };
+
+  return {
+    onSubmit,
     isLoading: mutation.isPending,
   };
 }

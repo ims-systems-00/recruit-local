@@ -5,6 +5,7 @@ import { handleServerError } from '@/lib/http/handleServerError';
 
 type SuccessResponse<T = any> = {
   success: true;
+  message: string;
   data: T;
 };
 
@@ -15,15 +16,14 @@ type ErrorResponse = {
 
 export type ApiResponse<T = any> = SuccessResponse<T> | ErrorResponse;
 
-export async function createJob(
-  data: MultiStepJobFormValues,
-): Promise<ApiResponse> {
+export async function createJob(data: { title: string }): Promise<ApiResponse> {
   try {
     const res = await axiosServer.post('/jobs', data);
 
     return {
       success: true,
-      data: res.data,
+      data: res.data.job,
+      message: res.data.message,
     };
   } catch (error) {
     return handleServerError(error, 'Failed');

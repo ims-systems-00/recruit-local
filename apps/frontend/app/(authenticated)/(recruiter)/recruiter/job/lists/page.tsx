@@ -51,6 +51,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { useCreateJob } from '@/services/jobs/jobs.client';
 
 export const userColumns: ColumnDef<User>[] = [
   {
@@ -148,6 +149,12 @@ export default function JobLists() {
 
   const [isListView, setIsListView] = useState(false);
 
+  const { onSubmit, isLoading } = useCreateJob();
+
+  const onCreate = () => {
+    onSubmit({ title: 'Untitled Title' });
+  };
+
   return (
     <div>
       <div className=" py-spacing-lg px-spacing-4xl border-b border-border-gray-secondary">
@@ -166,14 +173,18 @@ export default function JobLists() {
         <div className=" flex justify-between items-center gap-spacing-2xl">
           <div className=" space-y-spacing-2xs">
             <h3 className=" text-body-xl font-body-xl-strong! text-text-gray-primary">
-              Create a job post
+              Job Listing
             </h3>
             <p className=" capitalize text-label-sm text-text-gray-tertiary">
-              create and view Your all jobs
+              Create and view Your all jobs
             </p>
           </div>
           <div className=" flex items-center gap-spacing-2xl">
-            <Button className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!">
+            <Button
+              disabled={isLoading}
+              onClick={onCreate}
+              className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+            >
               <Plus />
               <span>Create New</span>
             </Button>
