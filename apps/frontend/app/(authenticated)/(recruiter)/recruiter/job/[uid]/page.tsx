@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Overview from './sections/overview';
 import Applicants from './sections/applicants';
 import InterviewSchedule from './sections/interview-schedule';
+import JobDescription from './sections/job-description';
 const tabs = [
   {
     value: 'overview',
@@ -21,7 +22,7 @@ const tabs = [
   {
     value: 'job-description',
     label: 'Job Description',
-    component: <p>Hello</p>,
+    component: <JobDescription />,
   },
   {
     value: 'applicants',
