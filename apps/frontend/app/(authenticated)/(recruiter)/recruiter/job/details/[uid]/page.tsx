@@ -44,7 +44,7 @@ export default function JobDetailsPage() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
-                href="/recruiter/job/lists"
+                href="/recruiter/jobs"
                 className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary"
               >
                 Job Listing

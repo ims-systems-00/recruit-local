@@ -39,7 +39,7 @@ const data = {
   navMain: [
     {
       title: 'Job Listing',
-      url: '/recruiter/job/lists',
+      url: '/recruiter/jobs',
       icon: ListTodo,
     },
     {
