@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import Fav from '@/public/images/rl-fav.svg';
+import Logomark from '@/public/images/Logomark.svg';
 import {
   AudioWaveform,
   BookOpen,
@@ -39,7 +39,7 @@ const data = {
   navMain: [
     {
       title: 'Job Listing',
-      url: '/recruiter/job/lists',
+      url: '/recruiter/jobs',
       icon: ListTodo,
     },
     {
@@ -93,26 +93,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenuButton
           size="lg"
-          className=" gap-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+          className=" gap-spacing-sm data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
         >
           <div
-            className={cn(
-              'min-w-11',
-              state === 'collapsed' && 'cursor-pointer',
-            )}
+            className={cn('min-w-8', state === 'collapsed' && 'cursor-pointer')}
             onClick={() => {
               state === 'collapsed' && toggleSidebar();
             }}
           >
             <Image
               className={cn(
-                'max-h-6 max-w-11',
+                'max-h-8 max-w-8',
                 state === 'collapsed' && 'max-w-8',
               )}
               alt="Fav"
-              src={Fav}
-              width={44}
-              height={24}
+              src={Logomark}
+              width={32}
+              height={32}
             />
           </div>
           <div className="flex flex-col gap-1 flex-1 text-left text-sm leading-tight  text-title">
@@ -128,9 +125,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M10.937 3.4375L16.5625 9.06296M10 6.87546L16.5625 13.438M10 11.2505L15.312 16.5625M10 3.4375V16.5625M4.0625 3.4375H15.9375C16.2827 3.4375 16.5625 3.71732 16.5625 4.0625V15.9375C16.5625 16.2827 16.2827 16.5625 15.9375 16.5625H4.0625C3.71732 16.5625 3.4375 16.2827 3.4375 15.9375V4.0625C3.4375 3.71732 3.71732 3.4375 4.0625 3.4375Z"
-                stroke="#152536"
-                strokeWidth="1.25"
+                d="M6.875 3.75V16.25"
+                stroke="#364153"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M16.875 3.75H3.125C2.77982 3.75 2.5 4.02982 2.5 4.375V15.625C2.5 15.9702 2.77982 16.25 3.125 16.25H16.875C17.2202 16.25 17.5 15.9702 17.5 15.625V4.375C17.5 4.02982 17.2202 3.75 16.875 3.75Z"
+                stroke="#364153"
+                strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />

@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FieldPath, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   fullJobSchema,
   MultiStepJobFormValues,
 } from '@/app/(authenticated)/(recruiter)/recruiter/job/create/job.schema';
-import { createJob } from './jobs.server';
+import { createJob, getJobs } from './jobs.server';
+import { JobListFilters, JobListResponse } from './job.type';
 
 export const stepFields: Record<number, FieldPath<MultiStepJobFormValues>[]> = {
   1: [
@@ -48,7 +49,30 @@ export const stepFields: Record<number, FieldPath<MultiStepJobFormValues>[]> = {
   3: ['number', 'aboutUs', 'autoFill', 'category', 'keywords'],
 };
 
-export function useCreateJob() {
+export function useJobs(filters: JobListFilters = {}) {
+  const query = useQuery<JobListResponse, Error>({
+    queryKey: ['jobs', filters],
+    queryFn: async () => {
+      const response = await getJobs();
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+  });
+
+  return {
+    jobs: query.data?.docs || [],
+    pagination: query.data?.pagination,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+    isFetching: query.isFetching,
+  };
+}
+
+export function useUpdateJob() {
   const router = useRouter();
   const [step, setStep] = useState(1);
 
@@ -106,6 +130,36 @@ export function useCreateJob() {
     prevStep,
     onSubmit,
     methods,
+    isLoading: mutation.isPending,
+  };
+}
+
+export function useCreateJob() {
+  const router = useRouter();
+
+  const mutation = useMutation({
+    mutationFn: createJob,
+    onSuccess: (res, variables) => {
+      console.log('res', res, variables);
+      if (!res.success) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success(res.message || 'Registration completed');
+      // router.push('/recruiter/job/lists');
+    },
+    onError: () => {
+      toast.error('Something went wrong');
+    },
+  });
+
+  const onSubmit = (data: { title: 'Untitled Title' }) => {
+    mutation.mutate(data);
+  };
+
+  return {
+    onSubmit,
     isLoading: mutation.isPending,
   };
 }
