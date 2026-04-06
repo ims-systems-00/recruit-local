@@ -5,7 +5,7 @@ import JobInformationForm from './steps/job-information-form';
 import ReviewJobDescriptionForm from './steps/review-job-description-form';
 import JobDescriptionForm from './steps/job-description-form';
 import Preview from './preview/preview';
-import { useCreateJob } from '@/services/jobs/jobs.client';
+import { useCreateJob, useUpdateJob } from '@/services/jobs/jobs.client';
 import { FormProvider } from 'react-hook-form';
 import { StepsSidebar } from './steps-sidebar';
 import AdditionalQueries from './steps/additional-queries';
@@ -17,7 +17,7 @@ const steps = [
   { id: 4, label: 'Preview' },
 ];
 export default function CreateForm() {
-  const { onSubmit, step, nextStep, prevStep, methods } = useCreateJob();
+  const { onSubmit, step, nextStep, prevStep, methods } = useUpdateJob();
   return (
     <div className="min-h-screen flex items-stretch gap-spacing-4xl">
       <FormProvider {...methods}>
