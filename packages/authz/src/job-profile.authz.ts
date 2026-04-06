@@ -18,6 +18,7 @@ import {
   VISIBILITY,
 } from '@rl/types';
 
+// ---  FIELD DEFINITIONS ---
 export const ALL_JOB_PROFILE_FIELDS = [
   '_id',
   'userId',
@@ -32,16 +33,32 @@ export const ALL_JOB_PROFILE_FIELDS = [
   'updatedAt',
 ];
 
-const EMPLOYER_EXCLUDED_FIELDS = ['kycDocumentId', 'status', 'visibility'];
+// Helper to clean up array filtering
+const omitFields = (fieldsToOmit: string[]) =>
+  ALL_JOB_PROFILE_FIELDS.filter((field) => !fieldsToOmit.includes(field));
 
-const EMPLOYER_ALLOWED_FIELDS = ALL_JOB_PROFILE_FIELDS.filter(
-  (field) => !EMPLOYER_EXCLUDED_FIELDS.includes(field),
-);
+// What an employer is allowed to see
+const EMPLOYER_READ_FIELDS = omitFields([
+  'kycDocumentId',
+  'status',
+  'visibility',
+]);
 
+const CANDIDATE_MUTATION_FIELDS = omitFields([
+  '_id',
+  'userId',
+  'status',
+  'kycDocumentId',
+  'createdAt',
+  'updatedAt',
+]);
+
+// --- 2. AUTHZ ENTITY ---
 export class JobProfileAuthZEntity {
   public readonly _id: string | null;
   public readonly status?: JOB_PROFILE_STATUS_ENUM;
   public visibility?: VISIBILITY;
+
   constructor({
     _id,
     status,
@@ -63,6 +80,7 @@ type ClaimAbility = PureAbility<
 >;
 const ClaimAbility = PureAbility as AbilityClass<ClaimAbility>;
 
+// --- 3. ABILITY BUILDER ---
 export class JobProfileAbilityBuilder implements IAbilityBuilder {
   private abilityBuilder: AbilityBuilder<ClaimAbility>;
   private session: ISession;
@@ -71,24 +89,54 @@ export class JobProfileAbilityBuilder implements IAbilityBuilder {
     this.abilityBuilder = new AbilityBuilder(ClaimAbility);
     this.session = session;
   }
+
   getAbility(): AnyAbility {
     const builder = this.abilityBuilder;
+    const { user, jobProfileId } = this.session;
 
-    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
+    // 1. PLATFORM ADMIN
+    if (user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       builder.can(AbilityAction.Manage, JobProfileAuthZEntity);
+      return this.buildAbility();
     }
 
-    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
-      builder.can(AbilityAction.Manage, JobProfileAuthZEntity, {
-        _id: this.session.jobProfileId,
-      });
+    // 2. CANDIDATE
+    if (user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+      if (jobProfileId) {
+        builder.can(AbilityAction.Read, JobProfileAuthZEntity, {
+          _id: jobProfileId,
+        });
+
+        builder.can(
+          AbilityAction.Update,
+          JobProfileAuthZEntity,
+          CANDIDATE_MUTATION_FIELDS,
+          {
+            _id: jobProfileId,
+          },
+        );
+
+        builder.can(AbilityAction.SoftDelete, JobProfileAuthZEntity, {
+          _id: jobProfileId,
+        });
+        builder.can(AbilityAction.Restore, JobProfileAuthZEntity, {
+          _id: jobProfileId,
+        });
+      } else {
+        builder.can(
+          AbilityAction.Create,
+          JobProfileAuthZEntity,
+          CANDIDATE_MUTATION_FIELDS,
+        );
+      }
     }
 
-    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
+    // 3. EMPLOYER
+    if (user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
       builder.can(
         AbilityAction.Read,
         JobProfileAuthZEntity,
-        EMPLOYER_ALLOWED_FIELDS,
+        EMPLOYER_READ_FIELDS,
         {
           status: JOB_PROFILE_STATUS_ENUM.VERIFIED,
           visibility: VISIBILITY.PUBLIC,
@@ -96,7 +144,11 @@ export class JobProfileAbilityBuilder implements IAbilityBuilder {
       );
     }
 
-    return builder.build({
+    return this.buildAbility();
+  }
+
+  private buildAbility(): AnyAbility {
+    return this.abilityBuilder.build({
       conditionsMatcher: buildMongoQueryMatcher(),
       fieldMatcher: fieldPatternMatcher,
     });
