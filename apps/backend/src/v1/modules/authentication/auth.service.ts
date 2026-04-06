@@ -47,9 +47,12 @@ const handleInvitationRegistration = async (payload: UserPayload): Promise<IUser
   payload.role = decoded.role;
 
   // verified the email
-  const user = await userService.createUser(payload);
+  const user = await userService.create({ payload });
   user.emailVerificationStatus = EMAIL_VERIFICATION_STATUS_ENUMS.VERIFIED;
-  await user.save();
+  await userService.update({
+    query: { _id: user._id } as any,
+    payload: { emailVerificationStatus: EMAIL_VERIFICATION_STATUS_ENUMS.VERIFIED },
+  });
 
   // Remove the invitation token from the database
   await verificationTokenService.remove({ _id: isTokenExists._id.toString() });
@@ -61,8 +64,8 @@ const handleDirectRegistration = async (payload: UserPayload): Promise<IUserDoc>
   const isExists = await userService.getUserByEmail(payload.email);
   if (isExists) throw new BadRequestException("Email already exists.");
 
-  const user = await userService.createUser(payload);
-  await _generateSendAndStoreRegistrationToken({ userId: user.id.toString(), receiver: user.email });
+  const user = await userService.create({ payload });
+  await _generateSendAndStoreRegistrationToken({ userId: user._id.toString(), receiver: user.email });
 
   return user;
 };
@@ -183,7 +186,7 @@ export const refreshAccessToken = async ({
   }
 
   // Check if the user exists
-  const user = await userService.getUser({
+  const user = await userService.getOne({
     query: { _id: decoded.id },
   });
 

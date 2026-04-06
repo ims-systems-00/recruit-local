@@ -1,13 +1,22 @@
-import { UserInput } from "../../../models";
+import { IUserDoc, UserInput } from "../../../models";
+import { IListParams, ListQueryParams } from "@rl/types";
 
-export type Query = Partial<UserInput & { _id: string }>;
+// --- Standardized Parameter Interfaces ---
+export type IListUserParams = IListParams<UserInput>;
+export type IUserQueryParams = ListQueryParams<UserInput>;
 
-export interface IOptions {
-  page?: number;
-  limit?: number;
+export interface IUserUpdateParams {
+  query: IUserQueryParams;
+  payload: Partial<IUserDoc>;
+  allowedFields?: string[];
 }
 
-export interface IListUserParams {
-  query: Query;
-  options?: IOptions;
+export interface IUserGetParams {
+  query: IUserQueryParams;
+  allowedFields?: string[];
+}
+
+export interface IUserCreateParams {
+  payload: UserInput;
+  allowedFields?: string[];
 }

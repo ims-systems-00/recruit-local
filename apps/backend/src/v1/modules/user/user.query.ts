@@ -2,6 +2,8 @@ import { accessibleBy } from "@casl/mongoose";
 import { AbilityAction } from "@rl/types";
 import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
 import { PipelineStage } from "mongoose";
+import { IUserDoc, User } from "../../../models";
+import { omit } from "lodash";
 
 export const roleScopedSecurityQuery = (ability: ReturnType<UserAbilityBuilder["getAbility"]>) => {
   // Get the raw query from CASL
@@ -38,17 +40,15 @@ export const excludeDeletedQuery = (): PipelineStage[] => {
 
 // user queries
 
-export const userProjectionQuery = (): PipelineStage[] => {
-  return projectQuery([
-    "firstName",
-    "lastName",
-    "tenantId",
-    "email",
-    "role",
-    "type",
-    "emailVerificationStatus",
-    "profileImageId",
-    "createdAt",
-    "updatedAt",
-  ]);
+export const userProjectionQuery = (allowedFields?: string[]): PipelineStage[] => {
+  let selectedFields: string[] = [];
+
+  if (allowedFields && allowedFields.length > 0) {
+    selectedFields = [...allowedFields];
+  } else {
+    const fieldsToExclude: (keyof IUserDoc | "__v")[] = ["__v" as keyof IUserDoc];
+    selectedFields = Object.keys(omit(User.schema.paths, fieldsToExclude));
+  }
+
+  return projectQuery(selectedFields);
 };
