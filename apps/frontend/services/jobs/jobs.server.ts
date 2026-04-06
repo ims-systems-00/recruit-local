@@ -46,6 +46,7 @@ export async function getJobs(
         page: params?.page || 1,
         limit: params?.limit || 10,
         search: params?.search,
+        status: params?.status,
       },
     });
     // const backendResponse = await postListResponseSchema.validate(res.data, {

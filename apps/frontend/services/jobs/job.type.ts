@@ -4,6 +4,7 @@ export type JobListFilters = {
   page?: number;
   limit?: number;
   search?: string;
+  status?: string;
 };
 
 export interface JobData {

@@ -53,7 +53,7 @@ export function useJobs(filters: JobListFilters = {}) {
   const query = useQuery<JobListResponse, Error>({
     queryKey: ['jobs', filters],
     queryFn: async () => {
-      const response = await getJobs();
+      const response = await getJobs(filters);
       if (!response.success) {
         throw new Error(response.message);
       }
