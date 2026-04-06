@@ -14,14 +14,18 @@ export default function ChangePassword() {
   return (
     <div className=" min-h-screen flex justify-center items-center bg-card">
       <div className=" w-[400px] bg-card rounded-lg flex flex-col gap-y-spacing-4xl px-spacing-sm sm:px-spacing-0">
-        <div className="space-y-spacing-lg">
-          <h4>Create New Password</h4>
-          <p>alifun99@gmail.com</p>
+        <div className="space-y-spacing-xs">
+          <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-secondary">
+            Create New Password
+          </h4>
+          <p className=" text-body-md text-text-gray-tertiary">
+            alifun99@gmail.com
+          </p>
         </div>
         <div className=" space-y-spacing-4xl">
           <div className="space-y-spacing-4xl">
             <div className="space-y-spacing-xs">
-              <Label className="text-title text-base leading-[100%]">
+              <Label className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
                 New Password
               </Label>
               <InputGroup className="h-10 rounded-lg shadow-light">
@@ -36,7 +40,7 @@ export default function ChangePassword() {
             </div>
 
             <div className="space-y-spacing-xs">
-              <Label className="text-title text-base leading-[100%]">
+              <Label className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
                 Confirm Password
               </Label>
               <InputGroup className="h-10 rounded-lg shadow-light">

@@ -16,23 +16,21 @@ export default function CreateOrganizationForm() {
   } = useCreateTanent();
   return (
     <form onSubmit={onSubmit} className=" space-y-spacing-4xl">
-      <div className="space-y-spacing-4xl">
-        <div className="space-y-spacing-xs">
-          <Label className="text-title text-base leading-[100%]">
-            Organization Name
-          </Label>
-          <div className=" space-y-spacing-3xs">
-            <InputGroup className="h-10 rounded-lg shadow-light">
-              <InputGroupInput
-                type="text"
-                placeholder="Enter Organization name"
-                {...register('name')}
-              />
-            </InputGroup>
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name.message}</p>
-            )}
-          </div>
+      <div className="space-y-spacing-xs">
+        <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+          Organization Name
+        </Label>
+        <div className=" space-y-spacing-3xs">
+          <InputGroup className="h-10 rounded-lg shadow-light">
+            <InputGroupInput
+              type="text"
+              placeholder="Enter Organization name"
+              {...register('name')}
+            />
+          </InputGroup>
+          {errors.name && (
+            <p className="text-sm text-red-500">{errors.name.message}</p>
+          )}
         </div>
       </div>
       <div className=" flex justify-end items-center gap-4 pt-3 border-t border-border">

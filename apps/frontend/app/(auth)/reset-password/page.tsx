@@ -13,14 +13,16 @@ export default function ResetPassword() {
   return (
     <div className=" min-h-screen flex justify-center items-center bg-card">
       <div className=" shadow-regular w-[692px] bg-card rounded-lg flex flex-col gap-y-spacing-5xl p-12">
-        <div className="space-y-spacing-lg">
-          <h4>Reset Password</h4>
-          <p>
+        <div className="space-y-spacing-xs">
+          <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-secondary">
+            Reset Password
+          </h4>
+          <p className=" text-body-md text-text-gray-tertiary">
             Please enter the email address associated with your account, and we
             will send you a link to reset your password.
           </p>
         </div>
-        <div className=" space-y-12">
+        <div className=" space-y-spacing-4xl">
           <InputGroup className="h-10 rounded-lg shadow-light">
             <InputGroupInput type="email" placeholder="Enter your email" />
             <InputGroupAddon className="group-has-[[data-slot=input-group-control]:focus-visible]/input-group:text-text-brand-primary">
