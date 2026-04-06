@@ -1,10 +1,16 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Ellipsis, MapPin } from 'lucide-react';
+import { EllipsisVertical, MapPin } from 'lucide-react';
 import { JobData } from '@/services/jobs/job.type';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { formatJobStatus, getJobStatusBadgeClass } from './jobs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function CardJobItem({ job }: { job: JobData }) {
   return (
@@ -13,9 +19,24 @@ export default function CardJobItem({ job }: { job: JobData }) {
         <div className=" space-y-spacing-sm">
           <div className="flex justify-between items-center gap-spacing-4xl">
             <p className=" text-label-sm text-text-gray-tertiary">XJ-486</p>
-            <span>
-              <Ellipsis className="w-5 h-5 text-text-gray-primary" />
-            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-fg-gray-secondary flex items-center justify-center">
+                  <EllipsisVertical size={16} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-32 bg-white">
+                <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  View Details
+                </DropdownMenuItem>
+                <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  Archive
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <Badge
@@ -72,7 +93,7 @@ export default function CardJobItem({ job }: { job: JobData }) {
       </div>
       <div className=" border-t border-border-gray-secondary flex justify-between items-center gap-2.5 px-spacing-4xl py-spacing-2xl">
         <p className=" text-body-sm text-text-gray-tertiary">
-          {job?.startDate || 'N/A'}
+          {formatDate(job?.startDate) || 'N/A'}
         </p>
         <p className=" text-body-sm text-text-gray-tertiary">Active</p>
       </div>

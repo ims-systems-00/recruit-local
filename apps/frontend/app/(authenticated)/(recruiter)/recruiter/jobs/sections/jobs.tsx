@@ -12,6 +12,7 @@ import {
 import {
   Dot,
   Ellipsis,
+  EllipsisVertical,
   LayoutGrid,
   MapPin,
   Plus,
@@ -19,7 +20,7 @@ import {
   TextAlignJustify,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { useCreateJob, useJobs } from '@/services/jobs/jobs.client';
 import JobItemSkelaton from './job-item-skelaton';
 import CardJobItem from './card-job-item';
@@ -27,6 +28,16 @@ import EmptyBox from './empty-box';
 import PaginationComponent from './pagination-component';
 import { useDebounce } from '@/hooks/useDebounce';
 import { JOBS_STATUS_ENUMS } from '@rl/types';
+import { Badge } from '@/components/ui/badge';
+import { JobData } from '@/services/jobs/job.type';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { TableSkeleton } from './table-skeleton';
 
 export function getJobStatusBadgeClass(status: string) {
   switch (status) {
@@ -62,41 +73,120 @@ export function formatJobStatus(status: string) {
   }
 }
 
-export const userColumns: ColumnDef<User>[] = [
+export const userColumns: ColumnDef<JobData>[] = [
   {
-    accessorKey: 'id',
-    header: 'ID',
+    accessorKey: 'title',
+    header: 'Job Title',
     size: 80,
   },
   {
-    accessorKey: 'name',
-    header: 'Name',
-    // cell: ()=> {
-    //     return
-    // }
-  },
-  {
-    accessorKey: 'email',
-    header: 'Email',
-  },
-  {
-    accessorKey: 'role',
-    header: 'Role',
+    accessorKey: 'reference',
+    header: 'Reference',
+    cell: ({ row }) => {
+      return <span>JL - 01</span>;
+    },
   },
   {
     accessorKey: 'status',
     header: 'Status',
-    cell: ({ row }) => (
-      <span
-        className={
-          row.original.status === 'active'
-            ? 'text-green-600 font-medium'
-            : 'text-red-600 font-medium'
-        }
-      >
-        {row.original.status}
-      </span>
-    ),
+    cell: ({ cell }) => {
+      const status = cell.getValue() as JOBS_STATUS_ENUMS;
+
+      return (
+        <Badge
+          className={cn(
+            'text-label-sm font-label-sm-strong!',
+            getJobStatusBadgeClass(status),
+          )}
+        >
+          {formatJobStatus(status)}
+        </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: 'location',
+    header: 'Location',
+    cell: ({ cell }) => {
+      const value = cell.getValue() as string | undefined;
+
+      return <span>{value || 'N/A'}</span>;
+    },
+  },
+  {
+    accessorKey: 'employmentType',
+    header: 'Job Type',
+    cell: ({ cell }) => {
+      const value = cell.getValue() as string | undefined;
+
+      return <span className=" capitalize">{value || 'N/A'}</span>;
+    },
+  },
+
+  {
+    accessorKey: 'applied',
+    header: 'Applied',
+    cell: ({ row }) => {
+      return <span>90</span>;
+    },
+  },
+  {
+    accessorKey: 'applicants',
+    header: 'Applicants',
+    cell: ({ row }) => {
+      return (
+        <div className="flex items-center">
+          {[1, 2, 3, 4].map((item) => (
+            <Avatar
+              key={item}
+              className=" size-6 -ml-1.5 first:ml-0 border border-white"
+            >
+              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+              <AvatarFallback>CN</AvatarFallback>
+            </Avatar>
+          ))}
+          <Avatar className="-ml-1.5 size-6 bg-gray-200 border border-white text-body-xs">
+            <AvatarFallback>+7</AvatarFallback>
+          </Avatar>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'startDate',
+    header: 'Posted Date',
+    cell: ({ row }) => {
+      const value = formatDate(row?.original?.startDate);
+
+      return <span>{value || 'N/A'}</span>;
+    },
+  },
+
+  {
+    accessorKey: 'action',
+    header: '',
+    cell: ({ row }) => {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="text-fg-gray-secondary flex items-center justify-center">
+              <EllipsisVertical size={16} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-32 bg-white">
+            <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+              View Details
+            </DropdownMenuItem>
+            <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+              Archive
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
   },
 ];
 
@@ -285,14 +375,18 @@ export default function Jobs() {
                 )}
               >
                 {isJobLoading ? (
-                  <div className=" grid grid-cols-2 gap-spacing-4xl">
-                    {[1, 2, 3, 4].map((item) => (
-                      <JobItemSkelaton key={item} />
-                    ))}
-                  </div>
+                  isListView ? (
+                    <TableSkeleton columns={9} />
+                  ) : (
+                    <div className=" grid grid-cols-2 gap-spacing-4xl">
+                      {[1, 2, 3, 4].map((item) => (
+                        <JobItemSkelaton key={item} />
+                      ))}
+                    </div>
+                  )
                 ) : Boolean(jobs?.length) ? (
                   isListView ? (
-                    <DataTable columns={userColumns} data={demoUsers} />
+                    <DataTable columns={userColumns} data={jobs} />
                   ) : (
                     <div className=" grid grid-cols-2 gap-spacing-4xl">
                       {jobs?.map((item) => (
