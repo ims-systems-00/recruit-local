@@ -26,7 +26,7 @@ export default function Login() {
 
   return (
     <div className=" min-h-screen flex justify-center items-center">
-      <div className=" shadow-regular w-[692px] h-[700px] rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
+      <div className="  w-[400px] rounded-lg flex flex-col gap-y-spacing-4xl px-spacing-sm sm:px-spacing-0">
         <div>
           <Image
             className="max-h-[62px] max-w-[114px]"
@@ -39,7 +39,7 @@ export default function Login() {
 
         <form
           onSubmit={onSubmit}
-          className=" flex flex-col gap-y-spacing-6xl flex-1"
+          className=" flex flex-col gap-y-spacing-5xl flex-1"
         >
           <div className="space-y-spacing-4xl">
             <div className="space-y-spacing-xs">
@@ -114,7 +114,7 @@ export default function Login() {
             </div>
           </div>
 
-          <div className=" flex-1 flex justify-between flex-col">
+          <div className=" flex-1 flex justify-between flex-col gap-y-spacing-5xl">
             <Button
               type="submit"
               disabled={isLoading}

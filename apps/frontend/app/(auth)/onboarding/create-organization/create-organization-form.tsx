@@ -15,13 +15,13 @@ export default function CreateOrganizationForm() {
     control,
   } = useCreateTanent();
   return (
-    <form onSubmit={onSubmit} className=" space-y-12">
+    <form onSubmit={onSubmit} className=" space-y-spacing-4xl">
       <div className="space-y-spacing-4xl">
-        <div className="space-y-spacing-lg">
+        <div className="space-y-spacing-xs">
           <Label className="text-title text-base leading-[100%]">
             Organization Name
           </Label>
-          <div className=" space-y-2">
+          <div className=" space-y-spacing-3xs">
             <InputGroup className="h-10 rounded-lg shadow-light">
               <InputGroupInput
                 type="text"

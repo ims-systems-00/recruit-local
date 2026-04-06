@@ -52,7 +52,7 @@ export default function SignUpForm() {
 
         <div className="space-y-spacing-2xl">
           <div className="space-y-spacing-2xl">
-            <div className=" grid grid-cols-2 gap-spacing-2xl">
+            <div className=" grid grid-cols-1 gap-spacing-2xl">
               <div className="space-y-spacing-xs">
                 <Label className=" text-label-sm font-label-sm-strong!">
                   First Name
@@ -218,7 +218,7 @@ export default function SignUpForm() {
         </div>
       </div>
 
-      <div className=" flex-1 flex justify-between flex-col gap-8">
+      <div className=" flex-1 flex flex-col gap-spacing-5xl">
         <Button
           type="submit"
           className="button-xl bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer"

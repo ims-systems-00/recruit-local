@@ -6,8 +6,8 @@ import SignUpForm from './sign-up-form';
 export default function SignUp() {
   return (
     <div className=" min-h-screen flex justify-center items-center py-spacing-5xl">
-      <div className=" shadow-regular w-[692px] min-h-[735px] rounded-lg flex flex-col gap-y-spacing-5xl p-spacing-5xl">
-        <div className=" flex gap-4">
+      <div className="w-[400px] rounded-lg flex flex-col gap-y-spacing-4xl px-spacing-sm sm:px-spacing-0">
+        <div className=" flex flex-col gap-spacing-2xl">
           <div className="min-w-[114px]">
             <Image
               className="max-h-[62px] max-w-[114px]"

@@ -5,10 +5,12 @@ import CreateOrganizationForm from './create-organization-form';
 export default function CreateOrganization() {
   return (
     <div className=" min-h-screen flex justify-center items-center bg-card">
-      <div className=" shadow-regular w-[692px] bg-card rounded-lg flex flex-col gap-y-spacing-5xl p-12">
+      <div className=" w-[400px] bg-card rounded-lg flex flex-col gap-y-spacing-4xl px-spacing-sm sm:px-spacing-0">
         <div className="space-y-spacing-lg">
-          <h4>Create Your Organization</h4>
-          <p>
+          <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-secondary">
+            Create Your Organization
+          </h4>
+          <p className=' text-body-md'>
             Enter your organization name to begin. Setup can be completed later
           </p>
         </div>
