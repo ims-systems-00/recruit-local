@@ -6,6 +6,7 @@ import { modelNames } from "./constants";
 import { boardSettingsSchema, IBoardSettings } from "./schema/board-settings.schema";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
+import { automaticReferencePlugin, IAutomaticReferenceDoc } from "./plugins/automatic-reference.plugin";
 
 import {
   WORKPLACE_ENUMS,
@@ -46,8 +47,15 @@ export interface IJobInput extends TenantInput {
   formId?: Types.ObjectId;
 }
 
-export interface IJobDoc extends IJobInput, ITenantDoc, ISoftDeleteDoc, IBaseDoc, IBoardSettings {
+export interface IJobDoc
+  extends IJobInput,
+    ITenantDoc,
+    ISoftDeleteDoc,
+    IBaseDoc,
+    IBoardSettings,
+    IAutomaticReferenceDoc {
   keywords?: string[];
+  totalApplications?: number;
 }
 
 export interface IJobModel
@@ -98,6 +106,7 @@ const jobSchema = new Schema<IJobDoc>(
       ref: modelNames.FORM,
     },
     keywords: { type: [String], default: [] },
+    totalApplications: { type: Number, default: 0 },
   },
   {}
 );
@@ -107,5 +116,6 @@ jobSchema.plugin(softDeletePlugin);
 jobSchema.plugin(mongoosePaginate);
 jobSchema.plugin(aggregatePaginate);
 jobSchema.plugin(tenantDataPlugin);
+jobSchema.plugin(automaticReferencePlugin({ model: modelNames.JOB, referencePrefix: "JOB" }));
 
 export const Job = model<IJobDoc, IJobModel>(modelNames.JOB, jobSchema);
