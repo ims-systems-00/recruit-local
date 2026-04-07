@@ -3,6 +3,11 @@ import autoIncrement from "@riadhossain43/mongoose-autoincrement";
 
 autoIncrement.initialize();
 
+export interface IAutomaticReferenceDoc {
+  ID: number;
+  reference: string;
+}
+
 interface IAutomaticReferencePluginOptions {
   model: string;
   referencePrefix: string;

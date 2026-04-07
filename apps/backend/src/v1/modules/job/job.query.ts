@@ -11,9 +11,15 @@ export const jobRoleScopedSecurityQuery = (ability: ReturnType<JobAbilityBuilder
   return query;
 };
 
-export const jobProjectionQuery = (): PipelineStage[] => {
-  const fieldsToExclude: (keyof IJobDoc | "__v")[] = ["__v"];
-  const selectedFields = Object.keys(omit(Job.schema.paths, fieldsToExclude));
+export const jobProjectionQuery = (allowedFields?: string[]): PipelineStage[] => {
+  let selectedFields: string[] = [];
+
+  if (allowedFields && allowedFields.length > 0) {
+    selectedFields = [...allowedFields];
+  } else {
+    const fieldsToExclude: (keyof IJobDoc | "__v")[] = ["__v"];
+    selectedFields = Object.keys(omit(Job.schema.paths, fieldsToExclude));
+  }
 
   return projectQuery(selectedFields);
 };
