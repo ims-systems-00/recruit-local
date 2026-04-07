@@ -28,12 +28,6 @@ const workingHoursSchema = Joi.object({
     .label("End Time"),
 }).label("Working Hours");
 
-const educationSchema = Joi.object({
-  degree: Joi.string().optional().label("Degree"),
-  fieldOfStudy: Joi.string().optional().label("Field of Study"),
-  gpa: Joi.string().optional().label("GPA"),
-}).label("Education");
-
 export const createBodySchema = Joi.object({
   title: Joi.string().required().label("Title"),
   description: Joi.string().optional().label("Description"),
@@ -124,7 +118,6 @@ export const updateBodySchema = Joi.object({
 
   workingHours: workingHoursSchema.optional(),
   salary: Joi.number().optional().label("Salary"),
-  minEducationalQualification: educationSchema.optional(),
   keywords: Joi.array().items(Joi.string()).optional().label("Keywords"),
 
   status: Joi.string()
