@@ -6,12 +6,12 @@ import { FieldPath, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { createJob, getJobs } from './jobs.server';
+import { JobListFilters, JobListResponse } from './job.type';
 import {
   fullJobSchema,
   MultiStepJobFormValues,
-} from '@/app/(authenticated)/(recruiter)/recruiter/job/create/job.schema';
-import { createJob, getJobs } from './jobs.server';
-import { JobListFilters, JobListResponse } from './job.type';
+} from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/job.schema';
 
 export const stepFields: Record<number, FieldPath<MultiStepJobFormValues>[]> = {
   1: [
@@ -147,7 +147,7 @@ export function useCreateJob() {
       }
 
       toast.success(res.message || 'Registration completed');
-      // router.push('/recruiter/job/lists');
+      router.push(`/recruiter/job/${res.data._id}/edit`);
     },
     onError: () => {
       toast.error('Something went wrong');

@@ -1,5 +1,4 @@
 'use server';
-import { MultiStepJobFormValues } from '@/app/(authenticated)/(recruiter)/recruiter/job/create/job.schema';
 import { axiosServer } from '@/lib/http/axios.server';
 import { handleServerError } from '@/lib/http/handleServerError';
 import {

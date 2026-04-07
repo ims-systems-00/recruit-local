@@ -8,7 +8,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import CreateForm from './create-form';
-export default function CreateJob() {
+export default function EditJob() {
   return (
     <div>
       <div className=" py-spacing-lg px-spacing-4xl border-b border-border-gray-secondary">
