@@ -35,14 +35,20 @@ export function NavMain({
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           if (!item.items) {
             return (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild tooltip={item.title}>
-                  <Link href={item.url}>
+                <SidebarMenuButton
+                  asChild
+                  tooltip={item.title}
+                  className=" py-spacing-sm px-spacing-lg bg-bg-gray-soft-primary h-9 rounded-lg text-text-gray-secondary hover:bg-bg-gray-soft-secondary hover:text-text-gray-primary"
+                >
+                  <Link
+                    href={item.url}
+                    className=" text-label-sm font-label-sm-strong! "
+                  >
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                   </Link>
@@ -60,9 +66,14 @@ export function NavMain({
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={item.title}>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    className=" py-spacing-sm px-spacing-lg bg-bg-gray-soft-primary h-9 rounded-lg text-text-gray-secondary"
+                  >
                     {item.icon && <item.icon />}
-                    <span>{item.title}</span>
+                    <span className=" text-label-sm font-label-sm-strong! ">
+                      {item.title}
+                    </span>
                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -71,8 +82,14 @@ export function NavMain({
                   <SidebarMenuSub>
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton asChild>
-                          <Link href={subItem.url}>
+                        <SidebarMenuSubButton
+                          asChild
+                          className=" py-spacing-sm px-spacing-lg bg-bg-gray-soft-primary h-9 rounded-lg text-text-gray-secondary hover:bg-bg-gray-soft-secondary hover:text-text-gray-primary"
+                        >
+                          <Link
+                            href={subItem.url}
+                            className=" text-label-sm font-label-sm-strong! "
+                          >
                             <span>{subItem.title}</span>
                           </Link>
                         </SidebarMenuSubButton>

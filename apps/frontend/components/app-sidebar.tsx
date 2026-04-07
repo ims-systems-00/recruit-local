@@ -4,8 +4,10 @@ import * as React from 'react';
 import Logomark from '@/public/images/Logomark.svg';
 import {
   AudioWaveform,
+  Bell,
   BookOpen,
   Bot,
+  CircleQuestionMark,
   Command,
   Frame,
   GalleryVerticalEnd,
@@ -13,6 +15,7 @@ import {
   Map,
   Newspaper,
   PieChart,
+  Settings,
   Settings2,
   SquareTerminal,
 } from 'lucide-react';
@@ -67,23 +70,23 @@ const data = {
     //   ],
     // },
   ],
-  // projects: [
-  //   {
-  //     name: 'Design Engineering',
-  //     url: '#',
-  //     icon: Frame,
-  //   },
-  //   {
-  //     name: 'Sales & Marketing',
-  //     url: '#',
-  //     icon: PieChart,
-  //   },
-  //   {
-  //     name: 'Travel',
-  //     url: '#',
-  //     icon: Map,
-  //   },
-  // ],
+  footerNavs: [
+    {
+      name: 'Notifications',
+      url: '#',
+      icon: Bell,
+    },
+    {
+      name: 'Settings',
+      url: '#',
+      icon: Settings,
+    },
+    {
+      name: 'Support',
+      url: '#',
+      icon: CircleQuestionMark,
+    },
+  ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -112,9 +115,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               height={32}
             />
           </div>
-          <div className="flex flex-col gap-1 flex-1 text-left text-sm leading-tight  text-title">
-            <span className="truncate font-medium">Recruit Local</span>
-            <span className="truncate text-xs">Free Plan</span>
+          <div className="flex flex-col gap-1 flex-1 text-left ">
+            <span className="truncate text-label-sm font-label-sm-strong! text-text-gray-primary">
+              Recruit Local
+            </span>
+            <span className="truncate text-label-xs text-text-gray-tertiary">
+              Free Plan
+            </span>
           </div>
           <span className=" cursor-pointer" onClick={toggleSidebar}>
             <svg
@@ -144,9 +151,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className=" gap-spacing-2xl p-spacing-0 pb-spacing-sm">
+        <NavProjects projects={data.footerNavs} />
         <NavUser />
       </SidebarFooter>
       <SidebarRail />
