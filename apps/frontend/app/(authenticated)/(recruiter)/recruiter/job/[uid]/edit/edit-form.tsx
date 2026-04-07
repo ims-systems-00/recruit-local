@@ -9,6 +9,7 @@ import { useCreateJob, useUpdateJob } from '@/services/jobs/jobs.client';
 import { FormProvider } from 'react-hook-form';
 import { StepsSidebar } from './steps-sidebar';
 import AdditionalQueries from './steps/additional-queries';
+import { JobData } from '@/services/jobs/job.type';
 
 const steps = [
   { id: 1, label: 'Job Information' },
@@ -16,8 +17,17 @@ const steps = [
   { id: 3, label: 'Business Information' },
   { id: 4, label: 'Preview' },
 ];
-export default function CreateForm() {
-  const { onSubmit, step, nextStep, prevStep, methods } = useUpdateJob();
+export default function EditForm({
+  defaultValues,
+}: {
+  defaultValues: JobData;
+}) {
+  const { onSubmit, step, nextStep, prevStep, methods } = useUpdateJob({
+    id: defaultValues._id,
+    defaultValues: {
+      title: defaultValues.title,
+    },
+  });
   return (
     <div className="min-h-screen flex items-stretch gap-spacing-4xl">
       <FormProvider {...methods}>

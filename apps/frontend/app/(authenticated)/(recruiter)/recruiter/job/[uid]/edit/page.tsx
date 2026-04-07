@@ -7,8 +7,26 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import CreateForm from './create-form';
-export default function EditJob() {
+import { getJobById } from '@/services/jobs/jobs.server';
+import EditForm from './edit-form';
+
+interface Props {
+  params: {
+    uid: string;
+  };
+}
+
+export default async function EditJob({ params }: Props) {
+  const { uid } = params;
+
+  const response = await getJobById(uid);
+
+  if (!response.success) {
+    return <div>Failed to load job</div>;
+  }
+
+  const jobData = response.data;
+
   return (
     <div>
       <div className=" py-spacing-lg px-spacing-4xl border-b border-border-gray-secondary">
@@ -33,7 +51,7 @@ export default function EditJob() {
       </div>
 
       <div className=" px-spacing-4xl">
-        <CreateForm />
+        <EditForm defaultValues={jobData} />
       </div>
     </div>
   );
