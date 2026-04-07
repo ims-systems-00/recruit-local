@@ -760,7 +760,11 @@ export default function JobInformationForm({ next }: { next: () => void }) {
           Previous
         </Button>
         <Button
-          onClick={next}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            next();
+          }}
           className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
         >
           Continue

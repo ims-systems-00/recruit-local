@@ -35,7 +35,12 @@ export default function CardJobItem({ job }: { job: JobData }) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Edit
+                  <Link
+                    href={`/recruiter/job/${job._id}/edit`}
+                    className=" w-full"
+                  >
+                    Edit
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                   Archive

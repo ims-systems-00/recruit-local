@@ -184,7 +184,12 @@ export const userColumns: ColumnDef<JobData>[] = [
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-              Edit
+              <Link
+                href={`/recruiter/job/${row?.original?._id}/edit`}
+                className=" w-full"
+              >
+                Edit
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
               Archive
@@ -281,8 +286,6 @@ export default function Jobs() {
     onSubmit({ title: 'Untitled Title' });
   };
 
-  console.log('jobs', jobs);
-  console.log('pagination', pagination);
   return (
     <div className=" p-spacing-4xl">
       <div className=" flex justify-between items-center gap-spacing-2xl">

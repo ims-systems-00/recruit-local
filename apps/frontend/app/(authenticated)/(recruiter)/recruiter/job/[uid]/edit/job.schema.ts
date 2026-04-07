@@ -31,7 +31,7 @@ export const workingHoursSchema = yup.object({
 // Salary
 export const salarySchema = yup.object({
   // salary mode is missing in core constant
-  mode: yup.string().required('Salary mode is required'),
+  mode: yup.string().optional(),
   amount: yup
     .number()
     .typeError('Salary must be a number')
@@ -69,7 +69,6 @@ export const skillSchema = yup.object({
 });
 
 export const stepOneJobSchema = yup.object({
-  bannerStorage: awsStorageSchema.nullable().default(undefined),
   // Basic Information
   title: yup.string().required('Title is required'),
   employmentType: yup.string().oneOf(Object.values(EMPLOYMENT_TYPE)).nullable(),
@@ -97,36 +96,8 @@ export const stepOneJobSchema = yup.object({
   // Job Description
   salary: salarySchema.nullable(),
   period: yup.string().oneOf(Object.values(PERIOD_ENUMS)).nullable(),
-  description: yup.string().nullable(),
-  responsibility: yup.string().nullable().default(undefined),
-  attachmentsStorage: yup.array().of(awsStorageSchema).nullable(),
-});
 
-export const stepTwoJobSchema = yup.object({
-  // Candidate Requirements
-  minEducationalQualification: educationSchema.nullable(),
-
-  //   skill need array but ui have text area
-  skills: yup.array().of(skillSchema).nullable(),
-  //   Experience Level Missing
-
-  //   Application Process
   email: yup.string().email('Invalid email').default(undefined),
-  requiredDocuments: yup
-    .array()
-    .of(yup.string().oneOf(Object.values(REQUIRED_DOCUMENTS_ENUMS)))
-    .nullable(),
-
-  // why we should need start date
-  startDate: yup.date().nullable(),
-
-  endDate: yup
-    .date()
-    .min(yup.ref('startDate'), 'End date must be after start date')
-    .nullable(),
-});
-
-export const stepThreeJobSchema = yup.object({
   number: yup
     .string()
     .optional()
@@ -137,7 +108,22 @@ export const stepThreeJobSchema = yup.object({
     ),
   aboutUs: yup.string().nullable().default(undefined),
   autoFill: yup.boolean().nullable(),
+  endDate: yup.date().nullable(),
+});
 
+export const stepTwoJobSchema = yup.object({
+  description: yup.string().nullable(),
+  responsibility: yup.string().nullable().default(undefined),
+  attachmentsStorage: yup.array().of(awsStorageSchema).nullable(),
+
+  //   Application Process
+  requiredDocuments: yup
+    .array()
+    .of(yup.string().oneOf(Object.values(REQUIRED_DOCUMENTS_ENUMS)))
+    .nullable(),
+});
+
+export const stepThreeJobSchema = yup.object({
   // category does not exists on ui
   category: yup.string().nullable(),
 
