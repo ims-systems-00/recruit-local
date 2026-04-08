@@ -76,12 +76,12 @@ export function StepsSidebar({ currentStep }: StepsSidebarProps) {
               </div>
               <div className="pt-0.5">
                 <p
-                  className={` text-label-sm font-label-sm-strong! ${active ? 'text-text-brand-primary' : completed ? 'text-text-brand-primary' : 'text-text-gray-secondary'}`}
+                  className={` text-label-sm font-label-sm-strong! ${active ? 'text-text-brand-primary' : 'text-text-gray-secondary'}`}
                 >
                   {step.title}
                 </p>
                 <p
-                  className={`text-xs mt-0.5 leading-snug ${active ? 'text-text-brand-secondary' : completed ? 'text-text-brand-secondary' : 'text-text-gray-tertiary'}`}
+                  className={`text-xs mt-0.5 leading-snug ${active ? 'text-text-brand-secondary' : 'text-text-gray-tertiary'}`}
                 >
                   {step.subtitle}
                 </p>

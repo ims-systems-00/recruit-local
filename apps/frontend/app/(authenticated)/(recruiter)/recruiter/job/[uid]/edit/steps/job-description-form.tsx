@@ -31,13 +31,6 @@ export default function JobDescriptionForm({
   prev: (step: number) => void;
   next: (step: number) => void;
 }) {
-  const {
-    register,
-    control,
-    formState: { errors },
-    watch,
-    getValues,
-  } = useFormContext<MultiStepJobFormValues>();
   return (
     <>
       <div className=" space-y-spacing-4xl">
@@ -46,146 +39,6 @@ export default function JobDescriptionForm({
             Job Description
           </p>
           <div className="grid grid-cols-2 gap-spacing-2xl">
-            {/* <div className="space-y-spacing-xs ">
-              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                Salary Type
-              </Label>
-              <div className=" space-y-2">
-                <Controller
-                  name="salary.mode"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value || ''}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
-                        <SelectValue placeholder="Eg. Fixed" />
-                      </SelectTrigger>
-
-                      <SelectContent className=" bg-white">
-                        <SelectGroup>
-                          {SALARY_MODE_OPTIONS.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.salary?.mode && (
-                  <p className="text-xs text-text-error-primary">
-                    {errors.salary?.mode?.message}
-                  </p>
-                )}
-              </div>
-            </div>
-            {salaryMode === 'negotiable' ? (
-              <>
-                <div className="space-y-spacing-xs ">
-                  <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                    Min. Salary
-                  </Label>
-                  <div className=" space-y-2">
-                    <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
-                      <InputGroupInput
-                        type="number"
-                        placeholder="Eg. 100"
-                        {...register('salary.min')}
-                      />
-                    </InputGroup>
-                    {errors.salary?.min && (
-                      <p className="text-xs text-text-error-primary">
-                        {errors.salary?.min.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-spacing-xs ">
-                  <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                    Max. Salary
-                  </Label>
-                  <div className=" space-y-2">
-                    <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
-                      <InputGroupInput
-                        type="number"
-                        placeholder="Eg. 500"
-                        {...register('salary.max')}
-                      />
-                    </InputGroup>
-                    {errors.salary?.max && (
-                      <p className="text-xs text-text-error-primary">
-                        {errors.salary?.max.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="space-y-spacing-xs ">
-                <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Salary
-                </Label>
-                <div className=" space-y-2">
-                  <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
-                    <InputGroupInput
-                      type="number"
-                      placeholder="Eg. 300"
-                      {...register('salary.amount')}
-                    />
-                  </InputGroup>
-                  {errors.salary?.amount && (
-                    <p className="text-xs text-text-error-primary">
-                      {errors.salary?.amount.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div
-              className={cn(
-                'space-y-spacing-xs ',
-                salaryMode !== 'negotiable' && ' col-span-2',
-              )}
-            >
-              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                Period
-              </Label>
-              <div className=" space-y-2">
-                <Controller
-                  name="period"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value || ''}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
-                        <SelectValue placeholder="Eg. Hourly" />
-                      </SelectTrigger>
-
-                      <SelectContent className=" bg-white">
-                        <SelectGroup>
-                          {PERIOD_OPTIONS.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.period && (
-                  <p className="text-xs text-text-error-primary">
-                    {errors.period.message}
-                  </p>
-                )}
-              </div>
-            </div> */}
             <div className="space-y-spacing-xs col-span-2">
               <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                 About the Role
@@ -194,15 +47,15 @@ export default function JobDescriptionForm({
                 <InputGroup className="rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupTextarea
                     placeholder="Write your message here..."
-                    {...register('aboutUs')}
+                    // {...register('aboutUs')}
                     className="min-h-[136px] "
                   />
                 </InputGroup>
-                {errors.aboutUs && (
+                {/* {errors.aboutUs && (
                   <p className="text-xs text-text-error-primary">
                     {errors.aboutUs.message}
                   </p>
-                )}
+                )} */}
               </div>
             </div>
             <div className="space-y-spacing-xs col-span-2">
@@ -213,15 +66,15 @@ export default function JobDescriptionForm({
                 <InputGroup className="rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupTextarea
                     placeholder="Write your message here..."
-                    {...register('responsibility')}
+                    // {...register('responsibility')}
                     className="min-h-[136px] "
                   />
                 </InputGroup>
-                {errors.responsibility && (
+                {/* {errors.responsibility && (
                   <p className="text-xs text-text-error-primary">
                     {errors.responsibility.message}
                   </p>
-                )}
+                )} */}
               </div>
             </div>
             <div className="space-y-spacing-xs col-span-2">

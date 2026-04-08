@@ -22,29 +22,28 @@ export default function EditForm({
 }: {
   defaultValues: JobData;
 }) {
-  const { onSubmit, step, nextStep, prevStep, methods } = useUpdateJob({
-    id: defaultValues._id,
-    defaultValues: {
-      title: defaultValues.title,
-    },
-  });
+  const [step, setStep] = useState(1);
+
   return (
     <div className="min-h-screen flex items-stretch gap-spacing-4xl">
-      <FormProvider {...methods}>
-        <form
-          onSubmit={onSubmit}
-          className=" flex flex-col gap-y-spacing-6xl flex-1 pt-spacing-4xl"
-        >
-          {step === 1 && <JobInformationForm next={nextStep} />}
-          {/* {step === 2 && (
+      <div className=" flex flex-col gap-y-spacing-6xl flex-1 pt-spacing-4xl">
+        {step === 1 && (
+          <JobInformationForm
+            defaultValues={defaultValues}
+            next={() => setStep(2)}
+          />
+        )}
+        {/* {step === 2 && (
             <ReviewJobDescriptionForm prev={prevStep} next={nextStep} />
           )} */}
-          {step === 2 && <JobDescriptionForm prev={prevStep} next={nextStep} />}
-          {step === 3 && <AdditionalQueries prev={prevStep} next={nextStep} />}
-          {step === 4 && <Preview prev={prevStep} />}
-        </form>
-      </FormProvider>
-      {/* <Stepper steps={steps} currentStep={step} className="mb-12" /> */}
+        {step === 2 && (
+          <JobDescriptionForm prev={() => setStep(1)} next={() => setStep(3)} />
+        )}
+        {/* {step === 3 && (
+          <AdditionalQueries prev={() => setStep(2)} next={() => setStep(4)} />
+        )} */}
+        {/* {step === 4 && <Preview prev={() => setStep(3)} />} */}
+      </div>
       {step !== 4 && <StepsSidebar currentStep={step} />}
     </div>
   );

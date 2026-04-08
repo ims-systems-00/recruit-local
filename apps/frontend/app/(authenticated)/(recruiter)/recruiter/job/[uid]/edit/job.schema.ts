@@ -20,12 +20,12 @@ export const workingHoursSchema = yup.object({
   startTime: yup
     .string()
     .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)')
-    .nullable(),
+    .optional(),
 
   endTime: yup
     .string()
     .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)')
-    .nullable(),
+    .optional(),
 });
 
 // Salary
@@ -136,3 +136,74 @@ export const fullJobSchema = stepOneJobSchema
   .concat(stepThreeJobSchema);
 
 export type MultiStepJobFormValues = yup.InferType<typeof fullJobSchema>;
+
+export const jobInformationSchema = yup.object({
+  title: yup.string().trim().required('Job title is required'),
+
+  employmentType: yup.string().optional(),
+
+  workplace: yup.string().optional(),
+
+  yearOfExperience: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .typeError('Year of experience must be a number')
+    .optional(),
+
+  vacancy: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .typeError('Vacancy must be a number')
+    .optional(),
+
+  salary: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .typeError('Salary must be a number')
+    .optional(),
+
+  period: yup.string().optional(),
+
+  workingDays: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .typeError('Working days must be a number')
+    .optional(),
+
+  weekends: yup
+    .array()
+    .of(yup.string().oneOf(Object.values(WORKING_DAYS_ENUMS)))
+    .optional(),
+
+  aboutUs: yup.string().optional(),
+
+  email: yup.string().email('Invalid email').optional(),
+
+  workingHours: workingHoursSchema.optional(),
+  endDate: yup.date().optional(),
+
+  number: yup
+    .string()
+    .optional()
+    .test(
+      'is-valid-phone',
+      'Invalid phone number',
+      (value) => !value || isValidPhoneNumber(value),
+    ),
+
+  location: yup.string().optional(),
+
+  autoFill: yup.boolean().default(false),
+});
+
+export type JobInformationFormValues = yup.InferType<
+  typeof jobInformationSchema
+>;
