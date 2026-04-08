@@ -38,6 +38,7 @@ export const createBodySchema = Joi.object({
   category: Joi.string().optional().label("Category"),
   vacancy: Joi.number().integer().min(1).optional().label("Vacancy"),
   location: Joi.string().optional().label("Location"),
+  locationAdditionalInfo: Joi.string().optional().label("Location Additional Info"),
   responsibility: Joi.string().optional().label("Responsibility"),
   yearOfExperience: Joi.number().integer().min(0).optional().label("Years of Experience"),
 
@@ -84,6 +85,7 @@ export const updateBodySchema = Joi.object({
   category: Joi.string().optional().label("Category"),
   vacancy: Joi.number().integer().min(0).optional().label("Vacancy"),
   location: Joi.string().optional().label("Location"),
+  locationAdditionalInfo: Joi.string().optional().label("Location Additional Info"),
   responsibility: Joi.string().optional().label("Responsibility"),
   email: Joi.string().email().optional().label("Email"),
   number: Joi.string().optional().label("Contact Number"),

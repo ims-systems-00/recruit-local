@@ -4,24 +4,22 @@ import {
   ApiResponse,
   ControllerParams,
   formatListResponse,
-  logger,
   NotFoundException,
-  pick,
   UnauthorizedException,
 } from "../../../common/helper";
-import { UserAbilityBuilder, EventRegistrationAuthZEntity } from "@rl/authz";
+import { UserAbilityBuilder, CvAbilityBuilder } from "@rl/authz"; // Updated AuthZ Entity
 import { AbilityAction } from "@rl/types";
 import { roleScopedSecurityQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import * as actionService from "./action.service";
 
 export const list = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
+  // const abilityBuilder = new UserAbilityBuilder(req.session);
+  // const ability = abilityBuilder.getAbility();
 
-  //   if (!ability.can(AbilityAction.Read, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read skill assessment results.`);
-  //   }
+  // if (!ability.can(AbilityAction.Read, ActionAuthZEntity)) {
+  //   throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read actions.`);
+  // }
 
   const filter = new MongoQuery(req.query, {
     searchFields: ["label"],
@@ -29,14 +27,15 @@ export const list = async ({ req }: ControllerParams) => {
 
   const actionSearchQuery = filter.getFilterQuery();
   const options = filter.getQueryOptions();
-  //   const securityQuery = roleScopedSecurityQuery(EventRegistrationAuthZEntity, ability);
+
+  // const securityQuery = roleScopedSecurityQuery(ActionAuthZEntity, ability);
 
   const finalQuery = {
-    $and: [actionSearchQuery /*securityQuery*/],
+    $and: [actionSearchQuery /*, securityQuery*/],
   };
 
   const results = await actionService.list({
-    query: sanitizeQueryIds(finalQuery) as unknown,
+    query: sanitizeQueryIds(finalQuery) as any,
     options,
   });
 
@@ -52,16 +51,16 @@ export const list = async ({ req }: ControllerParams) => {
 };
 
 export const get = async ({ req }: ControllerParams) => {
-  const action = await actionService.getOne(sanitizeQueryIds({ _id: req.params.id }));
-  if (!action) {
-    throw new NotFoundException(`Action  ${req.params.id} not found.`);
-  }
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
+  // const abilityBuilder = new UserAbilityBuilder(req.session);
+  // const ability = abilityBuilder.getAbility();
 
-  //   if (!ability.can(AbilityAction.Read, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read skill assessment results.`);
-  //   }
+  // if (!ability.can(AbilityAction.Read, ActionAuthZEntity)) {
+  //   throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read actions.`);
+  // }
+
+  const action = await actionService.getOne({
+    query: sanitizeQueryIds({ _id: req.params.id }),
+  });
 
   return new ApiResponse({
     message: "Action retrieved.",
@@ -72,14 +71,16 @@ export const get = async ({ req }: ControllerParams) => {
 };
 
 export const create = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
+  // const abilityBuilder = new UserAbilityBuilder(req.session);
+  // const ability = abilityBuilder.getAbility();
 
-  //   if (!ability.can(AbilityAction.Create, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create skill assessment results.`);
-  //   }
+  // if (!ability.can(AbilityAction.Create, ActionAuthZEntity)) {
+  //   throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create actions.`);
+  // }
 
-  const action = await actionService.create(req.body);
+  const action = await actionService.create({
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Action created.",
@@ -90,14 +91,17 @@ export const create = async ({ req }: ControllerParams) => {
 };
 
 export const update = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
+  // const abilityBuilder = new UserAbilityBuilder(req.session);
+  // const ability = abilityBuilder.getAbility();
 
-  //   if (!ability.can(AbilityAction.Update, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to update skill assessment results.`);
-  //   }
+  // if (!ability.can(AbilityAction.Update, ActionAuthZEntity)) {
+  //   throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to update actions.`);
+  // }
 
-  const action = await actionService.update(sanitizeQueryIds({ _id: req.params.id }), req.body);
+  const action = await actionService.update({
+    query: sanitizeQueryIds({ _id: req.params.id }),
+    payload: req.body,
+  });
 
   return new ApiResponse({
     message: "Action updated.",
@@ -108,14 +112,16 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
+  // const abilityBuilder = new UserAbilityBuilder(req.session);
+  // const ability = abilityBuilder.getAbility();
 
-  //   if (!ability.can(AbilityAction.Delete, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to delete skill assessment results.`);
-  //   }
+  // if (!ability.can(AbilityAction.Delete, ActionAuthZEntity)) {
+  //   throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to delete actions.`);
+  // }
 
-  await actionService.softRemove(sanitizeQueryIds({ _id: req.params.id }));
+  await actionService.softRemove({
+    query: sanitizeQueryIds({ _id: req.params.id }),
+  });
 
   return new ApiResponse({
     message: "Action deleted.",
@@ -124,14 +130,16 @@ export const softRemove = async ({ req }: ControllerParams) => {
 };
 
 export const restore = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
+  // const abilityBuilder = new UserAbilityBuilder(req.session);
+  // const ability = abilityBuilder.getAbility();
 
-  //   if (!ability.can(AbilityAction.Restore, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to restore skill assessment results.`);
-  //   }
+  // if (!ability.can(AbilityAction.Restore, ActionAuthZEntity)) {
+  //   throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to restore actions.`);
+  // }
 
-  const action = await actionService.restore(sanitizeQueryIds({ _id: req.params.id }));
+  const action = await actionService.restore({
+    query: sanitizeQueryIds({ _id: req.params.id }),
+  });
 
   return new ApiResponse({
     message: "Action restored from trash.",
@@ -142,14 +150,16 @@ export const restore = async ({ req }: ControllerParams) => {
 };
 
 export const hardRemove = async ({ req }: ControllerParams) => {
-  //   const abilityBuilder = new UserAbilityBuilder(req.session);
-  //   const ability = abilityBuilder.getAbility();
+  // const abilityBuilder = new UserAbilityBuilder(req.session);
+  // const ability = abilityBuilder.getAbility();
 
-  //   if (!ability.can(AbilityAction.ForceDelete, EventRegistrationAuthZEntity)) {
-  //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to permanently delete skill assessment results.`);
-  //   }
+  // if (!ability.can(AbilityAction.ForceDelete, ActionAuthZEntity)) {
+  //   throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to permanently delete actions.`);
+  // }
 
-  await actionService.hardRemove(sanitizeQueryIds({ _id: req.params.id }));
+  await actionService.hardRemove({
+    query: sanitizeQueryIds({ _id: req.params.id }),
+  });
 
   return new ApiResponse({
     message: "Action permanently deleted.",

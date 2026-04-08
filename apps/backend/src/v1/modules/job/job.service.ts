@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import { Types, ClientSession } from "mongoose";
 import { Job, IJobInput } from "../../../models";
 import { getOne as getTenant } from "../tenant/tenant.service";
 import { NotFoundException } from "../../../common/helper";

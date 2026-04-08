@@ -47,7 +47,7 @@ export const get = async ({ req }: ControllerParams) => {
 
   const tenant = await tenantService.getOne({ query: { _id: req.params.id } });
 
-  if (!tenant || !ability.can(AbilityAction.Read, new TenantAuthZEntity({ _id: tenant._id?.toString() }))) {
+  if (!tenant || !ability.can(AbilityAction.Read, new TenantAuthZEntity({ _id: tenant._id?.toString() ?? null }))) {
     throw new UnauthorizedException("You do not have permission to view this organisation.");
   }
 
@@ -71,7 +71,7 @@ export const update = async ({ req }: ControllerParams) => {
 
   if (
     !existingTenant ||
-    !ability.can(AbilityAction.Update, new TenantAuthZEntity({ _id: existingTenant._id?.toString() }))
+    !ability.can(AbilityAction.Update, new TenantAuthZEntity({ _id: existingTenant._id?.toString() ?? null }))
   ) {
     throw new UnauthorizedException(`User is not authorized to update this organisation.`);
   }
@@ -103,15 +103,16 @@ export const updateLogo = async ({ req }: ControllerParams) => {
 
   if (
     !existingTenant ||
-    !ability.can(AbilityAction.Update, new TenantAuthZEntity({ _id: existingTenant._id?.toString() }))
+    !ability.can(AbilityAction.Update, new TenantAuthZEntity({ _id: existingTenant._id?.toString() ?? null }))
   ) {
     throw new UnauthorizedException(`User is not authorized to update this organisation's logo.`);
   }
 
   const tenant = await tenantService.updateLogo({
-    query: { _id: req.params.id },
-    logoStorage,
-    payload: req.body,
+    tenantId: req.params.id,
+    logoType: logoStorage === "logoSquareStorage" ? "square" : "rectangle",
+    file: req.file,
+    // session: req.session,
   });
 
   return new ApiResponse({
@@ -143,12 +144,11 @@ export const create = async ({ req }: ControllerParams) => {
   // });
 
   await updateUser({
-    query: { _id: user._id.toString() },
+    query: { _id: user._id!.toString() },
     payload: {
       tenantId: tenant.id,
       role: USER_ROLE_ENUMS.ADMIN,
     },
-    allowedFields: ["tenantId", "role"],
   });
 
   return new ApiResponse({
@@ -167,7 +167,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
 
   if (
     !existingTenant ||
-    !ability.can(AbilityAction.Delete, new TenantAuthZEntity({ _id: existingTenant._id?.toString() }))
+    !ability.can(AbilityAction.Delete, new TenantAuthZEntity({ _id: existingTenant._id!.toString() ?? null }))
   ) {
     throw new UnauthorizedException("You do not have permission to delete this organisation.");
   }
