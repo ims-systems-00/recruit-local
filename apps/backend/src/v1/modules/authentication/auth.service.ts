@@ -24,7 +24,7 @@ export const _generateSendAndStoreRegistrationToken = async ({
 
   const registrationToken = tokenService.generateToken({
     payload: { id: userId },
-    options: { expiresIn: process.env.REGISTRATION_TOKEN_EXPIRY },
+    options: { expiresIn: process.env.REGISTRATION_TOKEN_EXPIRY! },
   });
 
   const verificationLink = `${process.env.CLIENT_URL}/accounts/registration-verification/?registration_token=${registrationToken}`;
@@ -40,9 +40,10 @@ const handleInvitationRegistration = async (payload: UserPayload): Promise<IUser
   if (!isTokenExists) throw new BadRequestException("Invalid invitation token.");
 
   // Replace the email and type from the invitation token
-  const decoded = (await tokenService.verifyToken(payload.invitationToken)) as CustomJwtPayload;
-  payload.email = decoded.email;
+  const decoded = (await tokenService.verifyToken(payload.invitationToken!)) as CustomJwtPayload;
+  payload.email = decoded.email!;
   payload.type = decoded.type;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload.tenantId = decoded.tenantId as any;
   payload.role = decoded.role;
 
@@ -50,12 +51,13 @@ const handleInvitationRegistration = async (payload: UserPayload): Promise<IUser
   const user = await userService.create({ payload });
   user.emailVerificationStatus = EMAIL_VERIFICATION_STATUS_ENUMS.VERIFIED;
   await userService.update({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     query: { _id: user._id } as any,
     payload: { emailVerificationStatus: EMAIL_VERIFICATION_STATUS_ENUMS.VERIFIED },
   });
 
   // Remove the invitation token from the database
-  await verificationTokenService.remove({ _id: isTokenExists._id.toString() });
+  await verificationTokenService.remove({ _id: isTokenExists._id!.toString() });
 
   return user;
 };
@@ -103,14 +105,14 @@ export const verifyRegistration = async (token: string): Promise<IUserDoc> => {
 
   const decoded = (await tokenService.verifyToken(token)) as CustomJwtPayload;
 
-  const user = await userService.getUserById(decoded.id);
+  const user = await userService.getUserById(decoded.id!);
 
   logger.debug(`User found for registration verification: ${user.email}`);
 
   user.emailVerificationStatus = EMAIL_VERIFICATION_STATUS_ENUMS.VERIFIED;
   await user.save();
 
-  await verificationTokenService.remove({ _id: isExists._id.toString() });
+  await verificationTokenService.remove({ _id: isExists._id!.toString() });
 
   return user;
 };
@@ -123,7 +125,7 @@ export const resendVerification = async (email: string): Promise<IUserDoc> => {
     throw new BadRequestException("Email is already verified.");
   }
 
-  await _generateSendAndStoreRegistrationToken({ userId: user._id.toString(), receiver: user.email });
+  await _generateSendAndStoreRegistrationToken({ userId: user._id!.toString(), receiver: user.email });
 
   return user;
 };
@@ -133,8 +135,8 @@ export const recoverAccount = async (email: string): Promise<IUserDoc> => {
   if (!user) throw new NotFoundException("User not found.");
 
   const recoveryToken = tokenService.generateToken({
-    payload: { id: user._id.toString() },
-    options: { expiresIn: process.env.RECOVERY_TOKEN_EXPIRY },
+    payload: { id: user._id!.toString() },
+    options: { expiresIn: process.env.RECOVERY_TOKEN_EXPIRY! },
   });
 
   const recoveryLink = `${process.env.CLIENT_URL}/reset-password?recovery_token=${recoveryToken}`;
@@ -164,10 +166,10 @@ export const verifyRecovery = async ({
 
   const decoded = (await tokenService.verifyToken(token)) as CustomJwtPayload;
 
-  const user = await userService.getUserById(decoded.id);
+  const user = await userService.getUserById(decoded.id!);
   user.password = password;
   await user.save();
-  await verificationTokenService.remove({ _id: isExists._id.toString() });
+  await verificationTokenService.remove({ _id: isExists._id!.toString() });
 
   return user;
 };

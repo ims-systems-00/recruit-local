@@ -9,9 +9,11 @@ import {
 } from "../../../common/helper";
 import * as jobService from "./job.service";
 import { JobAbilityBuilder, JobAuthZEntity, ALL_JOB_FIELDS } from "@rl/authz";
-import { AbilityAction } from "@rl/types";
+import { AbilityAction, JOBS_STATUS_ENUMS } from "@rl/types";
 import { jobRoleScopedSecurityQuery } from "./job.query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
+import { agenda } from "../../../agenda/config";
+import { JOB_NAME } from "../../../agenda/constants";
 
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_FIELDS,
@@ -106,6 +108,10 @@ export const create = async ({ req }: ControllerParams) => {
     },
   });
 
+  if (job.endDate && job.status === JOBS_STATUS_ENUMS.OPEN) {
+    await agenda.schedule(new Date(job.endDate), JOB_NAME.EXPIRE_JOB_POST, { jobId: job.id.toString() });
+  }
+
   return new ApiResponse({
     message: "Job created successfully.",
     statusCode: StatusCodes.CREATED,
@@ -136,6 +142,10 @@ export const update = async ({ req }: ControllerParams) => {
     query: { _id: req.params.id },
     payload: req.body,
   });
+
+  if (job.endDate && job.status === JOBS_STATUS_ENUMS.OPEN) {
+    await agenda.schedule(new Date(job.endDate), JOB_NAME.EXPIRE_JOB_POST, { jobId: job.id.toString() });
+  }
 
   return new ApiResponse({
     message: "Job updated.",

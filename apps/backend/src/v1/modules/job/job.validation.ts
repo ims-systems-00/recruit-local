@@ -38,12 +38,12 @@ export const createBodySchema = Joi.object({
   category: Joi.string().optional().label("Category"),
   vacancy: Joi.number().integer().min(1).optional().label("Vacancy"),
   location: Joi.string().optional().label("Location"),
+  locationAdditionalInfo: Joi.string().optional().label("Location Additional Info"),
   responsibility: Joi.string().optional().label("Responsibility"),
   yearOfExperience: Joi.number().integer().min(0).optional().label("Years of Experience"),
 
   // Dates
-  startDate: Joi.date().iso().optional().label("Start Date"),
-  endDate: Joi.date().iso().min(Joi.ref("startDate")).optional().label("End Date"),
+  endDate: Joi.date().iso().optional().label("Start Date"),
 
   // Images & Files
   attachmentsStorage: Joi.array().items(awsStorageSchema).optional().label("Attachments Storage"),
@@ -84,13 +84,13 @@ export const updateBodySchema = Joi.object({
   category: Joi.string().optional().label("Category"),
   vacancy: Joi.number().integer().min(0).optional().label("Vacancy"),
   location: Joi.string().optional().label("Location"),
+  locationAdditionalInfo: Joi.string().optional().label("Location Additional Info"),
   responsibility: Joi.string().optional().label("Responsibility"),
   email: Joi.string().email().optional().label("Email"),
   number: Joi.string().optional().label("Contact Number"),
   aboutUs: Joi.string().optional().label("About Us"),
   autoFill: Joi.boolean().optional().label("Auto Fill"),
-  startDate: Joi.date().iso().optional().label("Start Date"),
-  endDate: Joi.date().iso().min(Joi.ref("startDate")).optional().label("End Date"),
+  endDate: Joi.date().iso().optional().label("Start Date"),
   attachmentsStorage: Joi.array().items(awsStorageSchema).optional().label("Attachments Storage"),
   yearOfExperience: Joi.number().integer().min(0).optional().label("Years of Experience"),
   workplace: Joi.string()

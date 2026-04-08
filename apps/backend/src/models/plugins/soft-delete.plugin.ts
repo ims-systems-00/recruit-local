@@ -21,7 +21,7 @@ export interface ISoftDeleteDoc extends Document {
 // Define the interface for the model with soft delete methods
 export interface ISoftDeleteModel<T extends ISoftDeleteDoc> extends Model<T>, PaginateModel<T> {
   softDelete(query: Record<string, any>, options?: any): Promise<{ deleted: number }>;
-  restore(query: Record<string, any>): Promise<{ restored: number }>;
+  restore(query: Record<string, any>, options?: any): Promise<{ restored: number }>;
   paginateAndExcludeDeleted(query: Record<string, any>, options?: any): QueryWithHelpers<PaginateResult<T>, T>;
   findOneWithExcludeDeleted(query: Record<string, any>): QueryWithHelpers<T | null, T>;
 }
@@ -46,7 +46,7 @@ export interface ISoftDeleteModel<T extends ISoftDeleteDoc> extends Model<T>, Pa
 export const softDeletePlugin = <T extends ISoftDeleteDoc>(schema: Schema<T>): void => {
   if (!(schema instanceof Schema)) throw new Error("The schema must be an instance of mongoose schema");
 
-  let softDeleteSchema = new Schema<ISoftDeleteDoc>({
+  const softDeleteSchema = new Schema<ISoftDeleteDoc>({
     deleteMarker: {
       status: {
         type: Boolean,
@@ -90,7 +90,7 @@ export const softDeletePlugin = <T extends ISoftDeleteDoc>(schema: Schema<T>): v
   });
 
   // Static method to restore soft deleted documents
-  schema.static("restore", async function (query: Record<string, any>) {
+  schema.static("restore", async function (query: Record<string, any>, options: any = {}) {
     try {
       const result = (await this.updateMany(
         {
@@ -103,7 +103,8 @@ export const softDeletePlugin = <T extends ISoftDeleteDoc>(schema: Schema<T>): v
             "deleteMarker.deletedAt": null,
             "deleteMarker.dateScheduled": null,
           },
-        }
+        },
+        options
       )) as UpdateWriteOpResult;
 
       return { restored: result.modifiedCount || 0 };

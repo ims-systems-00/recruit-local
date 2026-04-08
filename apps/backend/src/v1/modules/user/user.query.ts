@@ -40,15 +40,9 @@ export const excludeDeletedQuery = (): PipelineStage[] => {
 
 // user queries
 
-export const userProjectionQuery = (allowedFields?: string[]): PipelineStage[] => {
-  let selectedFields: string[] = [];
-
-  if (allowedFields && allowedFields.length > 0) {
-    selectedFields = [...allowedFields];
-  } else {
-    const fieldsToExclude: (keyof IUserDoc | "__v")[] = ["__v" as keyof IUserDoc];
-    selectedFields = Object.keys(omit(User.schema.paths, fieldsToExclude));
-  }
+export const userProjectionQuery = (): PipelineStage[] => {
+  const fieldsToExclude: (keyof IUserDoc | "__v")[] = ["__v" as keyof IUserDoc];
+  const selectedFields = Object.keys(omit(User.schema.paths, fieldsToExclude));
 
   return projectQuery(selectedFields);
 };

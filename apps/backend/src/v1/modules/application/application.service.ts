@@ -10,6 +10,7 @@ import * as statusService from "../status/status.service";
 import * as FileMediaService from "../file-media/file-media.service";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 import { modelNames } from "../../../models/constants";
+import { withTransaction } from "../../../common/helper/database-transaction";
 
 type IListApplicationParams = IListParams<ApplicationInput>;
 type IApplicationQueryParams = Partial<ApplicationInput & { _id: string }>;
@@ -79,51 +80,41 @@ export const getOneSoftDeleted = async ({ query }: IApplicationGetParams) => {
 };
 
 export const create = async ({ payload }: IApplicationCreateParams) => {
-  await jobService.getOne({
-    query: { _id: payload.jobId!.toString() },
-  });
-
-  const defaultStatus = await statusService.getOne({
-    query: {
-      collectionName: modelNames.JOB,
-      collectionId: payload.jobId!.toString(),
-      default: true,
-    },
-  });
-
-  if (!defaultStatus) throw new NotFoundException("Default starting status for this job not found.");
-
-  payload.statusId = defaultStatus._id as Types.ObjectId;
-
-  const merit = Math.floor(Math.random() * 10) + 1;
-  payload.rank = merit;
-
-  const applicationId = new Types.ObjectId();
-  let resumeId = null;
-
-  if (payload.resumeStorage) {
-    const fileMedia = await FileMediaService.create({
-      payload: {
-        collectionName: modelNames.APPLICATION,
-        collectionDocument: applicationId,
-        storageInformation: payload.resumeStorage,
-        visibility: VISIBILITY_ENUM.PRIVATE,
-      },
+  return withTransaction(async (session) => {
+    await jobService.getOne({
+      query: { _id: payload.jobId!.toString() },
     });
-    resumeId = fileMedia._id;
-  }
 
-  const { resumeStorage, ...cleanPayload } = payload;
+    const merit = Math.floor(Math.random() * 10) + 1;
+    payload.rank = merit;
 
-  let application = new Application({
-    ...cleanPayload,
-    _id: applicationId,
-    resumeId: resumeId,
+    const applicationId = new Types.ObjectId();
+    let resumeId = null;
+
+    if (payload.resumeStorage) {
+      const fileMedia = await FileMediaService.create({
+        payload: {
+          collectionName: modelNames.APPLICATION,
+          collectionDocument: applicationId,
+          storageInformation: payload.resumeStorage,
+          visibility: VISIBILITY_ENUM.PRIVATE,
+        },
+      });
+      resumeId = fileMedia._id;
+    }
+
+    const { resumeStorage, ...cleanPayload } = payload;
+
+    let application = new Application({
+      ...cleanPayload,
+      _id: applicationId,
+      resumeId: resumeId,
+    });
+
+    application = await application.save();
+
+    return application;
   });
-
-  application = await application.save();
-
-  return application;
 };
 
 export const update = async ({ query, payload }: IApplicationUpdateParams) => {
