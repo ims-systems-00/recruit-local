@@ -27,7 +27,6 @@ export interface IJobInput extends TenantInput {
   number?: string;
   aboutUs?: string;
 
-  startDate?: Date;
   endDate?: Date;
   yearOfExperience?: number;
   attachmentIds?: Types.ObjectId[];
@@ -72,7 +71,6 @@ const jobSchema = new Schema<IJobDoc>(
     email: { type: String },
     number: { type: String },
     aboutUs: { type: String },
-    startDate: { type: Date },
     endDate: { type: Date },
     yearOfExperience: { type: Number },
     responsibility: { type: String },

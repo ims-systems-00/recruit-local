@@ -1,22 +1,13 @@
-import { IUserDoc, UserInput } from "../../../models";
-import { IListParams, ListQueryParams } from "@rl/types";
+import {
+  IServiceListParams,
+  IServiceGetParams,
+  IServiceUpdateParams,
+  IServiceCreateParams,
+} from "../../../common/interface/service.interface";
+import { UserInput as IUserInput, IUserDoc } from "../../../models/user.model";
 
 // --- Standardized Parameter Interfaces ---
-export type IListUserParams = IListParams<UserInput>;
-export type IUserQueryParams = ListQueryParams<UserInput>;
-
-export interface IUserUpdateParams {
-  query: IUserQueryParams;
-  payload: Partial<IUserDoc>;
-  allowedFields?: string[];
-}
-
-export interface IUserGetParams {
-  query: IUserQueryParams;
-  allowedFields?: string[];
-}
-
-export interface IUserCreateParams {
-  payload: UserInput;
-  allowedFields?: string[];
-}
+export type IListUserParams = IServiceListParams<IUserInput>;
+export type IUserGetParams = IServiceGetParams<IUserInput>;
+export type IUserUpdateParams = IServiceUpdateParams<IUserDoc>;
+export type IUserCreateParams = IServiceCreateParams<IUserInput>;

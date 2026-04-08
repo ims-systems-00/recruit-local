@@ -1,24 +1,21 @@
-import { TenantInput } from "../../../models";
+import { ClientSession } from "mongoose";
+import {
+  IServiceListParams,
+  IServiceGetParams,
+  IServiceUpdateParams,
+  IServiceCreateParams,
+} from "../../../common/interface/service.interface";
+import { TenantInput, ITenantDoc } from "../../../models";
 
-export type Query = Partial<TenantInput & { _id: string }>;
-
-export interface IOptions {
-  page?: number;
-  limit?: number;
-}
-
-export interface IListTenantParams {
-  query: Query;
-  options?: {
-    page?: number;
-    limit?: number;
-  };
-}
-
-export interface IListUsersParams {
-  query: any;
-  options?: {
-    page?: number;
-    limit?: number;
-  };
+// --- Standardized Parameter Interfaces ---
+export type IListTenantParams = IServiceListParams<TenantInput>;
+export type ITenantGetParams = IServiceGetParams<TenantInput>;
+export type ITenantUpdateParams = IServiceUpdateParams<ITenantDoc>;
+export type ITenantCreateParams = IServiceCreateParams<TenantInput>;
+export interface ITenantUpdateLogoParams {
+  tenantId: string;
+  logoType: "square" | "rectangle";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  file: any;
+  session?: ClientSession;
 }
