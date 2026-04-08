@@ -15,6 +15,7 @@ export type ITenantCreateParams = IServiceCreateParams<TenantInput>;
 export interface ITenantUpdateLogoParams {
   tenantId: string;
   logoType: "square" | "rectangle";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   file: any;
   session?: ClientSession;
 }

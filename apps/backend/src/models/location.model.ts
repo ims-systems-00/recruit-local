@@ -1,14 +1,15 @@
-import { Schema, model, Document, Model, UpdateQuery, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Document, Model, UpdateQuery, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
-import { modelNames } from "./constants";
 import { getGeoLocationFromAddress } from "../common/helper";
 import { automaticReferencePlugin } from "./plugins/automatic-reference.plugin";
-import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
+import { ModelNames, modelNames } from "./constants";
 
-export interface LocationInput extends IUserOwnedInput {
+export interface LocationInput {
+  collectionName: ModelNames;
+  collectionId: Types.ObjectId;
   locationRef?: string;
   addressInMap?: string;
   addressBuilding?: string;
@@ -36,6 +37,16 @@ export interface ILocationModel
 
 const locationSchema = new Schema<ILocationDoc>(
   {
+    collectionName: {
+      type: String,
+      required: true,
+      enum: Object.values(modelNames),
+    },
+    collectionId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      index: true,
+    },
     locationRef: {
       type: String,
       required: true,
@@ -73,7 +84,6 @@ const locationSchema = new Schema<ILocationDoc>(
   }
 );
 
-locationSchema.plugin(userOwnedPlugin);
 locationSchema.plugin(softDeletePlugin);
 locationSchema.plugin(automaticReferencePlugin({ model: modelNames.LOCATION, referencePrefix: "LOC" }));
 locationSchema.plugin(mongoosePaginate);
