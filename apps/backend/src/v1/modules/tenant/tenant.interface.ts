@@ -15,6 +15,6 @@ export type ITenantCreateParams = IServiceCreateParams<TenantInput>;
 export interface ITenantUpdateLogoParams {
   tenantId: string;
   logoType: "square" | "rectangle";
-  file: Express.Multer.File;
+  file: any;
   session?: ClientSession;
 }
