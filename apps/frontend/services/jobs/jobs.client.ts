@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { createJob, getJobs, updateJob } from './jobs.server';
-import { JobListFilters, JobListResponse } from './job.type';
+import { JobData, JobListFilters, JobListResponse } from './job.type';
 import { MultiStepJobFormValues } from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/job.schema';
 
 export function useJobs(filters: JobListFilters = {}) {
@@ -50,14 +50,14 @@ export function useUpdateJob() {
   }: {
     id: string;
     data: Partial<MultiStepJobFormValues>;
-    onSuccessNext?: () => void;
+    onSuccessNext?: (data: Partial<JobData>) => void;
   }) => {
     try {
       const response = await mutation.mutateAsync({ id, data });
 
       if (response.success) {
         toast.success(response.message || 'Job updated successfully');
-        onSuccessNext?.();
+        onSuccessNext?.(data as Partial<JobData>);
       } else {
         toast.error(response.message);
       }

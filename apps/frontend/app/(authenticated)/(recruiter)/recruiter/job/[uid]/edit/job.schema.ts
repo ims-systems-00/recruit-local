@@ -201,9 +201,26 @@ export const jobInformationSchema = yup.object({
 
   location: yup.string().optional(),
 
+  locationAdditionalInfo: yup.string().optional(),
+
   autoFill: yup.boolean().default(false),
 });
 
 export type JobInformationFormValues = yup.InferType<
   typeof jobInformationSchema
+>;
+
+export const jobDescriptionSchema = yup.object({
+  description: yup.string().optional(),
+  responsibility: yup.string().optional(),
+  attachmentsStorage: yup.array().of(awsStorageSchema).optional(),
+
+  requiredDocuments: yup
+    .array()
+    .of(yup.string().oneOf(Object.values(REQUIRED_DOCUMENTS_ENUMS)))
+    .optional(),
+});
+
+export type JobDescriptionFormValues = yup.InferType<
+  typeof jobDescriptionSchema
 >;

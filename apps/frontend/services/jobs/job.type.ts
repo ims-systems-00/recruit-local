@@ -58,6 +58,13 @@ export interface JobData {
   };
 
   tenantId: string | null;
+  locationAdditionalInfo: string | null;
+
+  attachmentsStorage: {
+    Name: string;
+    Bucket: string;
+    Key: string;
+  }[];
 }
 
 export type JobListResponse = {

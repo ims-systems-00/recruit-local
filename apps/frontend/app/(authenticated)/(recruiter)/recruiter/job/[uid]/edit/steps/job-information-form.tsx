@@ -106,7 +106,7 @@ export default function JobInformationForm({
   defaultValues,
 }: {
   defaultValues: JobData;
-  next: () => void;
+  next: (data: Partial<JobData>) => void;
 }) {
   const { updateJob, isPending } = useUpdateJob();
   const weekendsAnchor = useComboboxAnchor();
@@ -117,23 +117,26 @@ export default function JobInformationForm({
     defaultValues: {
       title: defaultValues?.title || '',
       weekends: (defaultValues?.weekends as WORKING_DAYS_ENUMS[]) || [],
-      email: defaultValues?.email || undefined,
-      workingDays: defaultValues?.workingDays || undefined,
-      workplace: defaultValues?.workplace || undefined,
-      yearOfExperience: defaultValues?.yearOfExperience || undefined,
-      vacancy: defaultValues?.vacancy || undefined,
-      salary: defaultValues?.salary || undefined,
-      period: defaultValues?.period || undefined,
+      email: defaultValues?.email,
+      workingDays: defaultValues?.workingDays,
+      workplace: defaultValues?.workplace,
+      yearOfExperience: defaultValues?.yearOfExperience,
+      vacancy: defaultValues?.vacancy,
+      salary: defaultValues?.salary,
+      period: defaultValues?.period,
       endDate: defaultValues?.endDate
         ? new Date(defaultValues?.endDate)
         : undefined,
       workingHours: {
-        startTime: defaultValues?.workingHours?.startTime || undefined,
-        endTime: defaultValues?.workingHours?.startTime || undefined,
+        startTime: defaultValues?.workingHours?.startTime,
+        endTime: defaultValues?.workingHours?.startTime,
       },
-      aboutUs: defaultValues?.aboutUs || undefined,
-      number: defaultValues?.number || undefined,
-      location: defaultValues?.location || undefined,
+      aboutUs: defaultValues?.aboutUs,
+      number: defaultValues?.number,
+      location: defaultValues?.location,
+      locationAdditionalInfo:
+        defaultValues?.locationAdditionalInfo || undefined,
+      employmentType: defaultValues?.employmentType,
     },
     mode: 'onSubmit',
   });
@@ -150,12 +153,18 @@ export default function JobInformationForm({
       endDate: data.endDate ? new Date(data.endDate).toISOString() : undefined,
     };
 
-    console.log('payload', payload);
+    const cleanPayload = Object.fromEntries(
+      Object.entries(payload).filter(
+        ([_, value]) => value !== undefined && value !== null && value !== '',
+      ),
+    );
+
+    console.log('payload', cleanPayload);
 
     await updateJob({
       id: defaultValues._id,
-      data: payload,
-      onSuccessNext: next,
+      data: cleanPayload,
+      onSuccessNext: (newData) => next(newData),
     });
   };
 
@@ -686,13 +695,15 @@ export default function JobInformationForm({
                     <InputGroupInput
                       type="text"
                       placeholder="Eg. elena@example.com"
-                      // {...register('additional_info')}
+                      {...register('locationAdditionalInfo')}
                       disabled={autoFill}
                     />
                   </InputGroup>
-                  {/* {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email.message}</p>
-                )} */}
+                  {errors.locationAdditionalInfo && (
+                    <p className="text-sm text-red-500">
+                      {errors.locationAdditionalInfo.message}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
