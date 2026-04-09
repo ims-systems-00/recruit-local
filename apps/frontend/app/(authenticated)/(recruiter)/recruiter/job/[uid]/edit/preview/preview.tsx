@@ -1,64 +1,161 @@
 import { Button } from '@/components/ui/button';
-import { Bookmark, Cable, MousePointerClick, Share2 } from 'lucide-react';
+import { JobData } from '@/services/jobs/job.type';
+import {
+  Building2,
+  Calendar,
+  Clock,
+  DollarSign,
+  Briefcase,
+  Users,
+  Sun,
+  Moon,
+  Cable,
+  TriangleAlert,
+  Dot,
+} from 'lucide-react';
+import moment from 'moment';
 import React from 'react';
+import InfoCard from './info-card';
+import { REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
 
-export default function Preview({ prev }: { prev: (step: number) => void }) {
+const documentLabels: Record<REQUIRED_DOCUMENTS_ENUMS, string> = {
+  [REQUIRED_DOCUMENTS_ENUMS.RESUME]: 'CV',
+  [REQUIRED_DOCUMENTS_ENUMS.COVER_LETTER]: 'Cover Letter',
+  [REQUIRED_DOCUMENTS_ENUMS.PORTFOLIO]: 'Portfolio',
+  [REQUIRED_DOCUMENTS_ENUMS.CERTIFICATES]: 'Certificates',
+};
+
+const formatDate = (date: string | Date, format = 'MMMM D, YYYY') => {
+  if (!date) return '';
+
+  return moment(date).format(format);
+};
+
+export default function Preview({
+  prev,
+  defaultValues,
+}: {
+  prev: (step: number) => void;
+  defaultValues: JobData;
+}) {
+  const formattedSalary = defaultValues?.salary
+    ? `$${defaultValues.salary.toLocaleString()} ${defaultValues.period}`
+    : null;
+
+  // Format working hours
+  const workingHoursText = defaultValues?.workingHours
+    ? `${defaultValues.workingHours.startTime} – ${defaultValues.workingHours.endTime}`
+    : null;
+
+  // Format weekends
+  const weekendsText = defaultValues?.weekends?.length
+    ? defaultValues.weekends.join(' and ')
+    : null;
   return (
     <>
-      <div className=" space-y-spacing-4xl">
+      <div className=" space-y-spacing-4xl pb-10">
         <div className=" flex justify-between items-center gap-spacing-4xl">
           <div className=" space-y-spacing-2xs">
-            <h4 className=" text-body-lg font-body-lg-strong! text-text-gray-primary">
-              UI/UX Designer Wanted – Join Our Creative Team!
+            <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
+              {defaultValues.title}
             </h4>
-            <p className=" text-body-sm text-text-gray-tertiary">
-              25 July, 2025 | 10 : 03 am
+            <p className=" text-label-sm text-text-gray-tertiary">
+              Last Updated{' '}
+              {defaultValues?.endDate
+                ? formatDate(defaultValues.endDate)
+                : 'N/A'}
             </p>
           </div>
           <div className=" flex gap-spacing-sm items-center">
             <Button
               variant="outline"
-              className=" flex gap-spacing-2xs items-center border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
+              onClick={() => prev(3)}
+              className=" border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
             >
-              <Share2 />
+              Previous
             </Button>
             <Button
-              variant="outline"
-              className=" flex gap-spacing-2xs items-center border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
+              type="submit"
+              className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
             >
-              <Bookmark />
-              save
-            </Button>
-            <Button className="flex gap-spacing-2xs items-center bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!">
-              <MousePointerClick /> Apply Now
+              Post Now
             </Button>
           </div>
         </div>
+
+        <div className=" grid grid-cols-3 gap-spacing-2xl">
+          <InfoCard
+            icon={<Briefcase size={20} />}
+            title="Job Category"
+            subtitle={defaultValues?.category || 'Tech Lead'}
+          />
+
+          {/* Workplace */}
+          <InfoCard
+            icon={<Building2 size={20} />}
+            title="Workplace"
+            subtitle={defaultValues?.workplace}
+          />
+
+          {/* Employment Type */}
+          <InfoCard
+            icon={<Clock size={20} />}
+            title="Employment Type"
+            subtitle={defaultValues?.employmentType}
+          />
+
+          {/* Salary */}
+          <InfoCard
+            icon={<DollarSign size={20} />}
+            title="Salary"
+            subtitle={formattedSalary}
+          />
+
+          {/* Year of Experience */}
+          <InfoCard
+            icon={<Sun size={20} />}
+            title="Year of Experience"
+            subtitle={defaultValues?.yearOfExperience}
+          />
+
+          {/* Vacancy */}
+          <InfoCard
+            icon={<Users size={20} />}
+            title="Number of Vacancy"
+            subtitle={defaultValues?.vacancy}
+          />
+
+          {/* Working Days */}
+          <InfoCard
+            icon={<Calendar size={20} />}
+            title="Working Days"
+            subtitle={defaultValues?.workingDays}
+          />
+
+          {/* Weekends */}
+          <InfoCard
+            icon={<Moon size={20} />}
+            title="Weekends"
+            subtitle={weekendsText}
+          />
+
+          {/* Working Hours */}
+          <InfoCard
+            icon={<Clock size={20} />}
+            title="Working Hours"
+            subtitle={workingHoursText}
+          />
+        </div>
+
         <div className="space-y-spacing-2xl">
           <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-            Basic Information
+            About Organization
           </p>
-          <div className=" grid grid-cols-3 gap-spacing-lg">
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <div
-                key={item}
-                className=" rounded-2xl border border-border-gray-secondary p-spacing-4xl flex gap-spacing-lg items-center"
-              >
-                <div className=" w-8 h-8 rounded-md flex items-center justify-center border border-others-gray-light bg-others-gray-gray-zero ">
-                  <Cable />
-                </div>
-                <div className=" space-y-spacing-3xs">
-                  <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-                    Full Time
-                  </p>
-                  <p className=" text-label-sm text-text-gray-tertiary">
-                    Employment Type
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <p className=" text-body-md text-text-gray-secondary">
+            {defaultValues?.aboutUs || 'N/A'}
+          </p>
         </div>
+
         <div className="space-y-spacing-2xl">
           <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
             Locations
@@ -69,81 +166,43 @@ export default function Preview({ prev }: { prev: (step: number) => void }) {
         </div>
         <div className="space-y-spacing-2xl">
           <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-            Job Description
+            About the Role
           </p>
-          <div className=" space-y-spacing-lg">
-            <div className=" space-y-spacing-2xs">
-              <p className=" text-label-md font-body-md-strong! text-text-gray-secondary">
-                About the role
-              </p>
-              <p className=" text-body-md text-text-gray-secondary">
-                As a UI/UX Designer, you will be at the heart of our product
-                design process. You will lead the design of user interfaces that
-                are not only visually appealing but also intuitive, accessible,
-                and user-centered. This role requires a creative thinker who can
-                transform complex problems into elegant design solutions.
-              </p>
-            </div>
-            <div className=" space-y-spacing-2xl">
-              <p className=" text-label-md text-text-gray-secondary">
-                Key Responsibility
-              </p>
-              <ul className=" list-disc list-inside text-text-gray-secondary text-body-md">
-                <li>
-                  Conduct user research, competitor analysis, and market trend
-                  analysis.
-                </li>
-                <li>
-                  Conduct user research, competitor analysis, and market trend
-                  analysis.
-                </li>
-                <li>
-                  Conduct user research, competitor analysis, and market trend
-                  analysis.
-                </li>
-                <li>
-                  Conduct user research, competitor analysis, and market trend
-                  analysis.
-                </li>
-              </ul>
-            </div>
-            <div className=" grid grid-cols-2 gap-spacing-lg">
-              {[1, 2].map((item) => (
-                <div
-                  key={item}
-                  className=" rounded-2xl border border-border-gray-secondary p-spacing-4xl flex gap-spacing-lg items-center"
-                >
-                  <div className=" w-8 h-8 rounded-md flex items-center justify-center border border-others-gray-light bg-others-gray-gray-zero ">
-                    <Cable />
-                  </div>
-                  <div className=" space-y-spacing-3xs">
-                    <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-                      Full Time
-                    </p>
-                    <p className=" text-label-sm text-text-gray-tertiary">
-                      Employment Type
-                    </p>
-                  </div>
+          <p className=" text-body-md text-text-gray-secondary">
+            {defaultValues?.description || 'N/A'}
+          </p>
+        </div>
+        <div className="space-y-spacing-2xl">
+          <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+            Key Responsibilities
+          </p>
+          <p className=" text-body-md text-text-gray-secondary">
+            {defaultValues?.responsibility || 'N/A'}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-border-gray-secondary p-spacing-4xl flex gap-spacing-lg items-center">
+          <div className="w-12 h-12 rounded-md flex items-center justify-center border border-others-gray-light bg-others-gray-gray-zero">
+            <TriangleAlert size={20} />
+          </div>
+
+          <div className="space-y-spacing-3xs">
+            <p className="text-label-md font-label-md-strong! text-text-gray-primary">
+              Required
+            </p>
+            <div className="flex items-center gap-spacing-sm">
+              {defaultValues?.requiredDocuments?.map((doc) => (
+                <div key={doc} className="flex items-center gap-spacing-sm">
+                  <div className=" w-1.5 h-1.5 bg-fg-gray-tertiary rounded-full"></div>
+
+                  <span className="text-label-sm text-text-gray-tertiary">
+                    {documentLabels[doc as REQUIRED_DOCUMENTS_ENUMS]}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         </div>
-      </div>
-      <div className="flex py-spacing-2xl justify-end mt-spacing-4xl gap-spacing-sm">
-        <Button
-          variant="outline"
-          onClick={() => prev(3)}
-          className=" border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
-        >
-          Previous
-        </Button>
-        <Button
-          type="submit"
-          className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
-        >
-          Post Now
-        </Button>
       </div>
     </>
   );

@@ -55,7 +55,9 @@ export default function EditForm({
         {step === 3 && (
           <AdditionalQueries prev={() => setStep(2)} next={() => setStep(4)} />
         )}
-        {step === 4 && <Preview prev={() => setStep(3)} />}
+        {step === 4 && (
+          <Preview prev={() => setStep(3)} defaultValues={formData} />
+        )}
       </div>
       {step !== 4 && <StepsSidebar currentStep={step} />}
     </div>
