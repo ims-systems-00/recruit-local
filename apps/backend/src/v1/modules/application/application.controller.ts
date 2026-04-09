@@ -1,9 +1,11 @@
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
+import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
 import { AbilityAction, ACCOUNT_TYPE_ENUMS } from "@rl/types";
 import * as applicationService from "./application.service";
+import * as jobService from "../job/job.service";
+import { withTransaction } from "../../../common/helper/database-transaction";
 
 export const list = async ({ req }: ControllerParams) => {
   const filter = new MongoQuery(req.query, {
@@ -74,42 +76,58 @@ export const update = async ({ req }: ControllerParams) => {
 };
 
 export const create = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Create, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} application.`
-  //     );
+  return withTransaction(async (session) => {
+    //   const ability = new UserAbilityBuilder(req.session);
+    //   if (!ability.getAbility().can(AbilityAction.Create, UserAuthZEntity))
+    //     throw new UnauthorizedException(
+    //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Create} application.`
+    //     );
 
-  // Updated to pass payload inside the object parameter
-  const application = await applicationService.create({
-    payload: req.body,
-  });
+    // Updated to pass payload inside the object parameter
+    const application = await applicationService.create({
+      payload: req.body,
+      session,
+    });
+    await jobService.incrementStats({
+      query: { _id: application.jobId!.toString() } as any,
+      payload: { totalApplications: 1 },
+      session,
+    });
 
-  return new ApiResponse({
-    message: "Application created.",
-    statusCode: StatusCodes.CREATED,
-    data: application,
-    fieldName: "application",
+    return new ApiResponse({
+      message: "Application created.",
+      statusCode: StatusCodes.CREATED,
+      data: application,
+      fieldName: "application",
+    });
   });
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
-  //   const ability = new UserAbilityBuilder(req.session);
-  //   if (!ability.getAbility().can(AbilityAction.Delete, UserAuthZEntity))
-  //     throw new UnauthorizedException(
-  //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} application.`
-  //     );
+  return withTransaction(async (session) => {
+    //   const ability = new UserAbilityBuilder(req.session);
+    //   if (!ability.getAbility().can(AbilityAction.Delete, UserAuthZEntity))
+    //     throw new UnauthorizedException(
+    //       `User ${req.session.user?._id} is not authorized to ${AbilityAction.Delete} application.`
+    //     );
 
-  // Updated to call softDelete and handle the destructured return
-  const { application, deleted } = await applicationService.softRemove({
-    query: { _id: req.params.id },
-  });
+    // Updated to call softDelete and handle the destructured return
+    const { application, deleted } = await applicationService.softDelete({
+      query: { _id: req.params.id },
+      session,
+    });
+    await jobService.incrementStats({
+      query: { _id: application.jobId!.toString() } as any,
+      payload: { totalApplications: -1 },
+      session,
+    });
 
-  return new ApiResponse({
-    message: "Application deleted.",
-    statusCode: StatusCodes.OK,
-    data: { application, deleted },
-    fieldName: "application",
+    return new ApiResponse({
+      message: "Application deleted.",
+      statusCode: StatusCodes.OK,
+      data: { application, deleted },
+      fieldName: "application",
+    });
   });
 };
 
@@ -141,7 +159,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   //     );
 
   // Updated to call hardRemove
-  const application = await applicationService.hardRemove({
+  const application = await applicationService.hardDelete({
     query: { _id: req.params.id },
   });
 

@@ -1,3 +1,4 @@
+import { ClientSession } from "mongoose";
 import {
   IServiceListParams,
   IServiceGetParams,
@@ -15,13 +16,22 @@ export interface IJobCreateParams extends IServiceCreateParams<IJobInput> {
     bannerStorage?: AwsStorageTemplate;
     attachmentsStorage?: AwsStorageTemplate[];
   };
+  session?: ClientSession;
 }
 export type IJobListParams = IServiceListParams<IJobDoc>;
 export type IJobGetParams = IServiceGetParams<IJobDoc>;
 export interface IJobUpdateParams extends IServiceUpdateParams<IJobDoc> {
-  payload: Partial<IJobInput> & {
+  payload: Partial<IJobDoc> & {
     autoFill?: boolean;
     bannerStorage?: AwsStorageTemplate;
     attachmentsStorage?: AwsStorageTemplate[];
   };
+}
+
+export interface IJobIncrementStatsParams {
+  query: Partial<IJobInput & { _id: string }>;
+  payload: {
+    totalApplications?: number;
+  };
+  session?: ClientSession;
 }

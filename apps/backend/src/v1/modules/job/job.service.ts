@@ -8,7 +8,13 @@ import { jobProjectionQuery } from "./job.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { VISIBILITY_ENUM } from "@rl/types";
-import { IJobListParams, IJobGetParams, IJobUpdateParams, IJobCreateParams } from "./job.interface";
+import {
+  IJobListParams,
+  IJobGetParams,
+  IJobUpdateParams,
+  IJobCreateParams,
+  IJobIncrementStatsParams,
+} from "./job.interface";
 
 /**
  * Helper to fetch tenant data for job autofill
@@ -207,4 +213,13 @@ export const restore = async ({ query, session }: IJobGetParams) => {
 
   if (!restored) throw new NotFoundException("Job not found in trash.");
   return { restored };
+};
+
+export const incrementStats = async ({ query, payload, session }: IJobIncrementStatsParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+
+  const updatedJob = await Job.findOneAndUpdate({ ...sanitizedQuery }, { $inc: payload }, { new: true, session });
+
+  if (!updatedJob) throw new NotFoundException("Job not found.");
+  return updatedJob;
 };
