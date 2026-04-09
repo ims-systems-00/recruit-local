@@ -6,6 +6,11 @@ export enum PORTFOLIO_TYPE {
   WSP = 'WSP',
 }
 
+export enum TENANT_TYPE {
+  PRIVATE = 'private',
+  PUBLIC = 'public',
+}
+
 export enum CERTIFICATION_TYPE {
   SINGLE = 'SINGLE',
   MULTISITE = 'MULTISITE',
