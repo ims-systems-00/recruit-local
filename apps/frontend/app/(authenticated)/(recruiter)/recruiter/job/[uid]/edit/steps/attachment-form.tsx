@@ -10,8 +10,8 @@ export type UploadedFile = {
   Name: string;
   Bucket: string;
   Key: string;
-  size: number;
-  type: string;
+  // size: number;
+  // type: string;
 };
 
 type AttachmentFormProps = {
@@ -42,8 +42,8 @@ const AttachmentForm = ({ onUploadFile }: AttachmentFormProps) => {
         Name: response.data.metaInfo.Name,
         Bucket: response.data.metaInfo.Bucket,
         Key: response.data.metaInfo.Key,
-        size: file.size,
-        type: file.type,
+        // size: file.size,
+        // type: file.type,
       };
     } catch (err) {
       return null;

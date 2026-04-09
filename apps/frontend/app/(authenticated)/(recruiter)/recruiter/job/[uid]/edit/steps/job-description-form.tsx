@@ -38,6 +38,8 @@ import { JobData } from '@/services/jobs/job.type';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useUpdateJob } from '@/services/jobs/jobs.client';
 import AttachmentForm, { UploadedFile } from './attachment-form';
+import { useDeleteFileStorage } from '@/services/file-storage';
+import AttachmentItem from './attachment-item';
 const REQUIRED_DOCUMENTS_OPTIONS = [
   {
     id: REQUIRED_DOCUMENTS_ENUMS.RESUME,
@@ -66,7 +68,7 @@ export default function JobDescriptionForm({
   defaultValues: JobData;
 }) {
   const { updateJob, isPending } = useUpdateJob();
-
+  const { deleteFile, isLoading: isDeleting } = useDeleteFileStorage();
   const methods = useForm<JobDescriptionFormValues>({
     resolver: yupResolver(
       jobDescriptionSchema,
@@ -110,11 +112,25 @@ export default function JobDescriptionForm({
   };
 
   const onSubmit = async (data: JobDescriptionFormValues) => {
-    console.log('Job Description Payload:', data);
+    const payload = {
+      ...data,
+      attachmentsStorage:
+        data?.attachmentsStorage?.map(({ Key, Bucket, Name }) => ({
+          Key,
+          Bucket,
+          Name,
+        })) || [],
+    };
+
+    const cleanPayload = Object.fromEntries(
+      Object.entries(payload).filter(
+        ([_, value]) => value !== undefined && value !== null && value !== '',
+      ),
+    );
 
     await updateJob({
       id: defaultValues._id,
-      data: data,
+      data: cleanPayload,
       onSuccessNext: (newData) => next(newData),
     });
   };
@@ -125,6 +141,27 @@ export default function JobDescriptionForm({
     console.log('data', data);
 
     prev(data as JobData);
+  };
+
+  console.log('attachments', attachments);
+
+  const handleRemoveAttachment = async (item: UploadedFile) => {
+    try {
+      const res = await deleteFile({
+        fileKey: item.Key,
+      });
+
+      if (res?.success) {
+        const updated = attachments.filter((file) => file.Key !== item.Key);
+
+        setValue('attachmentsStorage', updated, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   console.log('attachments', attachments);
@@ -188,7 +225,9 @@ export default function JobDescriptionForm({
                     render={({ field }) => (
                       <AttachmentForm
                         onUploadFile={(files: UploadedFile[]) => {
-                          field.onChange([...(field.value || []), ...files]);
+                          const current =
+                            methods.getValues('attachmentsStorage') || [];
+                          field.onChange([...current, ...files]);
                         }}
                       />
                     )}
@@ -201,44 +240,12 @@ export default function JobDescriptionForm({
 
                   <div className=" space-y-spacing-lg">
                     {attachments?.map((item) => (
-                      <div
+                      <AttachmentItem
                         key={item.Key}
-                        className=" p-spacing-2xl rounded-2xl bg-bg-gray-soft-primary border border-border-gray-secondary flex justify-between gap-spacing-2xl"
-                      >
-                        <div className=" flex gap-spacing-lg items-center ">
-                          <div className=" min-w-10 w-10 h-10 flex items-center justify-center relative">
-                            <svg
-                              width="30"
-                              height="40"
-                              viewBox="0 0 30 40"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M29.9998 7.95719V36C29.9998 38.2091 28.209 40 25.9998 40H4C1.79086 40 0 38.2091 0 36V4C0 1.79086 1.79086 0 4 0H21.3367L29.9998 7.95719Z"
-                                fill="#F6339A"
-                              />
-                            </svg>
-                            <p className=" absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-white text-[9px]">
-                              {item.type}
-                            </p>
-                          </div>
-                          <div className=" space-y-spacing-3xs">
-                            <p className=" text-label-sm font-label-sm-strong! text-text-gray-primary">
-                              {item.Name}
-                            </p>
-                            <p className=" text-label-sm text-text-gray-tertiary">
-                              {item.size}
-                            </p>
-                          </div>
-                        </div>
-                        <span>
-                          <Trash2
-                            size={16}
-                            className=" text-fg-gray-tertiary"
-                          />
-                        </span>
-                      </div>
+                        isDeleting={isDeleting}
+                        item={item}
+                        onDelete={handleRemoveAttachment}
+                      />
                     ))}
                   </div>
                 </div>
