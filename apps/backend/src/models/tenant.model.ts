@@ -4,13 +4,14 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { AwsStorageTemplate } from "./templates/aws-storage.template";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
-import { TENANT_STATUS_ENUMS } from "@rl/types";
+import { TENANT_STATUS_ENUMS, TENANT_TYPE } from "@rl/types";
 import { modelNames } from "./constants";
 
 export interface TenantInput {
   name: string;
   description?: string;
   industry?: string;
+  type?: TENANT_TYPE;
   size?: number;
   phone?: string;
   email?: string;
@@ -18,18 +19,17 @@ export interface TenantInput {
   logoSquareStorage?: AwsStorageTemplate;
   logoRectangleSrc?: string;
   logoRectangleStorage?: AwsStorageTemplate;
-  addressBuilding?: string;
-  addressStreet?: string;
-  addressStreet2?: string;
-  addressCity?: string;
-  addressPostCode?: string;
-  addressStateProvince?: string;
-  addressCountry?: string;
+  officeAddress?: string;
   addressInMap?: string;
   status?: TENANT_STATUS_ENUMS;
-  registeredAddress?: string;
   website?: string;
   linkedIn?: string;
+
+  missionStatement?: string;
+  visionStatement?: string;
+
+  coreProducts?: string;
+  coreServices?: string;
 }
 
 // Define an interface for Tenant document
@@ -64,6 +64,10 @@ const tenantSchema = new Schema<ITenantDoc>(
     size: {
       type: Number,
     },
+    type: {
+      type: String,
+      enum: Object.values(TENANT_TYPE),
+    },
     phone: {
       type: String,
     },
@@ -78,25 +82,9 @@ const tenantSchema = new Schema<ITenantDoc>(
       type: String,
     },
     logoRectangleStorage: awsStorageTemplateMongooseDefinition,
-    addressBuilding: {
-      type: String,
-    },
-    addressStreet: {
-      type: String,
-    },
-    addressStreet2: {
-      type: String,
-    },
-    addressCity: {
-      type: String,
-    },
-    addressPostCode: {
-      type: String,
-    },
-    addressStateProvince: {
-      type: String,
-    },
-    addressCountry: {
+
+    // Aligned with officeAddress in interface
+    officeAddress: {
       type: String,
     },
 
@@ -114,13 +102,22 @@ const tenantSchema = new Schema<ITenantDoc>(
       enum: Object.values(TENANT_STATUS_ENUMS),
       default: TENANT_STATUS_ENUMS.ACTIVE,
     },
-    registeredAddress: {
-      type: String,
-    },
     website: {
       type: String,
     },
     linkedIn: {
+      type: String,
+    },
+    missionStatement: {
+      type: String,
+    },
+    visionStatement: {
+      type: String,
+    },
+    coreProducts: {
+      type: String,
+    },
+    coreServices: {
       type: String,
     },
   },

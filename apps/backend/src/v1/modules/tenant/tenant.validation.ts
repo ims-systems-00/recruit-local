@@ -1,6 +1,6 @@
 import Joi, { CustomHelpers } from "joi";
 import mongoose from "mongoose";
-import { TENANT_STATUS_ENUMS } from "@rl/types";
+import { TENANT_STATUS_ENUMS, TENANT_TYPE } from "@rl/types";
 
 // Custom validation for MongoDB ObjectId
 const objectIdValidation = (value: string, helpers: CustomHelpers) => {
@@ -10,57 +10,49 @@ const objectIdValidation = (value: string, helpers: CustomHelpers) => {
   return value;
 };
 
+// Reusable storage schema for AWS templates
+const awsStorageSchema = Joi.object({
+  Name: Joi.string().label("Name"),
+  Bucket: Joi.string().label("Bucket"),
+  Key: Joi.string().label("Key"),
+}).allow(null);
+
 export const createBodySchema = Joi.object({
   name: Joi.string().max(300).required().label("Name"),
   description: Joi.string().allow("", null).label("Description"),
-  industry: Joi.string().max(50).label("Industry"),
-  size: Joi.number().label("Size"),
+  industry: Joi.string().max(50).allow("", null).label("Industry"),
+  type: Joi.string()
+    .valid(...Object.values(TENANT_TYPE))
+    .label("Type"),
+  size: Joi.number().allow(null).label("Size"),
   phone: Joi.string().allow("", null).label("Phone"),
-  email: Joi.string().email().label("Office Email"),
-  logoSquareSrc: Joi.string().uri().label("Logo Square Src"),
-  logoSquareStorage: Joi.object().label("Logo Square Storage"),
-  logoRectangleSrc: Joi.string().uri().label("Logo Rectangle Src"),
-  logoRectangleStorage: Joi.object().label("Logo Rectangle Storage"),
-  addressBuilding: Joi.string().max(50).label("Address Building"),
-  addressStreet: Joi.string().max(50).label("Address Street"),
-  addressStreet2: Joi.string().max(50).label("Address Street 2"),
-  addressCity: Joi.string().max(50).label("Address City"),
-  addressPostCode: Joi.string().max(50).label("Address Post Code"),
-  addressStateProvince: Joi.string().max(50).label("Address State Province"),
-  addressCountry: Joi.string().max(50).label("Address Country"),
-  addressInMap: Joi.string().label("Address In Map"),
+  email: Joi.string().email().allow("", null).label("Office Email"),
+
+  logoSquareSrc: Joi.string().uri().allow("", null).label("Logo Square Src"),
+  logoSquareStorage: awsStorageSchema.label("Logo Square Storage"),
+  logoRectangleSrc: Joi.string().uri().allow("", null).label("Logo Rectangle Src"),
+  logoRectangleStorage: awsStorageSchema.label("Logo Rectangle Storage"),
+
+  officeAddress: Joi.string().allow("", null).label("Office Address"),
+  addressInMap: Joi.string().allow("", null).label("Address In Map"),
+
   status: Joi.string()
     .valid(...Object.values(TENANT_STATUS_ENUMS))
-    .optional()
+    .default(TENANT_STATUS_ENUMS.ACTIVE)
     .label("Status"),
-  registeredAddress: Joi.string().allow("", null).label("Registered Address"),
-  website: Joi.string().uri().label("Website"),
-  linkedIn: Joi.string().uri().label("LinkedIn"),
+
+  website: Joi.string().uri().allow("", null).label("Website"),
+  linkedIn: Joi.string().uri().allow("", null).label("LinkedIn"),
+
+  missionStatement: Joi.string().allow("", null).label("Mission Statement"),
+  visionStatement: Joi.string().allow("", null).label("Vision Statement"),
+  coreProducts: Joi.string().allow("", null).label("Core Products"),
+  coreServices: Joi.string().allow("", null).label("Core Services"),
 });
 
-export const updateBodySchema = Joi.object({
-  name: Joi.string().max(300).label("Name"),
-  industry: Joi.string().max(50).label("Industry"),
-  size: Joi.number().label("Size"),
-  phone: Joi.number().label("Phone"),
-  description: Joi.string().allow("", null).label("Description"),
-  email: Joi.string().email().label("Office Email"),
-  addressBuilding: Joi.string().max(50).label("Address Building"),
-  addressStreet: Joi.string().max(50).label("Address Street"),
-  addressStreet2: Joi.string().max(50).label("Address Street 2"),
-  addressCity: Joi.string().max(50).label("Address City"),
-  addressPostCode: Joi.string().max(50).label("Address Post Code"),
-  addressStateProvince: Joi.string().max(50).label("Address State Province"),
-  addressCountry: Joi.string().max(50).label("Address Country"),
-  addressInMap: Joi.string().label("Address In Map"),
-  status: Joi.string()
-    .valid(...Object.values(TENANT_STATUS_ENUMS))
-    .optional()
-    .label("Status"),
-  registeredAddress: Joi.string().allow("", null).label("Registered Address"),
-  website: Joi.string().uri().label("Website"),
-  linkedIn: Joi.string().uri().label("LinkedIn"),
-});
+export const updateBodySchema = createBodySchema.fork(Object.keys(createBodySchema.describe().keys), (schema) =>
+  schema.optional()
+);
 
 export const idParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("ID"),
@@ -70,24 +62,14 @@ export const logoUpdateParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("ID"),
   logoStorage: Joi.string().valid("logoSquareStorage", "logoRectangleStorage").required().label("Logo Storage"),
 });
+
 export const bulkDeleteBodySchema = Joi.object({
-  ids: Joi.array().items(Joi.string().custom(objectIdValidation).label("id")).max(100).label("ids"),
+  ids: Joi.array().items(Joi.string().custom(objectIdValidation).label("id")).max(100).required().label("ids"),
 });
+
 export const logoUpdateBodySchema = Joi.object({
-  logoSquareStorage: Joi.object({
-    Name: Joi.string().label("Name"),
-    Bucket: Joi.string().label("Bucket"),
-    Key: Joi.string().label("Key"),
-  })
-    .optional()
-    .label("Logo Square Storage"),
-  logoRectangleStorage: Joi.object({
-    Name: Joi.string().label("Name"),
-    Bucket: Joi.string().label("Bucket"),
-    Key: Joi.string().label("Key"),
-  })
-    .optional()
-    .label("Logo Rectangle Storage"),
+  logoSquareStorage: awsStorageSchema.label("Logo Square Storage"),
+  logoRectangleStorage: awsStorageSchema.label("Logo Rectangle Storage"),
 })
   .or("logoSquareStorage", "logoRectangleStorage")
   .label("Logo Storage");
