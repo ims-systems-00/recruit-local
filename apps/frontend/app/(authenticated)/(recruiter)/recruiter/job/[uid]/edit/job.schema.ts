@@ -13,6 +13,8 @@ export const awsStorageSchema = yup.object({
   Name: yup.string().required('Name is required'),
   Bucket: yup.string().required('Bucket is required'),
   Key: yup.string().required('Key is required'),
+  type: yup.string().optional(),
+  size: yup.string().optional(),
 });
 
 // Working Hours
