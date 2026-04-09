@@ -13,6 +13,8 @@ const awsStorageSchema = Joi.object({
   Name: Joi.string().required().label("Name"),
   Bucket: Joi.string().required().label("Bucket"),
   Key: Joi.string().required().label("Key"),
+  type: Joi.string().optional().label("Type"),
+  size: Joi.string().optional().label("Size"),
 })
   .unknown(true)
   .label("Storage File");

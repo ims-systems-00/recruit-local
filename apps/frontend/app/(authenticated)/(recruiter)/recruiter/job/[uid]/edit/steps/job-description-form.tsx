@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Folder, MailIcon } from 'lucide-react';
+import { Folder, MailIcon, Trash2 } from 'lucide-react';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import {
@@ -37,6 +37,7 @@ import { REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
 import { JobData } from '@/services/jobs/job.type';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useUpdateJob } from '@/services/jobs/jobs.client';
+import AttachmentForm, { UploadedFile } from './attachment-form';
 const REQUIRED_DOCUMENTS_OPTIONS = [
   {
     id: REQUIRED_DOCUMENTS_ENUMS.RESUME,
@@ -93,6 +94,8 @@ export default function JobDescriptionForm({
 
   const selectedDocs = watch('requiredDocuments') || [];
 
+  const attachments = watch('attachmentsStorage') || [];
+
   const toggleDocument = (value: REQUIRED_DOCUMENTS_ENUMS) => {
     const exists = selectedDocs.includes(value);
 
@@ -123,6 +126,8 @@ export default function JobDescriptionForm({
 
     prev(data as JobData);
   };
+
+  console.log('attachments', attachments);
 
   return (
     <FormProvider {...methods}>
@@ -176,19 +181,65 @@ export default function JobDescriptionForm({
                   Related Attachment
                 </Label>
                 <div className=" space-y-spacing-sm ">
-                  <div className=" w-full p-spacing-4xl rounded-2xl border border-dashed border-border-gray-secondary flex flex-col justify-center items-center gap-spacing-lg">
-                    <div className=" w-10 h-10 border border-others-brand-light flex justify-center items-center  bg-others-brand-brand-zero rounded-lg">
-                      <Folder className="text-others-brand-dark fill-others-brand-dark " />
-                    </div>
-                    <div className=" space-y-spacing-xs text-label-sm text-center">
-                      <p>
-                        <span className=" text-text-brand-secondary font-label-sm-strong!">
-                          Drag & Drop
-                        </span>{' '}
-                        or Choose File to Upload
-                      </p>
-                      <p>Supported Format: SVG, JPG, PNG (up to 10mb)</p>
-                    </div>
+                  <Controller
+                    name="attachmentsStorage"
+                    control={control}
+                    defaultValue={[]}
+                    render={({ field }) => (
+                      <AttachmentForm
+                        onUploadFile={(files: UploadedFile[]) => {
+                          field.onChange([...(field.value || []), ...files]);
+                        }}
+                      />
+                    )}
+                  />
+                  {errors.attachmentsStorage && (
+                    <p className="text-xs text-text-error-primary">
+                      {errors.attachmentsStorage.message}
+                    </p>
+                  )}
+
+                  <div className=" space-y-spacing-lg">
+                    {attachments?.map((item) => (
+                      <div
+                        key={item.Key}
+                        className=" p-spacing-2xl rounded-2xl bg-bg-gray-soft-primary border border-border-gray-secondary flex justify-between gap-spacing-2xl"
+                      >
+                        <div className=" flex gap-spacing-lg items-center ">
+                          <div className=" min-w-10 w-10 h-10 flex items-center justify-center relative">
+                            <svg
+                              width="30"
+                              height="40"
+                              viewBox="0 0 30 40"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M29.9998 7.95719V36C29.9998 38.2091 28.209 40 25.9998 40H4C1.79086 40 0 38.2091 0 36V4C0 1.79086 1.79086 0 4 0H21.3367L29.9998 7.95719Z"
+                                fill="#F6339A"
+                              />
+                            </svg>
+                            <p className=" absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-white text-[9px]">
+                              {item.type}
+                            </p>
+                          </div>
+                          <div className=" space-y-spacing-3xs">
+                            <p className=" text-label-sm font-label-sm-strong! text-text-gray-primary">
+                              {item.Name}
+                            </p>
+                            <p className=" text-label-sm text-text-gray-tertiary">
+                              {item.size}
+                            </p>
+                          </div>
+                        </div>
+                        <span>
+                          <Trash2
+                            size={16}
+                            className=" text-fg-gray-tertiary"
+                          />
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

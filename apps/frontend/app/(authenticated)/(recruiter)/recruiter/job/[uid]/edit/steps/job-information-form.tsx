@@ -575,7 +575,7 @@ export default function JobInformationForm({
               <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
                 Organization Information
               </p>
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2">
                 <Controller
                   name="autoFill"
                   control={control}
@@ -590,7 +590,7 @@ export default function JobInformationForm({
                 />
 
                 <Label htmlFor="autofill">Auto Fill From organization</Label>
-              </div>
+              </div> */}
             </div>
             <div className="grid grid-cols-2 gap-spacing-2xl">
               <div className="space-y-spacing-xs col-span-2">
