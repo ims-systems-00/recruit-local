@@ -69,6 +69,8 @@ export function QueryCardComponent({
   const isChoice =
     card.type === 'single-choice' || card.type === 'multiple-choice';
 
+  const isShortAns = card.type === 'short-answer';
+
   return (
     <div
       className={cn(
@@ -160,6 +162,13 @@ export function QueryCardComponent({
                 <span className=" text-label-sm">Add Option</span>
               </div>
             </div>
+          ) : isShortAns ? (
+            <input
+              type="text"
+              onClick={(e) => e.stopPropagation()}
+              placeholder="Write your thoughts here"
+              className="w-full text-label-md h-10 border border-border-gray-secondary  rounded-lg px-spacing-lg py-spacing-sm text-text-gray-primary placeholder:text-text-gray-quaternary  outline-none focus:border-border-brand-primary focus:ring-1 focus:ring-border-brand-primary"
+            />
           ) : (
             <textarea
               className="w-full text-label-md border border-border-gray-secondary  rounded-lg px-spacing-lg py-spacing-sm text-text-gray-primary placeholder:text-text-gray-quaternary resize-none outline-none focus:border-border-brand-primary focus:ring-1 focus:ring-border-brand-primary h-24"

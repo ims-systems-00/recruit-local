@@ -1,11 +1,12 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Eye, Plus, SquareCheck } from 'lucide-react';
+import { ArrowRight, Eye, EyeClosed, Plus, SquareCheck } from 'lucide-react';
 import React, { useState } from 'react';
 import { QueryCardComponent } from './query-card-component';
 import { QuickAddBar } from './quick-add-bar';
 import { InitialQuickAddBar } from './initial-quick-add-bar';
+import PreviewQueryCard from './preview-query-card';
 
 export type QueryType =
   | 'paragraph'
@@ -67,6 +68,8 @@ export default function AdditionalQueries({
 }) {
   const [cards, setCards] = useState<QueryCard[]>(INITIAL_CARDS);
 
+  const [isPreviewModeOn, setIsPreviewModeOn] = useState(false);
+
   const addCard = (type: QueryType) => {
     const newCard: QueryCard = {
       id: crypto.randomUUID(),
@@ -116,17 +119,6 @@ export default function AdditionalQueries({
     setCards((prev) => prev.map((c) => ({ ...c, focused: c.id === id })));
   };
 
-  //   const handleContinue = () => {
-  //     toast({
-  //       title: 'Queries saved successfully!',
-  //       description: 'Your interview questionnaire has been updated.',
-  //     });
-  //   };
-
-  //   const handlePrevious = () => {
-  //     toast({ description: 'Going to previous step.' });
-  //   };
-
   const focusedIndex = cards.findIndex((c) => c.focused);
   const hasFocused = focusedIndex !== -1;
 
@@ -143,55 +135,75 @@ export default function AdditionalQueries({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="w-10 h-10 rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary flex items-center justify-center text-fg-gray-secondary">
-            <Eye className="w-4 h-4" />
-          </button>
-          <Button
-            onClick={() => addCard('paragraph')}
-            className=" bg-bg-brand-solid-primary h-10 rounded-lg text-white"
-          >
-            <Plus className="w-4 h-4" />
-            Add Queries
-          </Button>
+          {Boolean(cards.length) && (
+            <button
+              onClick={() => setIsPreviewModeOn((prev) => !prev)}
+              className="w-10 h-10 rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary flex items-center justify-center text-fg-gray-secondary"
+            >
+              {isPreviewModeOn ? (
+                <EyeClosed className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
+          )}
+
+          {!isPreviewModeOn && (
+            <Button
+              onClick={() => addCard('paragraph')}
+              className=" bg-bg-brand-solid-primary h-10 rounded-lg text-white"
+            >
+              <Plus className="w-4 h-4" />
+              Add Queries
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Cards list */}
-      <div className="flex-1 overflow-y-auto pr-1  space-y-spacing-4xl">
-        {cards.map((card, idx) => (
-          <div key={card.id} className=" space-y-spacing-4xl">
-            <QueryCardComponent
-              card={card}
-              onUpdate={updateCard}
-              onDuplicate={duplicateCard}
-              onDelete={deleteCard}
-              onFocus={focusCard}
-            />
-            {/* Show quick-add bar right below the focused card */}
-            {card.focused && (
-              <div className=" flex items-center gap-spacing-xs">
-                <div className=" h-px w-full bg-border-gray-tertiary"></div>
-                <div className=" min-w-fit">
-                  <QuickAddBar onAdd={addCard} />
+      {isPreviewModeOn ? (
+        <div className="flex-1 overflow-y-auto pr-spacing-2xs space-y-spacing-4xl">
+          {cards.map((card, idx) => (
+            <PreviewQueryCard key={idx} card={card} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto pr-1  space-y-spacing-4xl">
+          {cards.map((card, idx) => (
+            <div key={card.id} className=" space-y-spacing-4xl">
+              <QueryCardComponent
+                card={card}
+                onUpdate={updateCard}
+                onDuplicate={duplicateCard}
+                onDelete={deleteCard}
+                onFocus={focusCard}
+              />
+              {/* Show quick-add bar right below the focused card */}
+              {card.focused && (
+                <div className=" flex items-center gap-spacing-xs">
+                  <div className=" h-px w-full bg-border-gray-tertiary"></div>
+                  <div className=" min-w-fit">
+                    <QuickAddBar onAdd={addCard} />
+                  </div>
+                  <div className=" h-px w-full bg-border-gray-tertiary"></div>
                 </div>
-                <div className=" h-px w-full bg-border-gray-tertiary"></div>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {/* No cards at all, or no card is focused → show at the end */}
-        {Boolean(cards.length) && !hasFocused && (
-          <div className=" flex items-center gap-spacing-xs">
-            <div className=" h-px w-full bg-border-gray-tertiary"></div>
-            <div className=" min-w-fit">
-              <QuickAddBar onAdd={addCard} />
+              )}
             </div>
-            <div className=" h-px w-full bg-border-gray-tertiary"></div>
-          </div>
-        )}
-        {cards.length === 0 && <InitialQuickAddBar onAdd={addCard} />}
-      </div>
+          ))}
+
+          {/* No cards at all, or no card is focused → show at the end */}
+          {Boolean(cards.length) && !hasFocused && (
+            <div className=" flex items-center gap-spacing-xs">
+              <div className=" h-px w-full bg-border-gray-tertiary"></div>
+              <div className=" min-w-fit">
+                <QuickAddBar onAdd={addCard} />
+              </div>
+              <div className=" h-px w-full bg-border-gray-tertiary"></div>
+            </div>
+          )}
+          {cards.length === 0 && <InitialQuickAddBar onAdd={addCard} />}
+        </div>
+      )}
 
       {/* Footer nav */}
       <div className="flex py-spacing-2xl justify-end mt-spacing-4xl gap-spacing-sm">

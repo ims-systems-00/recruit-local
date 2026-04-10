@@ -162,8 +162,6 @@ export default function JobInformationForm({
       ),
     );
 
-    console.log('payload', cleanPayload);
-
     await updateJob({
       id: defaultValues._id,
       data: cleanPayload,
