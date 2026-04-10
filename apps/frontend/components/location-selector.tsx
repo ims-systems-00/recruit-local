@@ -114,7 +114,7 @@ function PlacesAutocomplete({
           <span>
             <MapPinIcon className=" text-fg-gray-tertiary" />
           </span>
-          {selected || 'Search address...'}
+          <span className=" truncate">{selected || 'Search address...'}</span>
         </Button>
       </PopoverTrigger>
 

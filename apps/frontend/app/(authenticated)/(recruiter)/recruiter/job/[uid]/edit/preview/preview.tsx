@@ -12,11 +12,18 @@ import {
   Cable,
   TriangleAlert,
   Dot,
+  Mailbox,
+  PhoneCall,
+  Globe,
 } from 'lucide-react';
 import moment from 'moment';
 import React from 'react';
 import InfoCard from './info-card';
 import { REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
+import Image from 'next/image';
+
+import RelatedAttachmentDefault from '@/public/images/related_attachment_default.png';
+import MapByAddress from '@/components/map-by-address';
 
 const documentLabels: Record<REQUIRED_DOCUMENTS_ENUMS, string> = {
   [REQUIRED_DOCUMENTS_ENUMS.RESUME]: 'CV',
@@ -157,12 +164,17 @@ export default function Preview({
         </div>
 
         <div className="space-y-spacing-2xl">
-          <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-            Locations
-          </p>
-          <div className=" rounded-lg border border-border-gray-secondary">
-            Google map
+          <div className=" flex justify-between items-center gap-spacing-2xl">
+            <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+              Locations
+            </p>
+            <p className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+              {defaultValues?.location || 'N/A'}
+            </p>
           </div>
+          {defaultValues?.location && (
+            <MapByAddress address={defaultValues.location} />
+          )}
         </div>
         <div className="space-y-spacing-2xl">
           <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
@@ -202,6 +214,61 @@ export default function Preview({
               ))}
             </div>
           </div>
+        </div>
+        <div className="space-y-spacing-2xl">
+          <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+            Related Attachment
+          </p>
+          <div className=" grid grid-cols-3 gap-spacing-sm">
+            <div>
+              <Image
+                className="w-full aspect-video rounded-md "
+                alt="Logo"
+                src={RelatedAttachmentDefault}
+                width={370}
+                height={214}
+              />
+            </div>
+            <div>
+              <Image
+                className="w-full aspect-video rounded-md "
+                alt="Logo"
+                src={RelatedAttachmentDefault}
+                width={370}
+                height={214}
+              />
+            </div>
+            <div>
+              <Image
+                className="w-full aspect-video rounded-md "
+                alt="Logo"
+                src={RelatedAttachmentDefault}
+                width={370}
+                height={214}
+              />
+            </div>
+          </div>
+        </div>
+        <div className=" grid grid-cols-3 gap-spacing-2xl">
+          <InfoCard
+            icon={<Mailbox size={20} />}
+            title="Contact Email"
+            subtitle={defaultValues?.email}
+          />
+
+          {/* Workplace */}
+          <InfoCard
+            icon={<PhoneCall size={20} />}
+            title="Contact Number"
+            subtitle={defaultValues?.number}
+          />
+
+          {/* Employment Type */}
+          <InfoCard
+            icon={<Globe size={20} />}
+            title="Website URl"
+            subtitle={'www.boottech.com'}
+          />
         </div>
       </div>
     </>
