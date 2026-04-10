@@ -596,7 +596,7 @@
 }
 
 .PhoneInputInput {
-  @apply focus:outline-0 px-spacing-xl text-label-sm text-text-gray-quaternary;
+  @apply focus:outline-0 px-spacing-xl text-label-md font-label-md-strong! text-text-gray-primary;
 }
 
 .PhoneInputCountryIcon {

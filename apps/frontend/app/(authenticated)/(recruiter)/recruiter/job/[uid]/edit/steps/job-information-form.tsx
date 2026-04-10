@@ -207,7 +207,7 @@ export default function JobInformationForm({
                     <InputGroupInput
                       type="text"
                       placeholder=" Eg . UI/UX Designer Wanted – Join Our Creative Team!"
-                      className=" placeholder:text-text-gray-quaternary"
+                      className=" text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                       {...register('title')}
                     />
                   </InputGroup>
@@ -232,7 +232,7 @@ export default function JobInformationForm({
                         value={field.value || ''}
                         onValueChange={field.onChange}
                       >
-                        <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
+                        <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary text-text-gray-primary text-label-md font-label-md-strong!">
                           <SelectValue placeholder="Eg. Full Time" />
                         </SelectTrigger>
 
@@ -268,7 +268,7 @@ export default function JobInformationForm({
                         value={field.value || ''}
                         onValueChange={field.onChange}
                       >
-                        <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
+                        <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary text-text-gray-primary text-label-md font-label-md-strong!">
                           <SelectValue placeholder="Eg. Remote" />
                         </SelectTrigger>
 
@@ -301,6 +301,7 @@ export default function JobInformationForm({
                       type="number"
                       placeholder="10"
                       {...register('yearOfExperience')}
+                      className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                     />
                   </InputGroup>
                   {errors.yearOfExperience && (
@@ -319,7 +320,7 @@ export default function JobInformationForm({
                     <InputGroupInput
                       type="number"
                       placeholder="05"
-                      className=" placeholder:text-text-gray-quaternary"
+                      className=" placeholder:text-text-gray-quaternary text-text-gray-primary text-label-md font-label-md-strong!"
                       {...register('vacancy')}
                     />
                   </InputGroup>
@@ -341,6 +342,7 @@ export default function JobInformationForm({
                       type="number"
                       placeholder="Eg. 300"
                       {...register('salary')}
+                      className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                     />
                   </InputGroup>
                   {errors.salary && (
@@ -364,7 +366,7 @@ export default function JobInformationForm({
                         value={field.value || ''}
                         onValueChange={field.onChange}
                       >
-                        <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary">
+                        <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary text-text-gray-primary text-label-md font-label-md-strong!">
                           <SelectValue placeholder="Eg. Hourly" />
                         </SelectTrigger>
 
@@ -397,6 +399,7 @@ export default function JobInformationForm({
                       type="number"
                       placeholder="Eg. 5"
                       {...register('workingDays')}
+                      className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                     />
                   </InputGroup>
                   {errors.workingDays && (
@@ -424,7 +427,7 @@ export default function JobInformationForm({
                       >
                         <ComboboxChips
                           ref={weekendsAnchor}
-                          className="w-full focus-within:ring-0! min-h-10! rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary"
+                          className="w-full focus-within:ring-0! min-h-10! rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary text-text-gray-primary text-label-md font-label-md-strong!"
                         >
                           <ComboboxValue>
                             {(values: string[]) => (
@@ -484,14 +487,14 @@ export default function JobInformationForm({
                       type="time"
                       defaultValue="00:00"
                       {...methods.register('workingHours.startTime')}
-                      className=" h-10  appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none rounded-lg shadow-xs border-border-gray-primary"
+                      className=" h-10  appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none rounded-lg shadow-xs border-border-gray-primary text-text-gray-primary text-label-md font-label-md-strong!"
                     />
                     <span>To</span>
                     <Input
                       type="time"
                       defaultValue="00:00"
                       {...methods.register('workingHours.endTime')}
-                      className=" h-10 appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none rounded-lg shadow-xs border-border-gray-primary"
+                      className=" h-10 appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none rounded-lg shadow-xs border-border-gray-primary text-text-gray-primary text-label-md font-label-md-strong!"
                     />
                   </div>
                   {errors.workingHours?.startTime && (
@@ -523,7 +526,7 @@ export default function JobInformationForm({
                             <Button
                               variant="outline"
                               id="date"
-                              className="justify-start font-normal px-2 border-0 w-full"
+                              className="justify-start px-2 border-0 w-full text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                             >
                               {field.value
                                 ? field.value.toLocaleDateString()
@@ -602,7 +605,7 @@ export default function JobInformationForm({
                     <InputGroupTextarea
                       placeholder="Write here..."
                       {...register('aboutUs')}
-                      className="min-h-[136px] "
+                      className="min-h-[136px] text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                       disabled={autoFill}
                     />
                   </InputGroup>
@@ -624,6 +627,7 @@ export default function JobInformationForm({
                       placeholder="Eg. elena@example.com"
                       {...register('email')}
                       disabled={autoFill}
+                      className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                     />
                     <InputGroupAddon>
                       <MailIcon className=" text-fg-gray-tertiary" />
@@ -652,7 +656,7 @@ export default function JobInformationForm({
                         international
                         placeholder="Enter contact number"
                         disabled={autoFill}
-                        className=" border h-10 rounded-lg shadow-xs border-border-gray-primary w-full"
+                        className=" border h-10 rounded-lg shadow-xs border-border-gray-primary w-full text-text-gray-primary"
                       />
                     )}
                   />
@@ -701,6 +705,7 @@ export default function JobInformationForm({
                       placeholder="Eg. elena@example.com"
                       {...register('locationAdditionalInfo')}
                       disabled={autoFill}
+                      className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                     />
                   </InputGroup>
                   {errors.locationAdditionalInfo && (

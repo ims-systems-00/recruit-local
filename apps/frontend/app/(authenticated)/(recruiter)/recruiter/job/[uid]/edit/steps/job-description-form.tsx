@@ -184,7 +184,7 @@ export default function JobDescriptionForm({
                     <InputGroupTextarea
                       placeholder="Write your message here..."
                       {...register('description')}
-                      className="min-h-[136px] "
+                      className="min-h-[136px] text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                     />
                   </InputGroup>
                   {errors.description && (
@@ -203,7 +203,7 @@ export default function JobDescriptionForm({
                     <InputGroupTextarea
                       placeholder="Write your message here..."
                       {...register('responsibility')}
-                      className="min-h-[136px] "
+                      className="min-h-[136px] text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                     />
                   </InputGroup>
                   {errors.responsibility && (
@@ -266,7 +266,12 @@ export default function JobDescriptionForm({
                             onCheckedChange={() => toggleDocument(item.id)}
                             className=" data-[state=checked]:bg-bg-brand-solid-primary data-[state=checked]:text-text-white data-[state=checked]:border-bg-brand-solid-primary"
                           />
-                          <Label htmlFor={item.id}>{item.label}</Label>
+                          <Label
+                            htmlFor={item.id}
+                            className=" text-label-md font-label-md-strong! text-text-gray-secondary"
+                          >
+                            {item.label}
+                          </Label>
                         </div>
                       );
                     })}

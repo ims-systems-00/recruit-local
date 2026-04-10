@@ -107,7 +107,7 @@ function PlacesAutocomplete({
         <Button
           variant="outline"
           className={cn(
-            ' px-spacing-lg justify-start h-10! w-full rounded-lg shadow-xs border-border-gray-primary text-text-gray-quaternary',
+            ' px-spacing-lg justify-start h-10! w-full rounded-lg shadow-xs border-border-gray-primary text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary',
             selected && ' text-text-gray-primary',
           )}
         >
