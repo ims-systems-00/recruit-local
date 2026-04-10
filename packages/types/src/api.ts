@@ -1,9 +1,9 @@
 export interface IOptions {
   page?: number;
   limit?: number;
+  sort?: Record<string, 1 | -1 | 'asc' | 'desc'> | string;
 }
 
-// Replaced FilterQuery with standard Partial<T> and an index signature for extra params
 export type ListQueryParams<T> = Partial<T> & {
   _id?: string | string[];
   [key: string]: any;

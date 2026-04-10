@@ -4,7 +4,7 @@ import { getOne as getTenant } from "../tenant/tenant.service";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { jobProjectionQuery } from "./job.query";
+import { jobAttachmentsLookupQuery, jobProjectionQuery } from "./job.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { VISIBILITY_ENUM } from "@rl/types";
@@ -48,6 +48,7 @@ export const getOne = async ({ query = {}, session }: IJobGetParams) => {
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...jobProjectionQuery(),
+    ...jobAttachmentsLookupQuery(),
   ]);
 
   if (session) aggregate.session(session);
@@ -74,6 +75,7 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IJobGetParams) 
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...jobProjectionQuery(),
+    ...jobAttachmentsLookupQuery(),
   ]);
 
   if (session) aggregate.session(session);

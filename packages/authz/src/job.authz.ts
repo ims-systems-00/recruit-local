@@ -39,6 +39,7 @@ export const ALL_JOB_FIELDS = [
   'yearOfExperience',
   'responsibility',
   'attachmentIds',
+  'attachments',
   'category',
   'vacancy',
   'location',
@@ -154,6 +155,7 @@ export class JobAbilityBuilder implements IAbilityBuilder {
         EMPLOYER_UPDATE_FIELDS,
         {
           tenantId: this.session.tenantId,
+          status: { $ne: JOBS_STATUS_ENUMS.OPEN },
         },
       );
       builder.can(AbilityAction.SoftDelete, JobAuthZEntity, {
