@@ -121,7 +121,11 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
                 >
                   Cancel
                 </Button>
-                <Button className="cursor-pointer h-10 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong!">
+                <Button
+                  type="submit"
+                  form="tenant-edit-form"
+                  className="cursor-pointer h-10 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong!"
+                >
                   Save
                 </Button>
               </>

@@ -88,7 +88,7 @@ export default function EditProfile({
         Edit Profile
       </h4>
       <FormProvider {...methods}>
-        <form onSubmit={methods.handleSubmit(onSubmit)}>
+        <form id="tenant-edit-form" onSubmit={methods.handleSubmit(onSubmit)}>
           <div className=" space-y-spacing-2xl">
             <div className="space-y-spacing-2xl">
               <div className="grid grid-cols-2 gap-spacing-2xl">
