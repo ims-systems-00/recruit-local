@@ -6,6 +6,8 @@ import { TenantData, TenantsItemBackendResponse } from './tenants.type';
 import {
   tenantsIdParamsSchema,
   tenantsItemResponseSchema,
+  TenantUpdateInput,
+  tenantUpdateSchema,
 } from './tenants.validation';
 
 type SuccessResponse<T = any> = {
@@ -46,8 +48,6 @@ export async function getTenantById(
       `${API_ENDPOINT}/${id}`,
     );
 
-    console.log('res', res);
-
     const backendResponse = await tenantsItemResponseSchema.validate(res.data, {
       stripUnknown: true,
     });
@@ -59,5 +59,32 @@ export async function getTenantById(
     };
   } catch (error) {
     return handleServerError(error, 'Failed to fetch post');
+  }
+}
+
+export async function updateTenant(
+  id: string,
+  payload: Partial<TenantUpdateInput>,
+): Promise<ApiResponse<TenantData>> {
+  try {
+    await tenantsIdParamsSchema.validate({ id });
+    const validatedData = await tenantUpdateSchema.validate(payload, {
+      abortEarly: false,
+    });
+
+    const res = await axiosServer.put<TenantsItemBackendResponse>(
+      `${API_ENDPOINT}/${id}`,
+      validatedData,
+    );
+
+    const backendResponse = res.data;
+
+    return {
+      success: true,
+      data: backendResponse.tenant,
+      message: backendResponse.message,
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to update post');
   }
 }

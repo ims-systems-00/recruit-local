@@ -1,4 +1,12 @@
 import * as yup from 'yup';
+import { TENANT_STATUS_ENUMS, TENANT_TYPE } from '@rl/types';
+import { isValidPhoneNumber } from 'libphonenumber-js';
+
+export const awsStorageSchema = yup.object({
+  Name: yup.string().required('Name is required'),
+  Bucket: yup.string().required('Bucket is required'),
+  Key: yup.string().required('Key is required'),
+});
 
 export const deleteMarkerSchema = yup.object({
   status: yup.boolean().required(),
@@ -24,3 +32,61 @@ export const tenantsItemResponseSchema = yup.object({
   tenant: tenantsSchema.required(),
   message: yup.string().optional(),
 });
+
+export const tenantUpdateSchema = yup.object({
+  name: yup
+    .string()
+    .trim()
+    .max(300, 'Name must be at most 300 characters')
+    .required('Name is required'),
+
+  description: yup.string().optional(),
+
+  industry: yup
+    .string()
+    .max(50, 'Industry must be at most 50 characters')
+    .optional(),
+
+  type: yup.string().oneOf(Object.values(TENANT_TYPE)).optional(),
+
+  size: yup.number().typeError('Size must be a number').optional(),
+
+  phone: yup
+    .string()
+    .optional()
+    .test(
+      'is-valid-phone',
+      'Invalid phone number',
+      (value) => !value || isValidPhoneNumber(value),
+    ),
+
+  email: yup.string().email('Invalid email format').optional(),
+
+  logoSquareSrc: yup.string().url('Invalid URL').optional(),
+
+  logoSquareStorage: awsStorageSchema.optional(),
+
+  logoRectangleSrc: yup.string().url('Invalid URL').optional(),
+
+  logoRectangleStorage: awsStorageSchema.optional(),
+
+  officeAddress: yup.string().optional(),
+
+  addressInMap: yup.string().optional(),
+
+  status: yup.string().oneOf(Object.values(TENANT_STATUS_ENUMS)).optional(),
+
+  website: yup.string().url('Invalid URL').optional(),
+
+  linkedIn: yup.string().url('Invalid URL').optional(),
+
+  missionStatement: yup.string().optional(),
+
+  visionStatement: yup.string().optional(),
+
+  coreProducts: yup.string().optional(),
+
+  coreServices: yup.string().optional(),
+});
+
+export type TenantUpdateInput = yup.InferType<typeof tenantUpdateSchema>;

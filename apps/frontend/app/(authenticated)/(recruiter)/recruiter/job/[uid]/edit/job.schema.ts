@@ -6,7 +6,7 @@ import {
   PERIOD_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
 } from '@rl/types';
-import { isValidPhoneNumber } from 'react-phone-number-input';
+import { isValidPhoneNumber } from 'libphonenumber-js';
 
 // AWS Storage
 export const awsStorageSchema = yup.object({

@@ -13,45 +13,52 @@ import CurrentRecruitment from '../sections/current-recruitment';
 import Saves from '../sections/saves';
 import Activities from '../sections/activities';
 import { TenantData } from '@/services/tenants/tenants.type';
-
-const tabs = [
-  {
-    value: 'about',
-    label: 'About',
-    component: <About />,
-    editable: true,
-  },
-  {
-    value: 'services-and-products',
-    label: 'Services and Products',
-    component: <ServicesAndProducts />,
-    editable: true,
-  },
-  {
-    value: 'achievements',
-    label: 'Achievements',
-    component: <Achievements />,
-  },
-  {
-    value: 'current-recruitment',
-    label: 'Current Recruitment',
-    component: <CurrentRecruitment />,
-  },
-  {
-    value: 'activities',
-    label: 'Activities',
-    component: <Activities />,
-  },
-  {
-    value: 'saves',
-    label: 'Saves',
-    component: <Saves />,
-  },
-];
+import EditProfile from './edit-profile';
 
 export default function Profile({ tenantData }: { tenantData: TenantData }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
+
+  const [tenantDetails, setTenantDetails] = useState(tenantData);
+
+  const tabs = [
+    {
+      value: 'about',
+      label: 'About',
+      component: isEditMode ? (
+        <EditProfile defaultValues={tenantDetails} />
+      ) : (
+        <About />
+      ),
+      editable: true,
+    },
+    {
+      value: 'services-and-products',
+      label: 'Services and Products',
+      component: <ServicesAndProducts />,
+      editable: true,
+    },
+    {
+      value: 'achievements',
+      label: 'Achievements',
+      component: <Achievements />,
+    },
+    {
+      value: 'current-recruitment',
+      label: 'Current Recruitment',
+      component: <CurrentRecruitment />,
+    },
+    {
+      value: 'activities',
+      label: 'Activities',
+      component: <Activities />,
+    },
+    {
+      value: 'saves',
+      label: 'Saves',
+      component: <Saves />,
+    },
+  ];
 
   const visibleTabs = useMemo(() => {
     if (!isEditMode) return tabs;

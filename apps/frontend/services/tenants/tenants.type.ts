@@ -1,7 +1,39 @@
+import { TENANT_TYPE } from '@rl/types';
+
+export type AwsStorageType = {
+  Name: string;
+  Bucket: string;
+  Key: string;
+};
+
 export type TenantData = {
   _id: string;
   name: string;
+  description?: string;
+  industry?: string;
+  type?: (typeof TENANT_TYPE)[keyof typeof TENANT_TYPE];
+  size?: number;
+  phone?: string;
+  email?: string;
+
+  logoSquareSrc?: string;
+  logoSquareStorage?: AwsStorageType;
+
+  logoRectangleSrc?: string;
+  logoRectangleStorage?: AwsStorageType;
+
+  officeAddress?: string;
+  addressInMap?: string;
+
   status: string;
+
+  website?: string;
+  linkedIn?: string;
+
+  missionStatement?: string;
+  visionStatement?: string;
+  coreProducts?: string;
+  coreServices?: string;
   deleteMarker?: {
     status: boolean;
     deletedAt?: string | null;
@@ -14,6 +46,6 @@ export type TenantData = {
 
 export type TenantsItemBackendResponse = {
   success: boolean;
-  post: TenantData;
+  tenant: TenantData;
   message?: string;
 };
