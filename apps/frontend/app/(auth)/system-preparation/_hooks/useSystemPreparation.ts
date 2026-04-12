@@ -13,8 +13,10 @@ export const useSystemPreparation = () => {
 
   const userType = user?.type;
 
+  console.log('user', user);
+
   useEffect(() => {
-    if (!isUserLoading && user) {
+    if (!isUserLoading && user?._id) {
       startTransition(() => {
         if (!isEmailVerified) {
           router.push('/accounts/verify-email');
@@ -25,7 +27,7 @@ export const useSystemPreparation = () => {
           return;
         }
         if (userType === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
-          router.push('/recruiter/profile');
+          router.push(`/recruiter/profile/${user?._id}`);
           return;
         }
         if (userType === ACCOUNT_TYPE_ENUMS.CANDIDATE) {

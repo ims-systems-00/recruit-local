@@ -24,13 +24,14 @@ import { cn, formatDate } from '@/lib/utils';
 import { useCreateJob, useJobs } from '@/services/jobs/jobs.client';
 import JobItemSkelaton from './job-item-skelaton';
 import CardJobItem from './card-job-item';
-import EmptyBox from './empty-box';
+import EmptyBox from '../../../../../../components/empty-box';
 import PaginationComponent from './pagination-component';
 import { useDebounce } from '@/hooks/useDebounce';
 import { JOBS_STATUS_ENUMS } from '@rl/types';
 import { Badge } from '@/components/ui/badge';
 import { JobData } from '@/services/jobs/job.type';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -404,7 +405,15 @@ export default function Jobs() {
                     </div>
                   )
                 ) : (
-                  <EmptyBox />
+                  <EmptyBox
+                    title="No Jobs Posted Yet!"
+                    description="Currently, there are no job postings available."
+                  >
+                    <Button className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!">
+                      <Plus />
+                      <span>Create New</span>
+                    </Button>
+                  </EmptyBox>
                 )}
 
                 {Boolean(jobs?.length) && pagination?.totalPages && (

@@ -1,8 +1,15 @@
+import EmptyBox from '@/components/empty-box';
 import { Button } from '@/components/ui/button';
 import { EllipsisVertical, MapPin, Plus } from 'lucide-react';
 import React from 'react';
 
 export default function CurrentRecruitment() {
+  return (
+    <EmptyBox
+      title="Coming Soon"
+      description="We’re building this feature to improve your experience—stay tuned, it’s on the way."
+    />
+  );
   return (
     <div className=" space-y-spacing-4xl">
       <div className=" flex justify-between items-center">

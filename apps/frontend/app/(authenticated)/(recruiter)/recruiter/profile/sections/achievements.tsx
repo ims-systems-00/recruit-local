@@ -11,8 +11,15 @@ import { EllipsisVertical, Plus } from 'lucide-react';
 import React from 'react';
 import Image from 'next/image';
 import AchievementsDefault from '@/public/images/achievements_default.png';
+import EmptyBox from '@/components/empty-box';
 
 export default function Achievements() {
+  return (
+    <EmptyBox
+      title="Coming Soon"
+      description="We’re building this feature to improve your experience—stay tuned, it’s on the way."
+    />
+  );
   return (
     <div className=" space-y-spacing-4xl">
       <div className=" flex justify-between items-center">
