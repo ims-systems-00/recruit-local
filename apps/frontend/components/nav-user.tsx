@@ -89,7 +89,9 @@ export function NavUser() {
             <DropdownMenuGroup>
               <DropdownMenuItem
                 className=" cursor-pointer"
-                onClick={() => router.push(`/recruiter/profile/${user?._id}`)}
+                onClick={() =>
+                  router.push(`/recruiter/profile/${user?.tenantId}`)
+                }
               >
                 <BadgeCheck />
                 Profile

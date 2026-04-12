@@ -27,7 +27,7 @@ export const useSystemPreparation = () => {
           return;
         }
         if (userType === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
-          router.push(`/recruiter/profile/${user?._id}`);
+          router.push(`/recruiter/profile/${user?.tenantId}`);
           return;
         }
         if (userType === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
