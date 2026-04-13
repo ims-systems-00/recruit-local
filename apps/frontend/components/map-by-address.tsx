@@ -11,6 +11,8 @@ type Props = {
 };
 
 export default function MapByAddress({ address }: Props) {
+  console.log('address', address);
+
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
     libraries,
@@ -22,7 +24,7 @@ export default function MapByAddress({ address }: Props) {
   } | null>(null);
 
   useEffect(() => {
-    if (!address) return;
+    if (!address || !isLoaded) return;
 
     const getCoordinates = async () => {
       try {
@@ -36,7 +38,7 @@ export default function MapByAddress({ address }: Props) {
     };
 
     getCoordinates();
-  }, [address]);
+  }, [address, isLoaded]);
 
   if (!isLoaded || !location)
     return (

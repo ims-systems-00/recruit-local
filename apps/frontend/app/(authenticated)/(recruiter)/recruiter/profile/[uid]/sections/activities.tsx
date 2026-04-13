@@ -1,5 +1,5 @@
 import React from 'react';
-import EmptyBox from '../../../../../../components/empty-box';
+import EmptyBox from '../../../../../../../components/empty-box';
 
 export default function Activities() {
   return (

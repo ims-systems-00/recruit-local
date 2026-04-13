@@ -1,5 +1,5 @@
 import React from 'react';
-import Profile from '../sections/profile';
+import Profile from './sections/profile';
 import { getTenantById } from '@/services/tenants/tenants.server';
 interface Props {
   params: {

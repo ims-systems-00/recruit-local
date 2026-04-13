@@ -6,12 +6,12 @@ import RecruitDefaultLogo from '@/public/images/recruit_default_logo.png';
 import { Button } from '@/components/ui/button';
 import { Globe, Linkedin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import About from '../sections/about';
-import ServicesAndProducts from '../sections/services-and-products';
-import Achievements from '../sections/achievements';
-import CurrentRecruitment from '../sections/current-recruitment';
-import Saves from '../sections/saves';
-import Activities from '../sections/activities';
+import About from './about';
+import ServicesAndProducts from './services-and-products';
+import Achievements from './achievements';
+import CurrentRecruitment from './current-recruitment';
+import Saves from './saves';
+import Activities from './activities';
 import { TenantData } from '@/services/tenants/tenants.type';
 import EditProfile from './edit-profile';
 import { useUpdateTenant } from '@/services/tenants/tenants.client';
@@ -46,9 +46,13 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
         ? (tenantDetails?.type as TENANT_TYPE)
         : undefined,
       size: tenantDetails?.size,
+      website: tenantDetails?.website,
+      linkedIn: tenantDetails?.linkedIn,
     },
     mode: 'onSubmit',
   });
+
+  console.log('tenantDetails', tenantDetails);
 
   const {
     register,
@@ -71,7 +75,11 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
     await updateTenant({
       id: tenantDetails._id,
       data: cleanPayload,
-      //   onSuccessNext: (newData) => next(newData),
+      onSuccessNext: (newData) => {
+        setTenantDetails((prev) => ({ ...prev, ...newData }));
+        setIsEditMode(false);
+        setActiveTab('about');
+      },
     });
   };
 
@@ -82,7 +90,7 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       component: isEditMode ? (
         <EditProfile register={register} control={control} errors={errors} />
       ) : (
-        <About />
+        <About profile={tenantDetails} />
       ),
       editable: true,
     },
@@ -113,8 +121,6 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       component: <Saves />,
     },
   ];
-
-  console.log('errors', errors);
 
   const visibleTabs = useMemo(() => {
     if (!isEditMode) return tabs;
@@ -155,7 +161,7 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
         <div className=" pl-44 flex justify-between items-center gap-4 py-spacing-xl">
           <div className=" space-y-spacing-sm">
             <h4 className=" text-heading-sm font-heading-sm-strong! text-text-gray-primary">
-              {tenantData?.name}
+              {tenantDetails?.name}
             </h4>
             <div className=" flex items-center gap-spacing-xs">
               <Button variant="outline" className=" h-9 w-9">

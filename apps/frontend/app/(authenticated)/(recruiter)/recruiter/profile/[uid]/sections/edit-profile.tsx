@@ -52,8 +52,7 @@ export default function EditProfile({
       <h4 className=" text-text-gray-secondary text-heading-sm font-heading-sm-strong!">
         Edit Profile
       </h4>
-      {/* <FormProvider {...methods}> */}
-      {/* <form id="tenant-edit-form" onSubmit={methods.handleSubmit(onSubmit)}> */}
+
       <div className=" space-y-spacing-2xl">
         <div className="space-y-spacing-2xl">
           <div className="grid grid-cols-2 gap-spacing-2xl">
@@ -70,7 +69,7 @@ export default function EditProfile({
                 >
                   <InputGroupInput
                     type="text"
-                    placeholder=" Eg . UI/UX Designer Wanted – Join Our Creative Team!"
+                    placeholder=" Eg . Boottech"
                     className=" text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                     {...register('name')}
                   />
@@ -97,7 +96,7 @@ export default function EditProfile({
                       onValueChange={field.onChange}
                     >
                       <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary text-text-gray-primary text-label-md font-label-md-strong!">
-                        <SelectValue placeholder="Eg. Full Time" />
+                        <SelectValue placeholder="Eg. Public" />
                       </SelectTrigger>
 
                       <SelectContent className=" bg-white">
@@ -128,7 +127,7 @@ export default function EditProfile({
                 <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupInput
                     type="number"
-                    placeholder="10"
+                    placeholder="05"
                     {...register('size')}
                     className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                   />
@@ -149,7 +148,7 @@ export default function EditProfile({
                 <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupInput
                     type="text"
-                    placeholder="Eg. elena@example.com"
+                    placeholder="Eg. industry"
                     {...register('industry')}
                     className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                   />
@@ -239,7 +238,7 @@ export default function EditProfile({
                 <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupInput
                     type="text"
-                    placeholder="Eg. elena@example.com"
+                    placeholder="Eg. https://your-website.com"
                     {...register('website')}
                     className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                   />
@@ -259,7 +258,7 @@ export default function EditProfile({
                 <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
                   <InputGroupInput
                     type="text"
-                    placeholder="Eg. elena@example.com"
+                    placeholder="Eg. https://linkedin.com/in/your-profile"
                     {...register('linkedIn')}
                     className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                   />
@@ -293,8 +292,6 @@ export default function EditProfile({
           </div>
         </div>
       </div>
-      {/* </form> */}
-      {/* </FormProvider> */}
     </div>
   );
 }

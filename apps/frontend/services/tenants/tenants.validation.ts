@@ -26,6 +26,8 @@ export const tenantsSchema = yup.object({
   phone: yup.string().optional(),
   size: yup.number().optional(),
   type: yup.string().optional(),
+  website: yup.string().optional(),
+  linkedIn: yup.string().optional(),
   deleteMarker: deleteMarkerSchema.optional(),
   createdAt: yup.string().optional(),
   updatedAt: yup.string().optional(),
