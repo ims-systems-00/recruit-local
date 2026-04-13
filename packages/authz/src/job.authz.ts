@@ -158,6 +158,10 @@ export class JobAbilityBuilder implements IAbilityBuilder {
           status: { $ne: JOBS_STATUS_ENUMS.OPEN },
         },
       );
+      builder.can(AbilityAction.Update, JobAuthZEntity, ['status'], {
+        tenantId: this.session.tenantId,
+        status: JOBS_STATUS_ENUMS.OPEN,
+      });
       builder.can(AbilityAction.SoftDelete, JobAuthZEntity, {
         tenantId: this.session.tenantId,
       });

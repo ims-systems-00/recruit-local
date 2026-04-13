@@ -5,7 +5,7 @@ import { TENANT_STATUS_ENUMS, TENANT_TYPE, TENANT_INDUSTRY_ENUMS } from "@rl/typ
 // Custom validation for MongoDB ObjectId
 const objectIdValidation = (value: string, helpers: CustomHelpers) => {
   if (!mongoose.Types.ObjectId.isValid(value)) {
-    return helpers.message({ custom: `"${helpers.state.path.join(".")}" must be a valid ObjectId` });
+    return helpers.message({ custom: `"${helpers.state.path?.join(".")}" must be a valid ObjectId` });
   }
   return value;
 };
