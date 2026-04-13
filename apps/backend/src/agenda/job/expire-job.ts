@@ -25,7 +25,7 @@ export const defineExpireJob = () => {
         // Update to your specific "Closed" or "Expired" enum value
         await jobService.update({
           query: { _id: jobId },
-          payload: { status: JOBS_STATUS_ENUMS.ARCHIVED },
+          payload: { status: JOBS_STATUS_ENUMS.CLOSED },
         });
 
         logger.info(`Successfully expired Job post: ${jobId}`);

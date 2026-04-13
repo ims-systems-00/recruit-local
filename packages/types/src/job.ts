@@ -35,4 +35,5 @@ export enum JOBS_STATUS_ENUMS {
   OPEN = 'open',
   EVALUATION = 'evaluation',
   ARCHIVED = 'archived',
+  CLOSED = 'closed',
 }
