@@ -16,6 +16,9 @@ export interface IServiceListParams<T> {
 export interface IServiceGetParams<T> {
   query: IMongooseQueryParams<T>;
   session?: ClientSession;
+  options?: {
+    select?: string;
+  };
 }
 
 export interface IServiceUpdateParams<T> {

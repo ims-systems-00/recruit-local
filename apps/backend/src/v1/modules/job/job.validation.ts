@@ -7,6 +7,7 @@ import {
   PERIOD_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
   JOBS_STATUS_ENUMS,
+  QUERY_TYPE_ENUMS,
 } from "@rl/types";
 
 const awsStorageSchema = Joi.object({
@@ -27,6 +28,25 @@ const workingHoursSchema = Joi.object({
     .optional()
     .label("End Time"),
 }).label("Working Hours");
+
+// Added sub-schema for the queries
+const additionalQuerySchema = Joi.object({
+  question: Joi.string().required().label("Question"),
+  type: Joi.string()
+    .valid(...Object.values(QUERY_TYPE_ENUMS))
+    .required()
+    .label("Query Type"),
+  options: Joi.array()
+    .items(Joi.string())
+    .when("type", {
+      is: Joi.valid(QUERY_TYPE_ENUMS.SINGLE_CHOICE, QUERY_TYPE_ENUMS.MULTIPLE_CHOICE),
+      then: Joi.array().min(1).required(),
+      otherwise: Joi.forbidden(),
+    })
+    .label("Options"),
+  isRequired: Joi.boolean().default(false).label("Is Required"),
+  expectedAnswer: Joi.string().optional().allow("").label("Expected Answer"),
+}).label("Additional Query");
 
 export const createBodySchema = Joi.object({
   title: Joi.string().required().label("Title"),
@@ -74,8 +94,13 @@ export const createBodySchema = Joi.object({
   // Nested Complex Objects
   workingHours: workingHoursSchema.optional(),
   salary: Joi.number().optional().label("Salary"),
+
   // System
   keywords: Joi.array().items(Joi.string()).optional().label("Keywords"),
+
+  // --- NEW FIELDS ---
+  formId: Joi.string().custom(objectIdValidation).optional().label("Form ID"),
+  additionalQueries: Joi.array().items(additionalQuerySchema).optional().label("Additional Queries"),
 });
 
 export const updateBodySchema = Joi.object({
@@ -124,6 +149,10 @@ export const updateBodySchema = Joi.object({
     .valid(...Object.values(JOBS_STATUS_ENUMS))
     .optional()
     .label("Job Status"),
+
+  // --- NEW FIELDS ---
+  formId: Joi.string().custom(objectIdValidation).optional().label("Form ID"),
+  additionalQueries: Joi.array().items(additionalQuerySchema).optional().label("Additional Queries"),
 });
 
 export const idParamsSchema = Joi.object({

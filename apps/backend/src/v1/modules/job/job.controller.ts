@@ -14,6 +14,7 @@ import { jobRoleScopedSecurityQuery } from "./job.query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { agenda } from "../../../agenda/config";
 import { JOB_NAME } from "../../../agenda/constants";
+import { list as listApplications } from "../application/application.service";
 
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_FIELDS,
@@ -218,5 +219,38 @@ export const hardRemove = async ({ req }: ControllerParams) => {
     statusCode: StatusCodes.OK,
     data: getSanitizedJobResponse(job, ability),
     fieldName: "job",
+  });
+};
+
+export const allApplicationsForJob = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new JobAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  const job = await jobService.getOne({
+    query: { _id: req.params.id },
+  });
+
+  if (!job || !ability.can(AbilityAction.Read, new JobAuthZEntity(job))) {
+    throw new UnauthorizedException("You do not have permission to view applications for this job.");
+  }
+
+  const results = await listApplications({
+    query: { jobId: req.params.id },
+    options: {
+      sort: { createdAt: -1 },
+    },
+  });
+
+  // todo: sanitize applications based on their own permissions
+
+  // transform applications
+  const { data, pagination } = formatListResponse({ ...results });
+
+  return new ApiResponse({
+    message: "Applications retrieved for the job.",
+    statusCode: StatusCodes.OK,
+    data: data,
+    fieldName: "applications",
+    pagination,
   });
 };

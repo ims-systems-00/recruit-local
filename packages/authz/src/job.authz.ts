@@ -39,6 +39,7 @@ export const ALL_JOB_FIELDS = [
   'yearOfExperience',
   'responsibility',
   'attachmentIds',
+  'attachments',
   'category',
   'vacancy',
   'location',
@@ -58,6 +59,15 @@ export const ALL_JOB_FIELDS = [
   'keywords',
   'reference',
   'totalApplications',
+
+  // --- Forms & Queries ---
+  'formId',
+  // 'additionalQueries',
+  'additionalQueries.question',
+  'additionalQueries.type',
+  'additionalQueries.options',
+  'additionalQueries.isRequired',
+  'additionalQueries.expectedAnswer',
 
   // --- Board Settings ---
   'boardBackground',
@@ -97,6 +107,10 @@ const EMPLOYER_CREATE_FIELDS = [
   'boardBackground',
   'boardSortBy',
   'boardSortOrder',
+
+  // additional queries
+  'formId',
+  'additionalQueries',
 ];
 
 const CANDIDATE_READ_FIELDS = omitFields([
@@ -104,6 +118,11 @@ const CANDIDATE_READ_FIELDS = omitFields([
   'deletedAt',
   'totalApplications',
   'status',
+  'formId',
+  'boardBackground',
+  'boardSortBy',
+  'boardSortOrder',
+  'additionalQueries.expectedAnswer',
 ]);
 
 const EMPLOYER_UPDATE_FIELDS = [...EMPLOYER_CREATE_FIELDS, 'status'];
@@ -147,15 +166,22 @@ export class JobAbilityBuilder implements IAbilityBuilder {
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
       builder.can(AbilityAction.Create, JobAuthZEntity, EMPLOYER_CREATE_FIELDS);
-      builder.can(AbilityAction.Read, JobAuthZEntity, ALL_JOB_FIELDS);
+      builder.can(AbilityAction.Read, JobAuthZEntity, ALL_JOB_FIELDS, {
+        tenantId: this.session.tenantId,
+      });
       builder.can(
         AbilityAction.Update,
         JobAuthZEntity,
         EMPLOYER_UPDATE_FIELDS,
         {
           tenantId: this.session.tenantId,
+          status: { $ne: JOBS_STATUS_ENUMS.OPEN },
         },
       );
+      builder.can(AbilityAction.Update, JobAuthZEntity, ['status'], {
+        tenantId: this.session.tenantId,
+        status: JOBS_STATUS_ENUMS.OPEN,
+      });
       builder.can(AbilityAction.SoftDelete, JobAuthZEntity, {
         tenantId: this.session.tenantId,
       });

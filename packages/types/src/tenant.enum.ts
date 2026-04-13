@@ -11,6 +11,19 @@ export enum TENANT_TYPE {
   PUBLIC = 'public',
 }
 
+export enum TENANT_INDUSTRY_ENUMS {
+  TECHNOLOGY = 'technology',
+  FINANCE = 'finance',
+  HEALTHCARE = 'healthcare',
+  EDUCATION = 'education',
+  MANUFACTURING = 'manufacturing',
+  RETAIL = 'retail',
+  HOSPITALITY = 'hospitality',
+  CONSTRUCTION = 'construction',
+  TRANSPORTATION = 'transportation',
+  ENERGY = 'energy',
+}
+
 export enum CERTIFICATION_TYPE {
   SINGLE = 'SINGLE',
   MULTISITE = 'MULTISITE',

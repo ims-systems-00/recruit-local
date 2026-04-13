@@ -99,7 +99,7 @@ export const restore = async ({ query }: IFileMediaGetParams) => {
 };
 
 export const hardDelete = async ({ query }: IFileMediaGetParams) => {
-  const fileMedia = await getOneSoftDeleted({ query });
+  const fileMedia = await getOne({ query });
   await FileMedia.findOneAndDelete(sanitizeQueryIds(query));
 
   // todo: delete from s3. - probably moves this to a queue?
