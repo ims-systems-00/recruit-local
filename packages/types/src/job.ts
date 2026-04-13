@@ -37,3 +37,10 @@ export enum JOBS_STATUS_ENUMS {
   ARCHIVED = 'archived',
   CLOSED = 'closed',
 }
+
+export enum QUERY_TYPE_ENUMS {
+  PARAGRAPH = 'paragraph',
+  SINGLE_CHOICE = 'single_choice',
+  MULTIPLE_CHOICE = 'multiple_choice',
+  SHORT_ANSWER = 'short_answer',
+}

@@ -16,7 +16,16 @@ import {
   REQUIRED_DOCUMENTS_ENUMS,
   WorkingHours,
   JOBS_STATUS_ENUMS,
+  QUERY_TYPE_ENUMS,
 } from "@rl/types";
+
+export interface IAdditionalQuery {
+  question: string;
+  type: QUERY_TYPE_ENUMS;
+  options?: string[];
+  isRequired: boolean;
+  expectedAnswer?: string;
+}
 
 export interface IJobInput extends TenantInput {
   title?: string;
@@ -44,6 +53,7 @@ export interface IJobInput extends TenantInput {
   requiredDocuments?: REQUIRED_DOCUMENTS_ENUMS[];
   status: JOBS_STATUS_ENUMS;
   formId?: Types.ObjectId;
+  additionalQueries?: IAdditionalQuery[];
 }
 
 export interface IJobDoc
@@ -63,6 +73,21 @@ export interface IJobModel
     PaginateModel<IJobDoc>,
     AggregatePaginateModel<IJobDoc>,
     ITenantModel<IJobDoc> {}
+
+const additionalQuerySchema = new Schema<IAdditionalQuery>(
+  {
+    question: { type: String, required: true },
+    type: {
+      type: String,
+      enum: Object.values(QUERY_TYPE_ENUMS),
+      required: true,
+    },
+    options: [{ type: String }],
+    isRequired: { type: Boolean, default: false },
+    expectedAnswer: { type: String },
+  },
+  { _id: true }
+);
 
 const jobSchema = new Schema<IJobDoc>(
   {
@@ -105,6 +130,7 @@ const jobSchema = new Schema<IJobDoc>(
     },
     keywords: { type: [String], default: [] },
     totalApplications: { type: Number, default: 0 },
+    additionalQueries: [additionalQuerySchema],
   },
   {}
 );
