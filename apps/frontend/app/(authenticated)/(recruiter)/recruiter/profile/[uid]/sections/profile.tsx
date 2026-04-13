@@ -24,6 +24,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import { TENANT_TYPE } from '@rl/types';
 import Link from 'next/link';
+import EditServicesAndProducts from './edit-services-and-products';
 
 export default function Profile({ tenantData }: { tenantData: TenantData }) {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -47,6 +48,10 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       website: tenantDetails?.website,
       linkedIn: tenantDetails?.linkedIn,
       industry: tenantDetails?.industry,
+      missionStatement: tenantDetails?.missionStatement,
+      visionStatement: tenantDetails?.visionStatement,
+      coreProducts: tenantDetails?.coreProducts,
+      coreServices: tenantDetails?.coreServices,
     },
     mode: 'onSubmit',
   });
@@ -96,7 +101,15 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
     {
       value: 'services-and-products',
       label: 'Services and Products',
-      component: <ServicesAndProducts />,
+      component: isEditMode ? (
+        <EditServicesAndProducts
+          register={register}
+          control={control}
+          errors={errors}
+        />
+      ) : (
+        <ServicesAndProducts profile={tenantDetails} />
+      ),
       editable: true,
     },
     {

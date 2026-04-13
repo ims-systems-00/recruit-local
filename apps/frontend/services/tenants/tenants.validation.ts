@@ -32,6 +32,10 @@ export const tenantsSchema = yup.object({
   createdAt: yup.string().optional(),
   updatedAt: yup.string().optional(),
   deletedAt: yup.string().nullable().optional(),
+  missionStatement: yup.string().optional(),
+  visionStatement: yup.string().optional(),
+  coreProducts: yup.string().optional(),
+  coreServices: yup.string().optional(),
 });
 
 export const tenantsIdParamsSchema = yup.object({
