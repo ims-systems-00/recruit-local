@@ -14,6 +14,15 @@ import Saves from '../sections/saves';
 import Activities from '../sections/activities';
 import { TenantData } from '@/services/tenants/tenants.type';
 import EditProfile from './edit-profile';
+import { useUpdateTenant } from '@/services/tenants/tenants.client';
+import { useComboboxAnchor } from '@/components/ui/combobox';
+import { Resolver, useForm } from 'react-hook-form';
+import {
+  TenantUpdateInput,
+  tenantUpdateSchema,
+} from '@/services/tenants/tenants.validation';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { TENANT_TYPE } from '@rl/types';
 
 export default function Profile({ tenantData }: { tenantData: TenantData }) {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -21,12 +30,57 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
 
   const [tenantDetails, setTenantDetails] = useState(tenantData);
 
+  console.log('tenantDetails', tenantDetails);
+
+  const { updateTenant, isPending } = useUpdateTenant();
+  const weekendsAnchor = useComboboxAnchor();
+  const methods = useForm<TenantUpdateInput>({
+    resolver: yupResolver(tenantUpdateSchema) as Resolver<TenantUpdateInput>,
+    defaultValues: {
+      name: tenantDetails?.name || '',
+      email: tenantDetails?.email,
+      description: tenantDetails?.description,
+      phone: tenantDetails?.phone,
+      officeAddress: tenantDetails?.officeAddress,
+      type: tenantDetails?.type
+        ? (tenantDetails?.type as TENANT_TYPE)
+        : undefined,
+      size: tenantDetails?.size,
+    },
+    mode: 'onSubmit',
+  });
+
+  const {
+    register,
+    control,
+    formState: { errors },
+    handleSubmit,
+  } = methods;
+
+  const onSubmit = async (data: TenantUpdateInput) => {
+    const payload = {
+      ...data,
+    };
+
+    const cleanPayload = Object.fromEntries(
+      Object.entries(payload).filter(
+        ([_, value]) => value !== undefined && value !== null && value !== '',
+      ),
+    );
+
+    await updateTenant({
+      id: tenantDetails._id,
+      data: cleanPayload,
+      //   onSuccessNext: (newData) => next(newData),
+    });
+  };
+
   const tabs = [
     {
       value: 'about',
       label: 'About',
       component: isEditMode ? (
-        <EditProfile defaultValues={tenantDetails} />
+        <EditProfile register={register} control={control} errors={errors} />
       ) : (
         <About />
       ),
@@ -59,6 +113,8 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       component: <Saves />,
     },
   ];
+
+  console.log('errors', errors);
 
   const visibleTabs = useMemo(() => {
     if (!isEditMode) return tabs;
@@ -117,16 +173,18 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
                 <Button
                   variant="outline"
                   onClick={handleCancelEdit}
+                  disabled={isPending}
                   className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
                 >
                   Cancel
                 </Button>
                 <Button
-                  type="submit"
-                  form="tenant-edit-form"
+                  type="button"
+                  onClick={handleSubmit(onSubmit)}
+                  disabled={isPending}
                   className="cursor-pointer h-10 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong!"
                 >
-                  Save
+                  {isPending ? 'Saving...' : 'Save'}
                 </Button>
               </>
             ) : (

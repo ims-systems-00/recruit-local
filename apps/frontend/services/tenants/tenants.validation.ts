@@ -18,6 +18,14 @@ export const tenantsSchema = yup.object({
   _id: yup.string().required('ID is required'),
   name: yup.string().required('Name is required'),
   status: yup.string().required('Status is required'),
+
+  description: yup.string().optional(),
+  email: yup.string().email().optional(),
+  industry: yup.string().optional(),
+  officeAddress: yup.string().optional(),
+  phone: yup.string().optional(),
+  size: yup.number().optional(),
+  type: yup.string().optional(),
   deleteMarker: deleteMarkerSchema.optional(),
   createdAt: yup.string().optional(),
   updatedAt: yup.string().optional(),
@@ -49,7 +57,13 @@ export const tenantUpdateSchema = yup.object({
 
   type: yup.string().oneOf(Object.values(TENANT_TYPE)).optional(),
 
-  size: yup.number().typeError('Size must be a number').optional(),
+  size: yup
+    .number()
+    .typeError('Number of Employers must be a number')
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .optional(),
 
   phone: yup
     .string()
@@ -64,11 +78,35 @@ export const tenantUpdateSchema = yup.object({
 
   logoSquareSrc: yup.string().url('Invalid URL').optional(),
 
-  logoSquareStorage: awsStorageSchema.optional(),
+  logoSquareStorage: awsStorageSchema
+    .optional()
+    .transform((value) => {
+      // If value is empty object or undefined, return undefined
+      if (
+        !value ||
+        (typeof value === 'object' && Object.keys(value).length === 0)
+      ) {
+        return undefined;
+      }
+      return value;
+    })
+    .default(undefined),
 
   logoRectangleSrc: yup.string().url('Invalid URL').optional(),
 
-  logoRectangleStorage: awsStorageSchema.optional(),
+  logoRectangleStorage: awsStorageSchema
+    .optional()
+    .transform((value) => {
+      // If value is empty object or undefined, return undefined
+      if (
+        !value ||
+        (typeof value === 'object' && Object.keys(value).length === 0)
+      ) {
+        return undefined;
+      }
+      return value;
+    })
+    .default(undefined),
 
   officeAddress: yup.string().optional(),
 

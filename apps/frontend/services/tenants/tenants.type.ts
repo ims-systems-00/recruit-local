@@ -11,7 +11,7 @@ export type TenantData = {
   name: string;
   description?: string;
   industry?: string;
-  type?: (typeof TENANT_TYPE)[keyof typeof TENANT_TYPE];
+  type?: string;
   size?: number;
   phone?: string;
   email?: string;
