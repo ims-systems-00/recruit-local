@@ -27,13 +27,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TENANT_TYPE } from '@rl/types';
+import { TENANT_INDUSTRY_ENUMS, TENANT_TYPE } from '@rl/types';
 import LocationSelector from '@/components/location-selector';
 import { TenantUpdateInput } from '@/services/tenants/tenants.validation';
 
 export const ORG_TYPE_OPTIONS = [
   { label: 'Private', value: TENANT_TYPE.PRIVATE },
   { label: 'Public', value: TENANT_TYPE.PUBLIC },
+];
+
+export const TENANT_INDUSTRY_OPTIONS = [
+  { label: 'Technology', value: TENANT_INDUSTRY_ENUMS.TECHNOLOGY },
+  { label: 'Finance', value: TENANT_INDUSTRY_ENUMS.FINANCE },
+  { label: 'Healthcare', value: TENANT_INDUSTRY_ENUMS.HEALTHCARE },
+  { label: 'Education', value: TENANT_INDUSTRY_ENUMS.EDUCATION },
+  { label: 'Manufacturing', value: TENANT_INDUSTRY_ENUMS.MANUFACTURING },
+  { label: 'Retail', value: TENANT_INDUSTRY_ENUMS.RETAIL },
+  { label: 'Hospitality', value: TENANT_INDUSTRY_ENUMS.HOSPITALITY },
+  { label: 'Construction', value: TENANT_INDUSTRY_ENUMS.CONSTRUCTION },
+  { label: 'Transportation', value: TENANT_INDUSTRY_ENUMS.TRANSPORTATION },
+  { label: 'Energy', value: TENANT_INDUSTRY_ENUMS.ENERGY },
 ];
 
 type EditProfileProps = {
@@ -145,14 +158,30 @@ export default function EditProfile({
                 Industry
               </Label>
               <div className=" space-y-spacing-sm">
-                <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
-                  <InputGroupInput
-                    type="text"
-                    placeholder="Eg. industry"
-                    {...register('industry')}
-                    className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
-                  />
-                </InputGroup>
+                <Controller
+                  name="industry"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || ''}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary text-text-gray-primary text-label-md font-label-md-strong!">
+                        <SelectValue placeholder="Eg. Technology" />
+                      </SelectTrigger>
+
+                      <SelectContent className=" bg-white">
+                        <SelectGroup>
+                          {TENANT_INDUSTRY_OPTIONS.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
                 {errors.industry && (
                   <p className="text-sm text-red-500">
                     {errors.industry.message}

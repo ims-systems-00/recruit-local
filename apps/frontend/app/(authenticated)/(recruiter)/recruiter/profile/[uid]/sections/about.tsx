@@ -4,7 +4,20 @@ import { Building, Mailbox, PhoneCall, ShieldCheck, Users } from 'lucide-react';
 import React from 'react';
 import ProfileInfoCard from './profile-info-card';
 import MapByAddress from '@/components/map-by-address';
-
+import { TENANT_INDUSTRY_ENUMS } from '@rl/types';
+export const TENANT_INDUSTRY_LABEL_MAP: Record<TENANT_INDUSTRY_ENUMS, string> =
+  {
+    [TENANT_INDUSTRY_ENUMS.TECHNOLOGY]: 'Technology',
+    [TENANT_INDUSTRY_ENUMS.FINANCE]: 'Finance',
+    [TENANT_INDUSTRY_ENUMS.HEALTHCARE]: 'Healthcare',
+    [TENANT_INDUSTRY_ENUMS.EDUCATION]: 'Education',
+    [TENANT_INDUSTRY_ENUMS.MANUFACTURING]: 'Manufacturing',
+    [TENANT_INDUSTRY_ENUMS.RETAIL]: 'Retail',
+    [TENANT_INDUSTRY_ENUMS.HOSPITALITY]: 'Hospitality',
+    [TENANT_INDUSTRY_ENUMS.CONSTRUCTION]: 'Construction',
+    [TENANT_INDUSTRY_ENUMS.TRANSPORTATION]: 'Transportation',
+    [TENANT_INDUSTRY_ENUMS.ENERGY]: 'Energy',
+  };
 export default function About({ profile }: { profile: TenantData }) {
   return (
     <div className=" space-y-spacing-4xl">
@@ -21,7 +34,13 @@ export default function About({ profile }: { profile: TenantData }) {
           <div className=" grid grid-cols-2 gap-spacing-lg">
             <ProfileInfoCard
               title="Industry"
-              subtitle={profile.industry}
+              subtitle={
+                profile?.industry
+                  ? TENANT_INDUSTRY_LABEL_MAP[
+                      profile.industry as TENANT_INDUSTRY_ENUMS
+                    ]
+                  : 'N/A'
+              }
               icon={<ShieldCheck />}
             />
             <ProfileInfoCard

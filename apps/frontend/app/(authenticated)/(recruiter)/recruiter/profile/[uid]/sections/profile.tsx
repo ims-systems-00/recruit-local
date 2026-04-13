@@ -23,6 +23,7 @@ import {
 } from '@/services/tenants/tenants.validation';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { TENANT_TYPE } from '@rl/types';
+import Link from 'next/link';
 
 export default function Profile({ tenantData }: { tenantData: TenantData }) {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -30,10 +31,7 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
 
   const [tenantDetails, setTenantDetails] = useState(tenantData);
 
-  console.log('tenantDetails', tenantDetails);
-
   const { updateTenant, isPending } = useUpdateTenant();
-  const weekendsAnchor = useComboboxAnchor();
   const methods = useForm<TenantUpdateInput>({
     resolver: yupResolver(tenantUpdateSchema) as Resolver<TenantUpdateInput>,
     defaultValues: {
@@ -48,6 +46,7 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       size: tenantDetails?.size,
       website: tenantDetails?.website,
       linkedIn: tenantDetails?.linkedIn,
+      industry: tenantDetails?.industry,
     },
     mode: 'onSubmit',
   });
@@ -164,12 +163,24 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
               {tenantDetails?.name}
             </h4>
             <div className=" flex items-center gap-spacing-xs">
-              <Button variant="outline" className=" h-9 w-9">
-                <Linkedin className=" text-fg-gray-secondary size-4" />
-              </Button>
-              <Button variant="outline" className=" h-9 w-9">
-                <Globe className=" text-fg-gray-secondary size-4" />
-              </Button>
+              {tenantDetails?.linkedIn && (
+                <Link
+                  href={tenantDetails.linkedIn}
+                  target="_blank"
+                  className=" h-9 w-9 border border-border-gray-secondary rounded-sm flex justify-center items-center"
+                >
+                  <Linkedin className=" text-fg-gray-secondary size-4" />
+                </Link>
+              )}
+              {tenantDetails?.website && (
+                <Link
+                  href={tenantDetails.website}
+                  target="_blank"
+                  className=" h-9 w-9 border border-border-gray-secondary rounded-sm flex justify-center items-center"
+                >
+                  <Globe className=" text-fg-gray-secondary size-4" />
+                </Link>
+              )}
             </div>
           </div>
 
