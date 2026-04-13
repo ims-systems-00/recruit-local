@@ -1,6 +1,6 @@
 import Joi, { CustomHelpers } from "joi";
 import mongoose from "mongoose";
-import { TENANT_STATUS_ENUMS, TENANT_TYPE } from "@rl/types";
+import { TENANT_STATUS_ENUMS, TENANT_TYPE, TENANT_INDUSTRY_ENUMS } from "@rl/types";
 
 // Custom validation for MongoDB ObjectId
 const objectIdValidation = (value: string, helpers: CustomHelpers) => {
@@ -20,7 +20,9 @@ const awsStorageSchema = Joi.object({
 export const createBodySchema = Joi.object({
   name: Joi.string().max(300).required().label("Name"),
   description: Joi.string().allow("", null).label("Description"),
-  industry: Joi.string().max(50).allow("", null).label("Industry"),
+  industry: Joi.string()
+    .valid(...Object.values(TENANT_INDUSTRY_ENUMS))
+    .label("Industry"),
   type: Joi.string()
     .valid(...Object.values(TENANT_TYPE))
     .label("Type"),
