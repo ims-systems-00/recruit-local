@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
-import { JOBS_STATUS_ENUMS } from '@rl/types';
 import Link from 'next/link';
 
 export default function CardJobItem({ job }: { job: JobData }) {
@@ -21,7 +20,9 @@ export default function CardJobItem({ job }: { job: JobData }) {
       <div className=" p-spacing-4xl space-y-spacing-4xl">
         <div className=" space-y-spacing-sm">
           <div className="flex justify-between items-center gap-spacing-4xl">
-            <p className=" text-label-sm text-text-gray-tertiary">XJ-486</p>
+            <p className=" text-label-sm text-text-gray-tertiary">
+              {job?.reference || 'N/A'}
+            </p>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="text-fg-gray-secondary flex items-center justify-center  cursor-pointer">
@@ -43,7 +44,7 @@ export default function CardJobItem({ job }: { job: JobData }) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Archive
+                  Closed
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -80,7 +81,9 @@ export default function CardJobItem({ job }: { job: JobData }) {
             <p className="text-label-sm font-body-sm-strong!  text-text-gray-primary">
               Applied
             </p>
-            <p className=" text-body-sm text-text-gray-tertiary">88</p>
+            <p className=" text-body-sm text-text-gray-tertiary">
+              {job?.totalApplications || 0}
+            </p>
           </div>
           <div className="flex items-center">
             {[1, 2, 3, 4].map((item) => (
@@ -103,7 +106,7 @@ export default function CardJobItem({ job }: { job: JobData }) {
       </div>
       <div className=" border-t border-border-gray-secondary flex justify-between items-center gap-2.5 px-spacing-4xl py-spacing-2xl">
         <p className=" text-body-sm text-text-gray-tertiary">
-          {formatDate(job?.startDate) || 'N/A'}
+          {formatDate(job?.endDate) || 'N/A'}
         </p>
         <div className=" flex items-center gap-spacing-sm ">
           <Switch

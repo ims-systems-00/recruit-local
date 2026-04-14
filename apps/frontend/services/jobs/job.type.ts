@@ -14,6 +14,8 @@ export interface JobData {
   email: string;
   number: string;
   aboutUs: string;
+  reference: string;
+  totalApplications: number;
 
   startDate: string; // ISO date string
   endDate: string; // ISO date string

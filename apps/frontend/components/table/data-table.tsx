@@ -45,12 +45,12 @@ export function DataTable<TData, TValue>({
                 const isLast = index === headerGroup.headers.length - 1;
                 return (
                   <TableHead
-                    className=" bg-bg-gray-soft-secondary! p-spacing-2xl! text-label-sm font-label-sm-strong! text-text-gray-tertiary!"
+                    className=" bg-bg-gray-soft-secondary! py-spacing-2xl! text-label-sm font-label-sm-strong! text-text-gray-tertiary!"
                     key={header.id}
                   >
                     <div
                       className={cn(
-                        ' border-r border-[#CED4DA]',
+                        ' border-r border-border-gray-primary px-spacing-2xl!',
                         isLast && 'border-r-0',
                       )}
                     >

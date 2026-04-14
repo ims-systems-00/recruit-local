@@ -85,7 +85,7 @@ export const userColumns: ColumnDef<JobData>[] = [
     accessorKey: 'reference',
     header: 'Reference',
     cell: ({ row }) => {
-      return <span>JL - 01</span>;
+      return <span>{row?.original?.reference || 'N/A'}</span>;
     },
   },
   {
@@ -129,7 +129,7 @@ export const userColumns: ColumnDef<JobData>[] = [
     accessorKey: 'applied',
     header: 'Applied',
     cell: ({ row }) => {
-      return <span>90</span>;
+      return <span>{row?.original?.totalApplications || 0}</span>;
     },
   },
   {
@@ -155,10 +155,10 @@ export const userColumns: ColumnDef<JobData>[] = [
     },
   },
   {
-    accessorKey: 'startDate',
+    accessorKey: 'endDate',
     header: 'Posted Date',
     cell: ({ row }) => {
-      const value = formatDate(row?.original?.startDate);
+      const value = formatDate(row?.original?.endDate);
 
       return <span>{value || 'N/A'}</span>;
     },
@@ -193,7 +193,7 @@ export const userColumns: ColumnDef<JobData>[] = [
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-              Archive
+              Closed
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -267,11 +267,11 @@ export default function Jobs() {
     },
     {
       value: JOBS_STATUS_ENUMS.OPEN,
-      label: 'Active Jobs',
+      label: 'Open Jobs',
     },
     {
-      value: JOBS_STATUS_ENUMS.ARCHIVED,
-      label: 'Archives jobs',
+      value: JOBS_STATUS_ENUMS.CLOSED,
+      label: 'Closed jobs',
     },
     {
       value: JOBS_STATUS_ENUMS.DRAFT,
