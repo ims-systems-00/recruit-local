@@ -35,34 +35,33 @@ export const jobAttachmentsLookupQuery = (): PipelineStage[] => {
         from: modelNames.FILE_MEDIA,
         let: { attachmentIds: "$attachmentIds" },
         pipeline: [
-          //  Match the documents by ID
           {
             $match: {
               $expr: {
-                $and: [
-                  { $in: ["$_id", { $ifNull: ["$$attachmentIds", []] }] },
-                  // { $ne: ["$deleted", true] },
-                ],
+                $and: [{ $in: ["$_id", { $ifNull: ["$$attachmentIds", []] }] }],
               },
             },
           },
-          // Add the virtual 'src' field using your logic
           {
             $addFields: {
               src: {
                 $cond: {
-                  // Check if visibility is PUBLIC
                   if: { $eq: ["$visibility", VISIBILITY_ENUM.PUBLIC] },
-
-                  // If true, concatenate the S3 URL pieces
-                  then: {
-                    $concat: [baseUrl, "/", "$storageInformation.Key"],
-                  },
-
-                  // If false (private), return null
+                  then: { $concat: [baseUrl, "/", "$storageInformation.Key"] },
                   else: null,
                 },
               },
+            },
+          },
+          // FIX: Use exclusion ONLY to avoid the "mixed projection" error
+          {
+            $project: {
+              deleteMarker: 0,
+              __v: 0,
+              collectionName: 0,
+              collectionDocument: 0,
+              createdAt: 0,
+              updatedAt: 0,
             },
           },
         ],
