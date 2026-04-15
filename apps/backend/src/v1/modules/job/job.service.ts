@@ -182,7 +182,9 @@ export const update = async ({ query, payload, session }: IJobUpdateParams) => {
   );
 
   if (!updatedJob) throw new NotFoundException("Job not found.");
-  return updatedJob;
+
+  const jobResponse = await getOne({ query: { _id: (updatedJob as any)._id.toString() }, session });
+  return jobResponse;
 };
 
 export const softDelete = async ({ query, session }: IJobGetParams) => {
