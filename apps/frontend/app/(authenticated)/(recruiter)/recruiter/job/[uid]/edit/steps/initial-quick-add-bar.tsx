@@ -1,3 +1,4 @@
+import { QUERY_TYPE_ENUMS } from '@rl/types';
 import {
   AlignLeft,
   ArrowRight,
@@ -5,38 +6,37 @@ import {
   CircleDot,
   Pilcrow,
 } from 'lucide-react';
-import { QueryType } from './additional-queries';
 
 interface InitialQuickAddBarProps {
-  onAdd: (type: QueryType) => void;
+  onAdd: (type: QUERY_TYPE_ENUMS) => void;
 }
 
 const QUICK_TYPES: {
-  type: QueryType;
+  type: QUERY_TYPE_ENUMS;
   label: string;
   description: string;
   icon: React.ElementType;
 }[] = [
   {
-    type: 'multiple-choice',
+    type: QUERY_TYPE_ENUMS.MULTIPLE_CHOICE,
     label: 'Multiple Choice',
     description: 'Select multiple options',
     icon: CheckSquare,
   },
   {
-    type: 'paragraph',
+    type: QUERY_TYPE_ENUMS.PARAGRAPH,
     label: 'Paragraph',
     description: 'Long text answer',
     icon: Pilcrow,
   },
   {
-    type: 'single-choice',
+    type: QUERY_TYPE_ENUMS.SINGLE_CHOICE,
     label: 'Single Choice',
     description: 'Select only one option',
     icon: CircleDot,
   },
   {
-    type: 'short-answer',
+    type: QUERY_TYPE_ENUMS.SHORT_ANSWER,
     label: 'Short Answer',
     description: 'User writes a short response',
     icon: AlignLeft,

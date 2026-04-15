@@ -17,9 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { QueryCard, QueryType } from './additional-queries';
+import { QueryCard } from './additional-queries';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { QUERY_TYPE_ENUMS } from '@rl/types';
 
 interface QueryCardProps {
   card: QueryCard;
@@ -29,18 +30,18 @@ interface QueryCardProps {
   onFocus: (id: string) => void;
 }
 
-const TYPE_ICONS: Record<QueryType, React.ReactNode> = {
-  paragraph: <AlignJustify className="w-4 h-4" />,
-  'single-choice': <Circle className="w-4 h-4" />,
-  'multiple-choice': <CheckSquare className="w-4 h-4" />,
-  'short-answer': <AlignLeft className="w-4 h-4" />,
+const TYPE_ICONS: Record<QUERY_TYPE_ENUMS, React.ReactNode> = {
+  [QUERY_TYPE_ENUMS.PARAGRAPH]: <AlignJustify className="w-4 h-4" />,
+  [QUERY_TYPE_ENUMS.SINGLE_CHOICE]: <Circle className="w-4 h-4" />,
+  [QUERY_TYPE_ENUMS.MULTIPLE_CHOICE]: <CheckSquare className="w-4 h-4" />,
+  [QUERY_TYPE_ENUMS.SHORT_ANSWER]: <AlignLeft className="w-4 h-4" />,
 };
 
-const TYPE_LABELS: Record<QueryType, string> = {
-  paragraph: 'Paragraph',
-  'single-choice': 'Single Choice',
-  'multiple-choice': 'Multiple Choice',
-  'short-answer': 'Short Answer',
+const TYPE_LABELS: Record<QUERY_TYPE_ENUMS, string> = {
+  [QUERY_TYPE_ENUMS.PARAGRAPH]: 'Paragraph',
+  [QUERY_TYPE_ENUMS.SINGLE_CHOICE]: 'Single Choice',
+  [QUERY_TYPE_ENUMS.MULTIPLE_CHOICE]: 'Multiple Choice',
+  [QUERY_TYPE_ENUMS.SHORT_ANSWER]: 'Short Answer',
 };
 
 export function QueryCardComponent({
@@ -67,9 +68,10 @@ export function QueryCardComponent({
   };
 
   const isChoice =
-    card.type === 'single-choice' || card.type === 'multiple-choice';
+    card.type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ||
+    card.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE;
 
-  const isShortAns = card.type === 'short-answer';
+  const isShortAns = card.type === QUERY_TYPE_ENUMS.SHORT_ANSWER;
 
   return (
     <div
@@ -91,14 +93,14 @@ export function QueryCardComponent({
                 card.focused && 'border-border-brand-primary',
               )}
               placeholder="Type your Queries"
-              value={card.title}
-              onChange={(e) => onUpdate(card.id, { title: e.target.value })}
+              value={card.question}
+              onChange={(e) => onUpdate(card.id, { question: e.target.value })}
               onClick={(e) => e.stopPropagation()}
             />
             <Select
               value={card.type}
               onValueChange={(val) =>
-                onUpdate(card.id, { type: val as QueryType })
+                onUpdate(card.id, { type: val as QUERY_TYPE_ENUMS })
               }
             >
               <SelectTrigger className="min-w-44 text-sm h-9! ">
@@ -108,7 +110,7 @@ export function QueryCardComponent({
                 </div>
               </SelectTrigger>
               <SelectContent className="bg-white">
-                {(Object.keys(TYPE_LABELS) as QueryType[]).map((t) => (
+                {(Object.keys(TYPE_LABELS) as QUERY_TYPE_ENUMS[]).map((t) => (
                   <SelectItem key={t} value={t}>
                     <div className="flex items-center gap-spacing-sm text-label-md">
                       {TYPE_ICONS[t]}
@@ -125,7 +127,7 @@ export function QueryCardComponent({
             <div className="border border-border-gray-secondary bg-bg-gray-soft-primary rounded-lg p-spacing-lg space-y-spacing-2xl">
               {card.options.map((opt) => (
                 <div key={opt.id} className="flex items-center gap-spacing-2xs">
-                  {card.type === 'single-choice' ? (
+                  {card.type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ? (
                     <div className="w-4 h-4 rounded-full border border-border-gray-primary shrink-0" />
                   ) : (
                     <div className="w-4 h-4 rounded border border-border-gray-primary shrink-0" />
@@ -154,7 +156,7 @@ export function QueryCardComponent({
                   addOption();
                 }}
               >
-                {card.type === 'single-choice' ? (
+                {card.type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ? (
                   <div className="w-4 h-4 rounded-full border border-border-gray-primary shrink-0" />
                 ) : (
                   <div className="w-4 h-4 rounded border border-border-gray-primary shrink-0" />
@@ -187,8 +189,8 @@ export function QueryCardComponent({
           </span>
 
           <Switch
-            checked={card.required}
-            onCheckedChange={(v) => onUpdate(card.id, { required: v })}
+            checked={card.isRequired}
+            onCheckedChange={(v) => onUpdate(card.id, { isRequired: v })}
             onClick={(e) => e.stopPropagation()}
             className=" bg-bg-gray-soft-quaternary data-[state=checked]:bg-bg-brand-solid-primary"
           />

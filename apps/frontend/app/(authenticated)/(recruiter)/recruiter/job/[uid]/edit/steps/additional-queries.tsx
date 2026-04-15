@@ -7,12 +7,9 @@ import { QueryCardComponent } from './query-card-component';
 import { QuickAddBar } from './quick-add-bar';
 import { InitialQuickAddBar } from './initial-quick-add-bar';
 import PreviewQueryCard from './preview-query-card';
-
-export type QueryType =
-  | 'paragraph'
-  | 'single-choice'
-  | 'multiple-choice'
-  | 'short-answer';
+import { AdditionalQuery, JobData } from '@/services/jobs/job.type';
+import { QUERY_TYPE_ENUMS } from '@rl/types';
+import { useUpdateJob } from '@/services/jobs/jobs.client';
 
 export interface QueryOption {
   id: string;
@@ -21,66 +18,53 @@ export interface QueryOption {
 
 export interface QueryCard {
   id: string;
-  title: string;
-  type: QueryType;
+  type: QUERY_TYPE_ENUMS;
   options: QueryOption[];
-  required: boolean;
+  question: string;
+  isRequired: boolean;
+  expectedAnswer?: string;
   focused: boolean;
 }
-
-const INITIAL_CARDS: QueryCard[] = [
-  {
-    id: '1',
-    title: '',
-    type: 'paragraph',
-    options: [],
-    required: false,
-    focused: false,
-  },
-  {
-    id: '2',
-    title: 'Type your Queries',
-    type: 'single-choice',
-    options: [
-      { id: 'o1', text: 'Option1' },
-      { id: 'o2', text: 'Option2' },
-      { id: 'o3', text: 'Option 3' },
-    ],
-    required: false,
-    focused: true,
-  },
-  {
-    id: '3',
-    title: '',
-    type: 'short-answer',
-    options: [],
-    required: false,
-    focused: false,
-  },
-];
 
 export default function AdditionalQueries({
   prev,
   next,
+  defaultValues,
 }: {
-  prev: (step: number) => void;
-  next: (step: number) => void;
+  next: (data: Partial<JobData>) => void;
+  prev: (data: Partial<JobData>) => void;
+  defaultValues: JobData;
 }) {
-  const [cards, setCards] = useState<QueryCard[]>(INITIAL_CARDS);
-
+  const [cards, setCards] = useState<QueryCard[]>(
+    defaultValues?.additionalQueries?.map((item) => ({
+      ...item,
+      id: crypto.randomUUID(),
+      isRequired: Boolean(item?.isRequired),
+      focused: false,
+      options:
+        item.options?.map((op) => ({
+          id: crypto.randomUUID(),
+          text: op,
+        })) || [],
+    })) || [],
+  );
   const [isPreviewModeOn, setIsPreviewModeOn] = useState(false);
 
-  const addCard = (type: QueryType) => {
+  const { updateJob, isPending } = useUpdateJob();
+
+  const addCard = (type: QUERY_TYPE_ENUMS) => {
     const newCard: QueryCard = {
       id: crypto.randomUUID(),
-      title: '',
+      question: 'Type your Queries',
       type,
       options:
-        type === 'single-choice' || type === 'multiple-choice'
+        type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ||
+        type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE
           ? [{ id: crypto.randomUUID(), text: 'Option1' }]
           : [],
-      required: false,
+      isRequired: false,
       focused: true,
+      expectedAnswer: '',
     };
     setCards((prev) => [
       ...prev.map((c) => ({ ...c, focused: false })),
@@ -122,6 +106,44 @@ export default function AdditionalQueries({
   const focusedIndex = cards.findIndex((c) => c.focused);
   const hasFocused = focusedIndex !== -1;
 
+  const handlePrev = () => {
+    const data: AdditionalQuery[] = cards.map((item) => ({
+      question: item.question,
+      type: item.type,
+      options:
+        item.type === QUERY_TYPE_ENUMS.SHORT_ANSWER ||
+        item.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE
+          ? (item.options?.map((q) => q.text) ?? [])
+          : undefined,
+      isRequired: item.isRequired ?? false,
+      expectedAnswer: item.expectedAnswer ?? '',
+    }));
+    prev({
+      additionalQueries: data,
+    } as JobData);
+  };
+
+  const onSubmitForm = async () => {
+    const payload: AdditionalQuery[] = cards.map((item) => ({
+      question: item.question,
+      type: item.type,
+      options:
+        item.type === QUERY_TYPE_ENUMS.SHORT_ANSWER ||
+        item.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE
+          ? (item.options?.map((q) => q.text) ?? [])
+          : undefined,
+      isRequired: item.isRequired ?? false,
+      expectedAnswer: item.expectedAnswer ?? '',
+    }));
+    await updateJob({
+      id: defaultValues._id,
+      data: {
+        additionalQueries: payload,
+      },
+      onSuccessNext: (newData) => next(newData),
+    });
+  };
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Header */}
@@ -150,7 +172,7 @@ export default function AdditionalQueries({
 
           {!isPreviewModeOn && (
             <Button
-              onClick={() => addCard('paragraph')}
+              onClick={() => addCard(QUERY_TYPE_ENUMS.PARAGRAPH)}
               className=" bg-bg-brand-solid-primary h-10 rounded-lg text-white"
             >
               <Plus className="w-4 h-4" />
@@ -209,16 +231,18 @@ export default function AdditionalQueries({
       <div className="flex py-spacing-2xl justify-end mt-spacing-4xl gap-spacing-sm">
         <Button
           variant="outline"
-          onClick={() => prev(2)}
-          className=" border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
+          onClick={handlePrev}
+          disabled={isPending}
+          className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
         >
           Previous
         </Button>
         <Button
-          onClick={() => next(4)}
-          className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+          onClick={onSubmitForm}
+          disabled={isPending}
+          className=" cursor-pointer bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
         >
-          Continue
+          {isPending ? 'Saving...' : 'Continue'}
         </Button>
       </div>
     </div>

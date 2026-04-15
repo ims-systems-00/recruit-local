@@ -19,6 +19,7 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from '@/components/ui/combobox';
+import { QUERY_TYPE_ENUMS } from '@rl/types';
 
 export default function PreviewQueryCard({ card }: { card: QueryCard }) {
   const multipleChoiceAnchor = useComboboxAnchor();
@@ -27,12 +28,14 @@ export default function PreviewQueryCard({ card }: { card: QueryCard }) {
     <div className="space-y-spacing-xs">
       {/* Label */}
       <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-        {card.title}{' '}
-        {card.required && <span className=" text-text-brand-secondary">*</span>}
+        {card.question}{' '}
+        {card.isRequired && (
+          <span className=" text-text-brand-secondary">*</span>
+        )}
       </Label>
 
       {/* Field Preview */}
-      {card.type === 'paragraph' && (
+      {card.type === QUERY_TYPE_ENUMS.PARAGRAPH && (
         <textarea
           disabled
           placeholder="Write your thoughts here"
@@ -40,7 +43,7 @@ export default function PreviewQueryCard({ card }: { card: QueryCard }) {
         />
       )}
 
-      {card.type === 'short-answer' && (
+      {card.type === QUERY_TYPE_ENUMS.SHORT_ANSWER && (
         <input
           disabled
           placeholder="Write your thoughts here"
@@ -48,7 +51,7 @@ export default function PreviewQueryCard({ card }: { card: QueryCard }) {
         />
       )}
 
-      {card.type === 'single-choice' && (
+      {card.type === QUERY_TYPE_ENUMS.SINGLE_CHOICE && (
         <Select>
           <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary text-text-gray-secondary text-label-md">
             <SelectValue placeholder="Select an option" />
@@ -63,7 +66,7 @@ export default function PreviewQueryCard({ card }: { card: QueryCard }) {
         </Select>
       )}
 
-      {card.type === 'multiple-choice' && (
+      {card.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE && (
         <Combobox multiple items={card.options} autoHighlight>
           <ComboboxChips
             ref={multipleChoiceAnchor}

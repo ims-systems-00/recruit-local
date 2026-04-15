@@ -19,11 +19,13 @@ import {
 import moment from 'moment';
 import React from 'react';
 import InfoCard from './info-card';
-import { REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
+import { JOBS_STATUS_ENUMS, REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
 import Image from 'next/image';
 
 import RelatedAttachmentDefault from '@/public/images/related_attachment_default.png';
 import MapByAddress from '@/components/map-by-address';
+import { useUpdateJob } from '@/services/jobs/jobs.client';
+import { useRouter } from 'next/navigation';
 
 const documentLabels: Record<REQUIRED_DOCUMENTS_ENUMS, string> = {
   [REQUIRED_DOCUMENTS_ENUMS.RESUME]: 'CV',
@@ -45,6 +47,10 @@ export default function Preview({
   prev: (step: number) => void;
   defaultValues: JobData;
 }) {
+  const { updateJob, isPending } = useUpdateJob();
+
+  const router = useRouter();
+
   const formattedSalary = defaultValues?.salary
     ? `$${defaultValues.salary.toLocaleString()} ${defaultValues.period}`
     : null;
@@ -58,6 +64,18 @@ export default function Preview({
   const weekendsText = defaultValues?.weekends?.length
     ? defaultValues.weekends.join(' and ')
     : null;
+
+  const onUpdateJob = async () => {
+    await updateJob({
+      id: defaultValues._id,
+      data: {
+        status: JOBS_STATUS_ENUMS.OPEN,
+      },
+      onSuccessNext: (newData) => {
+        router.push(`/recruiter/jobs`);
+      },
+    });
+  };
   return (
     <>
       <div className=" space-y-spacing-4xl pb-10">
@@ -75,15 +93,19 @@ export default function Preview({
           </div>
           <div className=" flex gap-spacing-sm items-center">
             <Button
+              type="button"
               variant="outline"
               onClick={() => prev(3)}
-              className=" border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
+              disabled={isPending}
+              className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
             >
               Previous
             </Button>
             <Button
-              type="submit"
-              className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+              type="button"
+              disabled={isPending}
+              onClick={onUpdateJob}
+              className=" cursor-pointer bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
             >
               Post Now
             </Button>

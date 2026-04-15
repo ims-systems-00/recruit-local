@@ -1,15 +1,15 @@
+import { QUERY_TYPE_ENUMS } from '@rl/types';
 import { Plus } from 'lucide-react';
-import { QueryType } from './additional-queries';
 
 interface QuickAddBarProps {
-  onAdd: (type: QueryType) => void;
+  onAdd: (type: QUERY_TYPE_ENUMS) => void;
 }
 
-const QUICK_TYPES: { type: QueryType; label: string }[] = [
-  { type: 'single-choice', label: 'Single choice' },
-  { type: 'multiple-choice', label: 'Multiple choice' },
-  { type: 'short-answer', label: 'Short Answer' },
-  { type: 'paragraph', label: 'Paragraph' },
+const QUICK_TYPES: { type: QUERY_TYPE_ENUMS; label: string }[] = [
+  { type: QUERY_TYPE_ENUMS.SINGLE_CHOICE, label: 'Single choice' },
+  { type: QUERY_TYPE_ENUMS.MULTIPLE_CHOICE, label: 'Multiple choice' },
+  { type: QUERY_TYPE_ENUMS.SHORT_ANSWER, label: 'Short Answer' },
+  { type: QUERY_TYPE_ENUMS.PARAGRAPH, label: 'Paragraph' },
 ];
 
 export function QuickAddBar({ onAdd }: QuickAddBarProps) {

@@ -1,5 +1,6 @@
 import { Pagination } from '@/types/api';
 import { DeleteMarker } from '../file-media/file-media.type';
+import { QUERY_TYPE_ENUMS } from '@rl/types';
 
 export type JobListFilters = {
   page?: number;
@@ -12,6 +13,14 @@ export type StorageInformation = {
   Name: string;
   Key: string;
   Bucket: string;
+};
+
+export type AdditionalQuery = {
+  question: string;
+  type: QUERY_TYPE_ENUMS;
+  options?: string[];
+  isRequired: boolean;
+  expectedAnswer?: string;
 };
 
 export interface JobData {
@@ -86,6 +95,7 @@ export interface JobData {
     __v: number;
     src: string;
   }[];
+  additionalQueries?: AdditionalQuery[];
 }
 
 export type JobListResponse = {

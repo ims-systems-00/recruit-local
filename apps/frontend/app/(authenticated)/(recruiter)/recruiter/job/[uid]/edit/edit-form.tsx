@@ -42,7 +42,17 @@ export default function EditForm({
           />
         )}
         {step === 3 && (
-          <AdditionalQueries prev={() => setStep(2)} next={() => setStep(4)} />
+          <AdditionalQueries
+            prev={(data) => {
+              setFormData((prev) => ({ ...prev, ...data }));
+              setStep(2);
+            }}
+            next={(data) => {
+              setFormData((prev) => ({ ...prev, ...data }));
+              setStep(4);
+            }}
+            defaultValues={formData}
+          />
         )}
         {step === 4 && (
           <Preview prev={() => setStep(3)} defaultValues={formData} />

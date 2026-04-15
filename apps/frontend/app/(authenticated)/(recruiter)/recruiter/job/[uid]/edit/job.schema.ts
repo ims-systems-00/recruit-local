@@ -1,5 +1,9 @@
 import * as yup from 'yup';
-import { WORKING_DAYS_ENUMS, REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
+import {
+  WORKING_DAYS_ENUMS,
+  REQUIRED_DOCUMENTS_ENUMS,
+  QUERY_TYPE_ENUMS,
+} from '@rl/types';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 
 // AWS Storage
@@ -110,6 +114,56 @@ export type JobDescriptionFormValues = yup.InferType<
   typeof jobDescriptionSchema
 >;
 
-export const fullJobSchema = jobInformationSchema.concat(jobDescriptionSchema);
+export const additionalQuerySchema = yup.object({
+  question: yup.string().required('Question is required'),
+
+  type: yup
+    .string()
+    .oneOf(Object.values(QUERY_TYPE_ENUMS), 'Invalid Query Type')
+    .required('Query Type is required'),
+
+  options: yup
+    .array()
+    .of(yup.string())
+    .when('type', {
+      is: (type: QUERY_TYPE_ENUMS) =>
+        [
+          QUERY_TYPE_ENUMS.SINGLE_CHOICE,
+          QUERY_TYPE_ENUMS.MULTIPLE_CHOICE,
+        ].includes(type),
+      then: (schema) =>
+        schema
+          .min(1, 'At least one option is required')
+          .required('Options are required'),
+      otherwise: (schema) => schema.strip(),
+    }),
+
+  isRequired: yup.boolean().default(false),
+
+  expectedAnswer: yup
+    .string()
+    .optional()
+    .nullable()
+    .transform((value) => value || ''),
+});
+
+export const jobAdditionalQuerySchema = yup.object({
+  additionalQueries: yup.array().of(additionalQuerySchema).default([]),
+});
+
+export type jobAdditionalQueryFormValues = yup.InferType<
+  typeof jobAdditionalQuerySchema
+>;
+
+export const jobPreviewSchema = yup.object({
+  status: yup.string().optional(),
+});
+
+export type JobPreviewFormValues = yup.InferType<typeof jobPreviewSchema>;
+
+export const fullJobSchema = jobInformationSchema
+  .concat(jobDescriptionSchema)
+  .concat(jobAdditionalQuerySchema)
+  .concat(jobPreviewSchema);
 
 export type MultiStepJobFormValues = yup.InferType<typeof fullJobSchema>;
