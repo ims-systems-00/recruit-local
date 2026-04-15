@@ -132,7 +132,12 @@ const jobSchema = new Schema<IJobDoc>(
     totalApplications: { type: Number, default: 0 },
     additionalQueries: [additionalQuerySchema],
   },
-  {}
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+    },
+  }
 );
 
 jobSchema.add(boardSettingsSchema);
