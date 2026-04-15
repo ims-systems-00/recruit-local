@@ -26,6 +26,8 @@ import RelatedAttachmentDefault from '@/public/images/related_attachment_default
 import MapByAddress from '@/components/map-by-address';
 import { useUpdateJob } from '@/services/jobs/jobs.client';
 import { useRouter } from 'next/navigation';
+import PreviewQueryCard from '../steps/preview-query-card';
+import { QueryCard } from '../steps/additional-queries';
 
 const documentLabels: Record<REQUIRED_DOCUMENTS_ENUMS, string> = {
   [REQUIRED_DOCUMENTS_ENUMS.RESUME]: 'CV',
@@ -292,6 +294,18 @@ export default function Preview({
             subtitle={'www.boottech.com'}
           />
         </div>
+        {Boolean(defaultValues?.additionalQueries?.length) && (
+          <div className="space-y-spacing-2xl">
+            <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+              Additional Queries
+            </p>
+            <div className=" grid grid-cols-1 gap-spacing-sm">
+              {defaultValues?.additionalQueries?.map((card, idx) => (
+                <PreviewQueryCard key={idx} card={card as Partial<QueryCard>} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

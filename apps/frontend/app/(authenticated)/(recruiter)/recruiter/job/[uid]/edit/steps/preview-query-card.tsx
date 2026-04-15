@@ -21,7 +21,11 @@ import {
 } from '@/components/ui/combobox';
 import { QUERY_TYPE_ENUMS } from '@rl/types';
 
-export default function PreviewQueryCard({ card }: { card: QueryCard }) {
+export default function PreviewQueryCard({
+  card,
+}: {
+  card: Partial<QueryCard>;
+}) {
   const multipleChoiceAnchor = useComboboxAnchor();
 
   return (
@@ -57,7 +61,7 @@ export default function PreviewQueryCard({ card }: { card: QueryCard }) {
             <SelectValue placeholder="Select an option" />
           </SelectTrigger>
           <SelectContent className=" bg-white">
-            {card.options.map((opt: any) => (
+            {card.options?.map((opt: any) => (
               <SelectItem key={opt.id} value={opt.id}>
                 {opt.text}
               </SelectItem>

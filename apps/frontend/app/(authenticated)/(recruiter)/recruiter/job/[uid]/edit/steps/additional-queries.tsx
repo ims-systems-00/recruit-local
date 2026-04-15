@@ -128,7 +128,7 @@ export default function AdditionalQueries({
       question: item.question,
       type: item.type,
       options:
-        item.type === QUERY_TYPE_ENUMS.SHORT_ANSWER ||
+        item.type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ||
         item.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE
           ? (item.options?.map((q) => q.text) ?? [])
           : undefined,

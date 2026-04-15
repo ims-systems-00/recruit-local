@@ -1,4 +1,5 @@
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { EllipsisVertical, MapPin } from 'lucide-react';
@@ -13,8 +14,30 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import Link from 'next/link';
+import { JOBS_STATUS_ENUMS } from '@rl/types';
+import { useUpdateJob } from '@/services/jobs/jobs.client';
+import JobAction from './job-action';
 
 export default function CardJobItem({ job }: { job: JobData }) {
+  const [jobIsOpen, setJobIsOpen] = useState(
+    job.status === JOBS_STATUS_ENUMS.OPEN ? true : false,
+  );
+  const { updateJob, isPending } = useUpdateJob();
+  const onUpdateJob = async () => {
+    setJobIsOpen(true);
+    await updateJob({
+      id: job._id,
+      data: {
+        status: JOBS_STATUS_ENUMS.OPEN,
+      },
+      onSuccessNext: (newData) => {
+        setJobIsOpen(true);
+      },
+      onError: () => {
+        setJobIsOpen(false);
+      },
+    });
+  };
   return (
     <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs">
       <div className=" p-spacing-4xl space-y-spacing-4xl">
@@ -23,31 +46,7 @@ export default function CardJobItem({ job }: { job: JobData }) {
             <p className=" text-label-sm text-text-gray-tertiary">
               {job?.reference || 'N/A'}
             </p>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="text-fg-gray-secondary flex items-center justify-center  cursor-pointer">
-                  <EllipsisVertical size={16} />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32 bg-white">
-                <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  <Link href={`/recruiter/job/${job._id}`} className=" w-full">
-                    View Details
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  <Link
-                    href={`/recruiter/job/${job._id}/edit`}
-                    className=" w-full"
-                  >
-                    Edit
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Closed
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <JobAction job={job} />
           </div>
 
           <Badge
@@ -110,8 +109,9 @@ export default function CardJobItem({ job }: { job: JobData }) {
         </p>
         <div className=" flex items-center gap-spacing-sm ">
           <Switch
-            // checked={job.status === JOBS_STATUS_ENUMS.OPEN ? true : false}
-            // onCheckedChange={(v) => onUpdate(card.id, { required: v })}
+            checked={jobIsOpen}
+            onCheckedChange={onUpdateJob}
+            disabled={jobIsOpen}
             onClick={(e) => e.stopPropagation()}
             className=" bg-bg-gray-soft-quaternary data-[state=checked]:bg-bg-brand-solid-primary"
           />

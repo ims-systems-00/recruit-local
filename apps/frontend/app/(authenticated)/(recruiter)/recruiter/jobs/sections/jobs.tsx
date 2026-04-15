@@ -32,14 +32,9 @@ import { Badge } from '@/components/ui/badge';
 import { JobData } from '@/services/jobs/job.type';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { TableSkeleton } from './table-skeleton';
 import Link from 'next/link';
+import JobAction from './job-action';
 
 export function getJobStatusBadgeClass(status: string) {
   switch (status) {
@@ -168,36 +163,7 @@ export const userColumns: ColumnDef<JobData>[] = [
     accessorKey: 'action',
     header: '',
     cell: ({ row }) => {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="text-fg-gray-secondary flex items-center justify-center cursor-pointer">
-              <EllipsisVertical size={16} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32 bg-white">
-            <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-              <Link
-                href={`/recruiter/job/${row?.original?._id}`}
-                className=" w-full"
-              >
-                View Details
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-              <Link
-                href={`/recruiter/job/${row?.original?._id}/edit`}
-                className=" w-full"
-              >
-                Edit
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-              Closed
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+      return <JobAction job={row.original} />;
     },
   },
 ];

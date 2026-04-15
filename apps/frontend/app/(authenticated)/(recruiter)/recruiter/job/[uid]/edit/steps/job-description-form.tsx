@@ -67,8 +67,6 @@ export default function JobDescriptionForm({
   prev: (data: Partial<JobData>) => void;
   defaultValues: JobData;
 }) {
-  console.log('defaultValues', defaultValues);
-
   const { updateJob, isPending } = useUpdateJob();
   const { deleteFile, isLoading: isDeleting } = useDeleteFileStorage();
   const methods = useForm<JobDescriptionFormValues>({

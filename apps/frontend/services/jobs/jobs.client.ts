@@ -47,10 +47,12 @@ export function useUpdateJob() {
     id,
     data,
     onSuccessNext,
+    onError,
   }: {
     id: string;
     data: Partial<MultiStepJobFormValues>;
     onSuccessNext?: (data: Partial<JobData>) => void;
+    onError?: () => void;
   }) => {
     try {
       const response = await mutation.mutateAsync({ id, data });
@@ -58,8 +60,10 @@ export function useUpdateJob() {
       if (response.success) {
         toast.success(response.message || 'Job updated successfully');
         onSuccessNext?.(data as Partial<JobData>);
+        queryClient.invalidateQueries({ queryKey: ['jobs'] });
       } else {
         toast.error(response.message);
+        onError?.();
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to update job');
