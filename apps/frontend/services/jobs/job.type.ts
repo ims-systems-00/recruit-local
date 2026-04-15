@@ -1,10 +1,17 @@
 import { Pagination } from '@/types/api';
+import { DeleteMarker } from '../file-media/file-media.type';
 
 export type JobListFilters = {
   page?: number;
   limit?: number;
   search?: string;
   status?: string;
+};
+
+export type StorageInformation = {
+  Name: string;
+  Key: string;
+  Bucket: string;
 };
 
 export interface JobData {
@@ -66,6 +73,18 @@ export interface JobData {
     Name: string;
     Bucket: string;
     Key: string;
+  }[];
+  attachments: {
+    _id: string;
+    collectionName: string;
+    collectionDocument: string;
+    storageInformation: StorageInformation;
+    visibility: string;
+    deleteMarker: DeleteMarker;
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+    src: string;
   }[];
 }
 

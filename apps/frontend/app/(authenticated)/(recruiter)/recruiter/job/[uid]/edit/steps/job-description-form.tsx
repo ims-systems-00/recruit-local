@@ -67,6 +67,8 @@ export default function JobDescriptionForm({
   prev: (data: Partial<JobData>) => void;
   defaultValues: JobData;
 }) {
+  console.log('defaultValues', defaultValues);
+
   const { updateJob, isPending } = useUpdateJob();
   const { deleteFile, isLoading: isDeleting } = useDeleteFileStorage();
   const methods = useForm<JobDescriptionFormValues>({
@@ -77,7 +79,10 @@ export default function JobDescriptionForm({
     defaultValues: {
       description: defaultValues?.description || '',
       responsibility: defaultValues?.responsibility || '',
-      attachmentsStorage: defaultValues?.attachmentsStorage || [],
+      attachmentsStorage:
+        defaultValues?.attachmentsStorage ||
+        defaultValues?.attachments?.map((item) => item.storageInformation) ||
+        [],
       requiredDocuments:
         (defaultValues?.requiredDocuments as REQUIRED_DOCUMENTS_ENUMS[]) || [],
     },
@@ -131,15 +136,14 @@ export default function JobDescriptionForm({
     await updateJob({
       id: defaultValues._id,
       data: cleanPayload,
-      onSuccessNext: (newData) => next(newData),
+      onSuccessNext: (newData) => {
+        next(newData);
+      },
     });
   };
 
   const handlePrev = () => {
     const data = methods.getValues();
-
-    console.log('data', data);
-
     prev(data as JobData);
   };
 

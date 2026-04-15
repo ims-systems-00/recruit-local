@@ -4,19 +4,10 @@ import { Stepper } from './stepper';
 import JobInformationForm from './steps/job-information-form';
 import JobDescriptionForm from './steps/job-description-form';
 import Preview from './preview/preview';
-import { useCreateJob, useUpdateJob } from '@/services/jobs/jobs.client';
-import { FormProvider } from 'react-hook-form';
 import { StepsSidebar } from './steps-sidebar';
 import AdditionalQueries from './steps/additional-queries';
 import { JobData } from '@/services/jobs/job.type';
-import { MultiStepJobFormValues } from './job.schema';
 
-const steps = [
-  { id: 1, label: 'Job Information' },
-  { id: 2, label: 'Review Job Description' },
-  { id: 3, label: 'Business Information' },
-  { id: 4, label: 'Preview' },
-];
 export default function EditForm({
   defaultValues,
 }: {
@@ -24,8 +15,6 @@ export default function EditForm({
 }) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(defaultValues);
-
-  console.log('formData', formData);
 
   return (
     <div className="min-h-screen flex items-stretch gap-spacing-4xl">

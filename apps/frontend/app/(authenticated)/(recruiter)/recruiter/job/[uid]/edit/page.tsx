@@ -10,14 +10,12 @@ import {
 import { getJobById } from '@/services/jobs/jobs.server';
 import EditForm from './edit-form';
 
-interface Props {
-  params: {
-    uid: string;
-  };
-}
+type PageProps = {
+  params: Promise<{ uid: string }>;
+};
 
-export default async function EditJob({ params }: Props) {
-  const { uid } = params;
+export default async function EditJob({ params }: PageProps) {
+  const { uid } = await params;
 
   const response = await getJobById(uid);
 
