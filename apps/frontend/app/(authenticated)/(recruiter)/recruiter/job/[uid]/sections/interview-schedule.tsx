@@ -9,6 +9,7 @@ import { useState, useRef } from 'react';
 import { MOCK_EVENTS } from './calendar/data';
 import { CalendarHeader } from './calendar/calendar-header';
 import { CalendarEvent, EventChip } from './calendar/event-chip';
+import EmptyBox from '@/components/empty-box';
 
 type ViewType = 'month' | 'week' | 'day';
 
@@ -48,6 +49,13 @@ function InterviewSchedule() {
     const api = calendarRef.current?.getApi();
     api?.changeView(viewMap[v]);
   };
+
+  return (
+    <EmptyBox
+      title="Coming Soon"
+      description="We’re building this feature to improve your experience—stay tuned, it’s on the way."
+    />
+  );
 
   return (
     <div className="border border-border-gray-primary rounded-2xl overflow-hidden">

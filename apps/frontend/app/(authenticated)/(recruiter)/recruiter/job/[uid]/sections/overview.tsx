@@ -13,9 +13,16 @@ import HiringChart from './hiring-chart';
 import ExperienceChart from './experience-chart';
 import DefaultImgForJobOverview from '@/public/images/DefaultImgForJobOverview.png';
 import Image from 'next/image';
+import EmptyBox from '@/components/empty-box';
 
 export default function Overview() {
   const [isMonthView, setIsMonthView] = useState(false);
+  return (
+    <EmptyBox
+      title="Coming Soon"
+      description="We’re building this feature to improve your experience—stay tuned, it’s on the way."
+    />
+  );
   return (
     <div className=" space-y-spacing-4xl">
       <div className=" flex justify-between items-center">

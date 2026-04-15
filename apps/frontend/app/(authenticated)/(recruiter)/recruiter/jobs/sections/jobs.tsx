@@ -337,7 +337,11 @@ export default function Jobs() {
                     title="No Jobs Posted Yet!"
                     description="Currently, there are no job postings available."
                   >
-                    <Button className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!">
+                    <Button
+                      disabled={isLoading}
+                      onClick={onCreate}
+                      className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+                    >
                       <Plus />
                       <span>Create New</span>
                     </Button>

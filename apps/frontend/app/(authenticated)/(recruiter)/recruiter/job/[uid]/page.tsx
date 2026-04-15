@@ -12,32 +12,50 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Overview from './sections/overview';
 import Applicants from './sections/applicants';
 import InterviewSchedule from './sections/interview-schedule';
-import JobDescription from './sections/job-description';
-const tabs = [
-  {
-    value: 'overview',
-    label: 'Overview',
-    component: <Overview />,
-  },
-  {
-    value: 'job-description',
-    label: 'Job Description',
-    component: <JobDescription />,
-  },
-  {
-    value: 'applicants',
-    label: 'Applicants',
-    component: <Applicants />,
-  },
+// import JobDescription from './sections/job-description';
+import { getJobById } from '@/services/jobs/jobs.server';
+import { formatDate } from '@/lib/utils';
+import JobDescription from './sections/job-description/job-description';
 
-  {
-    value: 'interview-schedule',
-    label: 'Interview Schedule',
-    component: <InterviewSchedule />,
-  },
-];
+type PageProps = {
+  params: Promise<{ uid: string }>;
+};
 
-export default function JobDetailsPage() {
+export default async function JobDetailsPage({ params }: PageProps) {
+  const { uid } = await params;
+
+  const response = await getJobById(uid);
+
+  if (!response.success) {
+    return <div>Failed to load job</div>;
+  }
+
+  const jobData = response.data;
+
+  const tabs = [
+    {
+      value: 'overview',
+      label: 'Overview',
+      component: <Overview />,
+    },
+    {
+      value: 'job-description',
+      label: 'Job Description',
+      component: <JobDescription job={jobData} />,
+    },
+    {
+      value: 'applicants',
+      label: 'Applicants',
+      component: <Applicants />,
+    },
+
+    {
+      value: 'interview-schedule',
+      label: 'Interview Schedule',
+      component: <InterviewSchedule />,
+    },
+  ];
+
   return (
     <div>
       <div className=" py-spacing-lg px-spacing-4xl border-b border-border-gray-secondary">
@@ -54,7 +72,7 @@ export default function JobDetailsPage() {
             <BreadcrumbSeparator className=" text-fg-gray-tertiary " />
             <BreadcrumbItem>
               <BreadcrumbPage className="text-label-sm font-label-sm-strong! py-spacing-2xs px-spacing-md rounded-md bg-bg-brand-soft-primary text-text-brand-primary">
-                JL - 01
+                {jobData.reference || 'N/A'}
               </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
@@ -64,10 +82,10 @@ export default function JobDetailsPage() {
       <div className=" p-spacing-4xl space-y-spacing-4xl">
         <div className=" space-y-spacing-2xs">
           <h3 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
-            UI/UX Designer Wanted – Join Our Creative Team!
+            {jobData?.title}
           </h3>
           <p className=" capitalize text-label-sm text-text-gray-tertiary">
-            Last Updated January 23, 2026
+            Last Updated {formatDate(jobData?.updatedAt)}
           </p>
         </div>
         <Tabs defaultValue={tabs[0].value} className="w-full gap-spacing-4xl">
