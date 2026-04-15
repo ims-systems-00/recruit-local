@@ -155,10 +155,10 @@ export const userColumns: ColumnDef<JobData>[] = [
     },
   },
   {
-    accessorKey: 'endDate',
+    accessorKey: 'updatedAt',
     header: 'Posted Date',
     cell: ({ row }) => {
-      const value = formatDate(row?.original?.endDate);
+      const value = formatDate(row?.original?.updatedAt);
 
       return <span>{value || 'N/A'}</span>;
     },
@@ -202,44 +202,6 @@ export const userColumns: ColumnDef<JobData>[] = [
   },
 ];
 
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  status: 'active' | 'inactive';
-};
-
-export const demoUsers: User[] = [
-  {
-    id: 1,
-    name: 'Tajuddin Molla',
-    email: 'tajuddin@example.com',
-    role: 'Frontend Developer',
-    status: 'active',
-  },
-  {
-    id: 2,
-    name: 'Nahid Hasan',
-    email: 'nahid@example.com',
-    role: 'Backend Developer',
-    status: 'inactive',
-  },
-  {
-    id: 3,
-    name: 'Sarjis Alam',
-    email: 'sarjis@example.com',
-    role: 'UI/UX Designer',
-    status: 'active',
-  },
-  {
-    id: 4,
-    name: 'Kaiyum Ahmed',
-    email: 'kaiyum@example.com',
-    role: 'Project Manager',
-    status: 'active',
-  },
-];
 export default function Jobs() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');

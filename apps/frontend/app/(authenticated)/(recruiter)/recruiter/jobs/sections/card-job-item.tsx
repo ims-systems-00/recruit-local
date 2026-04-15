@@ -106,7 +106,7 @@ export default function CardJobItem({ job }: { job: JobData }) {
       </div>
       <div className=" border-t border-border-gray-secondary flex justify-between items-center gap-2.5 px-spacing-4xl py-spacing-2xl">
         <p className=" text-body-sm text-text-gray-tertiary">
-          {formatDate(job?.endDate) || 'N/A'}
+          {formatDate(job?.updatedAt) || 'N/A'}
         </p>
         <div className=" flex items-center gap-spacing-sm ">
           <Switch

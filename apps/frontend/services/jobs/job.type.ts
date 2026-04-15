@@ -96,6 +96,8 @@ export interface JobData {
     src: string;
   }[];
   additionalQueries?: AdditionalQuery[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type JobListResponse = {
