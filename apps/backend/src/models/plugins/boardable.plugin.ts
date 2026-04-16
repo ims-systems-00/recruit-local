@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Schema, Document, Model, Types, ClientSession } from "mongoose";
 import { modelNames } from "../constants";
 import { withTransaction } from "../../common/helper/database-transaction";
@@ -180,7 +181,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>, opti
     const SPACE_MULTIPLIER = 1000;
     let currentRank = BOARD_CONFIG.REBALANCE_BASE_GAP * SPACE_MULTIPLIER;
 
-    const bulkOps = items.map((doc) => {
+    const bulkOps = items.map((doc: any) => {
       const update = { updateOne: { filter: { _id: doc._id }, update: { rank: currentRank } } };
       currentRank += BOARD_CONFIG.REBALANCE_BASE_GAP * SPACE_MULTIPLIER;
       return update;
@@ -194,7 +195,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>, opti
   schema.static(
     "moveToPosition",
     async function (
-      this: IBoardableModel<T>,
+      this: any,
       itemId: string | Types.ObjectId,
       targetStatusId: string | Types.ObjectId,
       targetIndex: number
@@ -230,7 +231,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>, opti
           .sort({ rank: -1, createdAt: 1 })
           .session(session);
 
-        const existingItems = columnItems.filter((i) => i._id.toString() !== item._id.toString());
+        const existingItems = columnItems.filter((i: any) => i._id.toString() !== item._id.toString());
 
         if (targetIndex < 0 || targetIndex > existingItems.length) {
           throw new Error(`Target index ${targetIndex} out of bounds`);
