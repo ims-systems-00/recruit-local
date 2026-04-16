@@ -37,7 +37,7 @@ export const createBodySchema = Joi.object({
 });
 
 export const updateBodySchema = Joi.object({
-  statusId: Joi.string().custom(objectIdValidation).required().label("Status"), // Kept required as per your original file
+  statusId: Joi.string().custom(objectIdValidation).required().label("Status"),
   coverLetter: Joi.string().optional().allow("").label("Cover Letter"),
 
   // Storage payloads

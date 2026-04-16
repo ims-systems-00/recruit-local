@@ -15,6 +15,7 @@ import {
   IJobCreateParams,
   IJobIncrementStatsParams,
 } from "./job.interface";
+import * as statusService from "../status/status.service";
 
 /**
  * Helper to fetch tenant data for job autofill
@@ -125,6 +126,17 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
     ...cleanPayload,
     _id: jobId,
     attachmentIds,
+  });
+
+  // create the first status named new applicants - default one
+  await statusService.create({
+    payload: {
+      collectionName: modelNames.JOB,
+      collectionId: job._id as Types.ObjectId,
+      label: "New Applicants",
+      default: true,
+    },
+    // session,
   });
 
   job = await job.save({ session });

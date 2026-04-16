@@ -145,7 +145,7 @@ export const update = async ({ req }: ControllerParams) => {
   });
 
   if (job.endDate && job.status === JOBS_STATUS_ENUMS.OPEN) {
-    await agenda.schedule(new Date(job.endDate), JOB_NAME.EXPIRE_JOB_POST, { jobId: job.id.toString() });
+    await agenda.schedule(new Date(job.endDate), JOB_NAME.EXPIRE_JOB_POST, { jobId: job._id.toString() });
   }
 
   return new ApiResponse({

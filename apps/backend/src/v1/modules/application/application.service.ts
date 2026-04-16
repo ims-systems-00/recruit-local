@@ -17,6 +17,7 @@ import {
   IApplicationStatusUpdateParams,
   IMoveBoardItemParams,
 } from "./application.interface";
+import * as statusService from "../status/status.service";
 
 export const list = ({ query = {}, options, session }: IListApplicationParams) => {
   const aggregate = Application.aggregate([
@@ -75,9 +76,18 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IApplicationGet
 export const create = async ({ payload, session }: IApplicationCreateParams) => {
   // 1. Validate Job Exists
   await jobService.getOne({
-    query: { _id: payload.jobId!.toString() } as any,
+    query: { _id: payload.jobId } as any,
     session,
   });
+
+  const existingApplication = await Application.findOne({
+    jobId: payload.jobId,
+    jobProfileId: payload.jobProfileId,
+  }).session(session || null);
+
+  if (existingApplication) {
+    throw new Error("An application already exists for the job.");
+  }
 
   // 2. Generate initial metrics
   const merit = Math.floor(Math.random() * 10) + 1;
@@ -124,11 +134,23 @@ export const create = async ({ payload, session }: IApplicationCreateParams) => 
   // 5. Clean payload and build document
   const { resumeStorage, caseStudyStorage, ...cleanPayload } = payload;
 
+  // get the default status for the job to set on the application
+  const defaultStatus = await statusService.getOne({
+    query: {
+      collectionName: modelNames.JOB,
+      collectionId: payload.jobId,
+    },
+    session,
+  });
+
+  if (!defaultStatus) throw new NotFoundException("Default status not found for the job.");
+
   const application = new Application({
     ...cleanPayload,
     _id: applicationId,
     resumeId,
     caseStudyId,
+    statusId: defaultStatus._id,
   });
 
   // 6. Save and Return
