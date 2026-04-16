@@ -17,6 +17,7 @@ import {
   IApplicationStatusUpdateParams,
   IMoveBoardItemParams,
 } from "./application.interface";
+import * as statusService from "../status/status.service";
 
 export const list = ({ query = {}, options, session }: IListApplicationParams) => {
   const aggregate = Application.aggregate([
@@ -73,18 +74,30 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IApplicationGet
 };
 
 export const create = async ({ payload, session }: IApplicationCreateParams) => {
-  // Assuming jobService has also been updated to accept sessions
+  // 1. Validate Job Exists
   await jobService.getOne({
-    query: { _id: payload.jobId!.toString() } as any,
+    query: { _id: payload.jobId } as any,
     session,
   });
 
+  const existingApplication = await Application.findOne({
+    jobId: payload.jobId,
+    jobProfileId: payload.jobProfileId,
+  }).session(session || null);
+
+  if (existingApplication) {
+    throw new Error("An application already exists for the job.");
+  }
+
+  // 2. Generate initial metrics
   const merit = Math.floor(Math.random() * 10) + 1;
   payload.rank = merit;
 
   const applicationId = new Types.ObjectId();
   let resumeId = null;
+  const caseStudyId: Types.ObjectId[] = [];
 
+  // 3. Handle Resume File
   if (payload.resumeStorage) {
     const fileMedia = await FileMediaService.create({
       payload: {
@@ -93,22 +106,56 @@ export const create = async ({ payload, session }: IApplicationCreateParams) => 
         storageInformation: payload.resumeStorage,
         visibility: VISIBILITY_ENUM.PRIVATE,
       },
-      // session, // Pass session here if FileMediaService supports it
+      // session, // Pass session here
     });
     resumeId = fileMedia._id;
   }
 
-  const { resumeStorage, ...cleanPayload } = payload;
+  // 4. Handle Case Studies (Parallel Execution for speed)
+  if (payload.caseStudyStorage && Array.isArray(payload.caseStudyStorage)) {
+    const caseStudyPromises = payload.caseStudyStorage.map((storage) =>
+      FileMediaService.create({
+        payload: {
+          collectionName: modelNames.APPLICATION,
+          collectionDocument: applicationId,
+          storageInformation: storage,
+          visibility: VISIBILITY_ENUM.PRIVATE,
+        },
+        // session,
+      })
+    );
+
+    const uploadedCaseStudies = await Promise.all(caseStudyPromises);
+
+    // Extract IDs and push them to the array
+    caseStudyId.push(...uploadedCaseStudies.map((file) => file._id as Types.ObjectId));
+  }
+
+  // 5. Clean payload and build document
+  const { resumeStorage, caseStudyStorage, ...cleanPayload } = payload;
+
+  // get the default status for the job to set on the application
+  const defaultStatus = await statusService.getOne({
+    query: {
+      collectionName: modelNames.JOB,
+      collectionId: payload.jobId,
+    },
+    session,
+  });
+
+  if (!defaultStatus) throw new NotFoundException("Default status not found for the job.");
 
   const application = new Application({
     ...cleanPayload,
     _id: applicationId,
-    resumeId: resumeId,
+    resumeId,
+    caseStudyId,
+    statusId: defaultStatus._id,
   });
 
+  // 6. Save and Return
   await application.save({ session });
 
-  // Return the sanitized document
   return getOne({
     query: { _id: application._id } as any,
     session,
@@ -120,7 +167,9 @@ export const update = async ({ query, payload, session }: IApplicationUpdatePara
   const application = await getOne({ query: sanitizedQuery, session });
 
   let updatedResumeId = application.resumeId;
+  let updatedCaseStudyId = application.caseStudyId || [];
 
+  // --- 1. Handle Resume Update ---
   if (payload.resumeStorage) {
     const newFileMedia = await FileMediaService.create({
       payload: {
@@ -146,7 +195,44 @@ export const update = async ({ query, payload, session }: IApplicationUpdatePara
     }
   }
 
-  const { resumeStorage, ...cleanPayload } = payload;
+  // --- 3. Handle Case Studies Update ---
+  // We check for undefined so that if they pass an empty array, it clears the existing files
+  if (payload.caseStudyStorage !== undefined) {
+    // Create new case studies in parallel
+    if (Array.isArray(payload.caseStudyStorage) && payload.caseStudyStorage.length > 0) {
+      const caseStudyPromises = payload.caseStudyStorage.map((storage) =>
+        FileMediaService.create({
+          payload: {
+            collectionName: modelNames.APPLICATION,
+            collectionDocument: application._id,
+            storageInformation: storage,
+            visibility: VISIBILITY_ENUM.PRIVATE,
+          },
+        })
+      );
+      const uploadedCaseStudies = await Promise.all(caseStudyPromises);
+      updatedCaseStudyId = uploadedCaseStudies.map((file) => file._id as Types.ObjectId);
+    } else {
+      updatedCaseStudyId = []; // Clear array if empty storage is passed
+    }
+
+    // Hard delete all old case studies
+    if (application.caseStudyId && application.caseStudyId.length > 0) {
+      for (const oldId of application.caseStudyId) {
+        try {
+          await FileMediaService.hardDelete({
+            query: { _id: oldId.toString() },
+            // session,
+          });
+        } catch (error) {
+          console.error(`Failed to delete old case study ${oldId} for Application ${application._id}`, error);
+        }
+      }
+    }
+  }
+
+  // Extract all storage payloads so they aren't saved directly to the Application document
+  const { resumeStorage, caseStudyStorage, ...cleanPayload } = payload;
 
   const updatedApplication = await Application.findOneAndUpdate(
     { _id: application._id },
@@ -154,6 +240,7 @@ export const update = async ({ query, payload, session }: IApplicationUpdatePara
       $set: {
         ...cleanPayload,
         resumeId: updatedResumeId,
+        caseStudyId: updatedCaseStudyId,
       },
     },
     {
@@ -187,18 +274,27 @@ export const hardDelete = async ({ query, session }: IApplicationGetParams) => {
   // Fetch sanitized document before deleting it
   const application = await getOneSoftDeleted({ query: sanitizedQuery, session });
 
-  // Clean up related files in S3
-  if (application.resumeId) {
+  // 1. Collect all associated file IDs
+  const filesToDelete: Types.ObjectId[] = [];
+
+  if (application.resumeId) filesToDelete.push(application.resumeId);
+  if (application.caseStudyId && Array.isArray(application.caseStudyId)) {
+    filesToDelete.push(...application.caseStudyId);
+  }
+
+  // 2. Clean up related files in S3 / FileMedia Service
+  for (const fileId of filesToDelete) {
     try {
       await FileMediaService.hardDelete({
-        query: { _id: application.resumeId.toString() },
+        query: { _id: fileId.toString() },
         // session,
       });
     } catch (error) {
-      console.error(`Failed to delete attached resume for Application ${application._id}`, error);
+      console.error(`Failed to delete attached file ${fileId} for Application ${application._id}`, error);
     }
   }
 
+  // 3. Delete the actual application document
   const deletedApplication = await Application.findOneAndDelete({ _id: application._id }, { session });
   if (!deletedApplication) throw new NotFoundException("Application not found to delete.");
 

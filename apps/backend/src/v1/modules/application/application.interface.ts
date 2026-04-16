@@ -13,8 +13,12 @@ import { AwsStorageTemplate } from "../../../models/templates/aws-storage.templa
 
 export type IListApplicationParams = IServiceListParams<ApplicationInput>;
 export type IApplicationGetParams = IServiceGetParams<ApplicationInput>;
-export type IApplicationCreateParams = IServiceCreateParams<ApplicationInput & { resumeStorage?: AwsStorageTemplate }>;
-export type IApplicationUpdateParams = IServiceUpdateParams<IApplicationDoc & { resumeStorage?: AwsStorageTemplate }>;
+export type IApplicationCreateParams = IServiceCreateParams<
+  ApplicationInput & { resumeStorage?: AwsStorageTemplate; caseStudyStorage?: AwsStorageTemplate[] }
+>;
+export type IApplicationUpdateParams = IServiceUpdateParams<
+  IApplicationDoc & { resumeStorage?: AwsStorageTemplate; caseStudyStorage?: AwsStorageTemplate[] }
+>;
 export type IApplicationQueryParams = Partial<ApplicationInput & { _id: string }>;
 
 export interface IApplicationStatusUpdateParams {

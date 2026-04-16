@@ -1,42 +1,43 @@
 import mongoose from "mongoose";
 
-/**
- * Recursively traverses a query object and casts string IDs to Mongoose ObjectIds.
- * Safe to use with any complex query structure (nested $or, $and, $in).
- * * @param query - The query object or array to sanitize
- * @returns A new deep copy of the query with ObjectIds typed correctly
- */
 export const sanitizeQueryIds = <T = unknown>(query: T): T => {
-  // 1. Handle Arrays (recurse over items, useful for $or, $and lists)
   if (Array.isArray(query)) {
     return query.map((item) => sanitizeQueryIds(item)) as unknown as T;
   }
 
-  // 2. Handle Objects (recurse over keys)
   if (query && typeof query === "object" && query.constructor === Object) {
-    const newQuery: unknown = {};
+    const newQuery: any = {};
 
     for (const key in query) {
-      const value = (query as unknown)[key];
-
+      const value = (query as any)[key];
       const isIdField = key === "_id" || key.endsWith("Id");
 
-      // Case A: Exact match on '_id' -> Cast String to ObjectId
+      // Case A: Exact string match
       if (isIdField && typeof value === "string" && mongoose.Types.ObjectId.isValid(value)) {
         newQuery[key] = new mongoose.Types.ObjectId(value);
       }
 
-      // Case B: Operator query on '_id' with '$in' -> Cast array items
-      else if (isIdField && value && typeof value === "object" && "$in" in value && Array.isArray(value.$in)) {
-        newQuery[key] = {
-          ...value,
-          $in: value.$in.map((id: unknown) =>
-            typeof id === "string" && mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id
-          ),
-        };
+      // Case B: Mongo Operators (e.g., $in, $nin, $ne, $eq) on an ID field
+      else if (isIdField && value && typeof value === "object" && value.constructor === Object) {
+        newQuery[key] = {};
+        for (const opKey in value) {
+          const opValue = value[opKey];
+
+          if (Array.isArray(opValue)) {
+            // Handle array operators like $in, $nin, $all
+            newQuery[key][opKey] = opValue.map((id) =>
+              typeof id === "string" && mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id
+            );
+          } else if (typeof opValue === "string" && mongoose.Types.ObjectId.isValid(opValue)) {
+            // Handle direct operators like $ne, $eq
+            newQuery[key][opKey] = new mongoose.Types.ObjectId(opValue);
+          } else {
+            newQuery[key][opKey] = opValue;
+          }
+        }
       }
 
-      // Case C: Recurse for all other keys (nested objects, logical operators)
+      // Case C: Standard recursion for other fields
       else {
         newQuery[key] = sanitizeQueryIds(value);
       }
@@ -45,6 +46,5 @@ export const sanitizeQueryIds = <T = unknown>(query: T): T => {
     return newQuery as T;
   }
 
-  // 3. Return primitives as-is (numbers, booleans, null)
   return query;
 };

@@ -7,12 +7,22 @@ import { IBaseDoc } from "./interfaces/base.interface";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { boardablePlugin, IBoardableInput, IBoardableModel } from "./plugins/boardable.plugin";
 
+export interface IApplicationAnswer {
+  queryId: Types.ObjectId;
+  answer: string | string[] | number | boolean;
+}
+
 export interface ApplicationInput extends JobProfileInput, IBoardableInput {
   jobId: Types.ObjectId;
   coverLetter?: string;
+  caseStudyId?: [Types.ObjectId];
   resumeId?: Types.ObjectId;
   feedback?: string;
   appliedAt?: Date;
+  answers?: IApplicationAnswer[];
+  portfolioUrl?: string;
+  currentSalary?: number;
+  expectedSalary?: number;
 }
 
 export interface IApplicationDoc extends ApplicationInput, ISoftDeleteDoc, IBaseDoc {}
@@ -23,6 +33,20 @@ interface IApplicationModel
     PaginateModel<IApplicationDoc>,
     AggregatePaginateModel<IApplicationDoc>,
     IBoardableModel<IApplicationDoc> {}
+
+const answerSchema = new Schema<IApplicationAnswer>(
+  {
+    queryId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+    },
+    answer: {
+      type: Schema.Types.Mixed,
+      required: true,
+    },
+  },
+  { _id: false }
+);
 
 const applicationSchema = new Schema<IApplicationDoc>(
   {
@@ -38,8 +62,18 @@ const applicationSchema = new Schema<IApplicationDoc>(
       ref: modelNames.FILE_MEDIA,
       default: null,
     },
+    caseStudyId: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: modelNames.FILE_MEDIA,
+      },
+    ],
+    answers: [answerSchema],
     feedback: { type: String },
     appliedAt: { type: Date, default: Date.now },
+    portfolioUrl: { type: String },
+    currentSalary: { type: Number },
+    expectedSalary: { type: Number },
   },
   {
     timestamps: true,

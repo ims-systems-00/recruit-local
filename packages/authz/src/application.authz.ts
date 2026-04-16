@@ -52,6 +52,11 @@ export const ALL_APPLICATION_FIELDS = [
   'jobId',
   'coverLetter',
   'resumeId',
+  'caseStudyId',
+  'answers',
+  'portfolioUrl',
+  'currentSalary',
+  'expectedSalary',
   'feedback',
   'appliedAt',
 ];
@@ -63,7 +68,12 @@ const CANDIDATE_CREATE_FIELDS = [
   // Core candidate inputs
   'jobId',
   'coverLetter',
-  'resumeStorage', // Used in creation payload
+  'resumeStorage',
+  'caseStudyStorage',
+  'answers',
+  'portfolioUrl',
+  'currentSalary',
+  'expectedSalary',
 
   // Job Profile inputs
   'firstName',
