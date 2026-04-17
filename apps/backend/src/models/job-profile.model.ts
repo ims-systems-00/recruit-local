@@ -8,12 +8,19 @@ import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { IBaseDoc } from "./interfaces/base.interface";
 
 export interface JobProfileInput extends IUserOwnedInput {
+  name?: string;
   headline?: string;
+  address?: string;
+  email?: string;
+  contactNumber?: string;
   summary?: string;
+  portfolioUrl?: string;
   keywords?: string[];
   languages?: language[];
   kycDocumentId?: Types.ObjectId;
   status: JOB_PROFILE_STATUS_ENUM;
+  skills?: string;
+  interests?: string;
 }
 
 export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, IBaseDoc {
@@ -26,7 +33,6 @@ interface IJobProfileModel
     PaginateModel<IJobProfileDoc>,
     AggregatePaginateModel<IJobProfileDoc> {}
 
-// 1. Define the sub-schema
 const languageSchema = new Schema({
   name: { type: String, required: true },
   proficiencyLevel: { type: String, required: true },
@@ -39,10 +45,25 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       ref: modelNames.USER,
       required: true,
     },
+    name: {
+      type: String,
+    },
     headline: {
       type: String,
     },
+    address: {
+      type: String,
+    },
+    email: {
+      type: String,
+    },
+    contactNumber: {
+      type: String,
+    },
     summary: {
+      type: String,
+    },
+    portfolioUrl: {
       type: String,
     },
     keywords: [
@@ -51,6 +72,12 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       },
     ],
     languages: [languageSchema],
+    skills: {
+      type: String,
+    },
+    interests: {
+      type: String,
+    },
     visibility: {
       type: String,
       enum: Object.values(VISIBILITY),

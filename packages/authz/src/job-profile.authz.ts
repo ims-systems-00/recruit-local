@@ -22,17 +22,24 @@ import {
 export const ALL_JOB_PROFILE_FIELDS = [
   '_id',
   'userId',
+  'name',
   'headline',
+  'address',
+  'email',
+  'contactNumber',
   'summary',
+  'portfolioUrl',
   'keywords',
   'languages',
+  'skills',
+  'interests',
   'visibility',
   'status',
   'kycDocumentId',
+  'kycDocumentStorage',
   'createdAt',
   'updatedAt',
 ];
-
 // Helper to clean up array filtering
 const omitFields = (fieldsToOmit: string[]) =>
   ALL_JOB_PROFILE_FIELDS.filter((field) => !fieldsToOmit.includes(field));
@@ -40,18 +47,29 @@ const omitFields = (fieldsToOmit: string[]) =>
 // What an employer is allowed to see
 const EMPLOYER_READ_FIELDS = omitFields([
   'kycDocumentId',
+  'kycDocumentStorage',
   'status',
   'visibility',
 ]);
 
-const CANDIDATE_MUTATION_FIELDS = omitFields([
-  '_id',
-  'userId',
-  'status',
-  'kycDocumentId',
-  'createdAt',
-  'updatedAt',
-]);
+const CANDIDATE_MUTATION_FIELDS = [
+  'name',
+  'headline',
+  'address',
+  'email',
+  'contactNumber',
+  'summary',
+  'portfolioUrl',
+  'keywords',
+  'languages',
+  'skills',
+  'interests',
+  'kycDocumentStorage',
+  'kycDocumentStorage.Name',
+  'kycDocumentStorage.Bucket',
+  'kycDocumentStorage.Key',
+  'visibility',
+];
 
 // --- 2. AUTHZ ENTITY ---
 export class JobProfileAuthZEntity {
