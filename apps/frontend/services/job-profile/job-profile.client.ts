@@ -97,8 +97,6 @@ export function useCreateJobProfile() {
 }
 
 export function useUpdateJobProfile() {
-  const queryClient = useQueryClient();
-
   const mutation = useMutation({
     mutationFn: ({
       id,
@@ -107,21 +105,35 @@ export function useUpdateJobProfile() {
       id: string;
       payload: JobProfileUpdateInput;
     }) => updateJobProfile(id, payload),
-    onSuccess: (response) => {
+  });
+
+  const updateJobProfileAsync = async ({
+    id,
+    payload,
+    onSuccessCallback,
+  }: {
+    id: string;
+    payload: JobProfileUpdateInput;
+    onSuccessCallback?: (data: JobProfile) => void;
+  }) => {
+    try {
+      const response = await mutation.mutateAsync({ id, payload });
+
       if (response.success) {
         toast.success(response.message || 'Job profile updated successfully');
-        queryClient.invalidateQueries({ queryKey: jobProfileKeys.all });
+        onSuccessCallback?.(response.data as JobProfile);
       } else {
         toast.error(response.message);
       }
-    },
-    onError: (error) =>
-      toast.error(error.message || 'Failed to update job profile'),
-  });
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update Job Profile');
+    }
+  };
 
   return {
-    updateJobProfile: mutation.mutateAsync,
-    isLoading: mutation.isPending,
+    updateJobProfile: updateJobProfileAsync,
+    isPending: mutation.isPending,
+    error: mutation.error,
   };
 }
 

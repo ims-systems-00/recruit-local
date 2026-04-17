@@ -10,8 +10,10 @@ import { JobProfileCreateInput } from '@/services/job-profile/job-profile.type';
 import { createJobProfileSchema } from '@/services/job-profile/job-profile.validation';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useLogout } from '@/services/auth/auth.client';
+import { useAuth } from '@/services/user/user.client';
 
 export default function CreateJobProfileForm() {
+  const { user } = useAuth();
   const { logout, isLoading: isLoggingOut } = useLogout();
 
   const {
@@ -27,9 +29,13 @@ export default function CreateJobProfileForm() {
   const { createJobProfile, isLoading } = useCreateJobProfile();
 
   const onSubmit = (data: JobProfileCreateInput) => {
-    createJobProfile(data);
+    let payload = {
+      ...data,
+      name: user?.firstName + ' ' + user?.lastName,
+      email: user?.email,
+    };
+    createJobProfile(payload);
   };
-  console.log('errors', errors);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className=" space-y-spacing-4xl">

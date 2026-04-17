@@ -63,14 +63,14 @@ export async function getJobProfileById(
 
     const res = await axiosServer.get(`${API_ENDPOINT}/${id}`);
 
-    const validated = await jobProfileItemResponseSchema.validate(res.data, {
-      stripUnknown: true,
-    });
+    // const validated = await jobProfileItemResponseSchema.validate(res.data, {
+    //   stripUnknown: true,
+    // });
 
     return {
       success: true,
-      data: validated.jobProfile,
-      message: validated.message || 'Job Profile retrieved successfully',
+      data: res.data.jobProfile,
+      message: res.data.message || 'Job Profile retrieved successfully',
     };
   } catch (error) {
     return handleServerError(error, 'Failed to fetch job profile details');
@@ -125,17 +125,17 @@ export async function updateJobProfile(
       validatedPayload,
     );
 
-    const validatedResponse = await jobProfileItemResponseSchema.validate(
-      res.data,
-      {
-        stripUnknown: true,
-      },
-    );
+    // const validatedResponse = await jobProfileItemResponseSchema.validate(
+    //   res.data,
+    //   {
+    //     stripUnknown: true,
+    //   },
+    // );
 
     return {
       success: true,
-      data: validatedResponse.jobProfile,
-      message: validatedResponse.message || 'Job Profile updated successfully',
+      data: res.data.jobProfile,
+      message: res.data.message || 'Job Profile updated successfully',
     };
   } catch (error) {
     return handleServerError(error, 'Failed to update job profile');

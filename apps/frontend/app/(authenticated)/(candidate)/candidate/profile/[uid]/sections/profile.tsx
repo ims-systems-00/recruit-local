@@ -7,56 +7,48 @@ import { Button } from '@/components/ui/button';
 import { Globe, Linkedin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import About from './about';
-import ServicesAndProducts from './services-and-products';
-import Achievements from './achievements';
-import CurrentRecruitment from './current-recruitment';
-import Saves from './saves';
-import Activities from './activities';
-import { TenantData } from '@/services/tenants/tenants.type';
 import EditProfile from './edit-profile';
-import { useUpdateTenant } from '@/services/tenants/tenants.client';
-import { useComboboxAnchor } from '@/components/ui/combobox';
 import { Resolver, useForm } from 'react-hook-form';
-import {
-  TenantUpdateInput,
-  tenantUpdateSchema,
-} from '@/services/tenants/tenants.validation';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { TENANT_TYPE } from '@rl/types';
-import Link from 'next/link';
-import EditServicesAndProducts from './edit-services-and-products';
+import {
+  JobProfile,
+  JobProfileUpdateInput,
+} from '@/services/job-profile/job-profile.type';
+import { updateJobProfileSchema } from '@/services/job-profile/job-profile.validation';
+import { useUpdateJobProfile } from '@/services/job-profile/job-profile.client';
 
-export default function Profile({ tenantData }: { tenantData: TenantData }) {
+export default function Profile({
+  jobProfileData,
+}: {
+  jobProfileData: JobProfile;
+}) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
 
-  const [tenantDetails, setTenantDetails] = useState(tenantData);
+  const [jobProfileDetails, setJobProfileDetails] = useState(jobProfileData);
 
-  const { updateTenant, isPending } = useUpdateTenant();
-  const methods = useForm<TenantUpdateInput>({
-    resolver: yupResolver(tenantUpdateSchema) as Resolver<TenantUpdateInput>,
+  const { updateJobProfile, isPending } = useUpdateJobProfile();
+  const methods = useForm<JobProfileUpdateInput>({
+    resolver: yupResolver(
+      updateJobProfileSchema,
+    ) as Resolver<JobProfileUpdateInput>,
     defaultValues: {
-      name: tenantDetails?.name || '',
-      email: tenantDetails?.email,
-      description: tenantDetails?.description,
-      phone: tenantDetails?.phone,
-      officeAddress: tenantDetails?.officeAddress,
-      type: tenantDetails?.type
-        ? (tenantDetails?.type as TENANT_TYPE)
-        : undefined,
-      size: tenantDetails?.size,
-      website: tenantDetails?.website,
-      linkedIn: tenantDetails?.linkedIn,
-      industry: tenantDetails?.industry,
-      missionStatement: tenantDetails?.missionStatement,
-      visionStatement: tenantDetails?.visionStatement,
-      coreProducts: tenantDetails?.coreProducts,
-      coreServices: tenantDetails?.coreServices,
+      name: jobProfileDetails?.name || '',
+      headline: jobProfileDetails?.headline || '',
+      email: jobProfileDetails?.email || '',
+      contactNumber: jobProfileDetails?.contactNumber || '',
+      address: jobProfileDetails?.address || '',
+      summary: jobProfileDetails?.summary || '',
+      skills: jobProfileDetails?.skills || '',
+      interests: jobProfileDetails?.interests || '',
+      portfolioUrl: jobProfileDetails?.portfolioUrl || '',
+      keywords: jobProfileDetails?.keywords || [],
+      languages: jobProfileDetails?.languages || [],
     },
     mode: 'onSubmit',
   });
 
-  console.log('tenantDetails', tenantDetails);
+  console.log('jobProfileDetails', jobProfileDetails);
 
   const {
     register,
@@ -65,7 +57,7 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
     handleSubmit,
   } = methods;
 
-  const onSubmit = async (data: TenantUpdateInput) => {
+  const onSubmit = async (data: JobProfileUpdateInput) => {
     const payload = {
       ...data,
     };
@@ -76,61 +68,25 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       ),
     );
 
-    await updateTenant({
-      id: tenantDetails._id,
-      data: cleanPayload,
-      onSuccessNext: (newData) => {
-        setTenantDetails((prev) => ({ ...prev, ...newData }));
+    await updateJobProfile({
+      id: jobProfileDetails._id,
+      payload: cleanPayload,
+      onSuccessCallback: (newData) => {
+        setJobProfileDetails((prev) => ({ ...prev, ...newData }));
         setIsEditMode(false);
         setActiveTab('about');
       },
     });
   };
 
+  console.log('errors', errors);
+
   const tabs = [
     {
       value: 'about',
       label: 'About',
-      component: isEditMode ? (
-        <EditProfile register={register} control={control} errors={errors} />
-      ) : (
-        <About profile={tenantDetails} />
-      ),
-      editable: true,
-    },
-    {
-      value: 'services-and-products',
-      label: 'Services and Products',
-      component: isEditMode ? (
-        <EditServicesAndProducts
-          register={register}
-          control={control}
-          errors={errors}
-        />
-      ) : (
-        <ServicesAndProducts profile={tenantDetails} />
-      ),
-      editable: true,
-    },
-    {
-      value: 'achievements',
-      label: 'Achievements',
-      component: <Achievements />,
-    },
-    {
-      value: 'current-recruitment',
-      label: 'Current Recruitment',
-      component: <CurrentRecruitment />,
-    },
-    {
-      value: 'activities',
-      label: 'Activities',
-      component: <Activities />,
-    },
-    {
-      value: 'saves',
-      label: 'Saves',
-      component: <Saves />,
+      component: <About profile={jobProfileDetails} />,
+      editable: false,
     },
   ];
 
@@ -171,29 +127,32 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
           </div>
         </div>
         <div className=" pl-44 flex justify-between items-center gap-4 py-spacing-xl">
-          <div className=" space-y-spacing-sm">
+          <div className=" space-y-spacing-2xs">
             <h4 className=" text-heading-sm font-heading-sm-strong! text-text-gray-primary">
-              {tenantDetails?.name}
+              {jobProfileDetails?.name || 'N/A'}
             </h4>
+            <p className=" text-body-sm text-text-gray-tertiary">
+              {jobProfileDetails?.headline || 'N/A'}
+            </p>
             <div className=" flex items-center gap-spacing-xs">
-              {tenantDetails?.linkedIn && (
+              {/* {jobProfileDetails?.linkedin && (
                 <Link
-                  href={tenantDetails.linkedIn}
+                  href={jobProfileDetails.linkedIn}
                   target="_blank"
                   className=" h-9 w-9 border border-border-gray-secondary rounded-sm flex justify-center items-center"
                 >
                   <Linkedin className=" text-fg-gray-secondary size-4" />
                 </Link>
               )}
-              {tenantDetails?.website && (
+              {jobProfileDetails?.website && (
                 <Link
-                  href={tenantDetails.website}
+                  href={jobProfileDetails.website}
                   target="_blank"
                   className=" h-9 w-9 border border-border-gray-secondary rounded-sm flex justify-center items-center"
                 >
                   <Globe className=" text-fg-gray-secondary size-4" />
                 </Link>
-              )}
+              )} */}
             </div>
           </div>
 
@@ -230,34 +189,38 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
         </div>
       </header>
       <div className="px-spacing-4xl pb-spacing-4xl">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="w-full gap-spacing-4xl"
-        >
-          <TabsList className="w-full bg-bg-gray-soft-secondary h-11 justify-start">
-            {visibleTabs.map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className="px-spacing-lg text-label-md font-label-md-strong! 
+        {isEditMode ? (
+          <EditProfile register={register} control={control} errors={errors} />
+        ) : (
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full gap-spacing-4xl"
+          >
+            <TabsList className="w-full bg-bg-gray-soft-secondary h-11 justify-start">
+              {visibleTabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="px-spacing-lg text-label-md font-label-md-strong! 
                           data-[state=active]:shadow-sm 
                           flex-0 
                           data-[state=active]:bg-bg-gray-soft-primary 
                           text-text-gray-quaternary 
                           dark:data-[state=active]:text-text-gray-secondary"
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          {visibleTabs.map((tab) => (
-            <TabsContent key={tab.value} value={tab.value}>
-              {tab.component}
-            </TabsContent>
-          ))}
-        </Tabs>
+            {visibleTabs.map((tab) => (
+              <TabsContent key={tab.value} value={tab.value}>
+                {tab.component}
+              </TabsContent>
+            ))}
+          </Tabs>
+        )}
       </div>
     </div>
   );

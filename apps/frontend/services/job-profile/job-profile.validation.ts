@@ -29,8 +29,15 @@ export const awsStorageSchema = yup.object({
 export const jobProfileSchema = yup.object({
   _id: objectIdSchema.required(),
   userId: objectIdSchema.required(),
+  name: yup.string().nullable().optional(),
+  email: yup.string().email().nullable().optional(),
+  contactNumber: yup.string().nullable().optional(),
+  portfolioUrl: yup.string().url().nullable().optional(),
   headline: yup.string().nullable().optional(),
+  address: yup.string().nullable().optional(),
   summary: yup.string().nullable().optional(),
+  skills: yup.string().nullable().optional(),
+  interests: yup.string().nullable().optional(),
   keywords: yup.array().of(yup.string().required()).nullable().optional(),
   languages: yup.array().of(languageSchema).nullable().optional(),
   visibility: yup
@@ -52,9 +59,16 @@ export const idParamsSchema = yup.object({
 });
 
 export const createJobProfileSchema = yup.object({
+  name: yup.string().optional(),
+  address: yup.string().optional(),
+  email: yup.string().email().optional(),
+  contactNumber: yup.string().optional(),
+  portfolioUrl: yup.string().url().optional(),
   headline: yup.string().optional(),
   summary: yup.string().optional(),
   keywords: yup.array().of(yup.string().required()).optional(),
+  skills: yup.string().optional(),
+  interests: yup.string().optional(),
   languages: yup.array().of(languageSchema).optional(),
   kycDocumentStorage: awsStorageSchema
     .nullable()
@@ -63,8 +77,15 @@ export const createJobProfileSchema = yup.object({
 });
 
 export const updateJobProfileSchema = yup.object({
+  name: yup.string().optional(),
+  address: yup.string().optional(),
+  email: yup.string().email().optional(),
+  contactNumber: yup.string().optional(),
+  portfolioUrl: yup.string().url().optional(),
   headline: yup.string().optional(),
   summary: yup.string().optional(),
+  skills: yup.string().optional(),
+  interests: yup.string().optional(),
   keywords: yup.array().of(yup.string().required()).optional(),
   languages: yup.array().of(languageSchema).optional(),
   visibility: yup
@@ -72,7 +93,10 @@ export const updateJobProfileSchema = yup.object({
     .oneOf(Object.values(VISIBILITY))
     .optional(),
   statusId: objectIdSchema.optional(),
-  kycDocumentStorage: awsStorageSchema.optional(),
+  kycDocumentStorage: awsStorageSchema
+    .nullable()
+    .notRequired()
+    .default(undefined),
 });
 
 // --- BACKEND RESPONSE ENVELOPES ---
