@@ -1,13 +1,12 @@
 import React from 'react';
 import Profile from './sections/profile';
 import { getJobProfileById } from '@/services/job-profile/job-profile.server';
-interface Props {
-  params: {
-    uid: string;
-  };
-}
-export default async function ProfilePage({ params }: Props) {
-  const { uid } = params;
+type PageProps = {
+  params: Promise<{ uid: string }>;
+};
+
+export default async function ProfilePage({ params }: PageProps) {
+  const { uid } = await params;
 
   const response = await getJobProfileById(uid);
 

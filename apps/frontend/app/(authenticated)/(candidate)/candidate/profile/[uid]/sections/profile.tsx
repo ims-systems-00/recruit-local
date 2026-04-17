@@ -4,7 +4,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import RecruitProfileDefault from '@/public/images/recruit_profile_default.svg';
 import RecruitDefaultLogo from '@/public/images/recruit_default_logo.png';
 import { Button } from '@/components/ui/button';
-import { Globe, Linkedin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import About from './about';
 import EditProfile from './edit-profile';
@@ -16,6 +15,7 @@ import {
 } from '@/services/job-profile/job-profile.type';
 import { updateJobProfileSchema } from '@/services/job-profile/job-profile.validation';
 import { useUpdateJobProfile } from '@/services/job-profile/job-profile.client';
+import WorkExperience from './work-experience/work-experience';
 
 export default function Profile({
   jobProfileData,
@@ -86,6 +86,12 @@ export default function Profile({
       value: 'about',
       label: 'About',
       component: <About profile={jobProfileDetails} />,
+      editable: false,
+    },
+    {
+      value: 'work-experience',
+      label: 'Work Experience',
+      component: <WorkExperience />,
       editable: false,
     },
   ];
