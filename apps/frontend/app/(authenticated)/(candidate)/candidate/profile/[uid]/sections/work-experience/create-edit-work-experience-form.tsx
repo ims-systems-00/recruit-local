@@ -74,11 +74,13 @@ export const WORKPLACE_OPTIONS = [
 type CreateEditWorkExperienceFormProps = {
   defaultValues?: ExperienceData;
   setOpen: (open: boolean) => void;
+  onClearSelectedExperience: () => void;
 };
 
 export default function CreateEditWorkExperienceForm({
   defaultValues,
   setOpen,
+  onClearSelectedExperience,
 }: CreateEditWorkExperienceFormProps) {
   const { uid } = useParams();
 
@@ -93,6 +95,7 @@ export default function CreateEditWorkExperienceForm({
       isEdit ? experienceUpdateSchema : experienceCreateSchema,
     ) as Resolver<ExperienceCreateInput | ExperienceUpdateInput>,
     defaultValues: {
+      jobProfileId: isEdit ? undefined : (uid as string),
       company: defaultValues?.company || undefined,
       jobTitle: defaultValues?.jobTitle || undefined,
       location: defaultValues?.location || undefined,
@@ -132,6 +135,7 @@ export default function CreateEditWorkExperienceForm({
         payload: cleanPayload,
         onSuccessCallback: (newData) => {
           setOpen(false);
+          onClearSelectedExperience();
         },
       });
     } else {
@@ -156,6 +160,10 @@ export default function CreateEditWorkExperienceForm({
       });
     }
   };
+
+  console.log('cleanPayload', uid);
+
+  console.log('errors', errors);
 
   return (
     <FormProvider {...methods}>

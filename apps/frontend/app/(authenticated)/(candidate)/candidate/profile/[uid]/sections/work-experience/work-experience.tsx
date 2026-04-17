@@ -11,12 +11,23 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import CreateEditWorkExperienceForm from './create-edit-work-experience-form';
-import { ExperienceData } from '@/services/experience';
+import {
+  ExperienceData,
+  useExperiences,
+  useHardDeleteExperience,
+} from '@/services/experience';
 
 export default function WorkExperience() {
   const [open, setOpen] = useState(false);
   const [selectedExperience, setSelectedExperience] =
     useState<ExperienceData | null>(null);
+  const { experiences, isLoading } = useExperiences();
+  const { hardDeleteExperience, isPending } = useHardDeleteExperience();
+
+  const onClearSelectedExperience = () => {
+    setSelectedExperience(null);
+  };
+
   return (
     <>
       <div className="space-y-spacing-4xl">
@@ -35,8 +46,17 @@ export default function WorkExperience() {
           </Button>
         </div>
         <div className=" space-y-spacing-2xl">
-          <WorkExperienceItem />
-          <WorkExperienceItem />
+          {experiences?.map((experience) => (
+            <WorkExperienceItem
+              key={experience._id}
+              experience={experience}
+              onEdit={() => {
+                setSelectedExperience(experience);
+                setOpen(true);
+              }}
+              onDelete={() => hardDeleteExperience(experience._id)}
+            />
+          ))}
         </div>
       </div>
       <Sheet open={open} onOpenChange={setOpen}>
@@ -52,6 +72,7 @@ export default function WorkExperience() {
             <CreateEditWorkExperienceForm
               setOpen={setOpen}
               defaultValues={selectedExperience || undefined}
+              onClearSelectedExperience={onClearSelectedExperience}
             />
           </div>
         </SheetContent>
