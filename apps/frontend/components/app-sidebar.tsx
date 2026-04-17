@@ -36,61 +36,81 @@ import {
 } from '@/components/ui/sidebar';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/services/user/user.client';
+import { ACCOUNT_TYPE_ENUMS } from '@rl/types';
 
-// This is sample data.
-const data = {
-  navMain: [
-    {
-      title: 'Job Listing',
-      url: '/recruiter/jobs',
-      icon: ListTodo,
-    },
-    {
-      title: 'News Feed',
-      url: '/recruiter/news-feed',
-      icon: Newspaper,
-    },
-    // {
-    //   title: 'Models',
-    //   url: '#',
-    //   icon: Bot,
-    //   items: [
-    //     {
-    //       title: 'Genesis',
-    //       url: '#',
-    //     },
-    //     {
-    //       title: 'Explorer',
-    //       url: '#',
-    //     },
-    //     {
-    //       title: 'Quantum',
-    //       url: '#',
-    //     },
-    //   ],
-    // },
-  ],
-  footerNavs: [
-    {
-      name: 'Notifications',
-      url: '#',
-      icon: Bell,
-    },
-    {
-      name: 'Settings',
-      url: '#',
-      icon: Settings,
-    },
-    {
-      name: 'Support',
-      url: '#',
-      icon: CircleQuestionMark,
-    },
-  ],
-};
+const recruiterNavMain = [
+  {
+    title: 'Job Listing',
+    url: '/recruiter/jobs',
+    icon: ListTodo,
+  },
+  {
+    title: 'News Feed',
+    url: '/recruiter/news-feed',
+    icon: Newspaper,
+  },
+  // {
+  //   title: 'Models',
+  //   url: '#',
+  //   icon: Bot,
+  //   items: [
+  //     {
+  //       title: 'Genesis',
+  //       url: '#',
+  //     },
+  //     {
+  //       title: 'Explorer',
+  //       url: '#',
+  //     },
+  //     {
+  //       title: 'Quantum',
+  //       url: '#',
+  //     },
+  //   ],
+  // },
+];
+
+const candidateNavMain = [
+  {
+    title: 'Job Feed',
+    url: '/candidate/jobs',
+    icon: ListTodo,
+  },
+  {
+    title: 'News Feed',
+    url: '/candidate/news-feed',
+    icon: Newspaper,
+  },
+];
+
+const footerNavs = [
+  {
+    name: 'Notifications',
+    url: '#',
+    icon: Bell,
+  },
+  {
+    name: 'Settings',
+    url: '#',
+    icon: Settings,
+  },
+  {
+    name: 'Support',
+    url: '#',
+    icon: CircleQuestionMark,
+  },
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth();
+
   const { state, toggleSidebar } = useSidebar();
+
+  const navMain =
+    user?.role === ACCOUNT_TYPE_ENUMS.CANDIDATE
+      ? candidateNavMain
+      : recruiterNavMain;
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -150,10 +170,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenuButton>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter className=" gap-spacing-2xl p-spacing-0 pb-spacing-sm">
-        <NavProjects projects={data.footerNavs} />
+        <NavProjects items={footerNavs} />
         <NavUser />
       </SidebarFooter>
       <SidebarRail />

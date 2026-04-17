@@ -27,9 +27,9 @@ import {
 import Link from 'next/link';
 
 export function NavProjects({
-  projects,
+  items,
 }: {
-  projects: {
+  items: {
     name: string;
     url: string;
     icon: LucideIcon;
@@ -40,7 +40,7 @@ export function NavProjects({
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarMenu className=" gap-spacing-xs">
-        {projects.map((item) => (
+        {items.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton
               asChild

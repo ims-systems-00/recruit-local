@@ -30,8 +30,12 @@ export const useSystemPreparation = () => {
           router.push(`/recruiter/profile/${user?.tenantId}`);
           return;
         }
+        if (userType === ACCOUNT_TYPE_ENUMS.CANDIDATE && !user.jobProfileId) {
+          router.push('/onboarding/create-job-profile');
+          return;
+        }
         if (userType === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
-          router.push('/recruiter/profile');
+          router.push('/candidate/profile');
           return;
         }
         if (userType === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {

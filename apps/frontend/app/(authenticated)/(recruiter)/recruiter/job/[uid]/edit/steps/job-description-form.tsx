@@ -135,6 +135,7 @@ export default function JobDescriptionForm({
       id: defaultValues._id,
       data: cleanPayload,
       onSuccessNext: (newData) => {
+        console.log('newData', newData);
         next(newData);
       },
     });

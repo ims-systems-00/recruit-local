@@ -56,7 +56,10 @@ export const createJobProfileSchema = yup.object({
   summary: yup.string().optional(),
   keywords: yup.array().of(yup.string().required()).optional(),
   languages: yup.array().of(languageSchema).optional(),
-  kycDocumentStorage: awsStorageSchema.optional(),
+  kycDocumentStorage: awsStorageSchema
+    .nullable()
+    .notRequired()
+    .default(undefined),
 });
 
 export const updateJobProfileSchema = yup.object({

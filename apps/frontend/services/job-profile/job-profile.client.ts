@@ -18,6 +18,7 @@ import type {
   JobProfileListResponse,
   JobProfileListFilters,
 } from './job-profile.type';
+import { useRouter } from 'next/navigation';
 
 // --- QUERY KEYS ---
 export const jobProfileKeys = {
@@ -72,6 +73,7 @@ export function useJobProfile(id: string) {
 
 export function useCreateJobProfile() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const mutation = useMutation({
     mutationFn: (payload: JobProfileCreateInput) => createJobProfile(payload),
@@ -79,6 +81,7 @@ export function useCreateJobProfile() {
       if (response.success) {
         toast.success(response.message || 'Job profile created successfully');
         queryClient.invalidateQueries({ queryKey: jobProfileKeys.all });
+        router.push('/candidate/profile');
       } else {
         toast.error(response.message);
       }

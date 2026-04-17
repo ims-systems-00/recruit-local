@@ -38,6 +38,9 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             emailVerificationStatus: user.emailVerificationStatus,
             type: user.type,
+            role: user.role,
+            tenantId: user.tenantId,
+            jobProfileId: user.jobProfileId,
             accessToken: user?.accessToken,
             refreshToken: user?.refreshToken,
           };
@@ -62,6 +65,9 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           emailVerificationStatus: user.emailVerificationStatus,
           type: user.type,
+          role: user.role,
+          tenantId: user.tenantId,
+          jobProfileId: user.jobProfileId,
         };
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;

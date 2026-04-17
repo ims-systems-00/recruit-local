@@ -11,6 +11,9 @@ declare module 'next-auth' {
       email: string;
       emailVerificationStatus: string;
       type: string;
+      role: string;
+      tenantId?: string;
+      jobProfileId?: string;
     } & DefaultSession['user'];
 
     accessToken: string;
@@ -25,6 +28,9 @@ declare module 'next-auth' {
     email: string;
     emailVerificationStatus: string;
     type: string;
+    role: string;
+    tenantId?: string;
+    jobProfileId?: string;
     accessToken: string;
     refreshToken: string;
   }
@@ -40,6 +46,9 @@ declare module 'next-auth/jwt' {
       email: string;
       emailVerificationStatus: string;
       type: string;
+      role: string;
+      tenantId?: string;
+      jobProfileId?: string;
     };
     accessToken: string;
     refreshToken: string;
