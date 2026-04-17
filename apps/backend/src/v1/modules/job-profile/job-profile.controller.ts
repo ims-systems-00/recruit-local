@@ -175,7 +175,7 @@ export const create = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job Profile created.",
     statusCode: StatusCodes.CREATED,
-    data: getSanitizedResponse(jobProfile, ability),
+    data: jobProfile,
     fieldName: "jobProfile",
   });
 };
