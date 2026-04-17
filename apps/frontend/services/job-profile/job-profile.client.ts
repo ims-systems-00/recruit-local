@@ -81,7 +81,7 @@ export function useCreateJobProfile() {
       if (response.success) {
         toast.success(response.message || 'Job profile created successfully');
         queryClient.invalidateQueries({ queryKey: jobProfileKeys.all });
-        router.push('/candidate/profile');
+        router.push(`/candidate/profile/${response.data?._id}`);
       } else {
         toast.error(response.message);
       }

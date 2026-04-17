@@ -35,13 +35,13 @@ export default function CreateJobProfileForm() {
     <form onSubmit={handleSubmit(onSubmit)} className=" space-y-spacing-4xl">
       <div className="space-y-spacing-xs">
         <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-          Profile Name
+          Job Profile Title
         </Label>
         <div className=" space-y-spacing-3xs">
           <InputGroup className="h-10 rounded-lg shadow-light">
             <InputGroupInput
               type="text"
-              placeholder="Enter profile name"
+              placeholder="Enter job profile title"
               {...register('headline')}
             />
           </InputGroup>

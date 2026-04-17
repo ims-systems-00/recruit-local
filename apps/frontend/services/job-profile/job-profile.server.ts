@@ -90,17 +90,17 @@ export async function createJobProfile(
 
     const res = await axiosServer.post(API_ENDPOINT, validatedPayload);
 
-    const validatedResponse = await jobProfileItemResponseSchema.validate(
-      res.data,
-      {
-        stripUnknown: true,
-      },
-    );
+    // const validatedResponse = await jobProfileItemResponseSchema.validate(
+    //   res.data,
+    //   {
+    //     stripUnknown: true,
+    //   },
+    // );
 
     return {
       success: true,
-      data: validatedResponse.jobProfile,
-      message: validatedResponse.message || 'Job Profile created successfully',
+      data: res.data.jobProfile,
+      message: res.data.message || 'Job Profile created successfully',
     };
   } catch (error) {
     return handleServerError(error, 'Failed to create job profile');

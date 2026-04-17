@@ -11,7 +11,7 @@ export default function CreateJobProfile() {
             Create Your Job Profile
           </h4>
           <p className=" text-body-md text-text-gray-tertiary">
-            Enter your job profile name to begin. Setup can be completed later
+            Enter your job profile title to begin. Setup can be completed later
           </p>
         </div>
         <CreateJobProfileForm />

@@ -29,14 +29,13 @@ import {
 import { useLogout } from '@/services/auth/auth.client';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/services/user/user.client';
+import { ACCOUNT_TYPE_ENUMS } from '@rl/types';
 
 export function NavUser() {
   const router = useRouter();
   const { isMobile } = useSidebar();
 
   const { user } = useAuth();
-
-  console.log('user', user);
 
   const { logout, isLoading } = useLogout();
 
@@ -85,13 +84,15 @@ export function NavUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-
             <DropdownMenuGroup>
               <DropdownMenuItem
                 className=" cursor-pointer"
-                onClick={() =>
-                  router.push(`/recruiter/profile/${user?.tenantId}`)
-                }
+                onClick={() => {
+                  user?.type === ACCOUNT_TYPE_ENUMS.CANDIDATE &&
+                    router.push(`/candidate/profile/${user?.jobProfileId}`);
+                  user?.type === ACCOUNT_TYPE_ENUMS.EMPLOYER &&
+                    router.push(`/recruiter/profile/${user?.tenantId}`);
+                }}
               >
                 <BadgeCheck />
                 Profile
@@ -105,7 +106,7 @@ export function NavUser() {
             >
               <LogOut />
               Log out
-            </DropdownMenuItem>
+            </DropdownMenuItem>{' '}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
