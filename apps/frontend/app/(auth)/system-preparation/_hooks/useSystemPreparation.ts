@@ -35,7 +35,7 @@ export const useSystemPreparation = () => {
           return;
         }
         if (userType === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
-          router.push('/candidate/profile');
+          router.push(`/candidate/profile/${user?.jobProfileId}`);
           return;
         }
         if (userType === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
