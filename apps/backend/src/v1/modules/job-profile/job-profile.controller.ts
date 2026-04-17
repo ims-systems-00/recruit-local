@@ -158,10 +158,10 @@ export const create = async ({ req }: ControllerParams) => {
     return new ApiResponse({ message: "User already has a job profile.", statusCode: StatusCodes.BAD_REQUEST });
   }
 
-  req.body.userId = req.session.user?._id;
-
   // Field-level check for creation payload
   validateUpdatePayload(req.body, ability, AbilityAction.Create, new JobProfileAuthZEntity(req.body));
+
+  req.body.userId = req.session.user?._id;
 
   const jobProfile = await jobProfileService.create({
     payload: req.body,
