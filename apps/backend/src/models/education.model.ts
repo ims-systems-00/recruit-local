@@ -30,7 +30,7 @@ const educationSchema = new Schema<IEducationDoc>(
     grade: { type: String },
   },
   {
-    ...baseSchemaOptions,
+    timestamps: true,
   }
 );
 
