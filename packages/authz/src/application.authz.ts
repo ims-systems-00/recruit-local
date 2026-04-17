@@ -23,50 +23,37 @@ export const ALL_APPLICATION_FIELDS = [
   'createdAt',
   'updatedAt',
 
-  // --- Soft Delete Plugin ---
+  // --- Soft Delete Plugin (ISoftDeleteDoc) ---
   'isDeleted',
   'deletedAt',
 
-  // --- Boardable Plugin ---
-  'status',
-  'statusHistory',
-  'boardOrder',
+  // --- Boardable Plugin (IBoardableInput & Model) ---
+  'statusId', // Matches IBoardableInput
+  'rank', // Matches IBoardableInput
 
-  // --- Job Profile Plugin (Assumed standard profile fields) ---
-  'firstName',
-  'lastName',
-  'email',
-  'phone',
-  'address',
-  'city',
-  'country',
-  'portfolio',
-  'linkedin',
-  'github',
-  'experience',
-  'education',
-  'skills',
-  'rank',
+  // --- Job Profile Plugin (JobProfileInput) ---
+  'jobProfileId', // Explicitly in your JobProfileInput type
 
-  // --- Core Application Fields ---
+  // --- Core Application Fields (ApplicationInput) ---
   'jobId',
   'coverLetter',
-  'resumeId',
-  'caseStudyId',
+  'resumeId', // Changed from resumeStorage to match Mongoose schema
+  'caseStudyId', // Changed from caseStudyStorage to match Mongoose schema
   'answers',
   'portfolioUrl',
   'currentSalary',
   'expectedSalary',
   'feedback',
   'appliedAt',
+  'tenantId',
 ];
-
 const omitFields = (fieldsToOmit: string[]) =>
   ALL_APPLICATION_FIELDS.filter((field) => !fieldsToOmit.includes(field));
 
 const CANDIDATE_CREATE_FIELDS = [
   // Core candidate inputs
   'jobId',
+  'jobProfileId',
   'coverLetter',
   'resumeStorage',
   'caseStudyStorage',
@@ -74,51 +61,25 @@ const CANDIDATE_CREATE_FIELDS = [
   'portfolioUrl',
   'currentSalary',
   'expectedSalary',
-
-  // Job Profile inputs
-  'firstName',
-  'lastName',
-  'email',
-  'phone',
-  'address',
-  'city',
-  'country',
-  'portfolio',
-  'linkedin',
-  'github',
-  'experience',
-  'education',
-  'skills',
 ];
 
-const CANDIDATE_READ_FIELDS = omitFields([
-  'isDeleted',
-  'deletedAt',
-  'feedback', // Feedback is internal from employer
-  'rank', // Internal ranking metric
-]);
+const CANDIDATE_READ_FIELDS = omitFields(['isDeleted', 'deletedAt', 'rank']);
 
-const EMPLOYER_UPDATE_FIELDS = ['status', 'feedback', 'boardOrder'];
+const EMPLOYER_UPDATE_FIELDS = ['statusId'];
 
 export class ApplicationAuthZEntity {
   public readonly tenantId: string | null;
-  public readonly candidateId: string | null;
+  public readonly jobProfileId: string | null;
 
   constructor({
     tenantId,
-    candidateId,
+    jobProfileId,
   }: {
     tenantId?: string | null;
-    candidateId?: string | null;
+    jobProfileId?: string | null;
   }) {
-    // Note: tenantId is inherited from the Job this application belongs to.
-    // In CASL subject evaluation, you will need to populate or pass the Job's tenantId
-    // down to the Application AuthZ entity to verify employer ownership.
     this.tenantId = tenantId ?? null;
-
-    // Assuming the user's ID is stored on the application (e.g., inside the job profile plugin or as a base field)
-    // If you don't store candidate ID on applications (e.g. guest applications), you'll need to adjust this.
-    this.candidateId = candidateId ?? null;
+    this.jobProfileId = jobProfileId ?? null;
   }
 }
 
@@ -157,7 +118,7 @@ export class ApplicationAbilityBuilder implements IAbilityBuilder {
         },
       );
 
-      // Employers can update specific fields (status, feedback, board placement)
+      // Employers can update specific fields (status)
       builder.can(
         AbilityAction.Update,
         ApplicationAuthZEntity,
@@ -197,13 +158,13 @@ export class ApplicationAbilityBuilder implements IAbilityBuilder {
         ApplicationAuthZEntity,
         CANDIDATE_READ_FIELDS,
         {
-          candidateId: this.session.user._id,
+          jobProfileId: this.session.jobProfileId,
         },
       );
 
-      // Candidates might be able to withdraw (soft delete) their own application depending on your business logic
+      // Candidates might be able to withdraw (soft delete)
       builder.can(AbilityAction.SoftDelete, ApplicationAuthZEntity, {
-        candidateId: this.session.user._id,
+        jobProfileId: this.session.jobProfileId,
       });
     }
 

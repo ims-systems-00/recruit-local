@@ -6,13 +6,14 @@ import { modelNames } from "./constants";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { boardablePlugin, IBoardableInput, IBoardableModel } from "./plugins/boardable.plugin";
+import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 
 export interface IApplicationAnswer {
   queryId: Types.ObjectId;
   answer: string | string[] | number | boolean;
 }
 
-export interface ApplicationInput extends JobProfileInput, IBoardableInput {
+export interface ApplicationInput extends JobProfileInput, IBoardableInput, TenantInput {
   jobId: Types.ObjectId;
   coverLetter?: string;
   caseStudyId?: [Types.ObjectId];
@@ -25,14 +26,15 @@ export interface ApplicationInput extends JobProfileInput, IBoardableInput {
   expectedSalary?: number;
 }
 
-export interface IApplicationDoc extends ApplicationInput, ISoftDeleteDoc, IBaseDoc {}
+export interface IApplicationDoc extends ApplicationInput, ISoftDeleteDoc, IBaseDoc, ITenantDoc {}
 
 interface IApplicationModel
   extends Model<IApplicationDoc>,
     ISoftDeleteModel<IApplicationDoc>,
     PaginateModel<IApplicationDoc>,
     AggregatePaginateModel<IApplicationDoc>,
-    IBoardableModel<IApplicationDoc> {}
+    IBoardableModel<IApplicationDoc>,
+    ITenantModel<IApplicationDoc> {}
 
 const answerSchema = new Schema<IApplicationAnswer>(
   {
@@ -89,8 +91,9 @@ applicationSchema.plugin(boardablePlugin, {
   parentModelName: modelNames.JOB,
   foreignKey: "jobId",
 });
-
+applicationSchema.plugin(tenantDataPlugin);
 // --- Indexes ---
+applicationSchema.index({ tenantId: 1 });
 applicationSchema.index({ jobId: 1, status: 1 });
 applicationSchema.index({ createdAt: -1 });
 applicationSchema.index({ resumeId: 1 });

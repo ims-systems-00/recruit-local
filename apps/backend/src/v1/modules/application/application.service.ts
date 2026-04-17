@@ -75,7 +75,7 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IApplicationGet
 
 export const create = async ({ payload, session }: IApplicationCreateParams) => {
   // 1. Validate Job Exists
-  await jobService.getOne({
+  const job = await jobService.getOne({
     query: { _id: payload.jobId } as any,
     session,
   });
@@ -145,12 +145,15 @@ export const create = async ({ payload, session }: IApplicationCreateParams) => 
 
   if (!defaultStatus) throw new NotFoundException("Default status not found for the job.");
 
+  const tenantId = job.tenantId;
+
   const application = new Application({
     ...cleanPayload,
     _id: applicationId,
     resumeId,
     caseStudyId,
     statusId: defaultStatus._id,
+    tenantId,
   });
 
   // 6. Save and Return
