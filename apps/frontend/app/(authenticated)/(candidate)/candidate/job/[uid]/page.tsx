@@ -7,14 +7,15 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { getJobById } from '@/services/jobs/jobs.server';
-import EditForm from './edit-form';
+import { formatDate } from '@/lib/utils';
+import JobDescription from './job-description/job-description';
 import Link from 'next/link';
 
 type PageProps = {
   params: Promise<{ uid: string }>;
 };
 
-export default async function EditJob({ params }: PageProps) {
+export default async function JobDetailsPage({ params }: PageProps) {
   const { uid } = await params;
 
   const response = await getJobById(uid);
@@ -32,24 +33,34 @@ export default async function EditJob({ params }: PageProps) {
           <BreadcrumbList>
             <BreadcrumbItem>
               <Link
-                href="/recruiter/jobs"
+                href="/candidate/jobs"
                 className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary"
               >
-                Job Listing
+                Job Feed
               </Link>
             </BreadcrumbItem>
             <BreadcrumbSeparator className=" text-fg-gray-tertiary " />
             <BreadcrumbItem>
               <BreadcrumbPage className="text-label-sm font-label-sm-strong! py-spacing-2xs px-spacing-md rounded-md bg-bg-brand-soft-primary text-text-brand-primary">
-                Create a job post
+                {jobData?.title || 'N/A'}
               </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
 
-      <div className=" px-spacing-4xl">
-        <EditForm defaultValues={jobData} />
+      <div className=" p-spacing-4xl space-y-spacing-4xl">
+        <div className=" space-y-spacing-2xs">
+          <h3 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
+            {jobData?.title}
+          </h3>
+          <p className=" capitalize text-label-sm text-text-gray-tertiary">
+            Last Updated {formatDate(jobData?.updatedAt)}
+          </p>
+        </div>
+        <div>
+          <JobDescription job={jobData} />
+        </div>
       </div>
     </div>
   );

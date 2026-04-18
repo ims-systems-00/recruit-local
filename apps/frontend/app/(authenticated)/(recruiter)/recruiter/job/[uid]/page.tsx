@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -16,6 +15,7 @@ import InterviewSchedule from './sections/interview-schedule';
 import { getJobById } from '@/services/jobs/jobs.server';
 import { formatDate } from '@/lib/utils';
 import JobDescription from './sections/job-description/job-description';
+import Link from 'next/link';
 
 type PageProps = {
   params: Promise<{ uid: string }>;
@@ -62,12 +62,12 @@ export default async function JobDetailsPage({ params }: PageProps) {
         <Breadcrumb className=" min-h-10 flex items-center">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink
+              <Link
                 href="/recruiter/jobs"
                 className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary"
               >
                 Job Listing
-              </BreadcrumbLink>
+              </Link>
             </BreadcrumbItem>
             <BreadcrumbSeparator className=" text-fg-gray-tertiary " />
             <BreadcrumbItem>

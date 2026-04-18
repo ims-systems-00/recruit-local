@@ -1,14 +1,13 @@
 'use client';
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Bookmark, MapPin, Pointer } from 'lucide-react';
+import { Bookmark, Pointer } from 'lucide-react';
 import { JobData } from '@/services/jobs/job.type';
 import { cn, formatDate } from '@/lib/utils';
 import DefaultImgForJob from '@/public/images/job_default.png';
 
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function CardJobItem({ job }: { job: JobData }) {
   console.log('job', job);
@@ -27,9 +26,11 @@ export default function CardJobItem({ job }: { job: JobData }) {
             />
           </div>
           <div className=" space-y-spacing-2xs">
-            <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-              {job?.title || 'N/A'}
-            </h4>
+            <Link href={`/candidate/job/${job?._id}`}>
+              <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+                {job?.title || 'N/A'}
+              </h4>
+            </Link>
             <div className=" flex items-center gap-spacing-2xs">
               <p className="text-label-sm capitalize text-text-gray-quaternary">
                 {job?.employmentType || 'N/A'}
