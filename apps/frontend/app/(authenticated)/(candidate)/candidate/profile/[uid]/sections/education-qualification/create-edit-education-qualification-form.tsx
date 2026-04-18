@@ -1,53 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
-import 'react-phone-number-input/style.css';
-import PhoneInput from 'react-phone-number-input';
 
 import { Label } from '@/components/ui/label';
-import { CalendarDays, MailIcon } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-  InputGroupTextarea,
 } from '@/components/ui/input-group';
-import {
-  Control,
-  Controller,
-  FieldErrors,
-  FormProvider,
-  Resolver,
-  useForm,
-  UseFormRegister,
-} from 'react-hook-form';
+import { Controller, FormProvider, Resolver, useForm } from 'react-hook-form';
 import { cn } from '@/lib/utils';
-import {
-  EMPLOYMENT_TYPE,
-  TENANT_INDUSTRY_ENUMS,
-  TENANT_TYPE,
-  WORKPLACE_ENUMS,
-} from '@rl/types';
-import LocationSelector from '@/components/location-selector';
-import { JobProfileUpdateInput } from '@/services/job-profile/job-profile.type';
-import {
-  ExperienceCreateInput,
-  experienceCreateSchema,
-  ExperienceData,
-  ExperienceUpdateInput,
-  experienceUpdateSchema,
-  useCreateExperience,
-  useUpdateExperience,
-} from '@/services/experience';
 import { yupResolver } from '@hookform/resolvers/yup';
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Popover,
   PopoverContent,
@@ -58,54 +22,48 @@ import { Calendar } from '@/components/ui/calendar';
 import { useParams } from 'next/navigation';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CheckedState } from '@radix-ui/react-checkbox';
+import {
+  EducationCreateInput,
+  educationCreateSchema,
+  EducationData,
+  EducationUpdateInput,
+  educationUpdateSchema,
+  useCreateEducation,
+  useUpdateEducation,
+} from '@/services/education';
 
-export const EMPLOYMENT_TYPE_OPTIONS = [
-  { label: 'Contract', value: EMPLOYMENT_TYPE.CONTRACT },
-  { label: 'Full Time', value: EMPLOYMENT_TYPE.FULL_TIME },
-  { label: 'Part Time', value: EMPLOYMENT_TYPE.PART_TIME },
-  { label: 'Freelance', value: EMPLOYMENT_TYPE.FREELANCE },
-  { label: 'Intern', value: EMPLOYMENT_TYPE.INTERN },
-];
-
-export const WORKPLACE_OPTIONS = [
-  { label: 'Remote', value: WORKPLACE_ENUMS.REMOTE },
-  { label: 'Onsite', value: WORKPLACE_ENUMS.ONSITE },
-  { label: 'Hybrid', value: WORKPLACE_ENUMS.HYBRID },
-];
-
-type CreateEditWorkExperienceFormProps = {
-  defaultValues?: ExperienceData;
+type CreateEditEducationQualificationFormProps = {
+  defaultValues?: EducationData;
   setOpen: (open: boolean) => void;
-  onClearSelectedExperience: () => void;
+  onClearSelectedEducation: () => void;
 };
 
-export default function CreateEditWorkExperienceForm({
+export default function CreateEditEducationQualificationForm({
   defaultValues,
   setOpen,
-  onClearSelectedExperience,
-}: CreateEditWorkExperienceFormProps) {
+  onClearSelectedEducation,
+}: CreateEditEducationQualificationFormProps) {
   const { uid } = useParams();
 
   const isEdit = !!defaultValues?._id;
 
-  const { updateExperience, isPending: isUpdatingExperience } =
-    useUpdateExperience();
-  const { createExperience, isPending: isCreatingExperience } =
-    useCreateExperience();
-  const methods = useForm<ExperienceCreateInput | ExperienceUpdateInput>({
+  const { updateEducation, isPending: isUpdatingEducation } =
+    useUpdateEducation();
+  const { createEducation, isPending: isCreatingEducation } =
+    useCreateEducation();
+  const methods = useForm<EducationCreateInput | EducationUpdateInput>({
     resolver: yupResolver(
-      isEdit ? experienceUpdateSchema : experienceCreateSchema,
-    ) as Resolver<ExperienceCreateInput | ExperienceUpdateInput>,
+      isEdit ? educationUpdateSchema : educationCreateSchema,
+    ) as Resolver<EducationCreateInput | EducationUpdateInput>,
     defaultValues: {
       jobProfileId: isEdit ? undefined : (uid as string),
-      company: defaultValues?.company || undefined,
-      jobTitle: defaultValues?.jobTitle || undefined,
-      location: defaultValues?.location || undefined,
-      workplace: defaultValues?.workplace || undefined,
-      employmentType: defaultValues?.employmentType || undefined,
-      startDate: defaultValues?.startDate || undefined,
-      endDate: defaultValues?.endDate || undefined,
-      description: defaultValues?.description || undefined,
+      institution: defaultValues?.institution || undefined,
+      degree: defaultValues?.degree || undefined,
+      fieldOfStudy: defaultValues?.fieldOfStudy || undefined,
+      startDate: defaultValues?.startDate as string | undefined,
+      endDate: defaultValues?.endDate as string | undefined,
+      grade: defaultValues?.grade as string | undefined,
+      description: defaultValues?.description as string | undefined,
     },
     mode: 'onSubmit',
   });
@@ -121,7 +79,7 @@ export default function CreateEditWorkExperienceForm({
     handleSubmit,
   } = methods;
 
-  const onSubmit = async (data: ExperienceUpdateInput) => {
+  const onSubmit = async (data: EducationUpdateInput) => {
     const payload = {
       ...data,
     };
@@ -133,31 +91,30 @@ export default function CreateEditWorkExperienceForm({
     );
 
     if (defaultValues?._id) {
-      await updateExperience({
+      await updateEducation({
         id: defaultValues?._id || '',
         payload: cleanPayload,
         onSuccessCallback: (newData) => {
           setOpen(false);
-          onClearSelectedExperience();
+          onClearSelectedEducation();
         },
       });
     } else {
-      await createExperience({
+      await createEducation({
         payload: {
+          ...cleanPayload,
           jobProfileId: uid as string,
-          employmentType: cleanPayload.employmentType as EMPLOYMENT_TYPE,
-          workplace: cleanPayload.workplace as WORKPLACE_ENUMS,
-          startDate: new Date(cleanPayload.startDate as string).toISOString(),
-          endDate: cleanPayload.endDate
-            ? new Date(cleanPayload.endDate as string).toISOString()
-            : undefined,
-          company: cleanPayload.company as string,
-          jobTitle: cleanPayload.jobTitle as string,
-          location: cleanPayload.location as string,
+          institution: cleanPayload.institution as string,
+          degree: cleanPayload.degree as string,
+          fieldOfStudy: cleanPayload.fieldOfStudy as string,
+          startDate: cleanPayload.startDate as string,
+          endDate: cleanPayload.endDate as string,
+          grade: cleanPayload.grade as string,
+          description: cleanPayload.description as string,
         },
         onSuccessCallback: (newData) => {
           setOpen(false);
-          onClearSelectedExperience();
+          onClearSelectedEducation();
         },
       });
     }
@@ -180,150 +137,102 @@ export default function CreateEditWorkExperienceForm({
                 <InputGroup
                   className={cn(
                     'h-10 rounded-lg shadow-xs border-border-gray-primary',
-                    errors.company && ' border-border-error-primary',
+                    errors.institution && ' border-border-error-primary',
                   )}
                 >
                   <InputGroupInput
                     type="text"
-                    placeholder=" Eg . John Doe"
+                    placeholder=" Eg . University of California, Los Angeles"
                     className=" text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
-                    {...register('company')}
+                    {...register('institution')}
                   />
                 </InputGroup>
-                {errors.company && (
+                {errors.institution && (
                   <p className="text-xs text-text-error-primary">
-                    {errors.company.message}
+                    {errors.institution.message}
                   </p>
                 )}
               </div>
             </div>
             <div className="space-y-spacing-xs">
               <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                Title
+                Education Level
               </Label>
               <div className=" space-y-spacing-sm">
                 <InputGroup
                   className={cn(
                     'h-10 rounded-lg shadow-xs border-border-gray-primary',
-                    errors.jobTitle && ' border-border-error-primary',
+                    errors.degree && ' border-border-error-primary',
                   )}
                 >
                   <InputGroupInput
                     type="text"
-                    placeholder=" Eg . Software Engineer"
+                    placeholder=" Eg . Bachelor of Science"
                     className=" text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
-                    {...register('jobTitle')}
+                    {...register('degree')}
                   />
                 </InputGroup>
-                {errors.jobTitle && (
+                {errors.degree && (
                   <p className="text-xs text-text-error-primary">
-                    {errors.jobTitle.message}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="space-y-spacing-xs ">
-              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                Employment Type
-              </Label>
-
-              <div className=" space-y-spacing-sm">
-                <Controller
-                  name="employmentType"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value || ''}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary text-text-gray-primary text-label-md font-label-md-strong!">
-                        <SelectValue placeholder="Eg. Full Time" />
-                      </SelectTrigger>
-
-                      <SelectContent className=" bg-white">
-                        <SelectGroup>
-                          {EMPLOYMENT_TYPE_OPTIONS.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.employmentType && (
-                  <p className="text-xs text-text-error-primary">
-                    {errors.employmentType.message}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="space-y-spacing-xs ">
-              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                Workplace
-              </Label>
-
-              <div className=" space-y-spacing-sm">
-                <Controller
-                  name="workplace"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value || ''}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary data-placeholder:text-text-gray-quaternary text-text-gray-primary text-label-md font-label-md-strong!">
-                        <SelectValue placeholder="Eg. Remote" />
-                      </SelectTrigger>
-
-                      <SelectContent className=" bg-white">
-                        <SelectGroup>
-                          {WORKPLACE_OPTIONS.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.workplace && (
-                  <p className="text-xs text-text-error-primary">
-                    {errors.workplace.message}
+                    {errors.degree.message}
                   </p>
                 )}
               </div>
             </div>
             <div className="space-y-spacing-xs">
               <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                Address
+                Department
               </Label>
               <div className=" space-y-spacing-sm">
-                <Controller
-                  control={control}
-                  name="location"
-                  render={({ field }) => (
-                    <LocationSelector
-                      defaultValue={field.value}
-                      onSelectLocation={(val) => {
-                        field.onChange(val.address);
-                      }}
-                    />
+                <InputGroup
+                  className={cn(
+                    'h-10 rounded-lg shadow-xs border-border-gray-primary',
+                    errors.fieldOfStudy && ' border-border-error-primary',
                   )}
-                />
-                {errors.location && (
-                  <p className="text-sm text-red-500">
-                    {errors.location.message}
+                >
+                  <InputGroupInput
+                    type="text"
+                    placeholder=" Eg . Computer Science"
+                    className=" text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
+                    {...register('fieldOfStudy')}
+                  />
+                </InputGroup>
+                {errors.fieldOfStudy && (
+                  <p className="text-xs text-text-error-primary">
+                    {errors.fieldOfStudy.message}
                   </p>
                 )}
               </div>
             </div>
-
+            <div className="space-y-spacing-xs">
+              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                Grade
+              </Label>
+              <div className=" space-y-spacing-sm">
+                <InputGroup
+                  className={cn(
+                    'h-10 rounded-lg shadow-xs border-border-gray-primary',
+                    errors.grade && ' border-border-error-primary',
+                  )}
+                >
+                  <InputGroupInput
+                    type="number"
+                    placeholder=" Eg . 3.80"
+                    step={0.01}
+                    className=" text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
+                    {...register('grade')}
+                  />
+                </InputGroup>
+                {errors.grade && (
+                  <p className="text-xs text-text-error-primary">
+                    {errors.grade.message}
+                  </p>
+                )}
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <Checkbox
-                id="is_current_workplace"
+                id="is_current_education"
                 checked={isCurrentWorkplace}
                 onCheckedChange={(checked: CheckedState) => {
                   console.log('checked', checked);
@@ -335,10 +244,10 @@ export default function CreateEditWorkExperienceForm({
                 className=" data-[state=checked]:bg-bg-brand-solid-primary data-[state=checked]:text-text-white data-[state=checked]:border-bg-brand-solid-primary"
               />
               <Label
-                htmlFor="is_current_workplace"
+                htmlFor="is_current_education"
                 className=" text-text-gray-secondary text-label-md font-label-md-strong!"
               >
-                I currently work here
+                I currently study here
               </Label>
             </div>
 
@@ -482,18 +391,18 @@ export default function CreateEditWorkExperienceForm({
               className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
               onClick={() => {
                 setOpen(false);
-                onClearSelectedExperience();
+                onClearSelectedEducation();
               }}
-              disabled={isUpdatingExperience || isCreatingExperience}
+              disabled={isUpdatingEducation || isCreatingEducation}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={isUpdatingExperience || isCreatingExperience}
+              disabled={isUpdatingEducation || isCreatingEducation}
               className=" cursor-pointer bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
             >
-              {isUpdatingExperience || isCreatingExperience
+              {isUpdatingEducation || isCreatingEducation
                 ? 'Saving...'
                 : 'Save'}
             </Button>

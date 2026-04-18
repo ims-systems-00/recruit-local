@@ -3,23 +3,23 @@ import { Button } from '@/components/ui/button';
 
 import { Plus } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import WorkExperienceItem from './work-experience-item';
+import EducationQualificationItem from './education-qualification-item';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import CreateEditWorkExperienceForm from './create-edit-work-experience-form';
-import { ExperienceData, useExperiences } from '@/services/experience';
-import WorkExperienceSkeleton from './work-experience-skeleton';
+import CreateEditEducationQualificationForm from './create-edit-education-qualification-form';
+import EducationQualificationSkeleton from './education-qualification-skeleton';
 import PaginationComponent from '../pagination-component';
 import EmptyBox from '@/components/empty-box';
+import { EducationData, useEducations } from '@/services/education';
 
-export default function WorkExperience() {
+export default function EducationQualification() {
   const [open, setOpen] = useState(false);
-  const [selectedExperience, setSelectedExperience] =
-    useState<ExperienceData | null>(null);
+  const [selectedEducation, setSelectedEducation] =
+    useState<EducationData | null>(null);
   const [page, setPage] = useState(1);
 
   const filters = useMemo(
@@ -30,10 +30,14 @@ export default function WorkExperience() {
     [page],
   );
 
-  const { experiences, isLoading, pagination } = useExperiences(filters);
+  const {
+    educations: educationQualifications,
+    isLoading,
+    pagination,
+  } = useEducations(filters);
 
-  const onClearSelectedExperience = () => {
-    setSelectedExperience(null);
+  const onClearSelectedEducation = () => {
+    setSelectedEducation(null);
   };
 
   return (
@@ -41,7 +45,7 @@ export default function WorkExperience() {
       <div className="space-y-spacing-4xl">
         <div className=" flex justify-between items-center gap-spacing-4xl py-spacing-xl">
           <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
-            Work Experience
+            Education Qualification
           </h4>
 
           <Button
@@ -56,23 +60,23 @@ export default function WorkExperience() {
         <div className=" space-y-spacing-2xl">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, index) => (
-              <WorkExperienceSkeleton key={index} />
+              <EducationQualificationSkeleton key={index} />
             ))
-          ) : Boolean(experiences?.length) ? (
-            experiences?.map((experience) => (
-              <WorkExperienceItem
-                key={experience._id}
-                experience={experience}
+          ) : Boolean(educationQualifications?.length) ? (
+            educationQualifications?.map((education) => (
+              <EducationQualificationItem
+                key={education._id}
+                education={education}
                 onEdit={() => {
-                  setSelectedExperience(experience);
+                  setSelectedEducation(education);
                   setOpen(true);
                 }}
               />
             ))
           ) : (
             <EmptyBox
-              title="No experience added yet"
-              description="Currently, there are no work experience added yet."
+              title="No education qualifications added yet"
+              description="Currently, there are no education qualifications added yet."
             >
               <Button
                 disabled={isLoading}
@@ -85,7 +89,7 @@ export default function WorkExperience() {
             </EmptyBox>
           )}
         </div>
-        {Boolean(experiences?.length) && pagination?.totalPages && (
+        {Boolean(educationQualifications?.length) && pagination?.totalPages && (
           <PaginationComponent
             meta={pagination}
             onPageChange={(pageNum) => {
@@ -98,7 +102,7 @@ export default function WorkExperience() {
         open={open}
         onOpenChange={(open) => {
           if (!open) {
-            onClearSelectedExperience();
+            onClearSelectedEducation();
           }
           setOpen(open);
         }}
@@ -106,16 +110,16 @@ export default function WorkExperience() {
         <SheetContent className=" bg-white min-w-[400px] max-w-[400px]">
           <SheetHeader className=" px-spacing-4xl pt-spacing-2xl pb-spacing-xs">
             <SheetTitle className=" text-label-lg! font-label-lg-strong! text-text-gray-primary">
-              {selectedExperience?._id
-                ? 'Edit Work Experience'
-                : 'Add New Work Experience'}
+              {selectedEducation?._id
+                ? 'Edit Education Qualifications'
+                : 'Add New Education Qualifications'}
             </SheetTitle>
           </SheetHeader>
           <div className=" px-spacing-4xl overflow-y-auto max-h-[calc(100vh-100px)]">
-            <CreateEditWorkExperienceForm
+            <CreateEditEducationQualificationForm
               setOpen={setOpen}
-              defaultValues={selectedExperience || undefined}
-              onClearSelectedExperience={onClearSelectedExperience}
+              defaultValues={selectedEducation || undefined}
+              onClearSelectedEducation={onClearSelectedEducation}
             />
           </div>
         </SheetContent>

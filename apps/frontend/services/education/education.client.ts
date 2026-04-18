@@ -76,35 +76,47 @@ export function useEducation(id: string) {
 }
 
 // Hook to create a new education
+
 export function useCreateEducation() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: (payload: EducationCreateInput) => createEducation(payload),
-    onSuccess: (response) => {
+  });
+
+  const createEducationAsync = async ({
+    payload,
+    onSuccessCallback,
+  }: {
+    payload: EducationCreateInput;
+    onSuccessCallback?: (data: EducationData) => void;
+  }) => {
+    try {
+      const response = await mutation.mutateAsync(payload);
+
       if (response.success) {
         toast.success(response.message || 'Education created successfully');
         queryClient.invalidateQueries({ queryKey: educationKeys.all });
+        onSuccessCallback?.(response.data as EducationData);
       } else {
         toast.error(response.message);
       }
-    },
-    onError: (error) => {
+    } catch (error: any) {
       toast.error(error.message || 'Failed to create education');
-    },
-  });
+    }
+  };
 
   return {
-    createEducation: mutation.mutateAsync,
-    isLoading: mutation.isPending,
+    createEducation: createEducationAsync,
+    isPending: mutation.isPending,
     error: mutation.error,
   };
 }
 
 // Hook to update an existing education
+
 export function useUpdateEducation() {
   const queryClient = useQueryClient();
-
   const mutation = useMutation({
     mutationFn: ({
       id,
@@ -113,22 +125,35 @@ export function useUpdateEducation() {
       id: string;
       payload: EducationUpdateInput;
     }) => updateEducation(id, payload),
-    onSuccess: (response) => {
+  });
+
+  const updateEducationAsync = async ({
+    id,
+    payload,
+    onSuccessCallback,
+  }: {
+    id: string;
+    payload: EducationUpdateInput;
+    onSuccessCallback?: (data: EducationData) => void;
+  }) => {
+    try {
+      const response = await mutation.mutateAsync({ id, payload });
+
       if (response.success) {
         toast.success(response.message || 'Education updated successfully');
         queryClient.invalidateQueries({ queryKey: educationKeys.all });
+        onSuccessCallback?.(response.data as EducationData);
       } else {
         toast.error(response.message);
       }
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to update education');
-    },
-  });
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update Education');
+    }
+  };
 
   return {
-    updateEducation: mutation.mutateAsync,
-    isLoading: mutation.isPending,
+    updateEducation: updateEducationAsync,
+    isPending: mutation.isPending,
     error: mutation.error,
   };
 }

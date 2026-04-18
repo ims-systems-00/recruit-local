@@ -16,6 +16,7 @@ import {
 import { updateJobProfileSchema } from '@/services/job-profile/job-profile.validation';
 import { useUpdateJobProfile } from '@/services/job-profile/job-profile.client';
 import WorkExperience from './work-experience/work-experience';
+import EducationQualification from './education-qualification/education-qualification';
 
 export default function Profile({
   jobProfileData,
@@ -92,6 +93,12 @@ export default function Profile({
       value: 'work-experience',
       label: 'Work Experience',
       component: <WorkExperience />,
+      editable: false,
+    },
+    {
+      value: 'education-qualification',
+      label: 'Education Qualification',
+      component: <EducationQualification />,
       editable: false,
     },
   ];
