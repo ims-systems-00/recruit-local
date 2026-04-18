@@ -17,6 +17,11 @@ import { updateJobProfileSchema } from '@/services/job-profile/job-profile.valid
 import { useUpdateJobProfile } from '@/services/job-profile/job-profile.client';
 import WorkExperience from './work-experience/work-experience';
 import EducationQualification from './education-qualification/education-qualification';
+import Trainings from './trainings/trainings';
+import TakenTests from './taken-tests/taken-tests';
+import Documents from './documents/documents';
+import Applied from './applied/applied';
+import Saved from './saved/saved';
 
 export default function Profile({
   jobProfileData,
@@ -99,6 +104,37 @@ export default function Profile({
       value: 'education-qualification',
       label: 'Education Qualification',
       component: <EducationQualification />,
+      editable: false,
+    },
+    {
+      value: 'trainings',
+      label: 'Trainings',
+      component: <Trainings />,
+      editable: false,
+    },
+    {
+      value: 'documents',
+      label: 'Documents',
+      component: <Documents />,
+      editable: false,
+    },
+    {
+      value: 'taken-tests',
+      label: 'Taken Tests',
+      component: <TakenTests />,
+      editable: false,
+    },
+
+    {
+      value: 'applied',
+      label: 'Applied',
+      component: <Applied />,
+      editable: false,
+    },
+    {
+      value: 'saved',
+      label: 'Saved',
+      component: <Saved />,
       editable: false,
     },
   ];
