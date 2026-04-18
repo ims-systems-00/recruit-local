@@ -108,7 +108,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state, toggleSidebar } = useSidebar();
 
   const navMain =
-    user?.role === ACCOUNT_TYPE_ENUMS.CANDIDATE
+    user?.type === ACCOUNT_TYPE_ENUMS.CANDIDATE
       ? candidateNavMain
       : recruiterNavMain;
   return (
