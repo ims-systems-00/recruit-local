@@ -56,6 +56,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { useParams } from 'next/navigation';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CheckedState } from '@radix-ui/react-checkbox';
 
 export const EMPLOYMENT_TYPE_OPTIONS = [
   { label: 'Contract', value: EMPLOYMENT_TYPE.CONTRACT },
@@ -110,7 +112,8 @@ export default function CreateEditWorkExperienceForm({
 
   const [openStartDate, setOpenStartDate] = useState(false);
   const [openEndDate, setOpenEndDate] = useState(false);
-
+  const [isCurrentWorkplace, setIsCurrentWorkplace] =
+    useState<CheckedState>(false);
   const {
     register,
     control,
@@ -144,9 +147,7 @@ export default function CreateEditWorkExperienceForm({
           jobProfileId: uid as string,
           employmentType: cleanPayload.employmentType as EMPLOYMENT_TYPE,
           workplace: cleanPayload.workplace as WORKPLACE_ENUMS,
-          startDate: cleanPayload.startDate
-            ? new Date(cleanPayload.startDate as string).toISOString()
-            : undefined,
+          startDate: new Date(cleanPayload.startDate as string).toISOString(),
           endDate: cleanPayload.endDate
             ? new Date(cleanPayload.endDate as string).toISOString()
             : undefined,
@@ -319,6 +320,27 @@ export default function CreateEditWorkExperienceForm({
               </div>
             </div>
 
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="is_current_workplace"
+                checked={isCurrentWorkplace}
+                onCheckedChange={(checked: CheckedState) => {
+                  console.log('checked', checked);
+                  setIsCurrentWorkplace(checked);
+                  if (checked) {
+                    methods.setValue('endDate', undefined);
+                  }
+                }}
+                className=" data-[state=checked]:bg-bg-brand-solid-primary data-[state=checked]:text-text-white data-[state=checked]:border-bg-brand-solid-primary"
+              />
+              <Label
+                htmlFor="is_current_workplace"
+                className=" text-text-gray-secondary text-label-md font-label-md-strong!"
+              >
+                I currently work here
+              </Label>
+            </div>
+
             <div className="space-y-spacing-xs ">
               <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                 Start Date
@@ -384,68 +406,73 @@ export default function CreateEditWorkExperienceForm({
                 )}
               </div>
             </div>
-            <div className="space-y-spacing-xs ">
-              <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                End Date
-              </Label>
-              <div className=" space-y-spacing-sm">
-                <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
-                  <Controller
-                    name="endDate"
-                    control={control}
-                    render={({ field }) => (
-                      <Popover open={openEndDate} onOpenChange={setOpenEndDate}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            id="date"
-                            className="justify-start px-2 border-0 w-full text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
-                          >
-                            {field.value
-                              ? new Date(field.value).toLocaleDateString()
-                              : 'Select date'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-auto overflow-hidden p-0 bg-white"
-                          align="start"
+            {!isCurrentWorkplace && (
+              <div className="space-y-spacing-xs ">
+                <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  End Date
+                </Label>
+                <div className=" space-y-spacing-sm">
+                  <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
+                    <Controller
+                      name="endDate"
+                      control={control}
+                      render={({ field }) => (
+                        <Popover
+                          open={openEndDate}
+                          onOpenChange={setOpenEndDate}
                         >
-                          <Calendar
-                            mode="single"
-                            selected={
-                              field.value ? new Date(field.value) : undefined
-                            }
-                            // defaultMonth={date}
-                            captionLayout="dropdown"
-                            onSelect={(date) => {
-                              field.onChange(date);
-                              setOpenEndDate(false);
-                            }}
-                            className="bg-white! w-[300px]"
-                            classNames={{
-                              selected:
-                                'bg-bg-brand-solid-primary w-10 h-10 rounded-lg text-white text-label-sm',
-                              day: ' w-10 h-10 rounded-lg text-text-gray-secondary text-label-sm hover:bg-bg-brand-solid-primary hover:text-white',
-                              weekday:
-                                'text-text-gray-secondary text-label-sm h-10 w-10 flex items-center justify-center',
-                            }}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                  />
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              id="date"
+                              className="justify-start px-2 border-0 w-full text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
+                            >
+                              {field.value
+                                ? new Date(field.value).toLocaleDateString()
+                                : 'Select date'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-auto overflow-hidden p-0 bg-white"
+                            align="start"
+                          >
+                            <Calendar
+                              mode="single"
+                              selected={
+                                field.value ? new Date(field.value) : undefined
+                              }
+                              // defaultMonth={date}
+                              captionLayout="dropdown"
+                              onSelect={(date) => {
+                                field.onChange(date);
+                                setOpenEndDate(false);
+                              }}
+                              className="bg-white! w-[300px]"
+                              classNames={{
+                                selected:
+                                  'bg-bg-brand-solid-primary w-10 h-10 rounded-lg text-white text-label-sm',
+                                day: ' w-10 h-10 rounded-lg text-text-gray-secondary text-label-sm hover:bg-bg-brand-solid-primary hover:text-white',
+                                weekday:
+                                  'text-text-gray-secondary text-label-sm h-10 w-10 flex items-center justify-center',
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      )}
+                    />
 
-                  <InputGroupAddon>
-                    <CalendarDays className=" text-fg-gray-tertiary" />
-                  </InputGroupAddon>
-                </InputGroup>
-                {errors.endDate && (
-                  <p className="text-xs text-text-error-primary">
-                    {errors.endDate.message}
-                  </p>
-                )}
+                    <InputGroupAddon>
+                      <CalendarDays className=" text-fg-gray-tertiary" />
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {errors.endDate && (
+                    <p className="text-xs text-text-error-primary">
+                      {errors.endDate.message}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
           <div className="flex py-spacing-2xl justify-end mt-spacing-4xl gap-spacing-sm">
             <Button

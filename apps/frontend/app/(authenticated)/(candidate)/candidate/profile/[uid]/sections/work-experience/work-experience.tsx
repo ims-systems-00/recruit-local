@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 
 import { Plus } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import WorkExperienceItem from './work-experience-item';
 import {
   Sheet,
@@ -11,18 +11,26 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import CreateEditWorkExperienceForm from './create-edit-work-experience-form';
-import {
-  ExperienceData,
-  useExperiences,
-  useHardDeleteExperience,
-} from '@/services/experience';
+import { ExperienceData, useExperiences } from '@/services/experience';
+import WorkExperienceSkeleton from './work-experience-skeleton';
+import PaginationComponent from '../pagination-component';
+import EmptyBox from '@/components/empty-box';
 
 export default function WorkExperience() {
   const [open, setOpen] = useState(false);
   const [selectedExperience, setSelectedExperience] =
     useState<ExperienceData | null>(null);
-  const { experiences, isLoading } = useExperiences();
-  const { hardDeleteExperience, isPending } = useHardDeleteExperience();
+  const [page, setPage] = useState(1);
+
+  const filters = useMemo(
+    () => ({
+      page,
+      limit: 10,
+    }),
+    [page],
+  );
+
+  const { experiences, isLoading, pagination } = useExperiences(filters);
 
   const onClearSelectedExperience = () => {
     setSelectedExperience(null);
@@ -46,18 +54,45 @@ export default function WorkExperience() {
           </Button>
         </div>
         <div className=" space-y-spacing-2xl">
-          {experiences?.map((experience) => (
-            <WorkExperienceItem
-              key={experience._id}
-              experience={experience}
-              onEdit={() => {
-                setSelectedExperience(experience);
-                setOpen(true);
-              }}
-              onDelete={() => hardDeleteExperience(experience._id)}
-            />
-          ))}
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <WorkExperienceSkeleton key={index} />
+            ))
+          ) : Boolean(experiences?.length) ? (
+            experiences?.map((experience) => (
+              <WorkExperienceItem
+                key={experience._id}
+                experience={experience}
+                onEdit={() => {
+                  setSelectedExperience(experience);
+                  setOpen(true);
+                }}
+              />
+            ))
+          ) : (
+            <EmptyBox
+              title="No experience added yet"
+              description="Currently, there are no work experience added yet."
+            >
+              <Button
+                disabled={isLoading}
+                onClick={() => setOpen(true)}
+                className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+              >
+                <Plus />
+                <span>Create New</span>
+              </Button>
+            </EmptyBox>
+          )}
         </div>
+        {Boolean(experiences?.length) && pagination?.totalPages && (
+          <PaginationComponent
+            meta={pagination}
+            onPageChange={(pageNum) => {
+              setPage(pageNum);
+            }}
+          />
+        )}
       </div>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent className=" bg-white min-w-[400px] max-w-[400px]">
