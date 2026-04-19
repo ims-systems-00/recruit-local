@@ -10,8 +10,6 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 export default function CardJobItem({ job }: { job: JobData }) {
-  console.log('job', job);
-
   return (
     <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs">
       <div className=" p-spacing-4xl space-y-spacing-4xl">
@@ -66,7 +64,7 @@ export default function CardJobItem({ job }: { job: JobData }) {
         </span>
         <div className=" flex items-center gap-spacing-lg">
           <Link href={`/candidate/job/${job?._id}/apply`}>
-            <Button className=" cursor-pointer bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
+            <Button className=" cursor-pointer hover:bg-bg-gray-soft-primary bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
               <Pointer />
               <span>Apply Now</span>
             </Button>

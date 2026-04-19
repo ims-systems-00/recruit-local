@@ -85,8 +85,6 @@ export default function Profile({
     });
   };
 
-  console.log('errors', errors);
-
   const tabs = [
     {
       value: 'about',
