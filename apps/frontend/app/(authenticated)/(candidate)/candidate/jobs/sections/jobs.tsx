@@ -13,12 +13,15 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/services/user/user.client';
 import JobLists from './job-lists';
 import { useDebounce } from '@/hooks/useDebounce';
+import FilterJobs from './filter-jobs';
 
 export default function Jobs() {
   const { user } = useAuth();
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+
+  const [isFilterJobsOpen, setIsFilterJobsOpen] = useState(false);
 
   const debouncedSearch = useDebounce(search, 500);
 
@@ -53,6 +56,13 @@ export default function Jobs() {
     },
   ];
 
+  const onFilterJobs = () => {
+    setIsFilterJobsOpen((prev) => !prev);
+  };
+
+  if (isFilterJobsOpen)
+    return <FilterJobs onClose={() => setIsFilterJobsOpen(false)} />;
+
   return (
     <div className=" p-spacing-4xl">
       <div className=" flex justify-between items-center gap-spacing-2xl">
@@ -79,7 +89,10 @@ export default function Jobs() {
               <Search className=" text-fg-gray-tertiary" />
             </InputGroupAddon>
           </InputGroup>
-          <Button className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!">
+          <Button
+            onClick={onFilterJobs}
+            className=" cursor-pointer bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+          >
             <Filter />
             <span>Filter Jobs</span>
           </Button>

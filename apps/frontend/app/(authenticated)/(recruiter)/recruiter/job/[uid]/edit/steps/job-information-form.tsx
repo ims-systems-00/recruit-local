@@ -62,47 +62,16 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useUpdateJob } from '@/services/jobs/jobs.client';
-import { JobData } from '@/services/jobs/job.type';
+import {
+  EMPLOYMENT_TYPE_OPTIONS,
+  JobData,
+  PERIOD_OPTIONS,
+  WORKING_DAYS_OPTIONS,
+  WORKPLACE_OPTIONS,
+} from '@/services/jobs/job.type';
 import LocationSelector, {
   LocationValue,
 } from '@/components/location-selector';
-
-export const EMPLOYMENT_TYPE_OPTIONS = [
-  { label: 'Full Time', value: EMPLOYMENT_TYPE.FULL_TIME },
-  { label: 'Part Time', value: EMPLOYMENT_TYPE.PART_TIME },
-  { label: 'Contract', value: EMPLOYMENT_TYPE.CONTRACT },
-  { label: 'Freelance', value: EMPLOYMENT_TYPE.FREELANCE },
-  { label: 'Intern', value: EMPLOYMENT_TYPE.INTERN },
-];
-
-export const WORKPLACE_OPTIONS = [
-  { label: 'Remote', value: WORKPLACE_ENUMS.REMOTE },
-  { label: 'Onsite', value: WORKPLACE_ENUMS.ONSITE },
-  { label: 'Hybrid', value: WORKPLACE_ENUMS.HYBRID },
-];
-
-export const SALARY_MODE_OPTIONS = [
-  { label: 'Negotiable', value: 'negotiable' },
-  { label: 'Fixed', value: 'fixed' },
-];
-
-export const WORKING_DAYS_OPTIONS = [
-  { label: 'Monday', value: WORKING_DAYS_ENUMS.MONDAY },
-  { label: 'Tuesday', value: WORKING_DAYS_ENUMS.TUESDAY },
-  { label: 'Wednesday', value: WORKING_DAYS_ENUMS.WEDNESDAY },
-  { label: 'Thursday', value: WORKING_DAYS_ENUMS.THURSDAY },
-  { label: 'Friday', value: WORKING_DAYS_ENUMS.FRIDAY },
-  { label: 'Saturday', value: WORKING_DAYS_ENUMS.SATURDAY },
-  { label: 'Sunday', value: WORKING_DAYS_ENUMS.SUNDAY },
-];
-
-export const PERIOD_OPTIONS = [
-  { label: 'Hourly', value: PERIOD_ENUMS.HOURLY },
-  { label: 'Daily', value: PERIOD_ENUMS.DAILY },
-  { label: 'Weekly', value: PERIOD_ENUMS.WEEKLY },
-  { label: 'Monthly', value: PERIOD_ENUMS.MONTHLY },
-  { label: 'Yearly', value: PERIOD_ENUMS.YEARLY },
-];
 
 export default function JobInformationForm({
   next,
