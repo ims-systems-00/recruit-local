@@ -81,7 +81,7 @@ export default function Jobs() {
           </InputGroup>
           <Button className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!">
             <Filter />
-            <span>Filter</span>
+            <span>Filter Jobs</span>
           </Button>
         </div>
       </div>

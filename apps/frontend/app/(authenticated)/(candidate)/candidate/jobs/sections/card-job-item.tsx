@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Bookmark, Pointer } from 'lucide-react';
+import { Bookmark, Loader2, Pointer } from 'lucide-react';
 import { JobData } from '@/services/jobs/job.type';
 import { cn, formatDate } from '@/lib/utils';
 import DefaultImgForJob from '@/public/images/job_default.png';
@@ -8,8 +8,16 @@ import DefaultImgForJob from '@/public/images/job_default.png';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useCreateFavourite } from '@/services/favourite/favourite.client';
 
 export default function CardJobItem({ job }: { job: JobData }) {
+  const { createFavourite, isPending } = useCreateFavourite();
+  const onAddFavourite = async () => {
+    await createFavourite({
+      itemId: job._id,
+      itemType: 'jobs',
+    });
+  };
   return (
     <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs">
       <div className=" p-spacing-4xl space-y-spacing-4xl">
@@ -69,8 +77,12 @@ export default function CardJobItem({ job }: { job: JobData }) {
               <span>Apply Now</span>
             </Button>
           </Link>
-          <Button className="cursor-pointer hover:bg-bg-gray-soft-primary w-9! p-spacing-0! bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
-            <Bookmark />
+          <Button
+            onClick={onAddFavourite}
+            disabled={isPending}
+            className="cursor-pointer hover:bg-bg-gray-soft-primary w-9! p-spacing-0! bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!"
+          >
+            {isPending ? <Loader2 className="animate-spin" /> : <Bookmark />}
           </Button>
         </div>
       </div>
