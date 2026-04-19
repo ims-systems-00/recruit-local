@@ -1,0 +1,118 @@
+import * as yup from 'yup';
+
+import { objectIdSchema, paginationSchema } from '@/services/shared';
+
+export const awsStorageSchema = yup.object({
+  Name: yup.string().required('Name is required'),
+  Bucket: yup.string().required('Bucket is required'),
+  Key: yup.string().required('Key is required'),
+});
+
+// --- CORE DATA MODEL ---
+export const applicationSchema = yup.object({
+  _id: objectIdSchema.required(),
+  jobId: objectIdSchema.required(),
+  jobProfileId: objectIdSchema.required(),
+  coverLetter: yup.string().nullable().optional(),
+  resumeStorage: awsStorageSchema.nullable().notRequired().default(undefined),
+  caseStudyStorage: yup.array().of(awsStorageSchema).nullable().optional(),
+  answers: yup
+    .array()
+    .of(
+      yup.object({
+        queryId: objectIdSchema.required('Query ID is required'),
+        answer: yup.mixed().required('Answer is required'),
+      }),
+    )
+    .nullable()
+    .optional(),
+  portfolioUrl: yup.string().url().nullable().optional(),
+  currentSalary: yup.number().nullable().optional(),
+  expectedSalary: yup.number().nullable().optional(),
+  feedback: yup.string().nullable().optional(),
+  appliedAt: yup.string().nullable().optional(),
+});
+
+// --- INPUT SCHEMAS (Matches Backend Joi) ---
+export const idParamsSchema = yup.object({
+  id: objectIdSchema.required('ID is required'),
+});
+
+export const createApplicationSchema = yup.object({
+  jobId: yup.string().required('Job ID is required'),
+  jobProfileId: yup.string().required('Job Profile ID is required'),
+  coverLetter: yup.string().optional(),
+  resumeStorage: awsStorageSchema.nullable().notRequired().default(undefined),
+  caseStudyStorage: yup.array().of(awsStorageSchema).optional(),
+  answers: yup
+    .array()
+    .of(
+      yup.object({
+        queryId: objectIdSchema.required('Query ID is required'),
+        answer: yup.mixed().required('Answer is required'),
+      }),
+    )
+    .optional(),
+  portfolioUrl: yup.string().url().optional(),
+  currentSalary: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .typeError('Current Salary must be a number')
+    .optional(),
+  expectedSalary: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .typeError('Expected Salary must be a number')
+    .optional(),
+  feedback: yup.string().optional(),
+  appliedAt: yup.string().optional(),
+});
+
+export const updateApplicationSchema = yup.object({
+  statusId: yup.string().required('Status is required'),
+  coverLetter: yup.string().optional(),
+  resumeStorage: awsStorageSchema.nullable().notRequired().default(undefined),
+  caseStudyStorage: yup.array().of(awsStorageSchema).optional(),
+  answers: yup
+    .array()
+    .of(
+      yup.object({
+        queryId: objectIdSchema.required('Query ID is required'),
+        answer: yup.mixed().required('Answer is required'),
+      }),
+    )
+    .optional(),
+  portfolioUrl: yup.string().url().optional(),
+  currentSalary: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .typeError('Current Salary must be a number')
+    .optional(),
+  expectedSalary: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === '' ? undefined : value,
+    )
+    .typeError('Salary must be a number')
+    .optional(),
+  feedback: yup.string().optional(),
+  appliedAt: yup.string().optional(),
+});
+
+// --- BACKEND RESPONSE ENVELOPES ---
+export const applicationListResponseSchema = yup.object({
+  applications: yup.array().of(applicationSchema).required(),
+  pagination: paginationSchema.required(),
+  message: yup.string().optional(),
+});
+
+export const applicationItemResponseSchema = yup.object({
+  application: applicationSchema.required(),
+  message: yup.string().optional(),
+});

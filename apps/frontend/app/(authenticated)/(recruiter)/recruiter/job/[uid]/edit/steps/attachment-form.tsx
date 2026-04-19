@@ -16,9 +16,17 @@ export type UploadedFile = {
 
 type AttachmentFormProps = {
   onUploadFile: (files: UploadedFile[]) => void;
+  multiple?: boolean;
+  accept?: Record<string, string[]>;
 };
 
-const AttachmentForm = ({ onUploadFile }: AttachmentFormProps) => {
+const AttachmentForm = ({
+  onUploadFile,
+  multiple = true,
+  accept = {
+    'image/*': ['.jpg', '.png', '.svg'],
+  },
+}: AttachmentFormProps) => {
   const [loading, setLoading] = useState(false);
 
   const { getUploadUrl, isLoading } = useGetUploadUrl();
@@ -70,6 +78,8 @@ const AttachmentForm = ({ onUploadFile }: AttachmentFormProps) => {
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     disabled: loading,
+    multiple,
+    accept,
   });
 
   const isDisabled = isLoading || isUploading || loading;
@@ -91,9 +101,12 @@ const AttachmentForm = ({ onUploadFile }: AttachmentFormProps) => {
           <span className=" text-text-brand-secondary font-label-sm-strong!">
             Drag & Drop
           </span>{' '}
-          or Choose File to Upload
+          or Choose {multiple ? 'Files' : 'File'} to Upload
         </p>
-        <p>Supported Format: SVG, JPG, PNG (up to 10mb)</p>
+        <p>
+          Supported Format:{' '}
+          {Object.values(accept).flat().join(', ').toUpperCase()}
+        </p>
       </div>
     </div>
   );

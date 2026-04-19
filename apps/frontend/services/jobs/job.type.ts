@@ -16,6 +16,7 @@ export type StorageInformation = {
 };
 
 export type AdditionalQuery = {
+  _id?: string;
   question: string;
   type: QUERY_TYPE_ENUMS;
   options?: string[];

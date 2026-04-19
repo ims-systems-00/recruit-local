@@ -17,6 +17,7 @@ export interface QueryOption {
 }
 
 export interface QueryCard {
+  _id?: string;
   id: string;
   type: QUERY_TYPE_ENUMS;
   options: QueryOption[];

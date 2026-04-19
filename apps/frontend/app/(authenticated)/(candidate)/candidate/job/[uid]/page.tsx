@@ -10,6 +10,8 @@ import { getJobById } from '@/services/jobs/jobs.server';
 import { formatDate } from '@/lib/utils';
 import JobDescription from './job-description/job-description';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Bookmark, Pointer, Share2 } from 'lucide-react';
 
 type PageProps = {
   params: Promise<{ uid: string }>;
@@ -50,13 +52,29 @@ export default async function JobDetailsPage({ params }: PageProps) {
       </div>
 
       <div className=" p-spacing-4xl space-y-spacing-4xl">
-        <div className=" space-y-spacing-2xs">
-          <h3 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
-            {jobData?.title}
-          </h3>
-          <p className=" capitalize text-label-sm text-text-gray-tertiary">
-            Last Updated {formatDate(jobData?.updatedAt)}
-          </p>
+        <div className=" flex justify-between items-center gap-spacing-4xl">
+          <div className=" space-y-spacing-2xs">
+            <h3 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
+              {jobData?.title}
+            </h3>
+            <p className=" capitalize text-label-sm text-text-gray-tertiary">
+              Last Updated {formatDate(jobData?.updatedAt)}
+            </p>
+          </div>
+          <div className=" flex items-center gap-spacing-lg">
+            <Link href={`/candidate/job/${uid}/apply`}>
+              <Button className=" cursor-pointer bg-bg-brand-solid-primary h-9 text-text-white! rounded-lg text-label-sm font-label-sm-strong!">
+                <Pointer />
+                <span>Apply to this job</span>
+              </Button>
+            </Link>
+            <Button className="cursor-pointer w-9! p-spacing-0! bg-bg-gray-soft-primary hover:bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
+              <Bookmark />
+            </Button>
+            <Button className="cursor-pointer w-9! p-spacing-0! bg-bg-gray-soft-primary hover:bg-bg-gray-soft-primary hover:border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
+              <Share2 />
+            </Button>
+          </div>
         </div>
         <div>
           <JobDescription job={jobData} />

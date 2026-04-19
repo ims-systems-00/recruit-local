@@ -65,11 +65,13 @@ export default function CardJobItem({ job }: { job: JobData }) {
           Applied {job?.totalApplications || 0}
         </span>
         <div className=" flex items-center gap-spacing-lg">
-          <Button className=" bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
-            <Pointer />
-            <span>Apply Now</span>
-          </Button>
-          <Button className=" w-9! p-spacing-0! bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
+          <Link href={`/candidate/job/${job?._id}/apply`}>
+            <Button className=" cursor-pointer bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
+              <Pointer />
+              <span>Apply Now</span>
+            </Button>
+          </Link>
+          <Button className="cursor-pointer hover:bg-bg-gray-soft-primary w-9! p-spacing-0! bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
             <Bookmark />
           </Button>
         </div>
