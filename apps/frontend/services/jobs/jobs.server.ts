@@ -9,6 +9,7 @@ import {
 } from './job.type';
 import { jobIdParamsSchema, JobItemBackendResponse } from './job.validation';
 import { MultiStepJobFormValues } from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/job.schema';
+import qs from 'qs';
 
 type SuccessResponse<T = any> = {
   success: true;
@@ -49,7 +50,13 @@ export async function getJobs(
         limit: params?.limit || 10,
         search: params?.search,
         status: params?.status,
+        employmentType: params?.employmentType,
+        workplace: params?.workplace,
+        salaryMode: params?.salaryMode,
+        period: params?.period,
       },
+      paramsSerializer: (params) =>
+        qs.stringify(params, { arrayFormat: 'repeat' }),
     });
     // const backendResponse = await postListResponseSchema.validate(res.data, {
     //   stripUnknown: true,

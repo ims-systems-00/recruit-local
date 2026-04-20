@@ -40,11 +40,10 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
     defaultValues: {
       jobId: job._id,
       jobProfileId: uid as string,
-      //   answers: job?.additionalQueries?.map((query) => ({
-      //     queryId: crypto.randomUUID(),
-      //     // queryId: query._id,
-      //     answer: query.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE ? [] : '',
-      //   })),
+      answers: job?.additionalQueries?.map((query) => ({
+        queryId: query._id,
+        answer: query.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE ? [] : '',
+      })),
     },
   });
 
@@ -191,7 +190,7 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
                 </div>
               </div>
             </div>
-            {/* {Boolean(job?.additionalQueries?.length) && (
+            {Boolean(job?.additionalQueries?.length) && (
               <div className="space-y-spacing-2xl">
                 <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
                   Additional Queries
@@ -207,7 +206,7 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
                   ))}
                 </div>
               </div>
-            )} */}
+            )}
 
             <div className="space-y-spacing-2xl">
               <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">

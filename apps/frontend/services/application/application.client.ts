@@ -18,6 +18,7 @@ import type {
   ApplicationListResponse,
   ApplicationListFilters,
 } from './application.type';
+import { useRouter } from 'next/navigation';
 
 // --- QUERY KEYS ---
 export const applicationKeys = {
@@ -72,13 +73,15 @@ export function useApplication(id: string) {
 
 export function useCreateApplication() {
   const queryClient = useQueryClient();
-
+  const router = useRouter();
   const mutation = useMutation({
     mutationFn: (payload: ApplicationCreateInput) => createApplication(payload),
     onSuccess: (response) => {
       if (response.success) {
         toast.success(response.message || 'Application created successfully');
         queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['jobs'] });
+        router.push(`/candidate/jobs`);
       } else {
         toast.error(response.message);
       }

@@ -13,6 +13,11 @@ export type JobListFilters = {
   limit?: number;
   search?: string;
   status?: string;
+
+  employmentType?: string[];
+  workplace?: string[];
+  salaryMode?: string[];
+  period?: string[];
 };
 
 export type StorageInformation = {

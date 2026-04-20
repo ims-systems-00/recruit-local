@@ -19,6 +19,7 @@ import {
   ComboboxItem,
   ComboboxList,
   ComboboxValue,
+  useComboboxAnchor,
 } from '@/components/ui/combobox';
 
 import { QUERY_TYPE_ENUMS } from '@rl/types';
@@ -33,6 +34,8 @@ export default function AdditionalQueryField({
   index: number;
   control: any;
 }) {
+  console.log(card);
+  const multipleChoiceAnchor = useComboboxAnchor();
   return (
     <div className="space-y-2">
       {/* Label */}
@@ -50,7 +53,7 @@ export default function AdditionalQueryField({
             <textarea
               {...field}
               placeholder="Write your thoughts here"
-              className="w-full h-24 border rounded-lg px-3 py-2"
+              className="w-full h-24 border rounded-lg px-3 py-2 focus:outline-none focus:ring-0"
             />
           )}
         />
@@ -65,7 +68,7 @@ export default function AdditionalQueryField({
             <input
               {...field}
               placeholder="Write your thoughts here"
-              className="w-full h-10 border rounded-lg px-3"
+              className="w-full h-10 border rounded-lg px-3 focus:outline-none focus:ring-0"
             />
           )}
         />
@@ -78,14 +81,14 @@ export default function AdditionalQueryField({
           name={`answers.${index}.answer`}
           render={({ field }) => (
             <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger className="h-10 w-full">
+              <SelectTrigger className="min-h-10 h-10 w-full">
                 <SelectValue placeholder="Select an option" />
               </SelectTrigger>
 
-              <SelectContent>
-                {card.options?.map((opt: any) => (
-                  <SelectItem key={opt.id} value={opt.text}>
-                    {opt.text}
+              <SelectContent className="bg-white">
+                {card.options?.map((opt: any, index: number) => (
+                  <SelectItem key={index} value={opt}>
+                    {opt}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -106,7 +109,10 @@ export default function AdditionalQueryField({
               value={field.value || []}
               onValueChange={field.onChange}
             >
-              <ComboboxChips className="w-full min-h-10 border rounded-lg px-2">
+              <ComboboxChips
+                ref={multipleChoiceAnchor}
+                className="w-full min-h-10 border rounded-lg px-2 focus:outline-none focus:ring-0"
+              >
                 <ComboboxValue>
                   {(values: string[]) => (
                     <>
@@ -121,11 +127,14 @@ export default function AdditionalQueryField({
                 </ComboboxValue>
               </ComboboxChips>
 
-              <ComboboxContent>
+              <ComboboxContent
+                anchor={multipleChoiceAnchor}
+                className="bg-white"
+              >
                 <ComboboxList>
-                  {(item) => (
-                    <ComboboxItem key={item.id} value={item.text}>
-                      {item.text}
+                  {(item: any, index: number) => (
+                    <ComboboxItem key={index} value={item}>
+                      {item}
                     </ComboboxItem>
                   )}
                 </ComboboxList>
