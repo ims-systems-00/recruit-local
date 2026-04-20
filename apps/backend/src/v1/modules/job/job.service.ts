@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Types, ClientSession } from "mongoose";
 import { Job } from "../../../models";
 import { getOne as getTenant } from "../tenant/tenant.service";

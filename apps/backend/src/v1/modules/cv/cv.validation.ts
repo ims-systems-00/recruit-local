@@ -48,7 +48,7 @@ const interestSchema = Joi.object({
 });
 
 export const createBodySchema = Joi.object({
-  title: Joi.string().required().label("CV Title").default("Untitled CV"),
+  title: Joi.string().optional().label("CV Title").default("Untitled CV"),
   jobProfileId: Joi.string().custom(objectIdValidation).required().label("Job Profile ID"),
 
   summary: Joi.string().optional().label("Summary"),
@@ -56,7 +56,9 @@ export const createBodySchema = Joi.object({
   email: Joi.string().email().optional().label("Email"),
   phone: Joi.string().optional().label("Phone"),
   address: Joi.string().optional().label("Address"),
+
   imageStorage: awsStorageSchema.optional(),
+  resumeStorage: awsStorageSchema.optional(),
 
   // Arrays (Optional on create, but must follow schema if provided)
   experience: Joi.array().items(experienceSchema).optional().label("Experience"),
@@ -67,6 +69,10 @@ export const createBodySchema = Joi.object({
   // Settings
   templateId: Joi.string().optional().label("Template ID"),
   colorProfile: Joi.string().optional().label("Color Profile"),
+  status: Joi.string()
+    .valid(...Object.values(CV_STATUS_ENUM))
+    .optional()
+    .label("CV Status"),
 });
 
 export const updateBodySchema = Joi.object({
@@ -76,10 +82,11 @@ export const updateBodySchema = Joi.object({
   email: Joi.string().email().optional().allow("").label("Email"),
   phone: Joi.string().optional().allow("").label("Phone"),
   address: Joi.string().optional().allow("").label("Address"),
-  imageStorage: awsStorageSchema.optional(),
+
+  imageStorage: awsStorageSchema.optional().allow(null),
+  resumeStorage: awsStorageSchema.optional().allow(null),
 
   // In the "Single Update" approach, passing these arrays replaces the existing ones.
-  // Validation ensures that if you send the array, every item inside is valid.
   experience: Joi.array().items(experienceSchema).optional(),
   education: Joi.array().items(educationSchema).optional(),
   skills: Joi.array().items(skillSchema).optional(),

@@ -4,7 +4,7 @@ import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { cvProjectQuery } from "./cv.query";
 import { NotFoundException } from "../../../common/helper";
 import { CV, CVInput } from "../../../models/cv.model";
-import { IListParams, ListQueryParams } from "@rl/types";
+import { CV_STATUS_ENUM, IListParams, ListQueryParams } from "@rl/types";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { VISIBILITY_ENUM } from "@rl/types";
@@ -16,7 +16,10 @@ type ICVQueryParams = ListQueryParams<CVInput>;
 
 export interface ICVUpdateParams {
   query: ICVQueryParams;
-  payload: Partial<CVInput> & { imageStorage?: AwsStorageTemplate };
+  payload: Partial<CVInput> & {
+    imageStorage?: AwsStorageTemplate;
+    resumeStorage?: AwsStorageTemplate; // Added resumeStorage
+  };
 }
 
 export interface ICVGetParams {
@@ -24,7 +27,10 @@ export interface ICVGetParams {
 }
 
 export interface ICVCreateParams {
-  payload: CVInput & { imageStorage?: AwsStorageTemplate };
+  payload: CVInput & {
+    imageStorage?: AwsStorageTemplate;
+    resumeStorage?: AwsStorageTemplate; // Added resumeStorage
+  };
 }
 
 export const list = ({ query = {}, options }: IListCVParams) => {
@@ -62,8 +68,13 @@ export const create = async ({ payload }: ICVCreateParams) => {
   // 1. Pre-generate the CV ID
   const cvId = new Types.ObjectId();
   let imageId = null;
+  let resumeId = null;
 
-  // 2. Intercept AWS storage data and create the FileMedia document
+  if (payload.resumeStorage && !payload.status) {
+    payload.status = CV_STATUS_ENUM.PUBLISHED;
+  }
+
+  // 2. Intercept AWS storage data and create the FileMedia document for Image
   if (payload.imageStorage) {
     const fileMedia = await FileMediaService.create({
       payload: {
@@ -76,12 +87,27 @@ export const create = async ({ payload }: ICVCreateParams) => {
     imageId = fileMedia._id;
   }
 
-  const { imageStorage, ...cleanPayload } = payload;
+  // 3. Intercept AWS storage data and create the FileMedia document for Resume
+  if (payload.resumeStorage) {
+    const fileMedia = await FileMediaService.create({
+      payload: {
+        collectionName: modelNames.CV,
+        collectionDocument: cvId,
+        storageInformation: payload.resumeStorage,
+        visibility: VISIBILITY_ENUM.PRIVATE, // Resumes are typically private
+      },
+    });
+    resumeId = fileMedia._id;
+  }
+
+  // 4. Strip raw AWS data from payload
+  const { imageStorage, resumeStorage, ...cleanPayload } = payload;
 
   let cv = new CV({
     ...cleanPayload,
     _id: cvId,
     imageId: imageId,
+    resumeId: resumeId,
   });
 
   cv = await cv.save();
@@ -93,10 +119,10 @@ export const update = async ({ query, payload }: ICVUpdateParams) => {
 
   const cv = await getOne({ query: sanitizedQuery });
   let updatedImageId = cv.imageId;
+  let updatedResumeId = cv.resumeId;
 
-  // 2. If a new image is provided, swap it out
+  // 1. Handle Image Update
   if (payload.imageStorage) {
-    // A. Create the new FileMedia document
     const newFileMedia = await FileMediaService.create({
       payload: {
         collectionName: modelNames.CV,
@@ -108,7 +134,6 @@ export const update = async ({ query, payload }: ICVUpdateParams) => {
 
     updatedImageId = newFileMedia._id;
 
-    // B. Delete the old image so it doesn't waste S3 space
     if (cv.imageId) {
       try {
         await FileMediaService.hardDelete({
@@ -120,8 +145,32 @@ export const update = async ({ query, payload }: ICVUpdateParams) => {
     }
   }
 
+  // 2. Handle Resume Update
+  if (payload.resumeStorage) {
+    const newFileMedia = await FileMediaService.create({
+      payload: {
+        collectionName: modelNames.CV,
+        collectionDocument: cv._id,
+        storageInformation: payload.resumeStorage,
+        visibility: VISIBILITY_ENUM.PRIVATE,
+      },
+    });
+
+    updatedResumeId = newFileMedia._id;
+
+    if (cv.resumeId) {
+      try {
+        await FileMediaService.hardDelete({
+          query: { _id: cv.resumeId.toString() },
+        });
+      } catch (error) {
+        console.error(`Failed to delete old resume ${cv.resumeId} for CV ${cv._id}`, error);
+      }
+    }
+  }
+
   // 3. Strip raw AWS data
-  const { imageStorage, ...cleanPayload } = payload;
+  const { imageStorage, resumeStorage, ...cleanPayload } = payload;
 
   const updatedCV = await CV.findOneAndUpdate(
     { _id: cv._id },
@@ -129,6 +178,7 @@ export const update = async ({ query, payload }: ICVUpdateParams) => {
       $set: {
         ...cleanPayload,
         imageId: updatedImageId,
+        resumeId: updatedResumeId,
       },
     },
     { new: true }
@@ -151,13 +201,19 @@ export const hardDelete = async ({ query }: ICVGetParams) => {
   const cv = await getOneSoftDeleted({ query: sanitizedQuery });
 
   // Delegate S3 deletion to the FileMediaService
-  if (cv.imageId) {
+  const filesToDelete: Types.ObjectId[] = [];
+
+  if (cv.imageId) filesToDelete.push(cv.imageId);
+  if (cv.resumeId) filesToDelete.push(cv.resumeId);
+
+  // Clean up all related files in S3 / FileMedia Service
+  for (const fileId of filesToDelete) {
     try {
       await FileMediaService.hardDelete({
-        query: { _id: cv.imageId.toString() },
+        query: { _id: fileId.toString() },
       });
     } catch (error) {
-      console.error("Failed to delete attached FileMedia for CV:", error);
+      console.error(`Failed to delete attached FileMedia ${fileId} for CV ${cv._id}:`, error);
     }
   }
 

@@ -9,7 +9,7 @@ import { IBaseDoc } from "./interfaces/base.interface";
 import { IExperience, IEducation, ISkill, IInterest, CV_STATUS_ENUM } from "@rl/types";
 
 export interface CVInput extends IUserOwnedInput, JobProfileInput {
-  title: string;
+  title?: string;
   summary?: string;
   experience?: IExperience[];
   education?: IEducation[];
@@ -23,6 +23,7 @@ export interface CVInput extends IUserOwnedInput, JobProfileInput {
   templateId?: string;
   colorProfile?: string;
   status: CV_STATUS_ENUM;
+  resumeId?: Types.ObjectId;
 }
 
 export interface ICVDoc extends CVInput, ISoftDeleteDoc, IBaseDoc {
@@ -75,7 +76,7 @@ const interestSchema = new Schema<IInterest>({
 
 const cvSchema = new Schema<ICVDoc>(
   {
-    title: { type: String, required: true },
+    title: { type: String },
     summary: { type: String },
 
     // Using Sub-Schemas instead of generic Array
@@ -92,11 +93,14 @@ const cvSchema = new Schema<ICVDoc>(
     templateId: { type: String },
     colorProfile: { type: String },
     status: { type: String, enum: Object.values(CV_STATUS_ENUM), default: CV_STATUS_ENUM.DRAFT },
+    resumeId: { type: Schema.Types.ObjectId, ref: modelNames.FILE_MEDIA },
   },
   {
     timestamps: true,
   }
 );
+
+cvSchema.index({ fileId: 1 });
 
 // --- Plugins ---
 
