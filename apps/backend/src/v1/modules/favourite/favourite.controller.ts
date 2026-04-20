@@ -2,7 +2,6 @@ import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 import * as favouriteService from "./favourite.service";
-import { result } from "lodash";
 
 export const list = async ({ req }: ControllerParams) => {
   const filter = new MongoQuery(req.query, {
