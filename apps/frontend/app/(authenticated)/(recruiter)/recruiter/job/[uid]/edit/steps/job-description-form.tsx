@@ -86,8 +86,6 @@ export default function JobDescriptionForm({
     },
   });
 
-  console.log('defaultValues', defaultValues);
-
   const {
     register,
     control,
@@ -135,7 +133,6 @@ export default function JobDescriptionForm({
       id: defaultValues._id,
       data: cleanPayload,
       onSuccessNext: (newData) => {
-        console.log('newData', newData);
         next(newData);
       },
     });
@@ -145,8 +142,6 @@ export default function JobDescriptionForm({
     const data = methods.getValues();
     prev(data as JobData);
   };
-
-  console.log('attachments', attachments);
 
   const handleRemoveAttachment = async (item: UploadedFile) => {
     try {
@@ -166,8 +161,6 @@ export default function JobDescriptionForm({
       console.error(err);
     }
   };
-
-  console.log('attachments', attachments);
 
   return (
     <FormProvider {...methods}>

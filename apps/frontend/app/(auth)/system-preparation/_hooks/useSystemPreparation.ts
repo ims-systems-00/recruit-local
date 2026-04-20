@@ -13,8 +13,6 @@ export const useSystemPreparation = () => {
 
   const userType = user?.type;
 
-  console.log('user', user);
-
   useEffect(() => {
     if (!isUserLoading && user?._id) {
       startTransition(() => {

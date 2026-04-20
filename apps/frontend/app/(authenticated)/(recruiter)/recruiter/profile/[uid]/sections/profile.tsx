@@ -56,8 +56,6 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
     mode: 'onSubmit',
   });
 
-  console.log('tenantDetails', tenantDetails);
-
   const {
     register,
     control,

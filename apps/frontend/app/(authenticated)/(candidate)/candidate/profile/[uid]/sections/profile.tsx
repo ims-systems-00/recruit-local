@@ -54,8 +54,6 @@ export default function Profile({
     mode: 'onSubmit',
   });
 
-  console.log('jobProfileDetails', jobProfileDetails);
-
   const {
     register,
     control,

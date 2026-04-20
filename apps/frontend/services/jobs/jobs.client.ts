@@ -59,7 +59,7 @@ export function useUpdateJob() {
 
       if (response.success) {
         toast.success(response.message || 'Job updated successfully');
-        onSuccessNext?.(data as Partial<JobData>);
+        onSuccessNext?.(response.data as Partial<JobData>);
         queryClient.invalidateQueries({ queryKey: ['jobs'] });
       } else {
         toast.error(response.message);
@@ -83,7 +83,6 @@ export function useCreateJob() {
   const mutation = useMutation({
     mutationFn: createJob,
     onSuccess: (res, variables) => {
-      console.log('res', res, variables);
       if (!res.success) {
         toast.error(res.message);
         return;

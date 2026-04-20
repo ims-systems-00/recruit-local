@@ -65,8 +65,6 @@ export function useLogin() {
       router.push('/system-preparation');
     },
     onError: (error: Error) => {
-      console.log('error', error);
-
       toast.error(error.message || 'Invalid email or password');
     },
   });

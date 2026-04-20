@@ -61,8 +61,8 @@ export default function PreviewQueryCard({
             <SelectValue placeholder="Select an option" />
           </SelectTrigger>
           <SelectContent className=" bg-white">
-            {card.options?.map((opt: any) => (
-              <SelectItem key={opt.id} value={opt.id}>
+            {card.options?.map((opt: any, index: number) => (
+              <SelectItem key={index} value={opt.id}>
                 {opt.text}
               </SelectItem>
             ))}

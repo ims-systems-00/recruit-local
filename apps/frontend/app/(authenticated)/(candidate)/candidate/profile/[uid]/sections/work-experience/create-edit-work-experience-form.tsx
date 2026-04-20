@@ -163,10 +163,6 @@ export default function CreateEditWorkExperienceForm({
     }
   };
 
-  console.log('cleanPayload', uid);
-
-  console.log('errors', errors);
-
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -326,7 +322,6 @@ export default function CreateEditWorkExperienceForm({
                 id="is_current_workplace"
                 checked={isCurrentWorkplace}
                 onCheckedChange={(checked: CheckedState) => {
-                  console.log('checked', checked);
                   setIsCurrentWorkplace(checked);
                   if (checked) {
                     methods.setValue('endDate', undefined);

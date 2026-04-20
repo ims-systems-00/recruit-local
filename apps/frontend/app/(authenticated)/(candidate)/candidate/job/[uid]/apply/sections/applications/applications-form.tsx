@@ -57,10 +57,7 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
     setValue,
   } = methods;
 
-  console.log('errors', errors);
-
   const onSubmit = async (data: ApplicationCreateInput) => {
-    console.log('data', data);
     const payload = {
       ...data,
     };
@@ -92,7 +89,6 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
     }
   };
 
-  console.log('job?.additionalQueries', job?.additionalQueries);
   return (
     <div className=" space-y-spacing-4xl">
       <div className=" space-y-spacing-2xs">
