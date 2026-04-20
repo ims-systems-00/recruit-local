@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Bookmark, Loader2, Pointer } from 'lucide-react';
+import { Bookmark, Building2, Loader2, Pointer } from 'lucide-react';
 import { JobData } from '@/services/jobs/job.type';
 import { cn, formatDate } from '@/lib/utils';
 import DefaultImgForJob from '@/public/images/job_default.png';
@@ -23,13 +23,16 @@ export default function CardJobItem({ job }: { job: JobData }) {
       <div className=" p-spacing-4xl space-y-spacing-4xl">
         <div className=" flex items-center gap-spacing-sm">
           <div className=" min-w-12 max-w-12 ">
-            <Image
+            <div className="max-h-12 max-w-12 w-12 h-12 bg-others-gray-gray-zero rounded-full flex items-center justify-center border border-others-gray-xlight">
+              <Building2 className="text-others-gray-default size-7" />
+            </div>
+            {/* <Image
               className="max-h-12 max-w-12 w-12 h-12 rounded-full "
               alt="Logo"
               src={DefaultImgForJob}
               width={48}
               height={48}
-            />
+            /> */}
           </div>
           <div className=" space-y-spacing-2xs">
             <Link href={`/candidate/job/${job?._id}`}>

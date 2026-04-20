@@ -4,7 +4,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CircleQuestionMark, EllipsisVertical } from 'lucide-react';
+import {
+  CircleQuestionMark,
+  EllipsisVertical,
+  GraduationCap,
+} from 'lucide-react';
 import Image from 'next/image';
 import React, { useState } from 'react';
 import DefaultImgForEducation from '@/public/images/ed_default.png';
@@ -43,13 +47,16 @@ export default function WorkExperienceItem({
         <div className=" flex justify-between items-start gap-spacing-4xl">
           <div className=" flex gap-spacing-2xl">
             <div className=" min-w-12 max-w-12 ">
-              <Image
+              <div className="max-h-12 max-w-12 w-12 bg-others-gray-gray-zero h-12 rounded-full flex items-center justify-center border border-others-gray-xlight">
+                <GraduationCap className="text-others-gray-default size-7" />
+              </div>
+              {/* <Image
                 className="max-h-12 max-w-12"
                 alt="Logo"
                 src={DefaultImgForEducation}
                 width={48}
                 height={48}
-              />
+              /> */}
             </div>
             <div className=" space-y-spacing-3xs">
               <p className=" text-label-md font-label-md-strong! text-text-gray-primary">

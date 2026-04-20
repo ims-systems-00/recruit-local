@@ -12,6 +12,7 @@ import JobDescription from './job-description/job-description';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Bookmark, Pointer, Share2 } from 'lucide-react';
+import BookmarkButton from './job-description/bookmark-button';
 
 type PageProps = {
   params: Promise<{ uid: string }>;
@@ -68,9 +69,7 @@ export default async function JobDetailsPage({ params }: PageProps) {
                 <span>Apply to this job</span>
               </Button>
             </Link>
-            <Button className="cursor-pointer w-9! p-spacing-0! bg-bg-gray-soft-primary hover:bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
-              <Bookmark />
-            </Button>
+            <BookmarkButton job_id={uid} />
             <Button className="cursor-pointer w-9! p-spacing-0! bg-bg-gray-soft-primary hover:bg-bg-gray-soft-primary hover:border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
               <Share2 />
             </Button>

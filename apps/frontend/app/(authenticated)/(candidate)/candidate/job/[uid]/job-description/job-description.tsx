@@ -56,11 +56,11 @@ export default function JobDescription({ job }: { job: JobData }) {
     <>
       <div className=" space-y-spacing-4xl pb-10">
         <div className=" grid grid-cols-3 gap-spacing-2xl">
-          <InfoCard
+          {/* <InfoCard
             icon={<Briefcase size={20} />}
             title="Job Category"
             subtitle={job?.category || 'Tech Lead'}
-          />
+          /> */}
 
           {/* Workplace */}
           <InfoCard
@@ -81,6 +81,12 @@ export default function JobDescription({ job }: { job: JobData }) {
             icon={<DollarSign size={20} />}
             title="Salary"
             subtitle={formattedSalary}
+          />
+
+          <InfoCard
+            icon={<Clock size={20} />}
+            title="Period"
+            subtitle={job?.period}
           />
 
           {/* Year of Experience */}
@@ -178,41 +184,28 @@ export default function JobDescription({ job }: { job: JobData }) {
             </div>
           </div>
         </div>
-        <div className="space-y-spacing-2xl">
-          <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-            Related Attachment
-          </p>
-          <div className=" grid grid-cols-3 gap-spacing-sm">
-            <div>
-              <Image
-                className="w-full aspect-video rounded-md "
-                alt="Logo"
-                src={RelatedAttachmentDefault}
-                width={370}
-                height={214}
-              />
-            </div>
-            <div>
-              <Image
-                className="w-full aspect-video rounded-md "
-                alt="Logo"
-                src={RelatedAttachmentDefault}
-                width={370}
-                height={214}
-              />
-            </div>
-            <div>
-              <Image
-                className="w-full aspect-video rounded-md "
-                alt="Logo"
-                src={RelatedAttachmentDefault}
-                width={370}
-                height={214}
-              />
+        {Boolean(job?.attachments?.length) && (
+          <div className="space-y-spacing-2xl">
+            <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+              Related Attachment
+            </p>
+            <div className=" grid grid-cols-3 gap-spacing-sm">
+              {job?.attachments?.map((attachment) => (
+                <div key={attachment.storageInformation.Key}>
+                  <Image
+                    className="w-full aspect-video rounded-md "
+                    alt="Logo"
+                    src={attachment.src || RelatedAttachmentDefault}
+                    width={370}
+                    height={214}
+                  />
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-        <div className=" grid grid-cols-3 gap-spacing-2xl">
+        )}
+
+        <div className=" grid grid-cols-2 gap-spacing-2xl">
           <InfoCard
             icon={<Mailbox size={20} />}
             title="Contact Email"
@@ -227,11 +220,11 @@ export default function JobDescription({ job }: { job: JobData }) {
           />
 
           {/* Employment Type */}
-          <InfoCard
+          {/* <InfoCard
             icon={<Globe size={20} />}
             title="Website URl"
             subtitle={'www.boottech.com'}
-          />
+          /> */}
         </div>
       </div>
     </>

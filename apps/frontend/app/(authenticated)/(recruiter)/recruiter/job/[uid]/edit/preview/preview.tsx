@@ -245,24 +245,26 @@ export default function Preview({
             </div>
           </div>
         </div>
-        <div className="space-y-spacing-2xl">
-          <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-            Related Attachment
-          </p>
-          <div className=" grid grid-cols-3 gap-spacing-sm">
-            {defaultValues?.attachments?.map((attachment) => (
-              <div key={attachment.storageInformation.Key}>
-                <Image
-                  className="w-full aspect-video rounded-md "
-                  alt="Logo"
-                  src={attachment.src || RelatedAttachmentDefault}
-                  width={370}
-                  height={214}
-                />
-              </div>
-            ))}
+        {Boolean(defaultValues?.attachments?.length) && (
+          <div className="space-y-spacing-2xl">
+            <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+              Related Attachment
+            </p>
+            <div className=" grid grid-cols-3 gap-spacing-sm">
+              {defaultValues?.attachments?.map((attachment) => (
+                <div key={attachment.storageInformation.Key}>
+                  <Image
+                    className="w-full aspect-video rounded-md "
+                    alt="Logo"
+                    src={attachment.src || RelatedAttachmentDefault}
+                    width={370}
+                    height={214}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
         <div className=" grid grid-cols-2 gap-spacing-2xl">
           <InfoCard
             icon={<Mailbox size={20} />}
