@@ -5,7 +5,6 @@ import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/so
 import { modelNames } from "./constants";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
-import { baseSchemaOptions } from "./options/schema.options";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { WORKPLACE_ENUMS, EMPLOYMENT_TYPE, IExperience } from "@rl/types";
 
@@ -32,7 +31,7 @@ const experienceSchema = new Schema<IExperienceDoc>(
     isActive: { type: Boolean, default: false },
   },
   {
-    ...baseSchemaOptions,
+    timestamps: true,
   }
 );
 

@@ -68,6 +68,7 @@ export const ALL_JOB_FIELDS = [
   'additionalQueries.options',
   'additionalQueries.isRequired',
   'additionalQueries.expectedAnswer',
+  'additionalQueries._id',
 
   // --- Board Settings ---
   'boardBackground',
@@ -116,7 +117,6 @@ const EMPLOYER_CREATE_FIELDS = [
 const CANDIDATE_READ_FIELDS = omitFields([
   'isDeleted',
   'deletedAt',
-  'totalApplications',
   'status',
   'formId',
   'boardBackground',
