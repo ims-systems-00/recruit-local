@@ -1,6 +1,8 @@
 import * as yup from 'yup';
 
 import { objectIdSchema, paginationSchema } from '@/services/shared';
+import { JobData } from '../jobs/job.type';
+import { REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
 
 export const awsStorageSchema = yup.object({
   Name: yup.string().required('Name is required'),
@@ -116,3 +118,82 @@ export const applicationItemResponseSchema = yup.object({
   application: applicationSchema.required(),
   message: yup.string().optional(),
 });
+
+export const buildApplicationSchema = (job: JobData) => {
+  // const queries = job?.additionalQueries || [];
+
+  return yup.object({
+    jobId: yup.string().required('Job ID is required'),
+    jobProfileId: yup.string().required('Job Profile ID is required'),
+
+    // Cover Letter
+    coverLetter: yup
+      .string()
+      .optional()
+      .test(
+        'cover-letter-required',
+        'Cover letter is required',
+        function (value) {
+          const isRequired = job.requiredDocuments?.includes(
+            REQUIRED_DOCUMENTS_ENUMS.COVER_LETTER,
+          );
+          if (!isRequired) return true;
+          return !!value?.trim();
+        },
+      ),
+
+    resumeStorage: awsStorageSchema
+      .nullable()
+      .notRequired()
+      .test('resume-required', 'Resume is required', function (value) {
+        const isRequired = job.requiredDocuments?.includes(
+          REQUIRED_DOCUMENTS_ENUMS.RESUME,
+        );
+        if (!isRequired) return true;
+        return !!value;
+      }),
+
+    caseStudyStorage: yup.array().of(awsStorageSchema).optional(),
+
+    portfolioUrl: yup
+      .string()
+      .url('Invalid URL')
+      .optional()
+      .test('portfolio-required', 'Portfolio is required', function (value) {
+        const isRequired = job.requiredDocuments?.includes(
+          REQUIRED_DOCUMENTS_ENUMS.PORTFOLIO,
+        );
+        if (!isRequired) return true;
+        return !!value?.trim();
+      }),
+
+    answers: yup
+      .array()
+      .of(
+        yup.object({
+          queryId: objectIdSchema.required('Query ID is required'),
+          answer: yup.mixed().required('Answer is required'),
+        }),
+      )
+      .optional(),
+
+    currentSalary: yup
+      .number()
+      .transform((value, originalValue) =>
+        originalValue === '' ? undefined : value,
+      )
+      .typeError('Current Salary must be a number')
+      .optional(),
+
+    expectedSalary: yup
+      .number()
+      .transform((value, originalValue) =>
+        originalValue === '' ? undefined : value,
+      )
+      .typeError('Expected Salary must be a number')
+      .optional(),
+
+    feedback: yup.string().optional(),
+    appliedAt: yup.string().optional(),
+  });
+};

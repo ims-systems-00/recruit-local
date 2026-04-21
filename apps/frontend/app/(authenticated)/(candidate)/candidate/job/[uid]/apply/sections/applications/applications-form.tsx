@@ -1,6 +1,9 @@
 'use client';
 import { ApplicationCreateInput } from '@/services/application/application.type';
-import { createApplicationSchema } from '@/services/application/application.validation';
+import {
+  buildApplicationSchema,
+  createApplicationSchema,
+} from '@/services/application/application.validation';
 import { JobData } from '@/services/jobs/job.type';
 import { useParams } from 'next/navigation';
 import React from 'react';
@@ -22,7 +25,7 @@ import AttachmentItem from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid
 import { useDeleteFileStorage } from '@/services/file-storage/file-storage.client';
 import AdditionalQueryField from './additional-query-field';
 import { QueryCard } from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/additional-queries';
-import { QUERY_TYPE_ENUMS } from '@rl/types';
+import { QUERY_TYPE_ENUMS, REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
 
 export default function ApplicationsForm({ job }: { job: JobData }) {
   const { uid } = useParams();
@@ -34,7 +37,7 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
 
   const methods = useForm<ApplicationCreateInput>({
     resolver: yupResolver(
-      createApplicationSchema,
+      buildApplicationSchema(job),
     ) as Resolver<ApplicationCreateInput>,
     mode: 'onSubmit',
     defaultValues: {
@@ -106,7 +109,12 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
                 Write Cover Letter
               </Label>
               <div className=" space-y-spacing-sm ">
-                <InputGroup className="rounded-lg shadow-xs border-border-gray-primary">
+                <InputGroup
+                  className={cn(
+                    'rounded-lg shadow-xs border-border-gray-primary',
+                    errors.coverLetter && ' border-border-error-primary!',
+                  )}
+                >
                   <InputGroupTextarea
                     placeholder="Write your cover letter here..."
                     {...register('coverLetter')}
@@ -114,7 +122,7 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
                   />
                 </InputGroup>
                 {errors.coverLetter && (
-                  <p className="text-xs text-text-error-primary">
+                  <p className="text-label-xs text-text-error-primary">
                     {errors.coverLetter.message}
                   </p>
                 )}
@@ -145,7 +153,7 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
                       />
                     </InputGroup>
                     {errors.portfolioUrl && (
-                      <p className="text-sm text-red-500">
+                      <p className="text-label-xs text-text-error-primary">
                         {errors.portfolioUrl.message}
                       </p>
                     )}
@@ -173,7 +181,7 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
                       )}
                     />
                     {errors.resumeStorage && (
-                      <p className="text-xs text-text-error-primary">
+                      <p className="text-label-xs text-text-error-primary">
                         {errors.resumeStorage.message}
                       </p>
                     )}
