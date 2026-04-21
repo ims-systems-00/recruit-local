@@ -61,11 +61,17 @@ export default function PreviewQueryCard({
             <SelectValue placeholder="Select an option" />
           </SelectTrigger>
           <SelectContent className=" bg-white">
-            {card.options?.map((opt: any, index: number) => (
-              <SelectItem key={index} value={opt.id}>
-                {opt.text}
-              </SelectItem>
-            ))}
+            {card.options?.map((opt: any, index: number) =>
+              opt?.id ? (
+                <SelectItem key={index} value={opt.id}>
+                  {opt.text}
+                </SelectItem>
+              ) : (
+                <SelectItem key={index} value={opt}>
+                  {opt}
+                </SelectItem>
+              ),
+            )}
           </SelectContent>
         </Select>
       )}
@@ -102,11 +108,17 @@ export default function PreviewQueryCard({
           >
             <ComboboxEmpty>No items found.</ComboboxEmpty>
             <ComboboxList>
-              {(item) => (
-                <ComboboxItem key={item.id} value={item.text}>
-                  {item.text}
-                </ComboboxItem>
-              )}
+              {(item) =>
+                item?.id ? (
+                  <ComboboxItem key={item.id} value={item.text}>
+                    {item.text}
+                  </ComboboxItem>
+                ) : (
+                  <ComboboxItem key={item} value={item}>
+                    {item}
+                  </ComboboxItem>
+                )
+              }
             </ComboboxList>
           </ComboboxContent>
         </Combobox>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Copy,
   Trash2,
@@ -21,6 +21,7 @@ import { QueryCard } from './additional-queries';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { QUERY_TYPE_ENUMS } from '@rl/types';
+import { Button } from '@/components/ui/button';
 
 interface QueryCardProps {
   card: QueryCard;
@@ -51,6 +52,11 @@ export function QueryCardComponent({
   onDelete,
   onFocus,
 }: QueryCardProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const [showExpected, setShowExpected] = useState(false);
+  const [draftAnswer, setDraftAnswer] = useState<string | string[]>('');
   const addOption = () => {
     const newOptions = [...card.options, { id: crypto.randomUUID(), text: '' }];
     onUpdate(card.id, { options: newOptions });
@@ -72,6 +78,216 @@ export function QueryCardComponent({
     card.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE;
 
   const isShortAns = card.type === QUERY_TYPE_ENUMS.SHORT_ANSWER;
+
+  // const handleExpectedAnswer = (value: string) => {
+  //   onUpdate(card.id, { expectedAnswer: value });
+  // };
+
+  const handleExpectedAnswer = (value: string) => {
+    setDraftAnswer(value);
+  };
+
+  const handleMultipleExpectedAnswer = (value: string) => {
+    setDraftAnswer((prev) => {
+      const arr = Array.isArray(prev) ? prev : [];
+      const exists = arr.includes(value);
+
+      return exists ? arr.filter((item) => item !== value) : [...arr, value];
+    });
+  };
+
+  useEffect(() => {
+    if (showExpected) {
+      inputRef.current?.focus();
+      textareaRef.current?.focus();
+      if (card.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE) {
+        setDraftAnswer(
+          card.expectedAnswer
+            ? card.expectedAnswer.split(',').filter(Boolean)
+            : [],
+        );
+      } else {
+        setDraftAnswer(card.expectedAnswer || '');
+      }
+    }
+  }, [showExpected]);
+
+  const onSave = () => {
+    const finalAnswer =
+      card.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE
+        ? (draftAnswer as string[]).join(',')
+        : (draftAnswer as string);
+
+    onUpdate(card.id, { expectedAnswer: finalAnswer });
+    setShowExpected(false);
+  };
+
+  if (showExpected) {
+    return (
+      <div
+        className={cn(
+          'rounded-2xl border bg-bg-gray-soft-primary  transition-all shadow-xs border-border-gray-secondary',
+          card.focused && 'border-border-brand-primary',
+        )}
+        onClick={() => onFocus(card.id)}
+      >
+        <div className=" p-spacing-4xl flex gap-spacing-2xl items-start">
+          <GripHorizontal className="w-5 h-5 text-fg-gray-secondary cursor-grab min-w-fit" />
+
+          <div className=" space-y-spacing-2xl flex-1">
+            {/* Header row */}
+            <div className="flex items-center gap-spacing-2xl">
+              <input
+                className={cn(
+                  'flex-1 h-10 text-label-md font-label-md-strong! border rounded-lg px-spacing-lg py-spacing-sm outline-none focus:border-border-brand-primary focus:ring-1 focus:ring-border-brand-primary transition-colors border-border-gray-secondary',
+                  card.focused && 'border-border-brand-primary',
+                )}
+                placeholder="Type your Queries"
+                value={card.question}
+                onChange={(e) =>
+                  onUpdate(card.id, { question: e.target.value })
+                }
+                onClick={(e) => e.stopPropagation()}
+                disabled
+              />
+              <Select
+                value={card.type}
+                onValueChange={(val) =>
+                  onUpdate(card.id, { type: val as QUERY_TYPE_ENUMS })
+                }
+                disabled
+              >
+                <SelectTrigger className="min-w-44 text-sm h-9! ">
+                  <div className="flex items-center gap-2 text-label-md">
+                    {/* {TYPE_ICONS[card.type]} */}
+                    <SelectValue />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  {(Object.keys(TYPE_LABELS) as QUERY_TYPE_ENUMS[]).map((t) => (
+                    <SelectItem key={t} value={t}>
+                      <div className="flex items-center gap-spacing-sm text-label-md">
+                        {TYPE_ICONS[t]}
+                        {TYPE_LABELS[t]}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {card.type === QUERY_TYPE_ENUMS.SINGLE_CHOICE && (
+              <div className="border border-border-gray-secondary bg-bg-gray-soft-primary rounded-lg p-spacing-lg space-y-spacing-2xl">
+                {card.options.map((opt) => (
+                  <label
+                    key={opt.id}
+                    className="flex items-center gap-spacing-2xs cursor-pointer text-text-gray-quinary text-label-sm"
+                  >
+                    <input
+                      type="radio"
+                      name={`expected-${card.id}`}
+                      checked={draftAnswer === opt.text}
+                      onChange={() => handleExpectedAnswer(opt.text)}
+                      className=" accent-bg-brand-solid-primary w-4 h-4"
+                    />
+                    <span className="text-text-gray-primary text-label-sm">
+                      {opt.text}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {card.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE && (
+              <div className="border border-border-gray-secondary bg-bg-gray-soft-primary rounded-lg p-spacing-lg space-y-spacing-2xl">
+                {card.options.map((opt) => (
+                  <label
+                    key={opt.id}
+                    className="flex items-center gap-spacing-2xs cursor-pointer text-text-gray-quinary text-label-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={
+                        Array.isArray(draftAnswer) &&
+                        draftAnswer.includes(opt.text)
+                      }
+                      onChange={() => handleMultipleExpectedAnswer(opt.text)}
+                      className=" accent-bg-brand-solid-primary w-4 h-4"
+                    />
+                    <span className="text-text-gray-primary text-label-sm">
+                      {opt.text}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {card.type === QUERY_TYPE_ENUMS.SHORT_ANSWER && (
+              <input
+                ref={inputRef}
+                type="text"
+                disabled={!showExpected}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => handleExpectedAnswer(e.target.value)}
+                value={showExpected ? draftAnswer : ''}
+                placeholder="Write your thoughts here"
+                className="w-full text-label-md h-10 border border-border-gray-secondary  rounded-lg px-spacing-lg py-spacing-sm text-text-gray-primary placeholder:text-text-gray-quaternary  outline-none focus:ring-1 focus:ring-border-brand-primary"
+              />
+            )}
+
+            {card.type === QUERY_TYPE_ENUMS.PARAGRAPH && (
+              <textarea
+                ref={textareaRef}
+                disabled={!showExpected}
+                className="w-full text-label-md border border-border-gray-secondary  rounded-lg px-spacing-lg py-spacing-sm text-text-gray-primary placeholder:text-text-gray-quaternary resize-none outline-none focus:ring-1 focus:ring-border-brand-primary h-24"
+                placeholder="Write your thoughts here"
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => handleExpectedAnswer(e.target.value)}
+                value={showExpected ? draftAnswer : ''}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Footer row */}
+        <div className=" px-spacing-4xl py-spacing-2xl border-t border-border-gray-secondary flex items-center justify-between">
+          <div className="flex items-center gap-spacing-sm">
+            <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
+              Required
+            </span>
+
+            <Switch
+              disabled
+              checked={card.isRequired}
+              onCheckedChange={(v) => onUpdate(card.id, { isRequired: v })}
+              onClick={(e) => e.stopPropagation()}
+              className=" bg-bg-gray-soft-quaternary data-[state=checked]:bg-bg-brand-solid-primary"
+            />
+          </div>
+          <div className="flex items-center gap-spacing-2xl">
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowExpected(false); // cancel
+              }}
+              className=" hover:bg-bg-gray-soft-secondary bg-bg-gray-soft-primary h-9 border border-border-gray-secondary text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!"
+            >
+              <span>Cancel</span>
+            </Button>
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSave();
+              }}
+              className=" bg-bg-brand-solid-primary h-9 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+            >
+              <span>Save</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -167,13 +383,15 @@ export function QueryCardComponent({
           ) : isShortAns ? (
             <input
               type="text"
+              disabled
               onClick={(e) => e.stopPropagation()}
               placeholder="Write your thoughts here"
-              className="w-full text-label-md h-10 border border-border-gray-secondary  rounded-lg px-spacing-lg py-spacing-sm text-text-gray-primary placeholder:text-text-gray-quaternary  outline-none focus:border-border-brand-primary focus:ring-1 focus:ring-border-brand-primary"
+              className="w-full text-label-md h-10 border border-border-gray-secondary  rounded-lg px-spacing-lg py-spacing-sm text-text-gray-primary placeholder:text-text-gray-quaternary  outline-none focus:ring-1 focus:ring-border-brand-primary"
             />
           ) : (
             <textarea
-              className="w-full text-label-md border border-border-gray-secondary  rounded-lg px-spacing-lg py-spacing-sm text-text-gray-primary placeholder:text-text-gray-quaternary resize-none outline-none focus:border-border-brand-primary focus:ring-1 focus:ring-border-brand-primary h-24"
+              disabled
+              className="w-full text-label-md border border-border-gray-secondary  rounded-lg px-spacing-lg py-spacing-sm text-text-gray-primary placeholder:text-text-gray-quaternary resize-none outline-none focus:ring-1 focus:ring-border-brand-primary h-24"
               placeholder="Write your thoughts here"
               onClick={(e) => e.stopPropagation()}
             />
@@ -198,7 +416,10 @@ export function QueryCardComponent({
         <div className="flex items-center gap-spacing-2xl">
           <button
             className=" text-label-sm font-label-sm-strong! text-text-brand-secondary cursor-pointer"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowExpected((prev) => !prev);
+            }}
           >
             Set Expected Answer
           </button>
@@ -208,6 +429,7 @@ export function QueryCardComponent({
               onDuplicate(card.id);
             }}
             type="button"
+            disabled={showExpected}
             className="text-fg-gray-secondary cursor-pointer hover:text-text-brand-secondary"
           >
             <Copy className="w-4 h-4 " />
