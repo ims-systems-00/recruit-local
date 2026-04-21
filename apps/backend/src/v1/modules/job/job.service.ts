@@ -18,6 +18,7 @@ import {
   IJobIncrementStatsParams,
 } from "./job.interface";
 import * as statusService from "../status/status.service";
+import { Favourite } from "../../../models";
 
 /**
  * Helper to fetch tenant data for job autofill
@@ -240,4 +241,13 @@ export const incrementStats = async ({ query, payload, session }: IJobIncrementS
 
   if (!updatedJob) throw new NotFoundException("Job not found.");
   return updatedJob;
+};
+
+// favourite job
+const favouriteJob = async ({ query, session }: IJobGetParams) => {
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const favourite = await Favourite.findOne({ ...sanitizedQuery }, null, { session });
+
+  if (!favourite) throw new NotFoundException("Favourite not found.");
+  return favourite;
 };

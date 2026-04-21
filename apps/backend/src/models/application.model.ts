@@ -7,6 +7,7 @@ import { IBaseDoc } from "./interfaces/base.interface";
 import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { boardablePlugin, IBoardableInput, IBoardableModel } from "./plugins/boardable.plugin";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
+import { automaticReferencePlugin, IAutomaticReferenceDoc } from "./plugins/automatic-reference.plugin";
 
 export interface IApplicationAnswer {
   queryId: Types.ObjectId;
@@ -26,7 +27,12 @@ export interface ApplicationInput extends JobProfileInput, IBoardableInput, Tena
   expectedSalary?: number;
 }
 
-export interface IApplicationDoc extends ApplicationInput, ISoftDeleteDoc, IBaseDoc, ITenantDoc {}
+export interface IApplicationDoc
+  extends ApplicationInput,
+    ISoftDeleteDoc,
+    IBaseDoc,
+    ITenantDoc,
+    IAutomaticReferenceDoc {}
 
 interface IApplicationModel
   extends Model<IApplicationDoc>,
@@ -92,10 +98,18 @@ applicationSchema.plugin(boardablePlugin, {
   foreignKey: "jobId",
 });
 applicationSchema.plugin(tenantDataPlugin);
+
+applicationSchema.plugin(
+  automaticReferencePlugin({
+    model: modelNames.APPLICATION,
+    referencePrefix: "APP",
+  })
+);
 // --- Indexes ---
 applicationSchema.index({ tenantId: 1 });
 applicationSchema.index({ jobId: 1, status: 1 });
 applicationSchema.index({ createdAt: -1 });
 applicationSchema.index({ resumeId: 1 });
+applicationSchema.index({ reference: 1 });
 
 export const Application = model<IApplicationDoc, IApplicationModel>(modelNames.APPLICATION, applicationSchema);
