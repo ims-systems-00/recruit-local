@@ -60,6 +60,8 @@ export const listSoftDeleted = async ({ query = {}, options, session }: IListApp
   const aggregate = Application.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
+    ...populateJobProfileQuery(),
+    ...populateStatusQuery(),
     ...applicationProjectionQuery(),
   ]);
 
@@ -72,6 +74,9 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IApplicationGet
   const aggregate = Application.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
+    ...populateJobProfileQuery(),
+    ...populateStatusQuery(),
+    ...populateFilesQuery(),
     ...applicationProjectionQuery(),
   ]);
 
@@ -264,7 +269,9 @@ export const update = async ({ query, payload, session }: IApplicationUpdatePara
 
   if (!updatedApplication) throw new NotFoundException("Application not found.");
 
-  return updatedApplication;
+  const finalUpdatedApplication = await getOne({ query: { _id: updatedApplication._id } as any, session });
+
+  return finalUpdatedApplication;
 };
 
 // Renamed from softRemove to match the User service standard

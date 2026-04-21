@@ -56,6 +56,7 @@ export const ALL_APPLICATION_FIELDS = [
   'resume.*',
   'jobProfile', // Add root key
   'jobProfile.*',
+  'reference',
 ];
 const omitFields = (fieldsToOmit: string[]) =>
   ALL_APPLICATION_FIELDS.filter((field) => !fieldsToOmit.includes(field));
