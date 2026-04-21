@@ -19,9 +19,10 @@ import WorkExperience from './work-experience/work-experience';
 import EducationQualification from './education-qualification/education-qualification';
 import Trainings from './trainings/trainings';
 import TakenTests from './taken-tests/taken-tests';
-import Documents from './documents/documents';
+// import Documents from './document/documents';
 import Applied from './applied/applied';
 import Saved from './saved/saved';
+import Documents from './documents/documents';
 
 export default function Profile({
   jobProfileData,
