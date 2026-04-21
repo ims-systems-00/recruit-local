@@ -5,7 +5,12 @@ import { NotFoundException } from "../../../common/helper";
 import { Application } from "../../../models";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
-import { applicationProjectionQuery } from "./application.query";
+import {
+  applicationProjectionQuery,
+  populateJobProfileQuery,
+  populateFilesQuery,
+  populateStatusQuery,
+} from "./application.query";
 import * as jobService from "../job/job.service";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
@@ -23,6 +28,8 @@ export const list = ({ query = {}, options, session }: IListApplicationParams) =
   const aggregate = Application.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
+    ...populateJobProfileQuery(),
+    ...populateStatusQuery(),
     ...applicationProjectionQuery(),
   ]);
 
@@ -35,6 +42,9 @@ export const getOne = async ({ query = {}, session }: IApplicationGetParams) => 
   const aggregate = Application.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
+    ...populateJobProfileQuery(),
+    ...populateFilesQuery(),
+    ...populateStatusQuery(),
     ...applicationProjectionQuery(),
   ]);
 
@@ -50,6 +60,8 @@ export const listSoftDeleted = async ({ query = {}, options, session }: IListApp
   const aggregate = Application.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
+    ...populateJobProfileQuery(),
+    ...populateStatusQuery(),
     ...applicationProjectionQuery(),
   ]);
 
@@ -62,6 +74,9 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IApplicationGet
   const aggregate = Application.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
+    ...populateJobProfileQuery(),
+    ...populateStatusQuery(),
+    ...populateFilesQuery(),
     ...applicationProjectionQuery(),
   ]);
 
@@ -254,7 +269,9 @@ export const update = async ({ query, payload, session }: IApplicationUpdatePara
 
   if (!updatedApplication) throw new NotFoundException("Application not found.");
 
-  return updatedApplication;
+  const finalUpdatedApplication = await getOne({ query: { _id: updatedApplication._id } as any, session });
+
+  return finalUpdatedApplication;
 };
 
 // Renamed from softRemove to match the User service standard
