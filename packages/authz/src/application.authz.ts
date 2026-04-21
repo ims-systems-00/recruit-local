@@ -28,17 +28,17 @@ export const ALL_APPLICATION_FIELDS = [
   'deletedAt',
 
   // --- Boardable Plugin (IBoardableInput & Model) ---
-  'statusId', // Matches IBoardableInput
-  'rank', // Matches IBoardableInput
+  'statusId',
+  'rank',
 
   // --- Job Profile Plugin (JobProfileInput) ---
-  'jobProfileId', // Explicitly in your JobProfileInput type
+  'jobProfileId',
 
   // --- Core Application Fields (ApplicationInput) ---
   'jobId',
   'coverLetter',
-  'resumeId', // Changed from resumeStorage to match Mongoose schema
-  'caseStudyId', // Changed from caseStudyStorage to match Mongoose schema
+  'resumeId',
+  'caseStudyId',
   'answers',
   'portfolioUrl',
   'currentSalary',
@@ -46,6 +46,16 @@ export const ALL_APPLICATION_FIELDS = [
   'feedback',
   'appliedAt',
   'tenantId',
+
+  // --- Populated Objects (FIXED) ---
+  'status', // Add root key
+  'status.*',
+  'caseStudies', // Add root key
+  'caseStudies.*',
+  'resume', // Add root key
+  'resume.*',
+  'jobProfile', // Add root key
+  'jobProfile.*',
 ];
 const omitFields = (fieldsToOmit: string[]) =>
   ALL_APPLICATION_FIELDS.filter((field) => !fieldsToOmit.includes(field));
