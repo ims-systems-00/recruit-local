@@ -14,10 +14,10 @@ export type JobListFilters = {
   search?: string;
   status?: string;
 
-  employmentType?: string[];
-  workplace?: string[];
-  salaryMode?: string[];
-  period?: string[];
+  employmentType?: { in: string[] };
+  workplace?: { in: string[] };
+  salaryMode?: { in: string[] };
+  period?: { in: string[] };
 };
 
 export type StorageInformation = {

@@ -56,7 +56,7 @@ export async function getJobs(
         period: params?.period,
       },
       paramsSerializer: (params) =>
-        qs.stringify(params, { arrayFormat: 'repeat' }),
+        qs.stringify(params, { arrayFormat: 'brackets' }),
     });
     // const backendResponse = await postListResponseSchema.validate(res.data, {
     //   stripUnknown: true,

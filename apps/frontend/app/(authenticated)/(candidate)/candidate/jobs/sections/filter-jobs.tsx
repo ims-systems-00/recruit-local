@@ -57,10 +57,16 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
       page,
       limit: 10,
       search: debouncedSearch || undefined,
-      workplace: workplace.length ? workplace : undefined,
-      employmentType: employmentType.length ? employmentType : undefined,
-      salaryMode: salaryMode.length ? salaryMode : undefined,
-      period: period.length ? period : undefined,
+
+      workplace: workplace.length ? { in: workplace } : undefined,
+
+      employmentType: employmentType.length
+        ? { in: employmentType }
+        : undefined,
+
+      salaryMode: salaryMode.length ? { in: salaryMode } : undefined,
+
+      period: period.length ? { in: period } : undefined,
     }),
     [page, debouncedSearch, workplace, employmentType, salaryMode, period],
   );
