@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { cvProjectQuery } from "./cv.query";
+import { cvProjectQuery, populateCvResumeQuery } from "./cv.query";
 import { NotFoundException } from "../../../common/helper";
 import { CV, CVInput } from "../../../models/cv.model";
 import { CV_STATUS_ENUM, IListParams, ListQueryParams } from "@rl/types";
@@ -35,7 +35,7 @@ export interface ICVCreateParams {
 
 export const list = ({ query = {}, options }: IListCVParams) => {
   return CV.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...cvProjectQuery()],
+    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...populateCvResumeQuery(), ...cvProjectQuery()],
     options
   );
 };
@@ -44,6 +44,7 @@ export const getOne = async ({ query = {} }: ICVGetParams) => {
   const cvs = await CV.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
+    ...populateCvResumeQuery(),
     ...cvProjectQuery(),
   ]);
   if (cvs.length === 0) throw new NotFoundException("CV not found.");
@@ -52,14 +53,19 @@ export const getOne = async ({ query = {} }: ICVGetParams) => {
 
 export const listSoftDeleted = async ({ query = {}, options }: IListCVParams) => {
   const cvs = await CV.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...cvProjectQuery()],
+    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...populateCvResumeQuery(), ...cvProjectQuery()],
     options
   );
   return cvs;
 };
 
 export const getOneSoftDeleted = async ({ query = {} }: ICVGetParams) => {
-  const cvs = await CV.aggregate([...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...cvProjectQuery()]);
+  const cvs = await CV.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...onlyDeletedQuery(),
+    ...populateCvResumeQuery(),
+    ...cvProjectQuery(),
+  ]);
   if (cvs.length === 0) throw new NotFoundException("CV not found in trash.");
   return cvs[0];
 };
@@ -81,7 +87,7 @@ export const create = async ({ payload }: ICVCreateParams) => {
         collectionName: modelNames.CV,
         collectionDocument: cvId,
         storageInformation: payload.imageStorage,
-        visibility: VISIBILITY_ENUM.PUBLIC, // CV profile pictures should be public!
+        visibility: VISIBILITY_ENUM.PUBLIC,
       },
     });
     imageId = fileMedia._id;
@@ -94,7 +100,7 @@ export const create = async ({ payload }: ICVCreateParams) => {
         collectionName: modelNames.CV,
         collectionDocument: cvId,
         storageInformation: payload.resumeStorage,
-        visibility: VISIBILITY_ENUM.PRIVATE, // Resumes are typically private
+        visibility: VISIBILITY_ENUM.PUBLIC,
       },
     });
     resumeId = fileMedia._id;
@@ -152,7 +158,7 @@ export const update = async ({ query, payload }: ICVUpdateParams) => {
         collectionName: modelNames.CV,
         collectionDocument: cv._id,
         storageInformation: payload.resumeStorage,
-        visibility: VISIBILITY_ENUM.PRIVATE,
+        visibility: VISIBILITY_ENUM.PUBLIC,
       },
     });
 
