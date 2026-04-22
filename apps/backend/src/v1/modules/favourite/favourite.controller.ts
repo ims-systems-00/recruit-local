@@ -14,7 +14,7 @@ export const list = async ({ req }: ControllerParams) => {
 
   const query = {
     ...filter.getFilterQuery(),
-    userId: req.session.user._id,
+    userId: req.session.user._id, // todo : this will come from security query
   };
 
   const options = filter.getQueryOptions();
