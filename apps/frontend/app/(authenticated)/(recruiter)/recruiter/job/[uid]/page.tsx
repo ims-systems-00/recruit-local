@@ -46,7 +46,7 @@ export default async function JobDetailsPage({ params }: PageProps) {
     {
       value: 'applicants',
       label: 'Applicants',
-      component: <Applicants />,
+      component: <Applicants jobId={jobData._id} />,
     },
 
     {

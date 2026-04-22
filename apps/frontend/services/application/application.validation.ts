@@ -29,10 +29,19 @@ export const applicationSchema = yup.object({
     .nullable()
     .optional(),
   portfolioUrl: yup.string().url().nullable().optional(),
+  jobProfile: yup.object({
+    _id: objectIdSchema.required(),
+    email: yup.string().required('Email is required'),
+    name: yup.string().required('Name is required'),
+  }),
   currentSalary: yup.number().nullable().optional(),
   expectedSalary: yup.number().nullable().optional(),
   feedback: yup.string().nullable().optional(),
   appliedAt: yup.string().nullable().optional(),
+  status: yup.object({
+    _id: objectIdSchema.required(),
+    label: yup.string().required('Status label is required'),
+  }),
 });
 
 // --- INPUT SCHEMAS (Matches Backend Joi) ---

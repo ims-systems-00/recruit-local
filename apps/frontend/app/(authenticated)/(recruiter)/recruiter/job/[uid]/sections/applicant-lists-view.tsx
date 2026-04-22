@@ -1,140 +1,92 @@
 import { DataTable } from '@/components/table/data-table';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
-import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn, formatDate } from '@/lib/utils';
+import { useApplications } from '@/services/application/application.client';
+import { Application } from '@/services/application/application.type';
 import { ColumnDef } from '@tanstack/react-table';
-import React from 'react';
+import React, { useState } from 'react';
+import PaginationComponent from './pagination-component';
+import { TableSkeleton } from './table-skeleton';
+import EmptyBox from '@/components/empty-box';
 
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  status: 'active' | 'inactive';
-};
+export const userColumns: ColumnDef<Application>[] = [
+  {
+    accessorKey: 'jobProfile.name',
+    header: 'Applicants',
+    cell: ({ row }) => (
+      <div className=" flex items-center gap-spacing-lg">
+        <Avatar className=" size-10 border border-border-gray-primary">
+          {/* <AvatarImage src={row.original.jobProfile.profileImageSrc} /> */}
+          <AvatarFallback>
+            {row.original.jobProfile.name.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <p className=" text-label-sm font-label-sm-strong! text-text-gray-primary">
+            {row.original.jobProfile.name}
+          </p>
+          <p className=" text-label-sm  text-text-gray-primary">
+            {row.original.jobProfile.email}
+          </p>
+        </div>
+      </div>
+    ),
+  },
+  {
+    accessorKey: 'rank',
+    header: 'Rank ID',
+  },
 
-export const demoUsers: User[] = [
   {
-    id: 1,
-    name: 'Tajuddin Molla',
-    email: 'tajuddin@example.com',
-    role: 'Frontend Developer',
-    status: 'active',
-  },
-  {
-    id: 2,
-    name: 'Nahid Hasan',
-    email: 'nahid@example.com',
-    role: 'Backend Developer',
-    status: 'inactive',
-  },
-  {
-    id: 3,
-    name: 'Sarjis Alam',
-    email: 'sarjis@example.com',
-    role: 'UI/UX Designer',
-    status: 'active',
-  },
-  {
-    id: 4,
-    name: 'Kaiyum Ahmed',
-    email: 'kaiyum@example.com',
-    role: 'Project Manager',
-    status: 'active',
-  },
-];
-
-export const userColumns: ColumnDef<User>[] = [
-  {
-    accessorKey: 'id',
-    header: 'ID',
-    size: 80,
-  },
-  {
-    accessorKey: 'name',
-    header: 'Name',
-  },
-  {
-    accessorKey: 'email',
-    header: 'Email',
-  },
-  {
-    accessorKey: 'role',
-    header: 'Role',
-  },
-  {
-    accessorKey: 'status',
+    accessorKey: 'status.label',
     header: 'Status',
     cell: ({ row }) => (
-      <span
-        className={
-          row.original.status === 'active'
-            ? 'text-green-600 font-medium'
-            : 'text-red-600 font-medium'
-        }
-      >
-        {row.original.status}
+      <span className=" w-fit flex items-center justify-center px-spacing-md py-spacing-3xs rounded-full text-label-sm font-label-sm-strong! text-others-fuchsia-dark bg-others-fuchsia-fuchsia-zero border border-others-fuchsia-light">
+        {row.original.status.label}
       </span>
     ),
   },
+  {
+    accessorKey: 'appliedAt',
+    header: 'Applied date',
+    cell: ({ row }) => {
+      const value = formatDate(row?.original?.appliedAt || undefined);
+
+      return <span>{value || 'N/A'}</span>;
+    },
+  },
 ];
-export default function ApplicantListsView() {
+export default function ApplicantListsView({ jobId }: { jobId: string }) {
+  const [page, setPage] = useState(1);
+  const { applications, isLoading, pagination } = useApplications({
+    jobId,
+    page,
+  });
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-border-gray-primary">
-      <DataTable columns={userColumns} data={demoUsers} />
-      <Pagination className={cn('py-spacing-4xl px-spacing-4xl border-t')}>
-        <PaginationContent className=" justify-between w-full">
-          <PaginationItem>
-            <PaginationPrevious
-              className=" border border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
-              href="#"
+    <div className="overflow-hidden rounded-2xl border border-border-gray-primary space-y-spacing-4xl">
+      {isLoading ? (
+        <TableSkeleton columns={userColumns.length} rows={5} />
+      ) : (
+        <>
+          {Boolean(applications?.length) ? (
+            <DataTable columns={userColumns} data={applications} />
+          ) : (
+            <EmptyBox
+              title="No Applicants Found"
+              description="No applicants found for this job."
             />
-          </PaginationItem>
-          <div className=" flex items-center gap-x-spacing-xs ">
-            <PaginationItem>
-              <PaginationLink
-                className=" w-10 h-10 rounded-lg flex justify-center items-center"
-                href="#"
-              >
-                1
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink
-                className=" w-10 h-10 border-0 rounded-lg flex justify-center items-center bg-bg-gray-soft-secondary"
-                href="#"
-                isActive
-              >
-                2
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink
-                className=" w-10 h-10 rounded-lg flex justify-center items-center"
-                href="#"
-              >
-                3
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationEllipsis />
-            </PaginationItem>
-          </div>
-          <PaginationItem>
-            <PaginationNext
-              className=" border border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
-              href="#"
+          )}
+          {Boolean(applications?.length) && pagination?.totalPages && (
+            <PaginationComponent
+              meta={pagination}
+              onPageChange={(pageNum) => {
+                setPage(pageNum);
+              }}
             />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+          )}
+        </>
+      )}
     </div>
   );
 }

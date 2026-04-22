@@ -1,21 +1,13 @@
 'use client';
 import { cn } from '@/lib/utils';
-import {
-  Ellipsis,
-  EllipsisVertical,
-  LayoutGrid,
-  Plus,
-  TextAlignJustify,
-  TrendingUp,
-} from 'lucide-react';
+import { LayoutGrid, Plus, TextAlignJustify } from 'lucide-react';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import Kanban from './kanban/kanban';
 import ApplicantKanbanView from './applicant-kanban-view';
 import ApplicantListsView from './applicant-lists-view';
 
-export default function Applicants() {
-  const [isListView, setIsListView] = useState(false);
+export default function Applicants({ jobId }: { jobId: string }) {
+  const [isListView, setIsListView] = useState(true);
 
   return (
     <div className="space-y-spacing-4xl">
@@ -60,7 +52,11 @@ export default function Applicants() {
       </div>
       {/* content part  */}
       <div className="">
-        {isListView ? <ApplicantListsView /> : <ApplicantKanbanView />}
+        {isListView ? (
+          <ApplicantListsView jobId={jobId} />
+        ) : (
+          <ApplicantKanbanView jobId={jobId} />
+        )}
       </div>
     </div>
   );

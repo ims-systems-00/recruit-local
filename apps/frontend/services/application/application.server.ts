@@ -31,21 +31,22 @@ export async function getApplications(
       params: {
         page: params?.page || 1,
         limit: params?.limit || 10,
-        search: params?.search,
+        clientSearch: params?.clientSearch,
+        jobId: params?.jobId,
       },
     });
 
-    const validated = await applicationListResponseSchema.validate(res.data, {
-      stripUnknown: true,
-    });
+    // const validated = await applicationListResponseSchema.validate(res.data, {
+    //   stripUnknown: true,
+    // });
 
     return {
       success: true,
       data: {
-        docs: validated.applications,
-        pagination: validated.pagination,
+        docs: res.data.applications,
+        pagination: res.data.pagination,
       },
-      message: validated.message || 'Applications fetched successfully',
+      message: res.data.message || 'Applications fetched successfully',
     };
   } catch (error) {
     return handleServerError(error, 'Failed to fetch applications');

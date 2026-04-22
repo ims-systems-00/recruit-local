@@ -17,9 +17,10 @@ export type Application = yup.InferType<typeof applicationSchema>;
 
 // --- QUERY FILTERS ---
 export type ApplicationListFilters = {
+  jobId?: string;
   page?: number;
   limit?: number;
-  search?: string;
+  clientSearch?: string;
 };
 
 // --- FRONTEND RESPONSE TYPES ---
