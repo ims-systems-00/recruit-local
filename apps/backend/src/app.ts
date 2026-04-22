@@ -10,6 +10,8 @@ import { globalErrorHandler, NotFoundException } from "./common/helper";
 import { CORS_ORIGIN } from "./common/constants";
 import { setupApiRoutes } from "./v1/routes/api-routes";
 import { setupAgenda } from "./agenda";
+import { initBullBoard } from "./.config/bull-board";
+
 export const app = express();
 
 const corsOptions = {
@@ -48,6 +50,9 @@ app.use(hpp());
 
 // Custom query parser
 app.use(customQueryParser);
+
+const bullBoard = initBullBoard(); // protect later
+app.use(bullBoard.path, bullBoard.router);
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Active" });

@@ -69,7 +69,11 @@
     "shelljs": "^0.8.5",
     "string-similarity": "^4.0.4",
     "uuid": "^11.0.2",
-    "winston": "^3.13.1"
+    "winston": "^3.13.1",
+    "ioredis": "^5.8.2",
+    "bullmq": "^5.61.2",
+    "@bull-board/api": "^6.14.0",
+    "@bull-board/express": "^6.14.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
