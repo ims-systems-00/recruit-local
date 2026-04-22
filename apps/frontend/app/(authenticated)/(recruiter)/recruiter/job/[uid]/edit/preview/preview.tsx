@@ -17,7 +17,7 @@ import {
   Globe,
 } from 'lucide-react';
 import moment from 'moment';
-import React from 'react';
+import React, { useState } from 'react';
 import InfoCard from './info-card';
 import { JOBS_STATUS_ENUMS, REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
 import Image from 'next/image';
@@ -28,6 +28,16 @@ import { useUpdateJob } from '@/services/jobs/jobs.client';
 import { useRouter } from 'next/navigation';
 import PreviewQueryCard from '../steps/preview-query-card';
 import { QueryCard } from '../steps/additional-queries';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 
 const documentLabels: Record<REQUIRED_DOCUMENTS_ENUMS, string> = {
   [REQUIRED_DOCUMENTS_ENUMS.RESUME]: 'CV',
@@ -50,6 +60,7 @@ export default function Preview({
   defaultValues: JobData;
 }) {
   const { updateJob, isPending } = useUpdateJob();
+  const [openAlertDialog, setOpenAlertDialog] = useState(false);
 
   const router = useRouter();
 
@@ -107,7 +118,7 @@ export default function Preview({
             <Button
               type="button"
               disabled={isPending}
-              onClick={onUpdateJob}
+              onClick={() => setOpenAlertDialog(true)}
               className=" cursor-pointer bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
             >
               Post Now
@@ -299,6 +310,38 @@ export default function Preview({
           </div>
         )}
       </div>
+      <AlertDialog open={openAlertDialog} onOpenChange={setOpenAlertDialog}>
+        <AlertDialogContent className="bg-white min-w-[400px] max-w-[400px]! rounded-3xl border border-others-brand-light gap-spacing-5xl">
+          <AlertDialogHeader className=" gap-spacing-2xl">
+            <div className=" flex justify-center items-center rounded-xl w-12 h-12 min-w-12 min-h-12 bg-others-brand-brand-zero border border-others-brand-light">
+              <TriangleAlert className="text-others-brand-dark" />
+            </div>
+            <div className="space-y-spacing-3xs">
+              <AlertDialogTitle className="text-label-lg font-label-lg-strong! text-text-gray-primary">
+                Are You sure you want to post this job?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-body-sm text-text-gray-tertiary">
+                {`You won’t be able to make changes after posting this job.`}
+              </AlertDialogDescription>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex gap-spacing-2xl">
+            <AlertDialogCancel
+              disabled={isPending}
+              className=" cursor-pointer flex-1 h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-secondary"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isPending}
+              onClick={onUpdateJob}
+              className=" cursor-pointer flex-1 h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-white bg-bg-brand-solid-primary"
+            >
+              {isPending ? 'Posting...' : 'Yes, Confirm'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

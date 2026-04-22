@@ -26,9 +26,12 @@ import { useDeleteFileStorage } from '@/services/file-storage/file-storage.clien
 import AdditionalQueryField from './additional-query-field';
 import { QueryCard } from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/additional-queries';
 import { QUERY_TYPE_ENUMS, REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
+import { useAuth } from '@/services/user/user.client';
 
 export default function ApplicationsForm({ job }: { job: JobData }) {
   const { uid } = useParams();
+
+  const { user } = useAuth();
 
   const { createApplication, isLoading: isCreatingApplication } =
     useCreateApplication();
@@ -42,7 +45,7 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
     mode: 'onSubmit',
     defaultValues: {
       jobId: job._id,
-      jobProfileId: uid as string,
+      jobProfileId: user?.jobProfileId as string,
       answers: job?.additionalQueries?.map((query) => ({
         queryId: query._id,
         answer: query.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE ? [] : '',
