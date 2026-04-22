@@ -1,22 +1,81 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 import * as favouriteService from "./favourite.service";
+import { modelNames } from "../../../models/constants";
+import { sanitizeFavouriteItem } from "./favourite.helper";
+import * as jobService from "../job/job.service";
 
 export const list = async ({ req }: ControllerParams) => {
   const filter = new MongoQuery(req.query, {
     searchFields: [],
   }).build();
 
-  const query = filter.getFilterQuery();
+  const query = {
+    ...filter.getFilterQuery(),
+    userId: req.session.user._id,
+  };
+
   const options = filter.getQueryOptions();
 
-  const results = await favouriteService.list({
+  // 1. Fetch favorites with standard options
+  const favoritesResult = await favouriteService.list({
     query,
     options,
   });
 
-  const { data, pagination } = formatListResponse(results);
+  // 2. Group the itemIds by itemType
+  const groupedIds = favoritesResult.docs.reduce<Record<string, string[]>>((acc, fav: any) => {
+    if (!acc[fav.itemType]) acc[fav.itemType] = [];
+    acc[fav.itemType].push(fav.itemId.toString());
+    return acc;
+  }, {});
+
+  // 3. Fetch the actual raw documents
+  const fetchPromises = [];
+
+  if (groupedIds[modelNames.JOB]?.length) {
+    fetchPromises.push(
+      jobService
+        .list({
+          // FIX 1: Pass the array directly. Your custom wrapper handles the $in logic!
+          query: { _id: groupedIds[modelNames.JOB] },
+          // FIX 2: Instead of pagination: false, we just set the limit to exactly
+          // the number of items we are asking for.
+          options: { limit: groupedIds[modelNames.JOB].length },
+        })
+        .then((res) => res.docs || res)
+    );
+  }
+
+  // Resolve all fetches
+  const fetchedArrays = await Promise.all(fetchPromises);
+
+  // Flatten into a Map for instant O(1) lookups
+  const dataMap = new Map();
+  fetchedArrays.flat().forEach((item: any) => {
+    if (item && item._id) {
+      dataMap.set(item._id.toString(), item);
+    }
+  });
+
+  // 4. Stitch the data together and apply CASL sanitization
+  const sanitizedDocs = favoritesResult.docs.map((fav: any) => {
+    const rawItem = dataMap.get(fav.itemId.toString());
+
+    // FIX 3: Manually convert the Mongoose document to a plain JS object
+    // to safely use the spread operator, since we couldn't use `lean: true`.
+    const favObj = typeof fav.toObject === "function" ? fav.toObject() : fav;
+
+    return {
+      ...favObj,
+      item: sanitizeFavouriteItem(rawItem, favObj.itemType, req.session),
+    };
+  });
+
+  // 5. Format and Return
+  const { data, pagination } = formatListResponse({ ...favoritesResult, docs: sanitizedDocs });
 
   return new ApiResponse({
     message: "Favourites retrieved",
@@ -26,7 +85,6 @@ export const list = async ({ req }: ControllerParams) => {
     pagination,
   });
 };
-
 export const get = async ({ req }: ControllerParams) => {
   const favourite = await favouriteService.getOne({
     query: { _id: req.params.id },
