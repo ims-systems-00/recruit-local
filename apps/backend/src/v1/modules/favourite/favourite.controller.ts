@@ -14,35 +14,34 @@ export const list = async ({ req }: ControllerParams) => {
 
   const query = {
     ...filter.getFilterQuery(),
-    userId: req.session.user._id,
+    userId: req.session.user._id, // todo : this will come from security query
   };
 
   const options = filter.getQueryOptions();
 
-  // 1. Fetch favorites with standard options
+  //  Fetch favorites with standard options
   const favoritesResult = await favouriteService.list({
     query,
     options,
   });
 
-  // 2. Group the itemIds by itemType
+  // Group the itemIds by itemType
   const groupedIds = favoritesResult.docs.reduce<Record<string, string[]>>((acc, fav: any) => {
     if (!acc[fav.itemType]) acc[fav.itemType] = [];
     acc[fav.itemType].push(fav.itemId.toString());
     return acc;
   }, {});
 
-  // 3. Fetch the actual raw documents
+  // Fetch the actual raw documents
   const fetchPromises = [];
+
+  console.log("Grouped item IDs by type for favorites:", groupedIds);
 
   if (groupedIds[modelNames.JOB]?.length) {
     fetchPromises.push(
       jobService
         .list({
-          // FIX 1: Pass the array directly. Your custom wrapper handles the $in logic!
-          query: { _id: groupedIds[modelNames.JOB] },
-          // FIX 2: Instead of pagination: false, we just set the limit to exactly
-          // the number of items we are asking for.
+          query: { _id: { $in: groupedIds[modelNames.JOB] } } as any,
           options: { limit: groupedIds[modelNames.JOB].length },
         })
         .then((res) => res.docs || res)
@@ -51,6 +50,7 @@ export const list = async ({ req }: ControllerParams) => {
 
   // Resolve all fetches
   const fetchedArrays = await Promise.all(fetchPromises);
+  console.log("Fetched related items for favorites:", fetchedArrays);
 
   // Flatten into a Map for instant O(1) lookups
   const dataMap = new Map();
@@ -60,11 +60,10 @@ export const list = async ({ req }: ControllerParams) => {
     }
   });
 
-  // 4. Stitch the data together and apply CASL sanitization
+  // Stitch the data together and apply CASL sanitization
   const sanitizedDocs = favoritesResult.docs.map((fav: any) => {
     const rawItem = dataMap.get(fav.itemId.toString());
 
-    // FIX 3: Manually convert the Mongoose document to a plain JS object
     // to safely use the spread operator, since we couldn't use `lean: true`.
     const favObj = typeof fav.toObject === "function" ? fav.toObject() : fav;
 
@@ -74,7 +73,7 @@ export const list = async ({ req }: ControllerParams) => {
     };
   });
 
-  // 5. Format and Return
+  // Format and Return
   const { data, pagination } = formatListResponse({ ...favoritesResult, docs: sanitizedDocs });
 
   return new ApiResponse({
@@ -85,6 +84,7 @@ export const list = async ({ req }: ControllerParams) => {
     pagination,
   });
 };
+
 export const get = async ({ req }: ControllerParams) => {
   const favourite = await favouriteService.getOne({
     query: { _id: req.params.id },
