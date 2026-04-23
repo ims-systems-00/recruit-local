@@ -73,17 +73,6 @@ const renderPdfThumbnail = async (pdfPath: string): Promise<Buffer> => {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const rawPdfBuffer = fs.readFileSync(pdfPath);
   const pdfBuffer = decodePossiblyBase64Pdf(rawPdfBuffer);
-  const prefixText = pdfBuffer.subarray(0, 32).toString("utf-8");
-  const prefixHex = pdfBuffer.subarray(0, 16).toString("hex");
-  const looksLikeBase64Pdf = prefixText.startsWith("JVBER");
-
-  console.log("[thumbnailCreateQueue][PDF] Incoming PDF debug", {
-    path: pdfPath,
-    size: pdfBuffer.length,
-    prefixText,
-    prefixHex,
-    looksLikeBase64Pdf,
-  });
 
   const pdfData = new Uint8Array(pdfBuffer);
 
@@ -149,12 +138,6 @@ const processThumbnailCreate = async (job: Job<ThumbnailCreateJobData>) => {
       thumbnailBuffer = await sharp(tempInputPath).resize(300, 300, { fit: "inside" }).jpeg({ quality: 80 }).toBuffer();
       contentType = "image/jpeg";
     } else if (PDF_EXTENSIONS.has(ext)) {
-      console.log("[thumbnailCreateQueue][PDF] Processing file", {
-        fileMediaId,
-        key: Key,
-        bucket: Bucket,
-        ext,
-      });
       try {
         thumbnailBuffer = await renderPdfThumbnail(tempInputPath);
       } catch (pdfError) {
