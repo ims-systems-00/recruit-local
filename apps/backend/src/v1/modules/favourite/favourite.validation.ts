@@ -1,13 +1,10 @@
-import Joi, { CustomHelpers } from "joi";
-import mongoose from "mongoose";
+import Joi from "joi";
 import { modelNames } from "../../../models/constants";
+import { objectIdValidation } from "../../../common/helper/validate";
 
-const objectIdValidation = (value: string, helpers: CustomHelpers) => {
-  if (!mongoose.Types.ObjectId.isValid(value)) {
-    return helpers.message({ custom: `"${helpers.state.path.join(".")}" must be a valid ObjectId` });
-  }
-  return value;
-};
+export const idParamsSchema = Joi.object({
+  id: Joi.string().custom(objectIdValidation).required().label("Favourite ID"),
+});
 
 export const createFavouriteBodySchema = Joi.object({
   itemId: Joi.string().custom(objectIdValidation).required().label("Item ID"),
