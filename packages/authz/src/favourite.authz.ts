@@ -41,6 +41,7 @@ export const ALL_FAVOURITE_FIELDS = [
 ];
 
 const USER_CREATE_FIELDS = ['userId', 'itemId', 'itemType'];
+const USER_UPDATE_FIELDS = ['itemType'];
 
 export class FavouriteAuthZEntity {
   public readonly userId: string | null;
@@ -100,8 +101,15 @@ export class FavouriteAbilityBuilder implements IAbilityBuilder {
         },
       );
 
-      // Users generally don't "update" favourites (they just toggle them on/off),
-      // but if you add metadata fields later, add a builder.can(AbilityAction.Update, ...) here.
+      // Users can update a small safe subset on their own favourites.
+      builder.can(
+        AbilityAction.Update,
+        FavouriteAuthZEntity,
+        USER_UPDATE_FIELDS,
+        {
+          userId: currentUserId,
+        },
+      );
 
       // Users can soft delete their own favourites
       builder.can(AbilityAction.SoftDelete, FavouriteAuthZEntity, {

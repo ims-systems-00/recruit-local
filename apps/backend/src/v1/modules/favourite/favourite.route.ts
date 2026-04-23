@@ -1,9 +1,13 @@
 import express from "express";
 import { validate } from "../../../common/middlewares";
 import { handleController } from "../../../common/helper";
-import { idParamsSchema } from "../user/user.validation";
 import { list, get, create, update, softRemove, hardRemove, restore } from "./favourite.controller";
-import { createFavouriteBodySchema, updateFavouriteBodySchema, favouriteListQuerySchema } from "./favourite.validation";
+import {
+  createFavouriteBodySchema,
+  updateFavouriteBodySchema,
+  favouriteListQuerySchema,
+  idParamsSchema,
+} from "./favourite.validation";
 
 const router = express.Router();
 
