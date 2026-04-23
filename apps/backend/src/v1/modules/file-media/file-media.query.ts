@@ -32,6 +32,17 @@ export const fileMediaSrcQuery = (): PipelineStage[] => {
             else: null,
           },
         },
+        thumbnailSrc: {
+          $cond: {
+            if: {
+              $and: [{ $eq: ["$visibility", VISIBILITY_ENUM.PUBLIC] }, { $ifNull: ["$thumbnail.Key", false] }],
+            },
+            then: {
+              $concat: [baseUrl, "/", "$thumbnail.Key"],
+            },
+            else: null,
+          },
+        },
       },
     },
   ];

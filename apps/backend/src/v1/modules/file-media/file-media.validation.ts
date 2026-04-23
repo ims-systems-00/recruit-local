@@ -30,6 +30,14 @@ export const createBodySchema = Joi.object({
     .required()
     .label("Storage Information"),
 
+  thumbnail: Joi.object<AwsStorageTemplate>({
+    Name: Joi.string().required(),
+    Key: Joi.string().required(),
+    Bucket: Joi.string().required(),
+  })
+    .optional()
+    .label("Thumbnail"),
+
   visibility: Joi.string()
     .valid(...validVisibilities)
     .required()
@@ -51,6 +59,14 @@ export const updateBodySchema = Joi.object({
   })
     .optional()
     .label("Storage Information"),
+
+  thumbnail: Joi.object<AwsStorageTemplate>({
+    Name: Joi.string(),
+    Key: Joi.string(),
+    Bucket: Joi.string(),
+  })
+    .optional()
+    .label("Thumbnail"),
 
   visibility: Joi.string()
     .valid(...validVisibilities)
