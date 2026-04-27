@@ -5,5 +5,6 @@ export * from './tenant.authz';
 export * from './job.authz';
 export * from './job-profile.authz';
 export * from './cv.authz';
+export * from './kyc.authz';
 export * from './application.authz';
 export * from './favourite.authz';
