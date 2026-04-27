@@ -1,0 +1,39 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "cSpell.language": "en-GB",
+  "cSpell.words": [
+    "AWSEB",
+    "boardable",
+    "Boardable",
+    "commentactivities",
+    "Dockerrun",
+    "documentfolders",
+    "eventregistrations",
+    "favorites",
+    "filemedias",
+    "formelements",
+    "formresponses",
+    "formsubmissions",
+    "imsat",
+    "imsrt",
+    "inrm",
+    "jobprofiles",
+    "Lexorank",
+    "linux",
+    "responsetemplates",
+    "skillassessmentresults",
+    "skillassessments",
+    "specializeduserprofiles",
+    "tokenpairs",
+    "verificationtokens"
+  ],
+  "cSpell.flagWords": [],
+  "cSpell.caseSensitive": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
