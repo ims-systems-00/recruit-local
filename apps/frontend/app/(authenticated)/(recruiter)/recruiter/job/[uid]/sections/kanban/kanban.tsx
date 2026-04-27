@@ -39,6 +39,10 @@ function Kanban({
 }) {
   console.log('statuses', statuses);
   const [columns, setColumns] = useState<Column[]>([]);
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  const [optimisticMap, setOptimisticMap] = useState<{
+    [statusId: string]: Application[];
+  }>({});
   const { moveApplicationToColumn, isPending: isMovingApplicationToColumn } =
     useMoveApplicationToColumn();
 
@@ -59,38 +63,103 @@ function Kanban({
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
+  const moveOptimistically = (
+    app: Application,
+    fromStatus: string,
+    toStatus: string,
+    toStatusLabel: string,
+    toIndex: number,
+  ) => {
+    setOptimisticMap((prev) => {
+      const next = { ...prev };
+      setRemovedIds((prevIds) => new Set(prevIds).add(app._id));
+      // remove from source
+      next[fromStatus] = (next[fromStatus] || []).filter(
+        (a) => a._id !== app._id,
+      );
+
+      // insert into target
+      const targetList = next[toStatus] || [];
+      const newTarget = [...targetList];
+      newTarget.splice(toIndex, 0, {
+        ...app,
+        status: { ...app.status, _id: toStatus, label: toStatusLabel },
+      });
+
+      next[toStatus] = newTarget;
+
+      return next;
+    });
+  };
+
+  const rollbackMove = (
+    app: Application,
+    fromStatus: string,
+    toStatus: string,
+  ) => {
+    setOptimisticMap((prev) => {
+      const next = { ...prev };
+
+      // remove from wrong column
+      next[toStatus] = (next[toStatus] || []).filter((a) => a._id !== app._id);
+
+      // restore to original
+      next[fromStatus] = [...(next[fromStatus] || []), app];
+
+      return next;
+    });
+    setRemovedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(app._id); // ✅ restore original
+      return next;
+    });
+  };
+
   // --- Drag handlers ---
   const handleDragStart = ({ active }: DragStartEvent) => {
     console.log('active', active);
     setActiveId(active.id as string);
     setActiveApplicant(active.data.current?.applicant as Application);
   };
+  const handleDragOver = ({ active, over }: DragOverEvent) => {
+    if (!over) return;
 
-  // const handleDragOver = ({ active, over }: DragOverEvent) => {
-  //   if (!over) return;
-  //   // console.log('active', active);
-  //   // console.log('over', over);
+    const activeApp = active.data.current?.applicant as Application;
+    const overApp = over.data.current?.applicant as Application;
+    const overIndex = over.data.current?.index as number;
 
-  //   const activeApp = active.data.current?.applicant as Application;
-  //   if (!activeApp) return;
+    if (!activeApp) return;
 
-  //   const overIsColumn = columns.some((c) => c.id === over.id);
-  //   const overApplicant = applicants.find((a) => a.id === over.id);
-  //   const targetColumn = overIsColumn
-  //     ? (over.id as string)
-  //     : overApplicant
-  //       ? overApplicant.column
-  //       : activeApp.column;
+    const fromStatus = activeApp.status._id;
 
-  //   if (activeApp.column !== targetColumn) {
-  //     setApplicants((prev) =>
-  //       prev.map((a) =>
-  //         a.id === active.id ? { ...a, column: targetColumn } : a,
-  //       ),
-  //     );
-  //   }
-  // };
+    let toStatus = fromStatus;
+    let toStatusLabel = activeApp.status.label;
+    let index = 0;
 
+    if (overApp) {
+      toStatus = overApp.status._id;
+      toStatusLabel = overApp.status.label;
+      index = overIndex ?? 0;
+    } else {
+      // hovering over column
+      toStatus = over.id as string;
+      const statusData = statuses.find((s) => s._id === toStatus);
+      toStatusLabel = statusData?.label || '';
+      index = 0;
+    }
+
+    // 🚫 prevent unnecessary updates
+    if (
+      fromStatus === toStatus &&
+      optimisticMap[toStatus]?.some(
+        (a, i) => a._id === activeApp._id && i === index,
+      )
+    ) {
+      return;
+    }
+
+    moveOptimistically(activeApp, fromStatus, toStatus, toStatusLabel, index);
+  };
   const handleDragEnd = async ({ active, over }: DragEndEvent) => {
     setActiveId(null);
     if (!over) return;
@@ -106,6 +175,23 @@ function Kanban({
 
     if (!activeApp) return;
 
+    const fromStatus = activeApp.status._id;
+    const fromStatusLabel = activeApp.status.label;
+    let toStatus = fromStatus;
+    let toStatusLabel = fromStatusLabel;
+    let index = 0;
+
+    if (overApp) {
+      toStatus = overApp.status._id;
+      toStatusLabel = overApp.status.label;
+      index = overIndex || 0;
+    } else {
+      toStatus = over.id as string;
+      index = 0;
+      const toStatusData = statuses.find((s) => s._id === toStatus);
+      toStatusLabel = toStatusData?.label || '';
+    }
+
     // return;
 
     if (!overApp && over.id === activeApp.status._id) {
@@ -113,12 +199,17 @@ function Kanban({
       return;
     }
 
+    moveOptimistically(activeApp, fromStatus, toStatus, toStatusLabel, index);
+
     if (!overApp) {
       await moveApplicationToColumn({
         id: activeApp._id,
         payload: {
           targetStatusId: over.id as string,
           targetIndex: 0,
+        },
+        onErrorCallback: () => {
+          rollbackMove(activeApp, fromStatus, toStatus);
         },
       });
 
@@ -130,6 +221,9 @@ function Kanban({
       payload: {
         targetStatusId: overApp.status._id,
         targetIndex: overIndex || 0,
+      },
+      onErrorCallback: () => {
+        rollbackMove(activeApp, fromStatus, toStatus);
       },
     });
   };
@@ -152,7 +246,7 @@ function Kanban({
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
-          // onDragOver={handleDragOver}
+          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-spacing-4xl overflow-x-auto pb-2 items-start">
@@ -168,6 +262,8 @@ function Kanban({
                 onRenameColumn={handleRenameColumn}
                 onDeleteColumn={handleDeleteColumn}
                 jobId={jobId}
+                optimisticItems={optimisticMap[col.id] || []}
+                removedIds={removedIds}
               />
             ))}
           </div>

@@ -155,10 +155,12 @@ export function useMoveApplicationToColumn() {
     id,
     payload,
     onSuccessCallback,
+    onErrorCallback,
   }: {
     id: string;
     payload: MoveApplicationToColumnInput;
     onSuccessCallback?: (data: Application) => void;
+    onErrorCallback?: () => void;
   }) => {
     try {
       const response = await mutation.mutateAsync({ id, payload });
@@ -172,9 +174,11 @@ export function useMoveApplicationToColumn() {
         onSuccessCallback?.(response.data as Application);
       } else {
         toast.error(response.message);
+        onErrorCallback?.();
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to move application to column');
+      onErrorCallback?.();
     }
   };
 

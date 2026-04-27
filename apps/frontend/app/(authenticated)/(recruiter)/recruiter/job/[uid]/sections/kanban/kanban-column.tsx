@@ -15,6 +15,7 @@ import {
 import { ApplicantCard } from './applicant-card';
 import { useState } from 'react';
 import { useApplications } from '@/services/application/application.client';
+import { Application } from '@/services/application/application.type';
 
 interface Props {
   id: string;
@@ -26,6 +27,8 @@ interface Props {
   onRenameColumn: (columnId: string, newTitle: string) => void;
   onDeleteColumn: (columnId: string) => void;
   jobId: string;
+  optimisticItems: Application[];
+  removedIds: Set<string>;
 }
 
 export function KanbanColumn({
@@ -38,6 +41,8 @@ export function KanbanColumn({
   onRenameColumn,
   onDeleteColumn,
   jobId,
+  optimisticItems,
+  removedIds,
 }: Props) {
   const [page, setPage] = useState(1);
   const { applications, isLoading, pagination } = useApplications({
@@ -45,6 +50,18 @@ export function KanbanColumn({
     page,
     statusId: id,
   });
+
+  const mergedApplications = [
+    ...optimisticItems,
+    ...applications.filter(
+      (a) =>
+        !optimisticItems.some((o) => o._id === a._id) && !removedIds.has(a._id),
+    ),
+  ];
+
+  console.log('mergedApplications', mergedApplications);
+  console.log('optimisticItems', optimisticItems);
+  console.log('applications', applications);
 
   const { setNodeRef, isOver } = useDroppable({ id });
 
@@ -113,10 +130,10 @@ export function KanbanColumn({
         }`}
       >
         <SortableContext
-          items={applications.map((a) => a._id)}
+          items={mergedApplications.map((a) => a._id)}
           strategy={verticalListSortingStrategy}
         >
-          {applications.map((applicant, index) => (
+          {mergedApplications.map((applicant, index) => (
             <ApplicantCard
               key={applicant._id}
               applicant={applicant}
