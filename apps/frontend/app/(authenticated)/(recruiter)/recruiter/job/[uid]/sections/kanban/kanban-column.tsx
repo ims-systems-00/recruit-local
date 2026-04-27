@@ -16,6 +16,7 @@ import { ApplicantCard } from './applicant-card';
 import { useState } from 'react';
 import { useApplications } from '@/services/application/application.client';
 import { Application } from '@/services/application/application.type';
+import { KanbanColumnSkeleton } from './kanban-column-skeleton';
 
 interface Props {
   id: string;
@@ -73,6 +74,7 @@ export function KanbanColumn({
       onDeleteColumn(id);
     }
   };
+  if (isLoading) return <KanbanColumnSkeleton />;
 
   return (
     <div className="flex flex-col gap-spacing-2xl flex-1 min-w-[363px] max-w-[363px] bg-bg-gray-soft-secondary p-spacing-sm rounded-3xl border border-border-gray-secondary">
