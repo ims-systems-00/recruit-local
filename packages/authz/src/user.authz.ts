@@ -36,6 +36,7 @@ export const ALL_USER_FIELDS = [
   'password',
   'isDeleted',
   'deletedAt',
+  'kycStatus',
 ];
 
 // Helper to clean up array filtering
@@ -57,6 +58,7 @@ const SELF_UPDATE_FIELDS = omitFields([
   'deletedAt',
   'type',
   'role',
+  'kycStatus',
 ]);
 
 const SELF_READ_FIELDS_CANDIDATE = omitFields([

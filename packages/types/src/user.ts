@@ -11,4 +11,5 @@ export interface User {
   createdAt?: string;
   updatedAt?: string;
   tenantId?: string | null;
+  kycStatus?: string;
 }
