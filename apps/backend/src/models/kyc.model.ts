@@ -59,12 +59,12 @@ const kycSchema = new Schema<IKycDoc>(
     },
     documentFrontId: {
       type: Schema.Types.ObjectId,
-      ref: "File",
+      ref: modelNames.FILE_MEDIA,
       required: true,
     },
     documentBackId: {
       type: Schema.Types.ObjectId,
-      ref: "File",
+      ref: modelNames.FILE_MEDIA,
     },
     rejectionReason: {
       type: String,
@@ -79,6 +79,4 @@ kycSchema.plugin(softDeletePlugin);
 kycSchema.plugin(mongoosePaginate);
 kycSchema.plugin(aggregatePaginate);
 
-const KycModel = model<IKycDoc, IKycModel>("Kyc", kycSchema);
-
-export default KycModel;
+export const Kyc = model<IKycDoc, IKycModel>("Kyc", kycSchema);
