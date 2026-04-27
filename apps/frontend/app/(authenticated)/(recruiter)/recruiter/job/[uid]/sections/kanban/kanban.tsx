@@ -37,12 +37,12 @@ function Kanban({
   statuses: StatusData[];
   jobId: string;
 }) {
-  console.log('statuses', statuses);
   const [columns, setColumns] = useState<Column[]>([]);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
   const [optimisticMap, setOptimisticMap] = useState<{
     [statusId: string]: Application[];
   }>({});
+
   const { moveApplicationToColumn, isPending: isMovingApplicationToColumn } =
     useMoveApplicationToColumn();
 
@@ -121,45 +121,44 @@ function Kanban({
     setActiveId(active.id as string);
     setActiveApplicant(active.data.current?.applicant as Application);
   };
-  const handleDragOver = ({ active, over }: DragOverEvent) => {
-    if (!over) return;
+  // const handleDragOver = ({ active, over }: DragOverEvent) => {
+  //   if (!over) return;
 
-    const activeApp = active.data.current?.applicant as Application;
-    const overApp = over.data.current?.applicant as Application;
-    const overIndex = over.data.current?.index as number;
+  //   const activeApp = active.data.current?.applicant as Application;
+  //   const overApp = over.data.current?.applicant as Application;
+  //   const overIndex = over.data.current?.index as number;
 
-    if (!activeApp) return;
+  //   if (!activeApp) return;
 
-    const fromStatus = activeApp.status._id;
+  //   const fromStatus = activeApp.status._id;
 
-    let toStatus = fromStatus;
-    let toStatusLabel = activeApp.status.label;
-    let index = 0;
+  //   let toStatus = fromStatus;
+  //   let toStatusLabel = activeApp.status.label;
+  //   let index = 0;
 
-    if (overApp) {
-      toStatus = overApp.status._id;
-      toStatusLabel = overApp.status.label;
-      index = overIndex ?? 0;
-    } else {
-      // hovering over column
-      toStatus = over.id as string;
-      const statusData = statuses.find((s) => s._id === toStatus);
-      toStatusLabel = statusData?.label || '';
-      index = 0;
-    }
+  //   if (overApp) {
+  //     toStatus = overApp.status._id;
+  //     toStatusLabel = overApp.status.label;
+  //     index = overIndex ?? 0;
+  //   } else {
+  //     // hovering over column
+  //     toStatus = over.id as string;
+  //     const statusData = statuses.find((s) => s._id === toStatus);
+  //     toStatusLabel = statusData?.label || '';
+  //     index = 0;
+  //   }
 
-    // 🚫 prevent unnecessary updates
-    if (
-      fromStatus === toStatus &&
-      optimisticMap[toStatus]?.some(
-        (a, i) => a._id === activeApp._id && i === index,
-      )
-    ) {
-      return;
-    }
+  //   if (
+  //     fromStatus === toStatus &&
+  //     optimisticMap[toStatus]?.some(
+  //       (a, i) => a._id === activeApp._id && i === index,
+  //     )
+  //   ) {
+  //     return;
+  //   }
 
-    moveOptimistically(activeApp, fromStatus, toStatus, toStatusLabel, index);
-  };
+  //   moveOptimistically(activeApp, fromStatus, toStatus, toStatusLabel, index);
+  // };
   const handleDragEnd = async ({ active, over }: DragEndEvent) => {
     setActiveId(null);
     if (!over) return;
@@ -246,7 +245,7 @@ function Kanban({
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
+          // onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-spacing-4xl overflow-x-auto pb-2 items-start">

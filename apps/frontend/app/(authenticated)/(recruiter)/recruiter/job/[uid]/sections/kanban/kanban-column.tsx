@@ -59,10 +59,6 @@ export function KanbanColumn({
     ),
   ];
 
-  console.log('mergedApplications', mergedApplications);
-  console.log('optimisticItems', optimisticItems);
-  console.log('applications', applications);
-
   const { setNodeRef, isOver } = useDroppable({ id });
 
   const handleRename = () => {

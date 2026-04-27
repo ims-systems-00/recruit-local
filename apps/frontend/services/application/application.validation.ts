@@ -43,6 +43,7 @@ export const applicationSchema = yup.object({
     label: yup.string().required('Status label is required'),
   }),
   rank: yup.number().nullable().optional(),
+  statusId: objectIdSchema.required(),
 });
 
 // --- INPUT SCHEMAS (Matches Backend Joi) ---
