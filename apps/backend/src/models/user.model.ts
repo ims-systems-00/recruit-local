@@ -5,7 +5,7 @@ import { passwordHashPlugin, PasswordHashInput, IPasswordHashDoc } from "./plugi
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import { EMAIL_VERIFICATION_STATUS_ENUMS, modelNames } from "./constants";
-import { USER_ROLE_ENUMS, ACCOUNT_TYPE_ENUMS } from "@rl/types";
+import { USER_ROLE_ENUMS, ACCOUNT_TYPE_ENUMS, KYC_STATUS } from "@rl/types";
 import { IJobProfileModel, JobProfileInput, IJobProfileDoc, jobProfilePlugin } from "./plugins/jobProfile.plugin";
 
 /*
@@ -27,6 +27,7 @@ export interface UserInput extends PasswordHashInput, TenantInput, JobProfileInp
 export interface IUserDoc extends UserInput, IPasswordHashDoc, ITenantDoc, IJobProfileDoc, ISoftDeleteDoc, Document {
   fullName: string;
   emailVerificationStatus: EMAIL_VERIFICATION_STATUS_ENUMS;
+  kycStatus?: KYC_STATUS;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -74,6 +75,11 @@ const userSchema = new Schema<IUserDoc>(
       type: String,
       enum: Object.values(USER_ROLE_ENUMS),
       default: null,
+    },
+    kycStatus: {
+      type: String,
+      enum: Object.values(KYC_STATUS),
+      default: KYC_STATUS.PENDING,
     },
   },
   {
