@@ -4,6 +4,7 @@ import {
   createApplicationSchema,
   updateApplicationSchema,
   applicationSchema,
+  moveApplicationToColumnSchema,
 } from './application.validation';
 
 // --- INFERRED TYPES FROM SCHEMAS ---
@@ -15,12 +16,17 @@ export type ApplicationUpdateInput = yup.InferType<
 >;
 export type Application = yup.InferType<typeof applicationSchema>;
 
+export type MoveApplicationToColumnInput = yup.InferType<
+  typeof moveApplicationToColumnSchema
+>;
+
 // --- QUERY FILTERS ---
 export type ApplicationListFilters = {
   jobId?: string;
   page?: number;
   limit?: number;
   clientSearch?: string;
+  statusId?: string;
 };
 
 // --- FRONTEND RESPONSE TYPES ---

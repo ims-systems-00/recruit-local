@@ -75,27 +75,40 @@ export function useStatus(id: string) {
   };
 }
 
-// Hook to create a new status
 export function useCreateStatus() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: (payload: StatusCreateInput) => createStatus(payload),
-    onSuccess: (response) => {
+  });
+
+  const createStatusAsync = async ({
+    payload,
+    onSuccessCallback,
+    onError,
+  }: {
+    payload: StatusCreateInput;
+    onSuccessCallback?: (data: Partial<StatusData>) => void;
+    onError?: () => void;
+  }) => {
+    try {
+      const response = await mutation.mutateAsync(payload);
+
       if (response.success) {
         toast.success(response.message || 'Status created successfully');
+        onSuccessCallback?.(response.data as Partial<StatusData>);
         queryClient.invalidateQueries({ queryKey: statusKeys.all });
       } else {
         toast.error(response.message);
+        onError?.();
       }
-    },
-    onError: (error) => {
+    } catch (error: any) {
       toast.error(error.message || 'Failed to create status');
-    },
-  });
+    }
+  };
 
   return {
-    createStatus: mutation.mutateAsync,
+    createStatus: createStatusAsync,
     isPending: mutation.isPending,
     error: mutation.error,
   };

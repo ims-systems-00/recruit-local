@@ -10,6 +10,7 @@ import {
   softDeleteApplication,
   hardDeleteApplication,
   restoreApplication,
+  moveApplicationToColumn,
 } from './application.server';
 import type {
   ApplicationCreateInput,
@@ -17,6 +18,7 @@ import type {
   Application,
   ApplicationListResponse,
   ApplicationListFilters,
+  MoveApplicationToColumnInput,
 } from './application.type';
 import { useRouter } from 'next/navigation';
 
@@ -132,6 +134,52 @@ export function useUpdateApplication() {
 
   return {
     updateApplication: updateApplicationAsync,
+    isPending: mutation.isPending,
+    error: mutation.error,
+  };
+}
+
+export function useMoveApplicationToColumn() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: MoveApplicationToColumnInput;
+    }) => moveApplicationToColumn(id, payload),
+  });
+
+  const moveApplicationToColumnAsync = async ({
+    id,
+    payload,
+    onSuccessCallback,
+  }: {
+    id: string;
+    payload: MoveApplicationToColumnInput;
+    onSuccessCallback?: (data: Application) => void;
+  }) => {
+    try {
+      const response = await mutation.mutateAsync({ id, payload });
+
+      if (response.success) {
+        toast.success(
+          response.message || 'Application moved to column successfully',
+        );
+        queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+        // queryClient.invalidateQueries({ queryKey: ['statuses'] });
+        onSuccessCallback?.(response.data as Application);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to move application to column');
+    }
+  };
+
+  return {
+    moveApplicationToColumn: moveApplicationToColumnAsync,
     isPending: mutation.isPending,
     error: mutation.error,
   };

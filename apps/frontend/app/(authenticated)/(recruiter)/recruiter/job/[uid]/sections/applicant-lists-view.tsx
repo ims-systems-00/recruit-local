@@ -15,10 +15,10 @@ export const userColumns: ColumnDef<Application>[] = [
     header: 'Applicants',
     cell: ({ row }) => (
       <div className=" flex items-center gap-spacing-lg">
-        <Avatar className=" size-10 border border-border-gray-primary">
+        <Avatar className=" size-10 border border-border-gray-primary items-center justify-center">
           {/* <AvatarImage src={row.original.jobProfile.profileImageSrc} /> */}
           <AvatarFallback>
-            {row.original.jobProfile.name.charAt(0)}
+            {row.original.jobProfile?.name?.charAt(0)}
           </AvatarFallback>
         </Avatar>
         <div>

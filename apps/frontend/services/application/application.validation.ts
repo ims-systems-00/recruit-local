@@ -42,6 +42,7 @@ export const applicationSchema = yup.object({
     _id: objectIdSchema.required(),
     label: yup.string().required('Status label is required'),
   }),
+  rank: yup.number().nullable().optional(),
 });
 
 // --- INPUT SCHEMAS (Matches Backend Joi) ---
@@ -114,6 +115,11 @@ export const updateApplicationSchema = yup.object({
     .optional(),
   feedback: yup.string().optional(),
   appliedAt: yup.string().optional(),
+});
+
+export const moveApplicationToColumnSchema = yup.object({
+  targetStatusId: yup.string().required('Target Status ID is required'),
+  targetIndex: yup.number().required('Target Index is required'),
 });
 
 // --- BACKEND RESPONSE ENVELOPES ---

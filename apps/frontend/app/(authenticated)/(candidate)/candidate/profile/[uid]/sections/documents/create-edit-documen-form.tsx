@@ -42,7 +42,7 @@ export default function CreateEditDocumentForm({
   const { updateCv, isPending: isUpdatingCv } = useUpdateCv();
   const { createCv, isPending: isCreatingCv } = useCreateCv();
   const methods = useForm<CvCreateInput | CvUpdateInput>({
-    resolver: yupResolver(schema) as Resolver<CvCreateInput | CvUpdateInput>,
+    resolver: yupResolver(schema),
     defaultValues: {
       jobProfileId: uid as string,
       title: 'Untitled CV',
@@ -50,8 +50,6 @@ export default function CreateEditDocumentForm({
     mode: 'onSubmit',
   });
 
-  const [isCurrentWorkplace, setIsCurrentWorkplace] =
-    useState<CheckedState>(false);
   const {
     register,
     control,

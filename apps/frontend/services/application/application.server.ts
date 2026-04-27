@@ -8,6 +8,7 @@ import {
   createApplicationSchema,
   updateApplicationSchema,
   applicationItemResponseSchema,
+  moveApplicationToColumnSchema,
 } from './application.validation';
 import type {
   ApplicationListFilters,
@@ -16,6 +17,7 @@ import type {
   Application,
   ApplicationCreateInput,
   ApplicationUpdateInput,
+  MoveApplicationToColumnInput,
 } from './application.type';
 
 const API_ENDPOINT = '/applications';
@@ -33,6 +35,7 @@ export async function getApplications(
         limit: params?.limit || 10,
         clientSearch: params?.clientSearch,
         jobId: params?.jobId,
+        statusId: params?.statusId,
       },
     });
 
@@ -221,5 +224,44 @@ export async function hardDeleteApplication(
     };
   } catch (error) {
     return handleServerError(error, 'Failed to permanently delete application');
+  }
+}
+
+//board/move/69b124a5fb8456ea401ceb1e
+//body: { targetStatusId: '69b124a5fb8456ea401ceb1e', targetIndex: 0 }
+
+export async function moveApplicationToColumn(
+  id: string,
+  payload: MoveApplicationToColumnInput,
+): Promise<ApplicationApiResponse<Application>> {
+  console.log('payload', payload);
+  try {
+    await idParamsSchema.validate({ id });
+    const validatedPayload = await moveApplicationToColumnSchema.validate(
+      payload,
+      {
+        abortEarly: false,
+      },
+    );
+
+    const res = await axiosServer.post(
+      `${API_ENDPOINT}/board/move/${id}`,
+      validatedPayload,
+    );
+
+    // const validatedResponse = await jobProfileItemResponseSchema.validate(
+    //   res.data,
+    //   {
+    //     stripUnknown: true,
+    //   },
+    // );
+
+    return {
+      success: true,
+      data: res.data.application,
+      message: res.data.message || 'Application moved to column successfully',
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to move application to column');
   }
 }

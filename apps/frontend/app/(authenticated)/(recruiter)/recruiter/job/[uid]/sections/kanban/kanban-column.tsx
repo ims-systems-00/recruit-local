@@ -11,30 +11,41 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { Applicant } from './data';
+// import type { Applicant } from './data';
 import { ApplicantCard } from './applicant-card';
+import { useState } from 'react';
+import { useApplications } from '@/services/application/application.client';
 
 interface Props {
   id: string;
   title: string;
-  applicants: Applicant[];
-  onAddClick: (columnId: string) => void;
-  onEdit: (applicant: Applicant) => void;
-  onDelete: (id: string) => void;
+  // applicants: Applicant[];
+  // onAddClick: (columnId: string) => void;
+  // onEdit: (applicant: Applicant) => void;
+  // onDelete: (id: string) => void;
   onRenameColumn: (columnId: string, newTitle: string) => void;
   onDeleteColumn: (columnId: string) => void;
+  jobId: string;
 }
 
 export function KanbanColumn({
   id,
   title,
-  applicants,
-  onAddClick,
-  onEdit,
-  onDelete,
+  // applicants,
+  // onAddClick,
+  // onEdit,
+  // onDelete,
   onRenameColumn,
   onDeleteColumn,
+  jobId,
 }: Props) {
+  const [page, setPage] = useState(1);
+  const { applications, isLoading, pagination } = useApplications({
+    jobId,
+    page,
+    statusId: id,
+  });
+
   const { setNodeRef, isOver } = useDroppable({ id });
 
   const handleRename = () => {
@@ -59,17 +70,17 @@ export function KanbanColumn({
             {title}
           </span>
           <span className=" py-spacing-3xs px-spacing-sm rounded-full border border-others-gray-light bg-others-gray-gray-zero text-label-xs font-label-xs-strong! text-others-gray-dark">
-            {applicants.length}
+            {applications.length}
           </span>
         </div>
         <div className="flex items-center gap-spacing-sm">
-          <button
+          {/* <button
             onClick={() => onAddClick(id)}
             className=" text-fg-gray-secondary"
             title="Add applicant"
           >
             <Plus size={16} />
-          </button>
+          </button> */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="text-fg-gray-secondary">
@@ -102,15 +113,14 @@ export function KanbanColumn({
         }`}
       >
         <SortableContext
-          items={applicants.map((a) => a.id)}
+          items={applications.map((a) => a._id)}
           strategy={verticalListSortingStrategy}
         >
-          {applicants.map((applicant) => (
+          {applications.map((applicant, index) => (
             <ApplicantCard
-              key={applicant.id}
+              key={applicant._id}
               applicant={applicant}
-              onEdit={onEdit}
-              onDelete={onDelete}
+              index={index}
             />
           ))}
         </SortableContext>
