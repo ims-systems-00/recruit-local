@@ -1,6 +1,8 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { Job } from "bullmq";
 import sharp from "sharp";
 import { createCanvas } from "@napi-rs/canvas";
@@ -21,6 +23,7 @@ const PDF_EXTENSIONS = new Set(["pdf"]);
 const DOC_EXTENSIONS = new Set(["doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "rtf"]);
 
 const fileManager = new FileManager(s3Client);
+const execFileAsync = promisify(execFile);
 
 const getFileExtension = (name: string): string => {
   return path
@@ -69,6 +72,51 @@ const decodePossiblyBase64Pdf = (buffer: Buffer): Buffer => {
   return buffer;
 };
 
+const looksLikeBase64OfficePayload = (buffer: Buffer): boolean => {
+  const prefixText = buffer.subarray(0, 64).toString("utf-8");
+
+  // Typical OOXML (.docx/.pptx/.xlsx) base64 starts with "UEsDB"
+  // Legacy Office OLE payload may start with "0M8R4" when base64 encoded.
+  return prefixText.startsWith("UEsDB") || prefixText.startsWith("0M8R4");
+};
+
+const decodePossiblyBase64Office = (buffer: Buffer): Buffer => {
+  if (!looksLikeBase64OfficePayload(buffer)) {
+    return buffer;
+  }
+
+  const asciiPayload = buffer.toString("utf-8").replace(/\s+/g, "");
+  const decoded = Buffer.from(asciiPayload, "base64");
+
+  // ZIP magic for OOXML: PK\x03\x04
+  const isZipPayload =
+    decoded.length >= 4 && decoded[0] === 0x50 && decoded[1] === 0x4b && decoded[2] === 0x03 && decoded[3] === 0x04;
+
+  // OLE magic for legacy Office docs: D0 CF 11 E0 A1 B1 1A E1
+  const isOlePayload =
+    decoded.length >= 8 &&
+    decoded[0] === 0xd0 &&
+    decoded[1] === 0xcf &&
+    decoded[2] === 0x11 &&
+    decoded[3] === 0xe0 &&
+    decoded[4] === 0xa1 &&
+    decoded[5] === 0xb1 &&
+    decoded[6] === 0x1a &&
+    decoded[7] === 0xe1;
+
+  if (isZipPayload || isOlePayload) {
+    logger.warn("[thumbnailCreateQueue][Office] Decoded base64 payload to binary office format", {
+      originalSize: buffer.length,
+      decodedSize: decoded.length,
+      format: isZipPayload ? "zip" : "ole",
+    });
+
+    return decoded;
+  }
+
+  return buffer;
+};
+
 const renderPdfThumbnail = async (pdfPath: string): Promise<Buffer> => {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const rawPdfBuffer = fs.readFileSync(pdfPath);
@@ -100,6 +148,60 @@ const renderPdfThumbnail = async (pdfPath: string): Promise<Buffer> => {
   await pdfDocument.destroy();
 
   return canvas.toBuffer("image/png");
+};
+
+const getLibreOfficeBinary = (): string => {
+  if (process.env.LIBREOFFICE_BIN) {
+    return process.env.LIBREOFFICE_BIN;
+  }
+
+  // Default macOS app bundle path works well for local development.
+  const macOsSofficePath = "/Applications/LibreOffice.app/Contents/MacOS/soffice";
+  if (process.platform === "darwin" && fs.existsSync(macOsSofficePath)) {
+    return macOsSofficePath;
+  }
+
+  return "soffice";
+};
+
+const convertOfficeFileToPdf = async (inputPath: string, outputDir: string): Promise<string> => {
+  const libreOfficeBin = getLibreOfficeBinary();
+  const inputBaseName = path.parse(inputPath).name;
+
+  await execFileAsync(libreOfficeBin, ["--headless", "--convert-to", "pdf", "--outdir", outputDir, inputPath], {
+    timeout: 120000,
+    maxBuffer: 10 * 1024 * 1024,
+    env: {
+      ...process.env,
+      HOME: process.env.HOME || os.tmpdir(),
+    },
+  });
+
+  const convertedPdfPath = path.join(outputDir, `${inputBaseName}.pdf`);
+
+  if (!fs.existsSync(convertedPdfPath)) {
+    throw new Error(`LibreOffice conversion succeeded but PDF not found at ${convertedPdfPath}`);
+  }
+
+  return convertedPdfPath;
+};
+
+const renderOfficeThumbnail = async (officePath: string): Promise<Buffer> => {
+  const rawOfficeBuffer = fs.readFileSync(officePath);
+  const decodedOfficeBuffer = decodePossiblyBase64Office(rawOfficeBuffer);
+
+  if (decodedOfficeBuffer !== rawOfficeBuffer) {
+    fs.writeFileSync(officePath, decodedOfficeBuffer);
+  }
+
+  const tempOutputDir = fs.mkdtempSync(path.join(os.tmpdir(), "office-thumbnail-"));
+
+  try {
+    const convertedPdfPath = await convertOfficeFileToPdf(officePath, tempOutputDir);
+    return await renderPdfThumbnail(convertedPdfPath);
+  } finally {
+    fs.rmSync(tempOutputDir, { recursive: true, force: true });
+  }
 };
 
 const getThumbnailKey = (originalKey: string) => {
@@ -143,6 +245,13 @@ const processThumbnailCreate = async (job: Job<ThumbnailCreateJobData>) => {
       } catch (pdfError) {
         logger.warn(`[Thumbnail] Falling back for PDF ${fileMediaId}`, pdfError);
         thumbnailBuffer = await buildThumbnailPng("PDF");
+      }
+    } else if (DOC_EXTENSIONS.has(ext)) {
+      try {
+        thumbnailBuffer = await renderOfficeThumbnail(tempInputPath);
+      } catch (officeError) {
+        logger.warn(`[Thumbnail] Falling back for office file ${fileMediaId}`, officeError);
+        thumbnailBuffer = await buildThumbnailPng(getMediaLabel(ext));
       }
     } else {
       const label = getMediaLabel(ext);
