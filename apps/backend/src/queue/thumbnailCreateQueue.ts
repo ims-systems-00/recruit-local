@@ -231,7 +231,30 @@ const processThumbnailCreate = async (job: Job<ThumbnailCreateJobData>) => {
 
     const ext = getFileExtension(Key || Name || "");
 
+    logger.info(`[Thumbnail] Preparing to download`, { fileMediaId, Bucket, Key, Name, ext });
+
     await fileManager.downloadFileFromS3(tempInputPath, { Bucket, Key });
+
+    try {
+      const stats = fs.statSync(tempInputPath);
+      let firstBytesHex = "";
+      try {
+        const fd = fs.openSync(tempInputPath, "r");
+        const head = Buffer.alloc(32);
+        fs.readSync(fd, head, 0, 32, 0);
+        fs.closeSync(fd);
+        firstBytesHex = head.toString("hex");
+      } catch (rbErr) {
+        logger.debug(`[Thumbnail] could not read first bytes`, { err: (rbErr as Error).message });
+      }
+
+      logger.info(`[Thumbnail] Downloaded file`, { path: tempInputPath, size: stats.size, firstBytesHex });
+    } catch (e) {
+      logger.warn(`[Thumbnail] Could not stat or read downloaded file`, {
+        file: tempInputPath,
+        err: (e as Error).message,
+      });
+    }
 
     let thumbnailBuffer: Buffer;
     let contentType = "image/png";
