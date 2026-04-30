@@ -1,8 +1,16 @@
 FROM node:22
 
-# Install Redis (server + CLI)
+# Install Redis (server + CLI) and LibreOffice for DOC/DOCX -> PDF conversion
 RUN apt-get update && \
-    apt-get install -y redis-server redis-tools && \
+        apt-get install -y --no-install-recommends \
+            redis-server \
+            redis-tools \
+            libreoffice \
+            libreoffice-writer \
+            libreoffice-calc \
+            libreoffice-impress \
+            fonts-dejavu-core \
+            fonts-liberation && \
     rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
