@@ -2,8 +2,16 @@ import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
 import * as jobProfileService from "./job-profile.service";
+import * as applicationService from "../application/application.service";
+import * as jobService from "../job/job.service";
 import { update as updateUser } from "../user";
-import { JobProfileAbilityBuilder, JobProfileAuthZEntity, ALL_JOB_PROFILE_FIELDS } from "@rl/authz";
+import {
+  JobProfileAbilityBuilder,
+  JobProfileAuthZEntity,
+  ALL_JOB_PROFILE_FIELDS,
+  JobAbilityBuilder,
+  JobAuthZEntity,
+} from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import { jobProfileRoleScopedSecurityQuery } from "./job-profile.query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
@@ -84,6 +92,76 @@ export const getOne = async ({ req }: ControllerParams) => {
     statusCode: StatusCodes.OK,
     data: getSanitizedResponse(jobProfile, ability),
     fieldName: "jobProfile",
+  });
+};
+
+export const getAppliedJobs = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new JobProfileAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  const jobProfile = await jobProfileService.getOne({
+    query: { _id: req.params.id },
+  });
+
+  if (!jobProfile || !ability.can(AbilityAction.Read, new JobProfileAuthZEntity(jobProfile))) {
+    throw new UnauthorizedException("You do not have permission to view this job profile.");
+  }
+
+  // Get all applications for this job profile
+  const applications = await applicationService.list({
+    query: { jobProfileId: req.params.id },
+    options: {
+      sort: { createdAt: -1 },
+    },
+  });
+
+  // Extract unique job IDs from applications
+  const applicationDocs = applications.docs as Array<{ jobId?: { toString(): string } | string }>;
+  const jobIds = Array.from(new Set(applicationDocs.map((app) => app.jobId?.toString()).filter(Boolean)));
+
+  if (jobIds.length === 0) {
+    const { data, pagination } = formatListResponse({ ...applications, docs: [] });
+    return new ApiResponse({
+      message: "No applied jobs found.",
+      statusCode: StatusCodes.OK,
+      data,
+      fieldName: "jobs",
+      pagination,
+    });
+  }
+
+  // Get the jobs with authorization check
+  const jobs = await jobService.list({
+    query: { _id: { $in: jobIds } } as unknown as Parameters<typeof jobService.list>[0]["query"],
+    options: {
+      sort: { createdAt: -1 },
+    },
+  });
+
+  // Sanitize jobs based on job permissions
+  const jobAbilityBuilder = new JobAbilityBuilder(req.session);
+  const jobAbility = jobAbilityBuilder.getAbility();
+
+  const caslJobFieldOptions = {
+    fieldsFrom: (rule: { fields?: string[] }) => rule.fields || [],
+  };
+
+  const sanitizedJobs = sanitizeDocuments<JobAuthZEntity>(
+    jobs.docs,
+    jobAbility,
+    AbilityAction.Read,
+    JobAuthZEntity,
+    caslJobFieldOptions
+  );
+
+  const { data, pagination } = formatListResponse({ ...jobs, docs: sanitizedJobs });
+
+  return new ApiResponse({
+    message: "Applied jobs retrieved for the job profile.",
+    statusCode: StatusCodes.OK,
+    data,
+    fieldName: "jobs",
+    pagination,
   });
 };
 
