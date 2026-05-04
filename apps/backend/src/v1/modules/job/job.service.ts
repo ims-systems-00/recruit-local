@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Types, ClientSession } from "mongoose";
-import { Job } from "../../../models";
+import { Job, Favourite } from "../../../models";
 import { getOne as getTenant } from "../tenant/tenant.service";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { jobAttachmentsLookupQuery, jobProjectionQuery } from "./job.query";
+import { alreadyAlliped, alreadysaved, jobAttachmentsLookupQuery, jobProjectionQuery } from "./job.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { VISIBILITY_ENUM } from "@rl/types";
@@ -18,7 +18,6 @@ import {
   IJobIncrementStatsParams,
 } from "./job.interface";
 import * as statusService from "../status/status.service";
-import { Favourite } from "../../../models";
 
 /**
  * Helper to fetch tenant data for job autofill
@@ -35,27 +34,37 @@ const _autoFill = async (tenantId: string, session?: ClientSession) => {
   };
 };
 
-export const list = ({ query = {}, options, session }: IJobListParams) => {
+const getMongoSession = (session?: ClientSession) => {
+  return session && typeof (session as any).inTransaction === "function" ? session : undefined;
+};
+
+export const list = ({ query = {}, options, session, userId, jobProfileId }: IJobListParams) => {
   const aggregate = Job.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...jobProjectionQuery(),
+    ...alreadyAlliped(jobProfileId),
+    ...alreadysaved(userId),
   ]);
 
-  if (session) aggregate.session(session);
+  const mongoSession = getMongoSession(session);
+  if (mongoSession) aggregate.session(mongoSession);
 
   return Job.aggregatePaginate(aggregate, options);
 };
 
-export const getOne = async ({ query = {}, session }: IJobGetParams) => {
+export const getOne = async ({ query = {}, session, userId, jobProfileId }: IJobGetParams) => {
   const aggregate = Job.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...jobProjectionQuery(),
     ...jobAttachmentsLookupQuery(),
+    ...alreadyAlliped(jobProfileId),
+    ...alreadysaved(userId),
   ]);
 
-  if (session) aggregate.session(session);
+  const mongoSession = getMongoSession(session);
+  if (mongoSession) aggregate.session(mongoSession);
 
   const jobs = await aggregate;
   if (jobs.length === 0) throw new NotFoundException("Job not found.");
@@ -69,7 +78,8 @@ export const listSoftDeleted = ({ query = {}, options, session }: IJobListParams
     ...jobProjectionQuery(),
   ]);
 
-  if (session) aggregate.session(session);
+  const mongoSession = getMongoSession(session);
+  if (mongoSession) aggregate.session(mongoSession);
 
   return Job.aggregatePaginate(aggregate, options);
 };
@@ -82,7 +92,8 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IJobGetParams) 
     ...jobAttachmentsLookupQuery(),
   ]);
 
-  if (session) aggregate.session(session);
+  const mongoSession = getMongoSession(session);
+  if (mongoSession) aggregate.session(mongoSession);
 
   const jobs = await aggregate;
   if (jobs.length === 0) throw new NotFoundException("Job not found in trash.");

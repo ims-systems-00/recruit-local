@@ -48,6 +48,8 @@ export const list = async ({ req }: ControllerParams) => {
   const results = await jobService.list({
     query: finalQuery,
     options: filter.getQueryOptions(),
+    userId: req.session.jobProfileId,
+    jobProfileId: req.session.jobProfileId,
   });
 
   const sanitizedDocs = sanitizeDocuments<JobAuthZEntity>(
@@ -75,6 +77,8 @@ export const get = async ({ req }: ControllerParams) => {
 
   const job = await jobService.getOne({
     query: { _id: req.params.id },
+    userId: req.session.jobProfileId,
+    jobProfileId: req.session.jobProfileId,
   });
 
   // Always authorize against the instance if it exists
@@ -82,10 +86,12 @@ export const get = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You do not have permission to view this job.");
   }
 
+  const sanitized = getSanitizedJobResponse(job, ability);
+
   return new ApiResponse({
     message: "Job retrieved.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedJobResponse(job, ability),
+    data: sanitized,
     fieldName: "job",
   });
 };
