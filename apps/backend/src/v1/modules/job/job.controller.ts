@@ -48,7 +48,7 @@ export const list = async ({ req }: ControllerParams) => {
   const results = await jobService.list({
     query: finalQuery,
     options: filter.getQueryOptions(),
-    userId: req.session.jobProfileId,
+    tenantId: req.session.tenantId,
     jobProfileId: req.session.jobProfileId,
   });
 
@@ -77,7 +77,7 @@ export const get = async ({ req }: ControllerParams) => {
 
   const job = await jobService.getOne({
     query: { _id: req.params.id },
-    userId: req.session.jobProfileId,
+    tenantId: req.session.tenantId,
     jobProfileId: req.session.jobProfileId,
   });
 

@@ -19,11 +19,11 @@ export interface IJobCreateParams extends IServiceCreateParams<IJobInput> {
   session?: ClientSession;
 }
 export interface IJobListParams extends IServiceListParams<IJobDoc> {
-  userId?: string;
+  tenantId?: string;
   jobProfileId?: string;
 }
 export interface IJobGetParams extends IServiceGetParams<IJobDoc> {
-  userId?: string;
+  tenantId?: string;
   jobProfileId?: string;
 }
 export interface IJobUpdateParams extends IServiceUpdateParams<IJobDoc> {

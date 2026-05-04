@@ -38,13 +38,13 @@ const getMongoSession = (session?: ClientSession) => {
   return session && typeof (session as any).inTransaction === "function" ? session : undefined;
 };
 
-export const list = ({ query = {}, options, session, userId, jobProfileId }: IJobListParams) => {
+export const list = ({ query = {}, options, session, tenantId, jobProfileId }: IJobListParams) => {
   const aggregate = Job.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...jobProjectionQuery(),
     ...alreadyAlliped(jobProfileId),
-    ...alreadysaved(userId),
+    ...alreadysaved(tenantId, jobProfileId),
   ]);
 
   const mongoSession = getMongoSession(session);
@@ -53,14 +53,14 @@ export const list = ({ query = {}, options, session, userId, jobProfileId }: IJo
   return Job.aggregatePaginate(aggregate, options);
 };
 
-export const getOne = async ({ query = {}, session, userId, jobProfileId }: IJobGetParams) => {
+export const getOne = async ({ query = {}, session, tenantId, jobProfileId }: IJobGetParams) => {
   const aggregate = Job.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...jobProjectionQuery(),
     ...jobAttachmentsLookupQuery(),
     ...alreadyAlliped(jobProfileId),
-    ...alreadysaved(userId),
+    ...alreadysaved(tenantId, jobProfileId),
   ]);
 
   const mongoSession = getMongoSession(session);

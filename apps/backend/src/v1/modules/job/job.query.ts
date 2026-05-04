@@ -118,12 +118,26 @@ export const alreadyAlliped = (jobProfileId?: string): PipelineStage[] => {
   ];
 };
 
-export const alreadysaved = (userId?: string): PipelineStage[] => {
-  if (!userId || !Types.ObjectId.isValid(userId)) {
+export const alreadysaved = (tenantId?: string, jobProfileId?: string): PipelineStage[] => {
+  // jobProfileId is required to check if a job is already saved
+  if (!jobProfileId || !Types.ObjectId.isValid(jobProfileId)) {
     return [{ $addFields: { alreadySaved: false } }];
   }
 
-  const userObjectId = new Types.ObjectId(userId);
+  const jobProfileObjectId = new Types.ObjectId(jobProfileId);
+
+  // Build match conditions - jobProfileId is always required, tenantId is optional
+  const matchConditions: any[] = [
+    { $eq: ["$jobProfileId", jobProfileObjectId] },
+    { $eq: ["$itemType", modelNames.JOB] },
+    { $eq: ["$itemId", "$$currentJobId"] },
+  ];
+
+  // Add tenantId condition if provided and valid
+  if (tenantId && Types.ObjectId.isValid(tenantId)) {
+    const tenantObjectId = new Types.ObjectId(tenantId);
+    matchConditions.unshift({ $eq: ["$tenantId", tenantObjectId] });
+  }
 
   return [
     {
@@ -134,11 +148,7 @@ export const alreadysaved = (userId?: string): PipelineStage[] => {
           {
             $match: {
               $expr: {
-                $and: [
-                  { $eq: ["$userId", userObjectId] },
-                  { $eq: ["$itemType", modelNames.JOB] },
-                  { $eq: ["$itemId", "$$currentJobId"] },
-                ],
+                $and: matchConditions,
               },
             },
           },

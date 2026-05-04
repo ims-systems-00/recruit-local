@@ -22,7 +22,8 @@ export const deleteMarkerSchema = yup.object({
 
 export const favouriteSchema = yup.object({
   _id: yup.string().required('ID is required'),
-  userId: yup.string().required('User ID is required'),
+  tenantId: yup.string().required('Tenant ID is required'),
+  jobProfileId: yup.string().required('Job Profile ID is required'),
   itemId: yup.string().required('Item ID is required'),
   itemType: yup.string().required('Item Type is required'),
   deleteMarker: deleteMarkerSchema.optional(),

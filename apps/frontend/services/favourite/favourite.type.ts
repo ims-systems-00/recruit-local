@@ -14,7 +14,8 @@ export type FavouriteIdParams = yup.InferType<typeof favouriteIdParamsSchema>;
 export type FavouriteListFilters = {
   page?: number;
   limit?: number;
-  userId?: string;
+  tenantId?: string;
+  jobProfileId?: string;
   itemId?: string;
   itemType?: string;
   startDate?: string;
@@ -24,7 +25,8 @@ export type FavouriteListFilters = {
 // API Response types
 export type FavouriteData = {
   _id: string;
-  userId: string;
+  tenantId: string;
+  jobProfileId: string;
   itemId: string;
   itemType: string;
   deleteMarker?: {
