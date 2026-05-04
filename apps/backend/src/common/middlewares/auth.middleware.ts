@@ -17,6 +17,10 @@ export const deserializeUser = catchAsync(async (req: Request, res: Response, ne
   // Verify access token
   const decoded = (await tokenService.verifyAccessToken(accessToken)) as CustomJwtPayload;
 
+  if (!decoded.id || !decoded.iat) {
+    return next(new UnauthorizedException("Invalid access token."));
+  }
+
   // Check if access token exists in the database
   const isExists = await tokenService.findAccessToken({ token: accessToken, userId: decoded.id });
   if (!isExists) {
@@ -24,11 +28,16 @@ export const deserializeUser = catchAsync(async (req: Request, res: Response, ne
   }
 
   // Check if user still exists
-  let currentUser: IUserDoc = null;
+  let currentUser: IUserDoc | null = null;
   try {
     currentUser = await userService.getUserById(decoded.id);
   } catch (err) {
-    return next(new UnauthorizedException(err.message));
+    const errorMessage = err instanceof Error ? err.message : "An error occurred";
+    return next(new UnauthorizedException(errorMessage));
+  }
+
+  if (!currentUser) {
+    return next(new UnauthorizedException("User not found."));
   }
 
   // Check if user changed password after the token was issued
@@ -39,7 +48,7 @@ export const deserializeUser = catchAsync(async (req: Request, res: Response, ne
   // Access protected route
   req.session = {
     user: {
-      _id: currentUser._id.toString(),
+      _id: String(currentUser._id),
       fullName: currentUser.fullName,
       type: currentUser.type,
       role: currentUser.role,
