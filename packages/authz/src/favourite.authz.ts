@@ -29,7 +29,8 @@ export const ALL_FAVOURITE_FIELDS = [
   'deleteMarker.status', // Used in your partialFilterExpression
 
   // --- Core Favourite Fields ---
-  'userId',
+  'tenantId',
+  'jobProfileId',
   'itemId',
   'itemType',
 
@@ -40,14 +41,31 @@ export const ALL_FAVOURITE_FIELDS = [
   'user.*',
 ];
 
-const USER_CREATE_FIELDS = ['userId', 'itemId', 'itemType'];
-const USER_UPDATE_FIELDS = ['itemType'];
+const CREATE_FIELDS = ['tenantId', 'jobProfileId', 'itemId', 'itemType'];
+
+const UPDATE_FIELDS = ['tenantId', 'jobProfileId', 'itemType'];
 
 export class FavouriteAuthZEntity {
-  public readonly userId: string | null;
+  public readonly tenantId: string | null | undefined;
+  public readonly jobProfileId: string | null;
+  public readonly itemId: string | null;
+  public readonly itemType: string | null;
 
-  constructor({ userId }: { userId?: string | null }) {
-    this.userId = userId ?? null;
+  constructor({
+    tenantId,
+    jobProfileId,
+    itemId,
+    itemType,
+  }: {
+    tenantId?: string | null;
+    jobProfileId?: string | null;
+    itemId?: string | null;
+    itemType?: string | null;
+  }) {
+    this.tenantId = tenantId ?? null;
+    this.jobProfileId = jobProfileId ?? null;
+    this.itemId = itemId ?? null;
+    this.itemType = itemType ?? null;
   }
 }
 
@@ -78,52 +96,77 @@ export class FavouriteAbilityBuilder implements IAbilityBuilder {
       });
     }
 
-    // --- Authenticated Users (Employers & Candidates) ---
-    // Assuming session.user.id holds the user's ObjectId string.
-    // Adjust to `this.session.userId` if that is how your ISession is typed.
-    const currentUserId = this.session.user._id;
+    // --- Employer: Can create with tenantId ---
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
+      const currentTenantId = this.session.tenantId;
 
-    if (currentUserId) {
-      // Users can create a favourite
-      builder.can(
-        AbilityAction.Create,
-        FavouriteAuthZEntity,
-        USER_CREATE_FIELDS,
-      );
+      if (currentTenantId) {
+        builder.can(AbilityAction.Create, FavouriteAuthZEntity, CREATE_FIELDS);
 
-      // Users can read their OWN favourites
-      builder.can(
-        AbilityAction.Read,
-        FavouriteAuthZEntity,
-        ALL_FAVOURITE_FIELDS,
-        {
-          userId: currentUserId,
-        },
-      );
+        builder.can(
+          AbilityAction.Read,
+          FavouriteAuthZEntity,
+          ALL_FAVOURITE_FIELDS,
+          { tenantId: currentTenantId },
+        );
 
-      // Users can update a small safe subset on their own favourites.
-      builder.can(
-        AbilityAction.Update,
-        FavouriteAuthZEntity,
-        USER_UPDATE_FIELDS,
-        {
-          userId: currentUserId,
-        },
-      );
+        builder.can(AbilityAction.Update, FavouriteAuthZEntity, UPDATE_FIELDS, {
+          tenantId: currentTenantId,
+        });
 
-      // Users can soft delete their own favourites
-      builder.can(AbilityAction.SoftDelete, FavouriteAuthZEntity, {
-        userId: currentUserId,
+        builder.can(AbilityAction.SoftDelete, FavouriteAuthZEntity, {
+          tenantId: currentTenantId,
+        });
+
+        builder.can(AbilityAction.Restore, FavouriteAuthZEntity, {
+          tenantId: currentTenantId,
+        });
+
+        builder.can(AbilityAction.HardDelete, FavouriteAuthZEntity, {
+          tenantId: currentTenantId,
+        });
+      }
+
+      return builder.build({
+        conditionsMatcher: buildMongoQueryMatcher(),
+        fieldMatcher: fieldPatternMatcher,
       });
+    }
 
-      // Users can restore their own favourites
-      builder.can(AbilityAction.Restore, FavouriteAuthZEntity, {
-        userId: currentUserId,
-      });
+    // --- Candidate: Can create with jobProfileId ---
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+      const currentJobProfileId = this.session.jobProfileId;
 
-      // Users can hard delete their own favourites
-      builder.can(AbilityAction.HardDelete, FavouriteAuthZEntity, {
-        userId: currentUserId,
+      if (currentJobProfileId) {
+        builder.can(AbilityAction.Create, FavouriteAuthZEntity, CREATE_FIELDS);
+
+        builder.can(
+          AbilityAction.Read,
+          FavouriteAuthZEntity,
+          ALL_FAVOURITE_FIELDS,
+          { jobProfileId: currentJobProfileId },
+        );
+
+        builder.can(AbilityAction.Update, FavouriteAuthZEntity, UPDATE_FIELDS, {
+          jobProfileId: currentJobProfileId,
+        });
+
+        builder.can(AbilityAction.SoftDelete, FavouriteAuthZEntity, {
+          jobProfileId: currentJobProfileId,
+        });
+
+        builder.can(AbilityAction.Restore, FavouriteAuthZEntity, {
+          jobProfileId: currentJobProfileId,
+        });
+
+        builder.can(AbilityAction.HardDelete, FavouriteAuthZEntity, {
+          jobProfileId: currentJobProfileId,
+        });
+      }
+
+      return builder.build({
+        conditionsMatcher: buildMongoQueryMatcher(),
+        fieldMatcher: fieldPatternMatcher,
       });
     }
 

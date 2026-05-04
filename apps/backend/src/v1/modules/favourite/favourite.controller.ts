@@ -12,7 +12,7 @@ import * as favouriteService from "./favourite.service";
 import { modelNames } from "../../../models/constants";
 import { sanitizeFavouriteItem } from "./favourite.helper";
 import * as jobService from "../job/job.service";
-import { AbilityAction } from "@rl/types";
+import { AbilityAction, ACCOUNT_TYPE_ENUMS } from "@rl/types";
 import { ALL_FAVOURITE_FIELDS, FavouriteAbilityBuilder, FavouriteAuthZEntity } from "@rl/authz";
 import { favouriteRoleScopedSecurityQuery } from "./favourite.query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
@@ -197,9 +197,26 @@ export const create = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You are not authorized to create favourites.");
   }
 
+  const { tenantId, jobProfileId, user } = req.session;
+
+  // Validate context based on account type
+  if (user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER && !tenantId) {
+    throw new UnauthorizedException("You must be associated with a tenant to create favourites.");
+  }
+
+  if (user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE && !jobProfileId) {
+    throw new UnauthorizedException("You must have an active job profile to create favourites.");
+  }
+
+  // Ensure at least one context is provided
+  if (!tenantId && !jobProfileId) {
+    throw new UnauthorizedException("You must have at least a tenant or job profile context to create favourites.");
+  }
+
   const payload = {
     ...req.body,
-    userId: req.session.user?._id,
+    ...(tenantId && { tenantId }),
+    ...(jobProfileId && { jobProfileId }),
   };
 
   validateUpdatePayload(payload, ability, AbilityAction.Create, new FavouriteAuthZEntity(payload));

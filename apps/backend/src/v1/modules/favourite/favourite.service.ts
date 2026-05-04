@@ -65,12 +65,21 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IFavouriteGetPa
 };
 
 export const create = async ({ payload, session }: IFavouriteCreateParams) => {
-  const existingFavourite = await Favourite.findOne({
-    userId: payload.userId,
+  // Build duplicate detection query
+  // jobProfileId is always required, tenantId is optional
+  const duplicateQuery: Record<string, unknown> = {
+    jobProfileId: payload.jobProfileId,
     itemId: payload.itemId,
     itemType: payload.itemType,
     "deleteMarker.status": false,
-  }).session(session || null);
+  };
+
+  // Add tenantId to query only if provided
+  if (payload.tenantId) {
+    duplicateQuery.tenantId = payload.tenantId;
+  }
+
+  const existingFavourite = await Favourite.findOne(duplicateQuery).session(session || null);
 
   if (existingFavourite) {
     throw new BadRequestException("Item is already in favourites.");
@@ -79,7 +88,7 @@ export const create = async ({ payload, session }: IFavouriteCreateParams) => {
   const favourite = await new Favourite(payload).save({ session });
 
   return getOne({
-    query: { _id: favourite._id.toString() },
+    query: { _id: String(favourite._id) },
     session,
   });
 };
@@ -97,7 +106,7 @@ export const update = async ({ query, payload, session }: IFavouriteUpdateParams
   if (!updatedFavourite) throw new NotFoundException("Favourite not found.");
 
   return getOne({
-    query: { _id: updatedFavourite._id.toString() },
+    query: { _id: String(updatedFavourite._id) },
     session,
   });
 };

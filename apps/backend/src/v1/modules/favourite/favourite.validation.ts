@@ -25,7 +25,9 @@ export const favouriteListQuerySchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
 
-  userId: Joi.string().custom(objectIdValidation).optional().label("User Filter"),
+  tenantId: Joi.string().custom(objectIdValidation).optional().label("Tenant Filter"),
+
+  jobProfileId: Joi.string().custom(objectIdValidation).optional().label("Job Profile Filter"),
 
   itemId: Joi.string().custom(objectIdValidation).optional().label("Item Filter"),
 
