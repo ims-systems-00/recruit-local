@@ -110,6 +110,8 @@ export interface JobData {
   additionalQueries?: AdditionalQuery[];
   createdAt: string;
   updatedAt: string;
+  alreadySaved?: boolean;
+  alreadyApplied?: boolean;
 }
 
 export type JobListResponse = {

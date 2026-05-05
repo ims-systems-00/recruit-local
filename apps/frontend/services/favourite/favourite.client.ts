@@ -82,6 +82,7 @@ export function useCreateFavourite() {
       if (response.success) {
         toast.success(response.message || 'Favourite added successfully');
         queryClient.invalidateQueries({ queryKey: favouriteKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['jobs'] });
       } else {
         toast.error(response.message);
       }
@@ -138,6 +139,7 @@ export function useSoftDeleteFavourite() {
       if (response.success) {
         toast.success(response.message || 'Favourite removed successfully');
         queryClient.invalidateQueries({ queryKey: favouriteKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['jobs'] });
       } else {
         toast.error(response.message);
       }
