@@ -11,10 +11,12 @@ import { useCreateFavourite } from '@/services/favourite/favourite.client';
 
 export default function CardJobItem({
   job,
-  isApplied,
+  isShowAppliedBtn = true,
+  isShowFavouriteBtn = true,
 }: {
   job: JobData;
-  isApplied?: boolean;
+  isShowAppliedBtn?: boolean;
+  isShowFavouriteBtn?: boolean;
 }) {
   const { createFavourite, isPending } = useCreateFavourite();
   const onAddFavourite = async () => {
@@ -79,7 +81,7 @@ export default function CardJobItem({
           Applied {job?.totalApplications || 0}
         </span>
         <div className=" flex items-center gap-spacing-lg">
-          {isApplied && (
+          {job?.alreadyApplied && isShowAppliedBtn && (
             <Button
               disabled
               className="border-border-brand-primary text-text-brand-primary! cursor-pointer hover:bg-bg-gray-soft-primary bg-bg-gray-soft-primary border  h-9  rounded-lg text-label-sm font-label-sm-strong!"
@@ -87,7 +89,7 @@ export default function CardJobItem({
               Applied
             </Button>
           )}
-          {!isApplied && (
+          {!job?.alreadyApplied && isShowAppliedBtn && (
             <Link href={`/candidate/job/${job?._id}/apply`}>
               <Button className=" cursor-pointer hover:bg-bg-gray-soft-primary bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
                 <Pointer />
@@ -95,17 +97,19 @@ export default function CardJobItem({
               </Button>
             </Link>
           )}
-          <Button
-            onClick={onAddFavourite}
-            disabled={isPending || job?.alreadySaved}
-            className={cn(
-              'cursor-pointer hover:bg-bg-gray-soft-primary w-9! p-spacing-0! bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!',
-              job?.alreadySaved &&
-                'text-text-brand-primary! border-border-brand-primary!',
-            )}
-          >
-            {isPending ? <Loader2 className="animate-spin" /> : <Bookmark />}
-          </Button>
+          {isShowFavouriteBtn && (
+            <Button
+              onClick={onAddFavourite}
+              disabled={isPending || job?.alreadySaved}
+              className={cn(
+                'cursor-pointer hover:bg-bg-gray-soft-primary w-9! p-spacing-0! bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!',
+                job?.alreadySaved &&
+                  'text-text-brand-primary! border-border-brand-primary!',
+              )}
+            >
+              {isPending ? <Loader2 className="animate-spin" /> : <Bookmark />}
+            </Button>
+          )}
         </div>
       </div>
     </div>

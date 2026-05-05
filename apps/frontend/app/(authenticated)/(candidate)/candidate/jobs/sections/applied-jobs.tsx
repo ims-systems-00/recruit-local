@@ -29,8 +29,13 @@ export default function AppliedJobs() {
         </div>
       ) : Boolean(jobs?.length) ? (
         <div className=" grid grid-cols-2 gap-spacing-4xl">
-          {jobs?.map((item) => (
-            <CardJobItem key={item._id} job={item} isApplied={true} />
+          {jobs?.map((item, index) => (
+            <CardJobItem
+              key={index}
+              job={item}
+              isShowAppliedBtn={false}
+              isShowFavouriteBtn={false}
+            />
           ))}
         </div>
       ) : (
