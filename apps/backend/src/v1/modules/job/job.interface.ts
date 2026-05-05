@@ -18,8 +18,14 @@ export interface IJobCreateParams extends IServiceCreateParams<IJobInput> {
   };
   session?: ClientSession;
 }
-export type IJobListParams = IServiceListParams<IJobDoc>;
-export type IJobGetParams = IServiceGetParams<IJobDoc>;
+export interface IJobListParams extends IServiceListParams<IJobDoc> {
+  tenantId?: string;
+  jobProfileId?: string;
+}
+export interface IJobGetParams extends IServiceGetParams<IJobDoc> {
+  tenantId?: string;
+  jobProfileId?: string;
+}
 export interface IJobUpdateParams extends IServiceUpdateParams<IJobDoc> {
   payload: Partial<IJobDoc> & {
     autoFill?: boolean;

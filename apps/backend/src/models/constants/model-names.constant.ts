@@ -23,6 +23,7 @@ export const modelNames = {
   JOB: "jobs",
   CV: "cvs",
   APPLICATION: "applications",
+  KYC: "kycs",
   EVENT: "events",
   EVENT_REGISTRATION: "eventregistrations",
   FAVOURITE: "favourites",

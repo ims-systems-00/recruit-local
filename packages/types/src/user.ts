@@ -12,4 +12,5 @@ export interface User {
   updatedAt?: string;
   tenantId?: string | null;
   jobProfileId?: string | null;
+  kycStatus?: string;
 }

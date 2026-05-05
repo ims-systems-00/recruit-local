@@ -5,7 +5,8 @@ import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/so
 import { modelNames } from "./constants";
 
 export interface IFavouriteInput {
-  userId: Schema.Types.ObjectId;
+  tenantId?: Schema.Types.ObjectId;
+  jobProfileId: Schema.Types.ObjectId;
   itemId: Schema.Types.ObjectId;
   itemType: typeof modelNames;
 }
@@ -23,10 +24,17 @@ interface IFavouriteModel
 
 const favouriteSchema = new Schema<IFavouriteDoc>(
   {
-    userId: {
+    tenantId: {
       type: Schema.Types.ObjectId,
-      ref: modelNames.USER,
+      ref: modelNames.TENANT,
+      required: false,
+      index: true,
+    },
+    jobProfileId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.JOB_PROFILE,
       required: true,
+      index: true,
     },
     itemId: {
       type: Schema.Types.ObjectId,
@@ -45,10 +53,12 @@ const favouriteSchema = new Schema<IFavouriteDoc>(
 );
 
 // Enforce uniqueness ONLY when the document is NOT deleted
+// Use sparse index to handle null tenantId for candidates without tenant association
 favouriteSchema.index(
-  { userId: 1, itemId: 1, itemType: 1 },
+  { tenantId: 1, jobProfileId: 1, itemId: 1, itemType: 1 },
   {
     unique: true,
+    sparse: true,
     partialFilterExpression: { "deleteMarker.status": false },
   }
 );

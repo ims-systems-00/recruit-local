@@ -1,9 +1,10 @@
 import { IListParams } from "@rl/types";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
-import { NotFoundException, FileManager, sanitizeQueryIds } from "../../../common/helper";
+import { NotFoundException, logger, sanitizeQueryIds } from "../../../common/helper";
 import { fileMediaProjectionQuery, fileMediaSrcQuery } from "./file-media.query";
 import { FileMedia, IFileMediaInput } from "../../../models";
-import { s3Client } from "../../../.config/s3.config";
+import { thumbnailCreateQueue } from "../../../queue/thumbnailCreateQueue";
+import { fileDeleteQueue } from "../../../queue/fileDeleteQueue";
 
 type IFileMediaListParams = IListParams<IFileMediaInput>;
 type IFileMediaQueryParams = Partial<IFileMediaInput & { _id: string }>;
@@ -24,6 +25,14 @@ export interface IFileMediaCreateParams {
 export const create = async ({ payload }: IFileMediaCreateParams) => {
   let fileMedia = new FileMedia(payload);
   fileMedia = await fileMedia.save();
+
+  try {
+    await thumbnailCreateQueue.addJob("create-thumbnail", {
+      fileMediaId: fileMedia.id.toString(),
+    });
+  } catch (error) {
+    logger.error("Failed to enqueue thumbnail create job", error);
+  }
 
   return fileMedia;
 };
@@ -102,10 +111,23 @@ export const hardDelete = async ({ query }: IFileMediaGetParams) => {
   const fileMedia = await getOne({ query });
   await FileMedia.findOneAndDelete(sanitizeQueryIds(query));
 
-  // todo: delete from s3. - probably moves this to a queue?
-  const fileManager = new FileManager(s3Client);
   const { Bucket, Key } = fileMedia.storageInformation;
-  fileManager.deleteFile({ Bucket, Key });
+  const filesToDelete: { Bucket: string; Key: string }[] = [{ Bucket, Key }];
+
+  if (fileMedia.thumbnail?.Bucket && fileMedia.thumbnail?.Key) {
+    const isSameAsPrimary = fileMedia.thumbnail.Bucket === Bucket && fileMedia.thumbnail.Key === Key;
+    if (!isSameAsPrimary) {
+      filesToDelete.push({ Bucket: fileMedia.thumbnail.Bucket, Key: fileMedia.thumbnail.Key });
+    }
+  }
+
+  try {
+    await fileDeleteQueue.addJob("delete-file-media-assets", {
+      files: filesToDelete,
+    });
+  } catch (error) {
+    logger.error("Failed to enqueue file delete job", error);
+  }
 
   return fileMedia;
 };

@@ -40,6 +40,8 @@ export const ALL_JOB_FIELDS = [
   'responsibility',
   'attachmentIds',
   'attachments',
+  'alreadyApplied',
+  'alreadySaved',
   'category',
   'vacancy',
   'location',

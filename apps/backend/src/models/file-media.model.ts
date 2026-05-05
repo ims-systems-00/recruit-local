@@ -10,6 +10,7 @@ export interface IFileMediaInput {
   collectionName: ModelNames;
   collectionDocument: Types.ObjectId;
   storageInformation: AwsStorageTemplate;
+  thumbnail?: AwsStorageTemplate;
   visibility: VISIBILITY_ENUM;
 }
 
@@ -38,6 +39,9 @@ const fileMediaSchema = new Schema<IFileMediaDoc>(
       refPath: "collectionName",
     },
     storageInformation: awsStorageTemplateMongooseDefinition,
+    thumbnail: {
+      ...awsStorageTemplateMongooseDefinition,
+    },
     visibility: {
       type: String,
       enum: Object.values(VISIBILITY_ENUM),

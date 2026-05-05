@@ -30,6 +30,7 @@ export * from "./status.model";
 export * from "./action.model";
 export * from "./kanban-board.model";
 export * from "./application.model";
+export * from "./kyc.model";
 export * from "./cv.model";
 export * from "./post.model";
 export * from "./reaction.model";

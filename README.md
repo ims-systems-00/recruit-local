@@ -1,5 +1,29 @@
 #Recruit Local monorepo
 
+## Local DOC/DOCX thumbnail testing (macOS)
+
+The backend thumbnail queue uses LibreOffice to generate thumbnails for office files.
+
+1. Install LibreOffice:
+
+```sh
+brew install --cask libreoffice
+```
+
+2. Set the LibreOffice binary path (recommended on macOS):
+
+```sh
+export LIBREOFFICE_BIN="/Applications/LibreOffice.app/Contents/MacOS/soffice"
+```
+
+3. Verify it works:
+
+```sh
+"$LIBREOFFICE_BIN" --headless --version
+```
+
+If the command above prints a version, DOC/DOCX thumbnail generation is ready for local testing.
+
 - for arm processors run
 
 ```

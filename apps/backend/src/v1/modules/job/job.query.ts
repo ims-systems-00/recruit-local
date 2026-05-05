@@ -1,4 +1,4 @@
-import { PipelineStage } from "mongoose";
+import { PipelineStage, Types } from "mongoose";
 import { projectQuery } from "../../../common/query";
 import { omit } from "lodash";
 import { IJobDoc, Job } from "../../../models";
@@ -66,6 +66,114 @@ export const jobAttachmentsLookupQuery = (): PipelineStage[] => {
           },
         ],
         as: "attachments",
+      },
+    },
+  ];
+};
+
+export const alreadyAlliped = (jobProfileId?: string): PipelineStage[] => {
+  if (!jobProfileId || !Types.ObjectId.isValid(jobProfileId)) {
+    return [{ $addFields: { alreadyApplied: false } }];
+  }
+
+  const jobProfileObjectId = new Types.ObjectId(jobProfileId);
+
+  return [
+    {
+      $lookup: {
+        from: modelNames.APPLICATION,
+        let: { currentJobId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [{ $eq: ["$jobId", "$$currentJobId"] }, { $eq: ["$jobProfileId", jobProfileObjectId] }],
+              },
+            },
+          },
+          {
+            $limit: 1,
+          },
+          {
+            $project: {
+              _id: 1,
+            },
+          },
+        ],
+        as: "alreadyAppliedLookup",
+      },
+    },
+    {
+      $addFields: {
+        alreadyApplied: {
+          $gt: [{ $size: "$alreadyAppliedLookup" }, 0],
+        },
+      },
+    },
+    {
+      $project: {
+        alreadyAppliedLookup: 0,
+      },
+    },
+  ];
+};
+
+export const alreadysaved = (tenantId?: string, jobProfileId?: string): PipelineStage[] => {
+  // jobProfileId is required to check if a job is already saved
+  if (!jobProfileId || !Types.ObjectId.isValid(jobProfileId)) {
+    return [{ $addFields: { alreadySaved: false } }];
+  }
+
+  const jobProfileObjectId = new Types.ObjectId(jobProfileId);
+
+  // Build match conditions - jobProfileId is always required, tenantId is optional
+  const matchConditions: any[] = [
+    { $eq: ["$jobProfileId", jobProfileObjectId] },
+    { $eq: ["$itemType", modelNames.JOB] },
+    { $eq: ["$itemId", "$$currentJobId"] },
+  ];
+
+  // Add tenantId condition if provided and valid
+  if (tenantId && Types.ObjectId.isValid(tenantId)) {
+    const tenantObjectId = new Types.ObjectId(tenantId);
+    matchConditions.unshift({ $eq: ["$tenantId", tenantObjectId] });
+  }
+
+  return [
+    {
+      $lookup: {
+        from: modelNames.FAVOURITE,
+        let: { currentJobId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: matchConditions,
+              },
+            },
+          },
+          {
+            $limit: 1,
+          },
+          {
+            $project: {
+              _id: 1,
+            },
+          },
+        ],
+        as: "alreadySavedLookup",
+      },
+    },
+    {
+      $addFields: {
+        alreadySaved: {
+          $gt: [{ $size: "$alreadySavedLookup" }, 0],
+        },
+      },
+    },
+    {
+      $project: {
+        alreadySavedLookup: 0,
       },
     },
   ];
