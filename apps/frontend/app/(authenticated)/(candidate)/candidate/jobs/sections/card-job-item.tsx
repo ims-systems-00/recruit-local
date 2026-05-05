@@ -3,14 +3,19 @@ import React from 'react';
 import { Bookmark, Building2, Loader2, Pointer } from 'lucide-react';
 import { JobData } from '@/services/jobs/job.type';
 import { cn, formatDate } from '@/lib/utils';
-import DefaultImgForJob from '@/public/images/job_default.png';
 
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useCreateFavourite } from '@/services/favourite/favourite.client';
 
-export default function CardJobItem({ job }: { job: JobData }) {
+export default function CardJobItem({
+  job,
+  isApplied,
+}: {
+  job: JobData;
+  isApplied?: boolean;
+}) {
   const { createFavourite, isPending } = useCreateFavourite();
   const onAddFavourite = async () => {
     await createFavourite({
@@ -74,7 +79,7 @@ export default function CardJobItem({ job }: { job: JobData }) {
           Applied {job?.totalApplications || 0}
         </span>
         <div className=" flex items-center gap-spacing-lg">
-          {job?.alreadyApplied && (
+          {isApplied && (
             <Button
               disabled
               className="border-border-brand-primary text-text-brand-primary! cursor-pointer hover:bg-bg-gray-soft-primary bg-bg-gray-soft-primary border  h-9  rounded-lg text-label-sm font-label-sm-strong!"
@@ -82,7 +87,7 @@ export default function CardJobItem({ job }: { job: JobData }) {
               Applied
             </Button>
           )}
-          {!job.alreadyApplied && (
+          {!isApplied && (
             <Link href={`/candidate/job/${job?._id}/apply`}>
               <Button className=" cursor-pointer hover:bg-bg-gray-soft-primary bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
                 <Pointer />

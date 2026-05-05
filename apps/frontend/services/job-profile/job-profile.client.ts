@@ -10,6 +10,7 @@ import {
   softDeleteJobProfile,
   hardDeleteJobProfile,
   restoreJobProfile,
+  getAppliedJobs,
 } from './job-profile.server';
 import type {
   JobProfileCreateInput,
@@ -19,6 +20,8 @@ import type {
   JobProfileListFilters,
 } from './job-profile.type';
 import { useRouter } from 'next/navigation';
+import { JobListResponse } from '../jobs/job.type';
+import { useSession } from 'next-auth/react';
 
 // --- QUERY KEYS ---
 export const jobProfileKeys = {
@@ -203,5 +206,34 @@ export function useRestoreJobProfile() {
   return {
     restoreJobProfile: mutation.mutateAsync,
     isLoading: mutation.isPending,
+  };
+}
+
+export function useAppliedJobs(filters: JobProfileListFilters) {
+  const { data: session } = useSession();
+
+  const query = useQuery<JobListResponse, Error>({
+    queryKey: ['applied-jobs', session?.user?.jobProfileId, filters],
+    queryFn: async () => {
+      const response = await getAppliedJobs(
+        session?.user?.jobProfileId || '',
+        filters,
+      );
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+    enabled: !!session?.user?.jobProfileId,
+  });
+
+  return {
+    jobs: query.data?.docs || [],
+    pagination: query.data?.pagination,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+    isFetching: query.isFetching,
   };
 }

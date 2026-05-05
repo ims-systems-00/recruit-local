@@ -17,6 +17,7 @@ import type {
   JobProfileUpdateInput,
   JobProfileListFilters,
 } from './job-profile.type';
+import { JobListBackendResponse, JobListResponse } from '../jobs/job.type';
 
 const API_ENDPOINT = '/job-profiles';
 
@@ -220,5 +221,36 @@ export async function hardDeleteJobProfile(
     };
   } catch (error) {
     return handleServerError(error, 'Failed to permanently delete job profile');
+  }
+}
+
+export async function getAppliedJobs(
+  jobProfileId: string,
+  filters: JobProfileListFilters,
+): Promise<JobProfileApiResponse<JobListResponse>> {
+  try {
+    const res = await axiosServer.get<JobListBackendResponse>(
+      `${API_ENDPOINT}/${jobProfileId}/applied-jobs`,
+      {
+        params: {
+          page: filters?.page || 1,
+          limit: filters?.limit || 10,
+        },
+      },
+    );
+    // const backendResponse = await postListResponseSchema.validate(res.data, {
+    //   stripUnknown: true,
+    // });
+
+    return {
+      success: true,
+      data: {
+        docs: res.data.jobs || [],
+        pagination: res.data.pagination,
+      },
+      message: res.data.message || 'Successful',
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to fetch applied jobs');
   }
 }

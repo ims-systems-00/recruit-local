@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,16 +8,16 @@ import JobItemSkelaton from './job-item-skelaton';
 import CardJobItem from './card-job-item';
 import EmptyBox from '../../../../../../components/empty-box';
 import PaginationComponent from './pagination-component';
-import { JobListFilters } from '@/services/jobs/job.type';
+import { useAppliedJobs } from '@/services/job-profile';
 
-export default function JobLists({
-  filters,
-  onPageChange,
-}: {
-  filters: JobListFilters;
-  onPageChange: (page: number) => void;
-}) {
-  const { jobs, isLoading: isJobLoading, pagination } = useJobs(filters);
+export default function AppliedJobs() {
+  const [page, setPage] = useState(1);
+
+  const {
+    jobs,
+    isLoading: isJobLoading,
+    pagination,
+  } = useAppliedJobs({ page: page });
 
   return (
     <div>
@@ -30,11 +30,7 @@ export default function JobLists({
       ) : Boolean(jobs?.length) ? (
         <div className=" grid grid-cols-2 gap-spacing-4xl">
           {jobs?.map((item) => (
-            <CardJobItem
-              key={item._id}
-              job={item}
-              isApplied={item?.alreadyApplied || false}
-            />
+            <CardJobItem key={item._id} job={item} isApplied={true} />
           ))}
         </div>
       ) : (
@@ -53,7 +49,7 @@ export default function JobLists({
         <PaginationComponent
           meta={pagination}
           onPageChange={(pageNum) => {
-            onPageChange(pageNum);
+            setPage(pageNum);
           }}
         />
       )}

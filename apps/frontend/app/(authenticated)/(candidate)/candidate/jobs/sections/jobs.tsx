@@ -14,6 +14,7 @@ import { useAuth } from '@/services/user/user.client';
 import JobLists from './job-lists';
 import { useDebounce } from '@/hooks/useDebounce';
 import FilterJobs from './filter-jobs';
+import AppliedJobs from './applied-jobs';
 
 export default function Jobs() {
   const { user } = useAuth();
@@ -47,7 +48,7 @@ export default function Jobs() {
     {
       value: 'applied',
       label: 'Applied',
-      component: <JobLists filters={filters} onPageChange={setPage} />,
+      component: <AppliedJobs />,
     },
     {
       value: 'saved',
