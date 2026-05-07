@@ -14,6 +14,7 @@ import { jobRoleScopedSecurityQuery } from "./job.query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { agenda } from "../../../agenda/config";
 import { JOB_NAME } from "../../../agenda/constants";
+import { jobOrchestratorQueue } from "../../../queue/jobOrchestrator";
 import { list as listApplications } from "../application/application.service";
 
 const caslFieldOptions = {
@@ -117,6 +118,21 @@ export const create = async ({ req }: ControllerParams) => {
 
   if (job.endDate && job.status === JOBS_STATUS_ENUMS.OPEN) {
     await agenda.schedule(new Date(job.endDate), JOB_NAME.EXPIRE_JOB_POST, { jobId: job.id.toString() });
+  }
+
+  // enqueue fanout job (async side-effect). keep non-blocking semantics for HTTP response.
+  if (job.status === JOBS_STATUS_ENUMS.OPEN) {
+    try {
+      await jobOrchestratorQueue.add("orchestrate-fanout", {
+        jobId: job.id.toString(),
+        jobSnapshot: {
+          title: job.title,
+          location: job.location,
+        },
+      });
+    } catch (err) {
+      console.error("[jobOrchestrator] failed to enqueue fanout for job", job._id || job.id, err);
+    }
   }
 
   return new ApiResponse({

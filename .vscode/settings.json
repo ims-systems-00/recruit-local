@@ -38,7 +38,9 @@
     "Soffice",
     "specializeduserprofiles",
     "tokenpairs",
-    "verificationtokens"
+    "verificationtokens",
+    "zadd",
+    "zremrangebyrank"
   ],
   "cSpell.flagWords": [],
   "cSpell.caseSensitive": true,

@@ -6,6 +6,7 @@ import { ExpressAdapter } from "@bull-board/express";
 import { deadLetterQueue } from "../queue/Queue";
 import { thumbnailCreateQueue } from "../queue/thumbnailCreateQueue";
 import { fileDeleteQueue } from "../queue/fileDeleteQueue";
+import { jobOrchestratorQueue } from "../queue/jobOrchestrator";
 
 export const initBullBoard = () => {
   const serverAdapter = new ExpressAdapter();
@@ -19,6 +20,7 @@ export const initBullBoard = () => {
       new BullMQAdapter(deadLetterQueue),
       new BullMQAdapter(thumbnailCreateQueue.queue),
       new BullMQAdapter(fileDeleteQueue.queue),
+      new BullMQAdapter(jobOrchestratorQueue),
     ],
     serverAdapter: serverAdapter,
   });
