@@ -4,8 +4,7 @@ import sgMail from "@sendgrid/mail";
 import ejs from "ejs";
 import path from "path";
 import { EmailConfiguration } from "./email.interface";
-import { logger } from "../../../../common/helper";
-if (process.env.NODE_ENV === "production") sgMail.setApiKey(process.env.SEND_GRID_API_KEY);
+if (process.env.NODE_ENV === "production") sgMail.setApiKey(process.env.SEND_GRID_API_KEY!);
 
 // Configure the Redis connection
 const emailQueue: Queue<EmailConfiguration> = new Bull("email-queue", {
@@ -44,7 +43,7 @@ emailQueue.process(async (job: Job<EmailConfiguration>) => {
     await sgMail.send({
       from: {
         name: "Interface NRM",
-        email: sender,
+        email: sender!,
       },
       to: receiver,
       subject: subject,
@@ -71,7 +70,7 @@ emailQueue.process(async (job: Job<EmailConfiguration>) => {
         },
       })
       .sendMail({
-        from: sender,
+        from: sender!,
         to: receiver,
         subject: subject,
         html,
