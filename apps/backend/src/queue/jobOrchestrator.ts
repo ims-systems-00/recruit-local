@@ -35,7 +35,7 @@ export const jobOrchestratorWorker = new Worker<OrchestratorData>(
       await redisConnection.expire(cacheKey, 60 * 60 * 24 * 30); // 30-day TTL
     }
 
-    // todo: query users based on some rules
+    // todo: query users based on some rules - make it job profile
     const activeUserCursor = User.find({}).select("_id").lean().cursor();
 
     let chunk: string[] = [];
