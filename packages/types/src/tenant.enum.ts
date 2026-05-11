@@ -11,7 +11,7 @@ export enum TENANT_TYPE {
   PUBLIC = 'public',
 }
 
-export enum TENANT_INDUSTRY_ENUMS {
+export enum INDUSTRY_ENUMS {
   TECHNOLOGY = 'technology',
   FINANCE = 'finance',
   HEALTHCARE = 'healthcare',

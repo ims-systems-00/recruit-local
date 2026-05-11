@@ -1,15 +1,16 @@
-import { Schema, model, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { VISIBILITY, language, JOB_PROFILE_STATUS_ENUM } from "@rl/types";
+import { VISIBILITY, language, JOB_PROFILE_STATUS_ENUM, INDUSTRY_ENUMS, JOB_TITLE_ENUMS } from "@rl/types";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { IBaseDoc } from "./interfaces/base.interface";
 
 export interface JobProfileInput extends IUserOwnedInput {
   name?: string;
-  headline?: string;
+  jobTitle?: JOB_TITLE_ENUMS[];
+  industry?: INDUSTRY_ENUMS[];
   address?: string;
   email?: string;
   contactNumber?: string;
@@ -17,7 +18,6 @@ export interface JobProfileInput extends IUserOwnedInput {
   portfolioUrl?: string;
   keywords?: string[];
   languages?: language[];
-  kycDocumentId?: Types.ObjectId;
   status: JOB_PROFILE_STATUS_ENUM;
   skills?: string;
   interests?: string;
@@ -48,8 +48,9 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
     name: {
       type: String,
     },
-    headline: {
-      type: String,
+    jobTitle: {
+      type: [String],
+      enum: Object.values(JOB_TITLE_ENUMS),
     },
     address: {
       type: String,
@@ -88,19 +89,12 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       enum: Object.values(JOB_PROFILE_STATUS_ENUM),
       default: JOB_PROFILE_STATUS_ENUM.UNVERIFIED,
     },
-    kycDocumentId: {
-      type: Schema.Types.ObjectId,
-      ref: modelNames.FILE_MEDIA,
-      default: null,
-    },
   },
   {
     timestamps: true,
     toJSON: {
       virtuals: true,
       transform: (_doc, ret) => {
-        // ret.id = ret._id;
-        // delete ret._id;
         return ret;
       },
     },
