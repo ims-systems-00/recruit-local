@@ -52,6 +52,7 @@ export const deserializeUser = catchAsync(async (req: Request, res: Response, ne
       fullName: currentUser.fullName,
       type: currentUser.type,
       role: currentUser.role,
+      emailVerificationStatus: currentUser.emailVerificationStatus,
       kycStatus: currentUser.kycStatus,
     },
     tenantId: currentUser.tenantId?.toString(),
