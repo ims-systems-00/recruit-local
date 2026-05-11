@@ -23,7 +23,8 @@ export const ALL_JOB_PROFILE_FIELDS = [
   '_id',
   'userId',
   'name',
-  'headline',
+  'jobTitle',
+  'industry',
   'address',
   'email',
   'contactNumber',
@@ -35,8 +36,6 @@ export const ALL_JOB_PROFILE_FIELDS = [
   'interests',
   'visibility',
   'status',
-  'kycDocumentId',
-  'kycDocumentStorage',
   'createdAt',
   'updatedAt',
 ];
@@ -45,16 +44,12 @@ const omitFields = (fieldsToOmit: string[]) =>
   ALL_JOB_PROFILE_FIELDS.filter((field) => !fieldsToOmit.includes(field));
 
 // What an employer is allowed to see
-const EMPLOYER_READ_FIELDS = omitFields([
-  'kycDocumentId',
-  'kycDocumentStorage',
-  'status',
-  'visibility',
-]);
+const EMPLOYER_READ_FIELDS = omitFields(['status', 'visibility']);
 
 const CANDIDATE_MUTATION_FIELDS = [
   'name',
-  'headline',
+  'jobTitle',
+  'industry',
   'address',
   'email',
   'contactNumber',
@@ -64,10 +59,6 @@ const CANDIDATE_MUTATION_FIELDS = [
   'languages',
   'skills',
   'interests',
-  'kycDocumentStorage',
-  'kycDocumentStorage.Name',
-  'kycDocumentStorage.Bucket',
-  'kycDocumentStorage.Key',
   'visibility',
 ];
 

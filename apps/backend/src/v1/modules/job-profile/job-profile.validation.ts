@@ -1,22 +1,21 @@
 import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
-import { PROFICIENCY, VISIBILITY } from "@rl/types";
+import { PROFICIENCY, VISIBILITY, JOB_TITLE_ENUMS, INDUSTRY_ENUMS } from "@rl/types";
 
 // --- Sub-Schemas ---
-// Reusable validation for AwsStorageTemplate
-const awsStorageSchema = Joi.object({
-  Name: Joi.string().required().label("Name"),
-  Bucket: Joi.string().required().label("Bucket"),
-  Key: Joi.string().required().label("Key"),
-})
-  .unknown(true)
-  .label("Storage File");
 
 // --- Main Schemas ---
 
 export const createBodySchema = Joi.object({
   name: Joi.string().optional().label("Name"),
-  headline: Joi.string().optional().label("Headline"),
+  jobTitle: Joi.array()
+    .items(Joi.string().valid(...Object.values(JOB_TITLE_ENUMS)))
+    .optional()
+    .label("Job Title"),
+  industry: Joi.array()
+    .items(Joi.string().valid(...Object.values(INDUSTRY_ENUMS)))
+    .optional()
+    .label("Industry"),
   address: Joi.string().optional().label("Address"),
   email: Joi.string().email().optional().label("Email"),
   contactNumber: Joi.string().optional().label("Contact Number"),
@@ -37,12 +36,18 @@ export const createBodySchema = Joi.object({
     .label("Languages"),
   skills: Joi.string().optional().label("Skills"),
   interests: Joi.string().optional().label("Interests"),
-  kycDocumentStorage: awsStorageSchema.optional().label("KYC Document Storage"),
 });
 
 export const updateBodySchema = Joi.object({
   name: Joi.string().optional().label("Name"),
-  headline: Joi.string().optional().label("Headline"),
+  jobTitle: Joi.array()
+    .items(Joi.string().valid(...Object.values(JOB_TITLE_ENUMS)))
+    .optional()
+    .label("Job Title"),
+  industry: Joi.array()
+    .items(Joi.string().valid(...Object.values(INDUSTRY_ENUMS)))
+    .optional()
+    .label("Industry"),
   address: Joi.string().optional().label("Address"),
   email: Joi.string().email().optional().label("Email"),
   contactNumber: Joi.string().optional().label("Contact Number"),
@@ -67,7 +72,6 @@ export const updateBodySchema = Joi.object({
     .valid(...Object.values(VISIBILITY))
     .optional()
     .label("Visibility"),
-  kycDocumentStorage: awsStorageSchema.optional().label("KYC Document Storage"),
 });
 
 export const idParamsSchema = Joi.object({

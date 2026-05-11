@@ -4,13 +4,13 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { AwsStorageTemplate } from "./templates/aws-storage.template";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
-import { TENANT_STATUS_ENUMS, TENANT_TYPE, TENANT_INDUSTRY_ENUMS } from "@rl/types";
+import { TENANT_STATUS_ENUMS, TENANT_TYPE, INDUSTRY_ENUMS } from "@rl/types";
 import { modelNames } from "./constants";
 
 export interface TenantInput {
   name: string;
   description?: string;
-  industry?: TENANT_INDUSTRY_ENUMS;
+  industry?: INDUSTRY_ENUMS;
   type?: TENANT_TYPE;
   size?: number;
   phone?: string;
@@ -60,7 +60,7 @@ const tenantSchema = new Schema<ITenantDoc>(
     },
     industry: {
       type: String,
-      enum: Object.values(TENANT_INDUSTRY_ENUMS),
+      enum: Object.values(INDUSTRY_ENUMS),
     },
     size: {
       type: Number,
