@@ -1,6 +1,7 @@
 export enum KYC_STATUS {
+  UNVERIFIED = 'unverified',
   PENDING = 'pending',
-  APPROVED = 'approved',
+  VERIFIED = 'verified',
   REJECTED = 'rejected',
   ACTION_REQUIRED = 'action_required',
 }

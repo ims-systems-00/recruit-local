@@ -79,7 +79,7 @@ const userSchema = new Schema<IUserDoc>(
     kycStatus: {
       type: String,
       enum: Object.values(KYC_STATUS),
-      default: KYC_STATUS.PENDING,
+      default: KYC_STATUS.UNVERIFIED,
     },
   },
   {

@@ -77,7 +77,7 @@ export class KycAuthZEntity {
     status?: KYC_STATUS;
   }) {
     this.userId = userId ?? null;
-    this.status = status ?? KYC_STATUS.PENDING;
+    this.status = status ?? KYC_STATUS.UNVERIFIED;
   }
 }
 

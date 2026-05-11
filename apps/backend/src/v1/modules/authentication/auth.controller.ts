@@ -38,6 +38,7 @@ export const registration = async ({ req }: ControllerParams): Promise<ApiRespon
       "role",
       "tenantId",
       "jobProfileId",
+      "kycStatus",
     ]),
     fieldName: "user",
   });
@@ -63,6 +64,7 @@ export const login = async ({ req }: ControllerParams): Promise<ApiResponse> => 
       "role",
       "tenantId",
       "jobProfileId",
+      "kycStatus",
     ]),
     accessToken: accessTokenRes,
     refreshToken: refreshTokenRes,
