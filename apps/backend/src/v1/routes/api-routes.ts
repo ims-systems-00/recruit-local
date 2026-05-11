@@ -35,6 +35,7 @@ import statusRoutes from "../modules/status/status.route";
 import actionRoutes from "../modules/action/action.route";
 import postRoutes from "../modules/post/post.route";
 import reactionRoute from "../modules/reaction/reaction.route";
+import valueRoutes from "../modules/value/value.route";
 
 const router = express.Router();
 
@@ -71,6 +72,7 @@ const getApiRoutes = () => {
   router.use("/actions", actionRoutes);
   router.use("/posts", postRoutes);
   router.use("/reactions", reactionRoute);
+  router.use("/values", valueRoutes);
 
   return router;
 };
