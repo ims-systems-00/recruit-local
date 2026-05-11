@@ -100,6 +100,7 @@ const TENANT_ADMIN_UPDATE_FIELDS = omitFields([
   'type',
   'isDeleted',
   'deletedAt',
+  'kycStatus',
 ]);
 
 // Platform Admin Fields

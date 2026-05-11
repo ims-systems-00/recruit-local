@@ -52,10 +52,13 @@ export const deserializeUser = catchAsync(async (req: Request, res: Response, ne
       fullName: currentUser.fullName,
       type: currentUser.type,
       role: currentUser.role,
+      kycStatus: currentUser.kycStatus,
     },
     tenantId: currentUser.tenantId?.toString(),
     jobProfileId: currentUser.jobProfileId?.toString(),
   };
+
+  console.log("Session data:", req.session);
 
   next();
 });
