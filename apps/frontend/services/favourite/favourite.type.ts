@@ -5,6 +5,7 @@ import {
   favouriteUpdateSchema,
 } from './favourite.validation';
 import { Pagination } from '@/types/api';
+import { JobData } from '../jobs/job.type';
 
 // TypeScript types
 export type FavouriteCreateInput = yup.InferType<typeof favouriteCreateSchema>;
@@ -34,6 +35,7 @@ export type FavouriteData = {
     deletedAt?: string | null;
     dateScheduled?: string | null;
   };
+  item: JobData;
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string | null;
