@@ -24,7 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import {
   EMPLOYMENT_TYPE,
-  TENANT_INDUSTRY_ENUMS,
+  INDUSTRY_ENUMS,
   TENANT_TYPE,
   WORKPLACE_ENUMS,
 } from '@rl/types';

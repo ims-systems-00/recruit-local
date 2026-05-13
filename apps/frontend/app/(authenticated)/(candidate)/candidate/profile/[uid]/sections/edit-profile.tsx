@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TENANT_INDUSTRY_ENUMS, TENANT_TYPE } from '@rl/types';
+import { INDUSTRY_ENUMS, TENANT_TYPE } from '@rl/types';
 import LocationSelector from '@/components/location-selector';
 import { JobProfileUpdateInput } from '@/services/job-profile/job-profile.type';
 
@@ -37,16 +37,16 @@ export const ORG_TYPE_OPTIONS = [
 ];
 
 export const TENANT_INDUSTRY_OPTIONS = [
-  { label: 'Technology', value: TENANT_INDUSTRY_ENUMS.TECHNOLOGY },
-  { label: 'Finance', value: TENANT_INDUSTRY_ENUMS.FINANCE },
-  { label: 'Healthcare', value: TENANT_INDUSTRY_ENUMS.HEALTHCARE },
-  { label: 'Education', value: TENANT_INDUSTRY_ENUMS.EDUCATION },
-  { label: 'Manufacturing', value: TENANT_INDUSTRY_ENUMS.MANUFACTURING },
-  { label: 'Retail', value: TENANT_INDUSTRY_ENUMS.RETAIL },
-  { label: 'Hospitality', value: TENANT_INDUSTRY_ENUMS.HOSPITALITY },
-  { label: 'Construction', value: TENANT_INDUSTRY_ENUMS.CONSTRUCTION },
-  { label: 'Transportation', value: TENANT_INDUSTRY_ENUMS.TRANSPORTATION },
-  { label: 'Energy', value: TENANT_INDUSTRY_ENUMS.ENERGY },
+  { label: 'Technology', value: INDUSTRY_ENUMS.TECHNOLOGY },
+  { label: 'Finance', value: INDUSTRY_ENUMS.FINANCE },
+  { label: 'Healthcare', value: INDUSTRY_ENUMS.HEALTHCARE },
+  { label: 'Education', value: INDUSTRY_ENUMS.EDUCATION },
+  { label: 'Manufacturing', value: INDUSTRY_ENUMS.MANUFACTURING },
+  { label: 'Retail', value: INDUSTRY_ENUMS.RETAIL },
+  { label: 'Hospitality', value: INDUSTRY_ENUMS.HOSPITALITY },
+  { label: 'Construction', value: INDUSTRY_ENUMS.CONSTRUCTION },
+  { label: 'Transportation', value: INDUSTRY_ENUMS.TRANSPORTATION },
+  { label: 'Energy', value: INDUSTRY_ENUMS.ENERGY },
 ];
 
 type EditProfileProps = {
