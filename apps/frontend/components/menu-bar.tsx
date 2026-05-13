@@ -1,14 +1,12 @@
 'use client';
 
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useState } from 'react';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetClose,
-  SheetTrigger,
 } from '@/components/ui/sheet';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -44,7 +42,7 @@ export default function MenuBar() {
             <Menu aria-hidden="true" className="size-6" />
           </button>
         </div>
-        <div className="hidden lg:flex lg:gap-x-12">
+        <div className="hidden lg:flex lg:gap-x-12 text-text-gray-quinary">
           <Link
             href="/"
             className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
@@ -111,57 +109,55 @@ export default function MenuBar() {
             </Link>
           </SheetHeader>
 
-          <div className="flow-root">
-            <div className="-my-6 divide-y divide-gray-500/10">
-              {/* Navigation */}
-              <div className="py-6 flex flex-col gap-spacing-xl">
-                <Link
-                  href="/"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/find-job"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Find Job
-                </Link>
-                <Link
-                  href="/pricing"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Pricing
-                </Link>
-                <Link
-                  href="/blogs"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Blogs
-                </Link>
-                <Link
-                  href="/contact"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Contact us
-                </Link>
-              </div>
+          <div>
+            {/* Navigation */}
+            <div className="pb-6 flex flex-col gap-spacing-xl text-text-gray-quinary">
+              <Link
+                href="/"
+                className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
+              >
+                Home
+              </Link>
+              <Link
+                href="/find-job"
+                className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
+              >
+                Find Job
+              </Link>
+              <Link
+                href="/pricing"
+                className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
+              >
+                Pricing
+              </Link>
+              <Link
+                href="/blogs"
+                className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
+              >
+                Blogs
+              </Link>
+              <Link
+                href="/contact"
+                className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
+              >
+                Contact us
+              </Link>
+            </div>
 
-              {/* Auth */}
-              <div className="py-6 flex flex-col gap-spacing-xl">
-                <Link
-                  href="#"
-                  className=" text-label-sm font-label-sm-strong! text-text-gray-quinary "
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="#"
-                  className="text-label-sm rounded-full font-label-sm-strong! flex items-center h-10 justify-center py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
-                >
-                  Register Now/Post Job
-                </Link>
-              </div>
+            {/* Auth */}
+            <div className="pb-6 flex flex-col gap-spacing-xl">
+              <Link
+                href="#"
+                className=" text-label-sm font-label-sm-strong! text-text-gray-quinary "
+              >
+                Sign In
+              </Link>
+              <Link
+                href="#"
+                className="text-label-sm rounded-full font-label-sm-strong! flex items-center h-10 justify-center py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
+              >
+                Register Now/Post Job
+              </Link>
             </div>
           </div>
         </SheetContent>
