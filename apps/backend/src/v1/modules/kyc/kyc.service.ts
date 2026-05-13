@@ -9,6 +9,8 @@ import { kycProjectionQuery, populateKycDocumentsQuery } from "./kyc.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { VISIBILITY_ENUM } from "@rl/types";
+import { agenda } from "../../../agenda/config";
+import { JOB_NAME } from "../../../agenda/constants";
 
 export const list = ({ query = {}, options, session }: IKycListQueryParams) => {
   const aggregate = Kyc.aggregate([
@@ -67,7 +69,7 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IKycGetParams) 
 };
 
 export const create = async ({ payload, session }: IKycCreateParams) => {
-  return withTransaction(async (txSession: ClientSession) => {
+  const result = await withTransaction(async (txSession: ClientSession) => {
     const activeSession = session || txSession;
     const kycId = new Types.ObjectId();
 
@@ -117,6 +119,13 @@ export const create = async ({ payload, session }: IKycCreateParams) => {
 
     return getOne({ query: { _id: kyc._id!.toString() }, session: activeSession });
   });
+
+  if (process.env.NODE_ENV === "development") {
+    const runAt = new Date(Date.now() + 5 * 60 * 1000);
+    await agenda.schedule(runAt, JOB_NAME.DEV_AUTO_VERIFY_KYC, { kycId: result._id.toString() });
+  }
+
+  return result;
 };
 
 export const update = async ({ query, payload, session }: IKycUpdateParams) => {
