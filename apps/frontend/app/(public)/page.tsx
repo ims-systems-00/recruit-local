@@ -1,13 +1,9 @@
-import RichTextEditor from '@/components/draft-editor/rich-text-editor';
-import { Button } from '@/components/ui/button';
+import Hero from './sections/hero/hero';
 
 export default function Home() {
   return (
-    <div className="h-screen flex justify-center items-center flex-col gap-spacing-4xl">
-      <div className=" max-w-2xl w-full">
-        <RichTextEditor />
-      </div>
-      <Button className="bg-bg-brand-solid-primary">Click me</Button>
-    </div>
+    <>
+      <Hero />
+    </>
   );
 }

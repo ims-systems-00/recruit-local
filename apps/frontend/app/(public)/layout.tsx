@@ -5,5 +5,9 @@ export default function PublicLayoutRoute({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <PublicLayout>{children}</PublicLayout>;
+  return (
+    <PublicLayout>
+      <main>{children}</main>
+    </PublicLayout>
+  );
 }
