@@ -36,6 +36,7 @@ import actionRoutes from "../modules/action/action.route";
 import postRoutes from "../modules/post/post.route";
 import reactionRoute from "../modules/reaction/reaction.route";
 import valueRoutes from "../modules/value/value.route";
+import keywordRoutes from "../modules/keyword/keyword.route";
 
 const router = express.Router();
 
@@ -73,6 +74,7 @@ const getApiRoutes = () => {
   router.use("/posts", postRoutes);
   router.use("/reactions", reactionRoute);
   router.use("/values", valueRoutes);
+  router.use("/keywords", keywordRoutes);
 
   return router;
 };
