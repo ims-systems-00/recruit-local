@@ -84,7 +84,7 @@ export default function StatSection() {
           </div>
         </div>
 
-        <div className="relative rounded-2xl overflow-hidden bg-white h-full">
+        <div className="relative rounded-2xl overflow-hidden bg-white h-full min-h-[400px]">
           <Image
             src={Avatar3}
             alt="avatar"

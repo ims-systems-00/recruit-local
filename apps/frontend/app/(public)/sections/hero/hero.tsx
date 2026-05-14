@@ -8,7 +8,7 @@ export default function Hero() {
     <section className="bg-bg-brand-solid-alt">
       <div className="max-w-[1280px] mx-auto px-spacing-5xl py-spacing-10xl text-white flex flex-col gap-y-spacing-8xl">
         <div className="flex flex-col gap-y-spacing-5xl items-center justify-center text-center ">
-          <span className=" h-9 bg-bg-brand-soft-primary rounded-full px-spacing-3xl flex justify-center items-center gap-spacing-sm text-label-sm font-label-sm-strong! text-text-brand-secondary_on-brand">
+          <span className=" min-h-9 py-spacing-lg sm:h-9 bg-bg-brand-soft-primary rounded-full px-spacing-3xl flex justify-center items-center gap-spacing-sm text-label-sm font-label-sm-strong! text-text-brand-secondary_on-brand">
             <Sparkles className="w-4 h-4" />
             Powered by Alice AI. Designed for people.
           </span>
