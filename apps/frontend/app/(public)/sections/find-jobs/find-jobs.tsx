@@ -13,7 +13,7 @@ import CardJobItem from './card-job-item';
 export default function FindJobs() {
   return (
     <section className="pt-spacing-10xl max-w-[1280px] mx-auto px-spacing-5xl">
-      <div className=" flex gap-spacing-8xl">
+      <div className=" flex flex-col lg:flex-row gap-spacing-8xl">
         <div className=" flex-1">
           <div className=" space-y-spacing-8xl">
             <div className=" space-y-spacing-4xl">
@@ -100,7 +100,7 @@ export default function FindJobs() {
             </div>
           </div>
         </div>
-        <div className="min-w-[282px] max-w-[282px] w-full space-y-spacing-5xl">
+        <div className="min-w-[282px] lg:max-w-[282px] w-full space-y-spacing-5xl">
           <div className=" border border-border-gray-secondary p-spacing-4xl rounded-2xl bg-bg-gray-soft-secondary text-center flex flex-col gap-spacing-2xl items-center justify-center">
             <p className=" text-body-xl font-body-xl-strong! text-text-gray-secondary">
               Post a Job Today
