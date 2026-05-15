@@ -71,7 +71,7 @@ export default function MenuBar() {
             Home
           </Link>
           <Link
-            href="/find-job"
+            href="/jobs"
             className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
           >
             Find Job
