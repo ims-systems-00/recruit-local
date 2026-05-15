@@ -1,4 +1,5 @@
-import { HeartHandshake, MapPin, Target } from 'lucide-react';
+import { BadgeCheck, Brain, Scale, Target } from 'lucide-react';
+import Link from 'next/link';
 import React from 'react';
 
 export default function AiIntegrations() {
@@ -22,25 +23,31 @@ export default function AiIntegrations() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-spacing-4xl">
           <CardItem
             icon={<Target className="w-6 h-6 text-others-brand-dark" />}
-            title="Skills and experience"
-            description="We look beyond keywords to understand your true capabilities and potential."
+            title="Skills + Values matching"
+            description="Deeper intelligence for better fit and long- term retention."
           />
           <CardItem
-            icon={<MapPin className="w-6 h-6 text-others-brand-dark" />}
-            title="Location and availability"
-            description="Prioritizing local connections that respect your time and community ties."
+            icon={<Scale className="w-6 h-6 text-others-brand-dark" />}
+            title="Reduced Bias"
+            description="Focusing on what truly matters to remove unfair hiring barriers."
           />
           <CardItem
-            icon={<HeartHandshake className="w-6 h-6 text-others-brand-dark" />}
-            title="Values and Culture"
-            description="Preferences for workplace behaviors that lead to better long-term happiness."
+            icon={<BadgeCheck className="w-6 h-6 text-others-brand-dark" />}
+            title="Quality over Quantity"
+            description="Stop filtering noise. Alice presents only the best matches."
           />
           <CardItem
-            icon={<HeartHandshake className="w-6 h-6 text-others-brand-dark" />}
-            title="Values and Culture"
-            description="Preferences for workplace behaviors that lead to better long-term happiness."
+            icon={<Brain className="w-6 h-6 text-others-brand-dark" />}
+            title="Continuous Learning"
+            description="Alice improves with every successful hire your team makes."
           />
         </div>
+        <Link
+          href="#"
+          className="text-label-md rounded-full font-label-md-strong! flex items-center h-12 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary text-text-white w-fit mx-auto"
+        >
+          {`Let’s Get Start`}
+        </Link>
       </div>
     </section>
   );

@@ -19,7 +19,7 @@ export default function ValueBased() {
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-5xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-4xl">
           <ValueCard
             icon={<Target className="w-6 h-6 text-white" />}
             title="Skills and experience"

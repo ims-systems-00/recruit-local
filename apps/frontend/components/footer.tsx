@@ -83,7 +83,7 @@ export default function Footer() {
                       support@RecruitCall.tech
                     </Link>
                   </div>
-                  <div className=" flex gap-spacing-5xl items-center">
+                  <div className=" flex gap-spacing-4xl items-center">
                     <Link href="" target="_blank">
                       <Image
                         className="max-h-6 max-w-6"

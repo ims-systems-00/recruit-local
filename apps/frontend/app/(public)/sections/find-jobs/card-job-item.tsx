@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 export default function CardJobItem({ job }: { job: Partial<JobData> }) {
   return (
-    <div className="p-spacing-4xl  border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs flex justify-between">
+    <div className="p-spacing-4xl  border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs flex justify-between sm:flex-row flex-col gap-spacing-4xl">
       <div className=" space-y-spacing-4xl">
         <div className=" flex items-center gap-spacing-sm">
           <div className=" min-w-12 max-w-12 ">

@@ -3,6 +3,7 @@ import FindJobs from './sections/find-jobs/find-jobs';
 import UserFeature from './sections/user-feature/user-feature';
 import ValueBased from './sections/value-based/value-based';
 import AiIntegrations from './sections/ai-integrations/ai-integrations';
+import KeyAspects from './sections/key-aspects/key-aspects';
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       <UserFeature />
       <ValueBased />
       <AiIntegrations />
+      <KeyAspects />
     </>
   );
 }
