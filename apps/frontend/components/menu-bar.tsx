@@ -1,7 +1,7 @@
 'use client';
 
 import { Menu } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -11,12 +11,33 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import NavLogo from '@/public/images/NavLogo.svg';
+import { cn } from '@/lib/utils';
 
 export default function MenuBar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   return (
-    <header className="bg-bg-brand-solid-alt">
+    <header
+      className={cn(
+        'bg-bg-brand-solid-alt sticky top-0 z-50 transition-all duration-300 ease-in-out',
+        isScrolled &&
+          'bg-bg-brand-solid-alt backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] supports-backdrop-filter:bg-bg-brand-solid-alt',
+      )}
+    >
       <nav
         aria-label="Global"
         className="mx-auto flex max-w-[1280px] items-center justify-between px-spacing-5xl h-[80px] text-white"
