@@ -5,6 +5,8 @@ import BlogOneImage from '@/public/images/blog-1.jpg';
 import BlogTwoImage from '@/public/images/blog-2.png';
 import BlogThreeImage from '@/public/images/blog-3.jpg';
 import BlogCard from './sections/blog-card';
+import FeaturedBlogCard from './sections/featured-blog-card';
+import AuthorImage from '@/public/images/author-default.png';
 
 export default function BlogsPage() {
   return (
@@ -24,7 +26,16 @@ export default function BlogsPage() {
           </p>
         </div>
         <div className=" space-y-spacing-4xl">
-          <div></div>
+          <div>
+            <FeaturedBlogCard
+              image={BlogOneImage}
+              title="Recruit Local Launches Oldham Trading Platform Transforming Job Search and Hiring Across UK Smart Cities"
+              url="#"
+              authorName="Anwar Ali"
+              authorRole="CEO & Founder"
+              authorImage={AuthorImage}
+            />
+          </div>
           <div className=" grid md:grid-cols-2 lg:grid-cols-3 gap-spacing-4xl">
             <BlogCard
               image={BlogOneImage}
