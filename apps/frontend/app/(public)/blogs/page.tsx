@@ -30,7 +30,7 @@ export default function BlogsPage() {
             <FeaturedBlogCard
               image={BlogOneImage}
               title="Recruit Local Launches Oldham Trading Platform Transforming Job Search and Hiring Across UK Smart Cities"
-              url="#"
+              url="/blogs/recruit-local-launches-oldham-trading-platform-transforming-job-search-and-hiring-across-uk-smart-cities"
               authorName="Anwar Ali"
               authorRole="CEO & Founder"
               authorImage={AuthorImage}
@@ -43,7 +43,7 @@ export default function BlogsPage() {
               description="Learn how job seekers can improve resumes and get noticed."
               readTime="7"
               date="10 jan, 2026"
-              url="#"
+              url="/blogs/stand-out-faster"
             />
             <BlogCard
               image={BlogTwoImage}
@@ -51,7 +51,7 @@ export default function BlogsPage() {
               description="Explore smarter ways to attract and retain top talent."
               readTime="7"
               date="10 jan, 2026"
-              url="#"
+              url="/blogs/build-better-teams"
             />
             <BlogCard
               image={BlogThreeImage}
@@ -59,7 +59,7 @@ export default function BlogsPage() {
               description="Simple career advice to help professionals grow with confidence."
               readTime="7"
               date="10 jan, 2026"
-              url="#"
+              url="/blogs/career-success"
             />
           </div>
         </div>
