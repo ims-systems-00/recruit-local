@@ -43,19 +43,19 @@ export default function Footer() {
                     Home
                   </Link>
                   <Link
-                    href="/about"
+                    href="/jobs"
                     className="text-label-md text-text-gray-quinary"
                   >
                     Find Jobs
                   </Link>
                   <Link
-                    href="/contact"
+                    href="/pricing"
                     className="text-label-md text-text-gray-quinary"
                   >
                     Pricing
                   </Link>
                   <Link
-                    href="/terms"
+                    href="/contact"
                     className="text-label-md text-text-gray-quinary"
                   >
                     Contact Us
@@ -84,7 +84,7 @@ export default function Footer() {
                     </Link>
                   </div>
                   <div className=" flex gap-spacing-4xl items-center">
-                    <Link href="" target="_blank">
+                    <Link href="/" target="_blank">
                       <Image
                         className="max-h-6 max-w-6"
                         alt="Logo"
@@ -93,7 +93,7 @@ export default function Footer() {
                         height={24}
                       />
                     </Link>
-                    <Link href="" target="_blank">
+                    <Link href="/" target="_blank">
                       <Image
                         className="max-h-6 max-w-6"
                         alt="Logo"
@@ -102,7 +102,7 @@ export default function Footer() {
                         height={24}
                       />
                     </Link>
-                    <Link href="" target="_blank">
+                    <Link href="/" target="_blank">
                       <Image
                         className="max-h-6 max-w-6"
                         alt="Logo"
@@ -111,7 +111,7 @@ export default function Footer() {
                         height={24}
                       />
                     </Link>
-                    <Link href="" target="_blank">
+                    <Link href="/" target="_blank">
                       <Image
                         className="max-h-6 max-w-6"
                         alt="Logo"
