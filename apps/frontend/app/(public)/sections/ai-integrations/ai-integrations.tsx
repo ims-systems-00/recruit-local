@@ -43,7 +43,7 @@ export default function AiIntegrations() {
           />
         </div>
         <Link
-          href="#"
+          href="/login"
           className="text-label-md rounded-full font-label-md-strong! flex items-center h-12 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary text-text-white w-fit mx-auto"
         >
           {`Let’s Get Start`}

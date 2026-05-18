@@ -110,7 +110,7 @@ export default function FindJobs() {
               exclusive talent by posting your job today.
             </p>
             <Link
-              href="#"
+              href="/login"
               className="text-label-lg w-full rounded-full font-label-lg-strong! flex items-center h-14 text-white justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
             >
               Post Job

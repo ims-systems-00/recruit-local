@@ -2,6 +2,7 @@ import Image from 'next/image';
 import React from 'react';
 import Logo from '@/public/images/logo.svg';
 import SignUpForm from './sign-up-form';
+import Link from 'next/link';
 
 export default function SignUp() {
   return (
@@ -9,13 +10,15 @@ export default function SignUp() {
       <div className="w-[400px] rounded-lg flex flex-col gap-y-spacing-4xl px-spacing-sm sm:px-spacing-0">
         <div className=" flex flex-col gap-spacing-2xl">
           <div className="min-w-[114px]">
-            <Image
-              className="max-h-[62px] max-w-[114px]"
-              alt="Logo"
-              src={Logo}
-              width={114}
-              height={62}
-            />
+            <Link href="/">
+              <Image
+                className="max-h-[62px] max-w-[114px]"
+                alt="Logo"
+                src={Logo}
+                width={114}
+                height={62}
+              />
+            </Link>
           </div>
           <div className="space-y-2">
             <p className=" text-sm font-medium text-body">

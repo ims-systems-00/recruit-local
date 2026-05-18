@@ -28,13 +28,15 @@ export default function Login() {
     <div className=" min-h-screen flex justify-center items-center">
       <div className="  w-[400px] rounded-lg flex flex-col gap-y-spacing-4xl px-spacing-sm sm:px-spacing-0">
         <div>
-          <Image
-            className="max-h-[62px] max-w-[114px]"
-            alt="Logo"
-            src={Logo}
-            width={114}
-            height={62}
-          />
+          <Link href="/">
+            <Image
+              className="max-h-[62px] max-w-[114px]"
+              alt="Logo"
+              src={Logo}
+              width={114}
+              height={62}
+            />
+          </Link>
         </div>
 
         <form

@@ -97,13 +97,13 @@ export default function MenuBar() {
         </div>
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-spacing-xl">
           <Link
-            href="#"
+            href="/login"
             className=" text-label-sm font-label-sm-strong! text-text-gray-quinary "
           >
             Sign In
           </Link>
           <Link
-            href="#"
+            href="/sign-up"
             className="text-label-sm rounded-full font-label-sm-strong! flex items-center h-10 justify-center py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
           >
             Register Now/Post Job
@@ -168,13 +168,13 @@ export default function MenuBar() {
             {/* Auth */}
             <div className="pb-6 flex flex-col gap-spacing-xl">
               <Link
-                href="#"
+                href="/login"
                 className=" text-label-sm font-label-sm-strong! text-text-gray-quinary "
               >
                 Sign In
               </Link>
               <Link
-                href="#"
+                href="/sign-up"
                 className="text-label-sm rounded-full font-label-sm-strong! flex items-center h-10 justify-center py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
               >
                 Register Now/Post Job
