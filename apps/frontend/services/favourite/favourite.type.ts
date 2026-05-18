@@ -35,7 +35,7 @@ export type FavouriteData = {
     deletedAt?: string | null;
     dateScheduled?: string | null;
   };
-  item: JobData;
+  item?: JobData;
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string | null;
