@@ -1,6 +1,5 @@
 import { Collection } from "mongodb";
 import { Embeddings } from "@langchain/core/embeddings";
-import { MongoDBAtlasVectorSearch } from "@langchain/mongodb";
 import { IVectorSearchAdapter, IVectorSearchOptions, IVectorSearchResult } from "./vector-search.adapter.interface";
 
 export class MongoVectorSearchAdapter implements IVectorSearchAdapter {
@@ -10,22 +9,32 @@ export class MongoVectorSearchAdapter implements IVectorSearchAdapter {
     queryText: string,
     options: IVectorSearchOptions
   ): Promise<IVectorSearchResult[]> {
-    const { indexName, textKey = "text", embeddingKey = "embedding", limit } = options;
+    const { indexName, textKey = "text", embeddingKey = "embedding", limit = 10 } = options;
 
-    const vectorStore = new MongoDBAtlasVectorSearch(embeddings, {
-      collection,
-      indexName,
-      textKey,
-      embeddingKey,
-    });
+    const queryVector = await embeddings.embedQuery(queryText);
 
-    const results = await vectorStore.similaritySearchWithScore(queryText, limit);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const results: any[] = await (collection as any)
+      .aggregate([
+        {
+          $vectorSearch: {
+            queryVector,
+            index: indexName,
+            path: embeddingKey,
+            limit,
+            numCandidates: 10 * limit,
+          },
+        },
+        { $set: { score: { $meta: "vectorSearchScore" } } },
+        { $project: { [embeddingKey]: 0, __v: 0 } },
+      ])
+      .toArray();
 
-    return results.map(([doc, score]) => ({
-      _id: String(doc.metadata._id ?? ""),
-      text: doc.pageContent,
-      score,
-      metadata: doc.metadata,
+    return results.map((doc) => ({
+      _id: String(doc._id ?? ""),
+      text: doc[textKey],
+      score: doc.score,
+      metadata: doc,
     }));
   }
 }

@@ -2,7 +2,7 @@ import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
 
 export const createBodySchema = Joi.object({
-  text: Joi.string().min(1).max(200).required(),
+  texts: Joi.array().items(Joi.string().min(1).max(200)).min(1).max(50).required(),
 });
 
 export const searchQuerySchema = Joi.object({

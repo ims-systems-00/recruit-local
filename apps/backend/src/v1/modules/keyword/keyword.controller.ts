@@ -24,15 +24,15 @@ export const list = async ({ req }: ControllerParams) => {
 };
 
 export const create = async ({ req }: ControllerParams) => {
-  const keyword = await keywordService.create({
+  const keywords = await keywordService.create({
     payload: req.body,
   });
 
   return new ApiResponse({
-    message: "Keyword created.",
+    message: "Keywords created.",
     statusCode: StatusCodes.CREATED,
-    data: keyword,
-    fieldName: "keyword",
+    data: keywords,
+    fieldName: "keywords",
   });
 };
 

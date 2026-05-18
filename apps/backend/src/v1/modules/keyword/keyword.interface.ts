@@ -13,7 +13,7 @@ export interface IListKeywordParams {
 }
 
 export interface IKeywordCreateParams {
-  payload: Pick<KeywordInput, "text">;
+  payload: { texts: string[] };
   session?: ClientSession;
 }
 

@@ -19,9 +19,13 @@ export const list = ({ query = {}, options }: IListKeywordParams) => {
 
 export const create = async ({ payload, session }: IKeywordCreateParams) => {
   const adapter = EmbeddingAdapterFactory.create("openai");
-  const embedding = await adapter.generateEmbedding(payload.text);
-  const docs = await Keyword.create([{ ...payload, embedding }], { session });
-  return docs[0];
+  const docs = await Promise.all(
+    payload.texts.map(async (text) => {
+      const embedding = await adapter.generateEmbedding(text);
+      return { text, embedding };
+    })
+  );
+  return Keyword.create(docs, { session });
 };
 
 export const search = async ({ query, limit = 10 }: IKeywordSearchParams) => {
