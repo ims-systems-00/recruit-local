@@ -13,8 +13,33 @@ import Link from 'next/link';
 import Image from 'next/image';
 import NavLogo from '@/public/images/NavLogo.svg';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
+
+const navItems = [
+  {
+    label: 'Home',
+    href: '/',
+  },
+  {
+    label: 'Find Job',
+    href: '/jobs',
+  },
+  {
+    label: 'Pricing',
+    href: '/pricing',
+  },
+  {
+    label: 'Blogs',
+    href: '/blogs',
+  },
+  {
+    label: 'Contact us',
+    href: '/contact',
+  },
+];
 
 export default function MenuBar() {
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -64,37 +89,19 @@ export default function MenuBar() {
             <Menu aria-hidden="true" className="size-6" />
           </button>
         </div>
-        <div className="hidden lg:flex lg:gap-x-12 text-text-gray-quinary">
-          <Link
-            href="/"
-            className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-          >
-            Home
-          </Link>
-          <Link
-            href="/jobs"
-            className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-          >
-            Find Job
-          </Link>
-          <Link
-            href="/pricing"
-            className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-          >
-            Pricing
-          </Link>
-          <Link
-            href="/blogs"
-            className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-          >
-            Blogs
-          </Link>
-          <Link
-            href="/contact"
-            className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-          >
-            Contact us
-          </Link>
+        <div className="hidden lg:flex lg:gap-x-spacing-3xl text-text-gray-quinary">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'px-spacing-lg text-label-sm font-label-sm-strong! hover:text-text-brand-secondary',
+                pathname === item.href && 'text-text-brand-secondary',
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-spacing-xl">
           <Link
@@ -135,46 +142,19 @@ export default function MenuBar() {
           <div>
             {/* Navigation */}
             <div className="pb-6 flex flex-col gap-spacing-xl text-text-gray-quinary">
-              <SheetClose asChild>
-                <Link
-                  href="/"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Home
-                </Link>
-              </SheetClose>
-              <SheetClose asChild>
-                <Link
-                  href="/jobs"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Find Job
-                </Link>
-              </SheetClose>
-              <SheetClose asChild>
-                <Link
-                  href="/pricing"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Pricing
-                </Link>
-              </SheetClose>
-              <SheetClose asChild>
-                <Link
-                  href="/blogs"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Blogs
-                </Link>
-              </SheetClose>
-              <SheetClose asChild>
-                <Link
-                  href="/contact"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Contact us
-                </Link>
-              </SheetClose>
+              {navItems.map((item) => (
+                <SheetClose asChild key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      ' text-label-sm font-label-sm-strong! hover:text-text-brand-secondary ',
+                      pathname === item.href && 'text-text-brand-secondary',
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                </SheetClose>
+              ))}
             </div>
 
             {/* Auth */}
