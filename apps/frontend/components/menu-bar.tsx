@@ -106,7 +106,7 @@ export default function MenuBar() {
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-spacing-xl">
           <Link
             href="/login"
-            className=" text-label-sm font-label-sm-strong! text-text-gray-quinary "
+            className=" px-spacing-lg text-label-sm font-label-sm-strong! text-text-gray-quinary "
           >
             Sign In
           </Link>
@@ -141,7 +141,7 @@ export default function MenuBar() {
 
           <div>
             {/* Navigation */}
-            <div className="pb-6 flex flex-col gap-spacing-xl text-text-gray-quinary">
+            <div className="pb-spacing-4xl flex flex-col gap-spacing-xl text-text-gray-quinary">
               {navItems.map((item) => (
                 <SheetClose asChild key={item.href}>
                   <Link
@@ -158,11 +158,11 @@ export default function MenuBar() {
             </div>
 
             {/* Auth */}
-            <div className="pb-6 flex flex-col gap-spacing-xl">
+            <div className="pb-spacing-4xl flex flex-col gap-spacing-xl">
               <SheetClose asChild>
                 <Link
                   href="/login"
-                  className=" text-label-sm font-label-sm-strong! text-text-gray-quinary "
+                  className=" px-spacing-lg text-label-sm font-label-sm-strong! text-text-gray-quinary "
                 >
                   Sign In
                 </Link>
