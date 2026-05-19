@@ -101,7 +101,7 @@ export default function UserFeature() {
                 href="#"
                 className="text-label-lg border border-border-gray-primary rounded-full font-label-lg-strong! text-text-gray-secondary flex items-center h-14 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-gray-soft-primary"
               >
-                See How It Works
+                Create Profile
               </Link>
               <Link
                 href="#"
