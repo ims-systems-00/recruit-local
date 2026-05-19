@@ -11,7 +11,7 @@ export default function AiIntegrations() {
             AI INTEGRATIONS
           </p>
           <div className=" space-y-spacing-2xl">
-            <p className=" text-heading-xl font-heading-xl-strong! max-w-[768px] text-text-gray-primary">
+            <p className=" text-heading-md md:text-heading-xl font-heading-xl-strong! max-w-[768px] text-text-gray-primary">
               Powered by Alice AI
             </p>
             <p className="text-body-md text-text-gray-secondary max-w-[768px]">

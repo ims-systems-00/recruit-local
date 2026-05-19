@@ -10,12 +10,12 @@ export default function Benifits() {
             BENIFITS
           </p>
           <div className=" space-y-spacing-2xl">
-            <p className=" text-heading-xl font-heading-xl-strong! max-w-[768px] text-text-gray-primary">
+            <p className=" text-heading-md md:text-heading-xl font-heading-xl-strong! max-w-[768px] text-text-gray-primary">
               Hire faster. Hire better. Hire with confidence.
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-spacing-4xl">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-spacing-4xl">
           <CardItem
             icon={<CheckCheck className="w-6 h-6 text-others-brand-dark" />}
             title="Faster hiring"

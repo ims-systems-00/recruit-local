@@ -14,8 +14,8 @@ export default function ContactPage() {
     <div>
       <Banner />
       <div className="max-w-[1280px] mx-auto px-spacing-5xl py-spacing-10xl">
-        <div className=" border bg-bg-gray-soft-primary border-border-gray-secondary rounded-4xl px-spacing-6xl py-spacing-5xl space-y-spacing-5xl">
-          <div className="grid grid-cols-2 gap-spacing-4xl">
+        <div className=" border bg-bg-gray-soft-primary border-border-gray-secondary rounded-4xl px-spacing-4xl md:px-spacing-6xl py-spacing-5xl space-y-spacing-5xl">
+          <div className="grid sm:grid-cols-2 gap-spacing-4xl">
             <div className="space-y-spacing-xl">
               <Label className=" text-label-md font-label-md-strong! text-text-gray-primary">
                 First name

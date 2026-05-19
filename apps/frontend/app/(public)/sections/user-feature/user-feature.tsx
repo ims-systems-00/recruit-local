@@ -22,10 +22,10 @@ export default function UserFeature() {
             JOB SEEKERS
           </p>
           <div className=" space-y-spacing-2xl">
-            <p className=" text-heading-lg font-heading-lg-strong! text-text-gray-secondary">
+            <p className=" text-heading-md md:text-heading-lg font-heading-lg-strong! text-text-gray-secondary">
               Find local jobs that match your skills, values and ambitions
             </p>
-            <div className=" flex items-center gap-spacing-4xl">
+            <div className=" flex flex-col sm:flex-row sm:items-center gap-spacing-4xl">
               <Link
                 href="#"
                 className="text-label-lg border border-border-gray-primary rounded-full font-label-lg-strong! text-text-gray-secondary flex items-center h-14 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-gray-soft-primary"
@@ -93,10 +93,10 @@ export default function UserFeature() {
             RECRUITERS
           </p>
           <div className=" space-y-spacing-2xl">
-            <p className=" text-heading-lg font-heading-lg-strong! text-text-gray-secondary">
+            <p className=" text-heading-md md:text-heading-lg font-heading-lg-strong! text-text-gray-secondary">
               Hire locally. Hire smarter. Hire people who fit not just on paper.
             </p>
-            <div className=" flex items-center gap-spacing-4xl">
+            <div className=" flex flex-col sm:flex-row sm:items-center gap-spacing-4xl">
               <Link
                 href="#"
                 className="text-label-lg border border-border-gray-primary rounded-full font-label-lg-strong! text-text-gray-secondary flex items-center h-14 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-gray-soft-primary"

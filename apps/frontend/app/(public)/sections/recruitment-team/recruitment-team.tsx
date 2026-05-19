@@ -41,17 +41,17 @@ export default function RecruitmentTeam() {
     <section className="bg-bg-brand-solid-alt">
       <div className="max-w-[1280px] mx-auto px-spacing-5xl py-spacing-10xl text-white flex flex-col gap-y-spacing-8xl">
         <div className=" flex flex-col items-center justify-center text-center gap-y-spacing-5xl">
-          <p className=" text-heading-lg font-heading-lg-strong! max-w-[734px]">
+          <p className=" text-heading-md md:text-heading-lg font-heading-lg-strong! max-w-[734px]">
             More than a platform your extended HR & recruitment team
           </p>
           <Link
             href="#"
-            className="text-label-lg rounded-full font-label-lg-strong! flex items-center h-14 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
+            className="text-label-md md:text-label-lg rounded-full font-label-lg-strong! flex items-center h-14 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
           >
             Explore Employer Premium
           </Link>
         </div>
-        <div className="group flex gap-spacing-xl md:gap-spacing-5xl h-44 sm:h-52 md:h-64 lg:h-[352px]">
+        <div className="group flex flex-col sm:flex-row gap-spacing-xl md:gap-spacing-5xl sm:h-52 md:h-64 lg:h-[352px]">
           {images.map((img) => (
             <div
               key={img.id}
@@ -62,10 +62,10 @@ export default function RecruitmentTeam() {
                 alt={img.alt}
                 width={544}
                 height={352}
-                className="w-full h-full object-cover"
+                className="w-full h-full min-h-[352px] max-h-[352px] object-cover"
               />
 
-              <div className=" absolute bottom-0 left-0 right-0 p-spacing-3xl md:p-spacing-5xl bg-linear-to-t from-black/95 via-black/50 to-transparent opacity-0 transition-opacity duration-1000 group-hover/item:opacity-100 ">
+              <div className=" absolute bottom-0 left-0 right-0 p-spacing-3xl md:p-spacing-5xl bg-linear-to-t from-black/95 via-black/50 to-transparent sm:opacity-0 transition-opacity duration-1000 group-hover/item:opacity-100 ">
                 <p className="text-white text-body-sm">{img.description}</p>
               </div>
             </div>

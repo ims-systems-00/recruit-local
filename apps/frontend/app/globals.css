@@ -246,28 +246,6 @@
   --font-label-sm: var(--typography-label-sm-family);
   --font-label-xs: var(--typography-label-xs-family);
 
-  /* ---------------- FONT SIZE ---------------- */
-  --text-display-sm: var(--typography-display-sm-size);
-  --text-display-lg: var(--typography-display-lg-size);
-
-  --text-heading-2xl: var(--typography-heading-2xl-size);
-  --text-heading-xl: var(--typography-heading-xl-size);
-  --text-heading-lg: var(--typography-heading-lg-size);
-  --text-heading-md: var(--typography-heading-md-size);
-  --text-heading-sm: var(--typography-heading-sm-size);
-
-  --text-body-xl: var(--typography-body-xl-size);
-  --text-body-lg: var(--typography-body-lg-size);
-  --text-body-md: var(--typography-body-md-size);
-  --text-body-sm: var(--typography-body-sm-size);
-  --text-body-xs: var(--typography-body-xs-size);
-
-  --text-label-xl: var(--typography-label-xl-size);
-  --text-label-lg: var(--typography-label-lg-size);
-  --text-label-md: var(--typography-label-md-size);
-  --text-label-sm: var(--typography-label-sm-size);
-  --text-label-xs: var(--typography-label-xs-size);
-
   /* ---------------- LINE HEIGHT ---------------- */
   --leading-display-sm: var(--typography-display-sm-line-height);
   --leading-display-lg: var(--typography-display-lg-line-height);
@@ -401,147 +379,148 @@
   --font-inter: var(--font-inter);
 }
 
+/*
+ * Typography size tokens live outside @theme so Tailwind does not emit
+ * font-size-only `.text-*` utilities that conflict with full typography @utility classes.
+ */
+
+@utility text-display-sm {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-display-sm-size);
+  line-height: var(--leading-display-sm);
+  letter-spacing: var(--tracking-display-sm);
+  font-weight: var(--font-weight-display-sm-base);
+}
+
+@utility text-display-lg {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-display-lg-size);
+  line-height: var(--leading-display-lg);
+  letter-spacing: var(--tracking-display-lg);
+  font-weight: var(--font-weight-display-lg-base);
+}
+
+@utility text-heading-2xl {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-heading-2xl-size);
+  line-height: var(--leading-heading-2xl);
+  letter-spacing: var(--tracking-heading-2xl);
+  font-weight: var(--font-weight-heading-2xl-base);
+}
+
+@utility text-heading-xl {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-heading-xl-size);
+  line-height: var(--leading-heading-xl);
+  letter-spacing: var(--tracking-heading-xl);
+  font-weight: var(--font-weight-heading-xl-base);
+}
+
+@utility text-heading-lg {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-heading-lg-size);
+  line-height: var(--leading-heading-lg);
+  letter-spacing: var(--tracking-heading-lg);
+  font-weight: var(--font-weight-heading-lg-base);
+}
+
+@utility text-heading-md {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-heading-md-size);
+  line-height: var(--leading-heading-md);
+  letter-spacing: var(--tracking-heading-md);
+  font-weight: var(--font-weight-heading-md-base);
+}
+
+@utility text-heading-sm {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-heading-sm-size);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  font-weight: var(--font-weight-heading-sm-base);
+}
+
+@utility text-body-xl {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-body-xl-size);
+  line-height: var(--leading-body-xl);
+  letter-spacing: var(--tracking-body-xl);
+  font-weight: var(--font-weight-body-xl-base);
+}
+
+@utility text-body-lg {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-body-lg-size);
+  line-height: var(--leading-body-lg);
+  letter-spacing: var(--tracking-body-lg);
+  font-weight: var(--font-weight-body-lg-base);
+}
+
+@utility text-body-md {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-body-md-size);
+  line-height: var(--leading-body-md);
+  letter-spacing: var(--tracking-body-md);
+  font-weight: var(--font-weight-body-md-base);
+}
+
+@utility text-body-sm {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-body-sm-size);
+  line-height: var(--leading-body-sm);
+  letter-spacing: var(--tracking-body-sm);
+  font-weight: var(--font-weight-body-sm-base);
+}
+
+@utility text-body-xs {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-body-xs-size);
+  line-height: var(--leading-body-xs);
+  letter-spacing: var(--tracking-body-xs);
+  font-weight: var(--font-weight-body-xs-base);
+}
+
+@utility text-label-xl {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-label-xl-size);
+  line-height: var(--leading-label-xl);
+  letter-spacing: var(--tracking-label-xl);
+  font-weight: var(--font-weight-label-xl-base);
+}
+
+@utility text-label-lg {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-label-lg-size);
+  line-height: var(--leading-label-lg);
+  letter-spacing: var(--tracking-label-lg);
+  font-weight: var(--font-weight-label-lg-base);
+}
+
+@utility text-label-md {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-label-md-size);
+  line-height: var(--leading-label-md);
+  letter-spacing: var(--tracking-label-md);
+  font-weight: var(--font-weight-label-md-base);
+}
+
+@utility text-label-sm {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-label-sm-size);
+  line-height: var(--leading-label-sm);
+  letter-spacing: var(--tracking-label-sm);
+  font-weight: var(--font-weight-label-sm-base);
+}
+
+@utility text-label-xs {
+  font-family: var(--font-poppins);
+  font-size: var(--typography-label-xs-size);
+  line-height: var(--leading-label-xs);
+  letter-spacing: var(--tracking-label-xs);
+  font-weight: var(--font-weight-label-xs-base);
+}
+
 @layer utilities {
-  /* ================= DISPLAY ================= */
-  .text-display-sm {
-    font-family: var(--font-poppins);
-    font-size: var(--text-display-sm);
-    line-height: var(--leading-display-sm);
-    letter-spacing: var(--tracking-display-sm);
-    font-weight: var(--font-weight-display-sm-base);
-  }
-
-  .text-display-lg {
-    font-family: var(--font-poppins);
-    font-size: var(--text-display-lg);
-    line-height: var(--leading-display-lg);
-    letter-spacing: var(--tracking-display-lg);
-    font-weight: var(--font-weight-display-lg-base);
-  }
-
-  /* ================= HEADING ================= */
-  .text-heading-2xl {
-    font-family: var(--font-poppins);
-    font-size: var(--text-heading-2xl);
-    line-height: var(--leading-heading-2xl);
-    letter-spacing: var(--tracking-heading-2xl);
-    font-weight: var(--font-weight-heading-2xl-base);
-  }
-
-  .text-heading-xl {
-    font-family: var(--font-poppins);
-    font-size: var(--text-heading-xl);
-    line-height: var(--leading-heading-xl);
-    letter-spacing: var(--tracking-heading-xl);
-    font-weight: var(--font-weight-heading-xl-base);
-  }
-
-  .text-heading-lg {
-    font-family: var(--font-poppins);
-    font-size: var(--text-heading-lg);
-    line-height: var(--leading-heading-lg);
-    letter-spacing: var(--tracking-heading-lg);
-    font-weight: var(--font-weight-heading-lg-base);
-  }
-
-  .text-heading-md {
-    font-family: var(--font-poppins);
-    font-size: var(--text-heading-md);
-    line-height: var(--leading-heading-md);
-    letter-spacing: var(--tracking-heading-md);
-    font-weight: var(--font-weight-heading-md-base);
-  }
-
-  .text-heading-sm {
-    font-family: var(--font-poppins);
-    font-size: var(--text-heading-sm);
-    line-height: var(--leading-heading-sm);
-    letter-spacing: var(--tracking-heading-sm);
-    font-weight: var(--font-weight-heading-sm-base);
-  }
-
-  /* ================= BODY ================= */
-  .text-body-xl {
-    font-family: var(--font-poppins);
-    font-size: var(--text-body-xl);
-    line-height: var(--leading-body-xl);
-    letter-spacing: var(--tracking-body-xl);
-    font-weight: var(--font-weight-body-xl-base);
-  }
-
-  .text-body-lg {
-    font-family: var(--font-poppins);
-    font-size: var(--text-body-lg);
-    line-height: var(--leading-body-lg);
-    letter-spacing: var(--tracking-body-lg);
-    font-weight: var(--font-weight-body-lg-base);
-  }
-
-  .text-body-md {
-    font-family: var(--font-poppins);
-    font-size: var(--text-body-md);
-    line-height: var(--leading-body-md);
-    letter-spacing: var(--tracking-body-md);
-    font-weight: var(--font-weight-body-md-base);
-  }
-
-  .text-body-sm {
-    font-family: var(--font-poppins);
-    font-size: var(--text-body-sm);
-    line-height: var(--leading-body-sm);
-    letter-spacing: var(--tracking-body-sm);
-    font-weight: var(--font-weight-body-sm-base);
-  }
-
-  .text-body-xs {
-    font-family: var(--font-poppins);
-    font-size: var(--text-body-xs);
-    line-height: var(--leading-body-xs);
-    letter-spacing: var(--tracking-body-xs);
-    font-weight: var(--font-weight-body-xs-base);
-  }
-
-  /* ================= LABEL ================= */
-  .text-label-xl {
-    font-family: var(--font-poppins);
-    font-size: var(--text-label-xl);
-    line-height: var(--leading-label-xl);
-    letter-spacing: var(--tracking-label-xl);
-    font-weight: var(--font-weight-label-xl-base);
-  }
-
-  .text-label-lg {
-    font-family: var(--font-poppins);
-    font-size: var(--text-label-lg);
-    line-height: var(--leading-label-lg);
-    letter-spacing: var(--tracking-label-lg);
-    font-weight: var(--font-weight-label-lg-base);
-  }
-
-  .text-label-md {
-    font-family: var(--font-poppins);
-    font-size: var(--text-label-md);
-    line-height: var(--leading-label-md);
-    letter-spacing: var(--tracking-label-md);
-    font-weight: var(--font-weight-label-md-base);
-  }
-
-  .text-label-sm {
-    font-family: var(--font-poppins);
-    font-size: var(--text-label-sm);
-    line-height: var(--leading-label-sm);
-    letter-spacing: var(--tracking-label-sm);
-    font-weight: var(--font-weight-label-sm-base);
-  }
-
-  .text-label-xs {
-    font-family: var(--font-poppins);
-    font-size: var(--text-label-xs);
-    line-height: var(--leading-label-xs);
-    letter-spacing: var(--tracking-label-xs);
-    font-weight: var(--font-weight-label-xs-base);
-  }
-
   .button-xl {
     padding: var(--spacing-spacing-lg) var(--spacing-spacing-3xl);
     display: flex;
