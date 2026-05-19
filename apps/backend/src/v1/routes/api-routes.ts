@@ -15,6 +15,7 @@ import userRoutes from "../modules/user/user.route";
 import formBuilderRoutes from "../modules/forms/forms.routes";
 
 import { deserializeUser } from "../../common/middlewares";
+import publicRoutes from "./public.route";
 // import responseTemplateRoutes from "../modules/response-template/response-template.route";
 import jobProfileRoutes from "../modules/job-profile/job-profile.route";
 import educationRoutes from "../modules/education/education.route";
@@ -41,6 +42,7 @@ const router = express.Router();
 
 const getApiRoutes = () => {
   router.use("/auth", authRoutes);
+  router.use("/public", publicRoutes);
   router.use(deserializeUser);
   router.use("/tenants", tenantRoutes);
   // router.use("/comment-activities", commentActivityRoutes);
