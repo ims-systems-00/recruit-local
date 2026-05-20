@@ -15,6 +15,41 @@ import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../.
 import { agenda } from "../../../agenda/config";
 import { JOB_NAME } from "../../../agenda/constants";
 import { list as listApplications } from "../application/application.service";
+import pick from "lodash/pick";
+
+const PUBLIC_JOB_FIELDS = [
+  "_id",
+  "title",
+  "description",
+  "employmentType",
+  "workplace",
+  "period",
+  "salary",
+  "location",
+  "locationAdditionalInfo",
+  "workingDays",
+  "weekends",
+  "workingHours",
+  "yearOfExperience",
+  "vacancy",
+  "endDate",
+  "keywords",
+  "category",
+  "tenantId",
+  "totalApplications",
+  "createdAt",
+  "updatedAt",
+];
+
+const PUBLIC_JOB_DETAIL_FIELDS = [
+  ...PUBLIC_JOB_FIELDS,
+  "aboutUs",
+  "responsibility",
+  "requiredDocuments",
+  "attachments",
+  "email",
+  "number",
+];
 
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_FIELDS,
@@ -224,6 +259,50 @@ export const hardRemove = async ({ req }: ControllerParams) => {
     message: "Job permanently deleted.",
     statusCode: StatusCodes.OK,
     data: getSanitizedJobResponse(job, ability),
+    fieldName: "job",
+  });
+};
+
+export const publicList = async ({ req }: ControllerParams) => {
+  const filter = new MongoQuery(req.query, {
+    searchFields: ["title", "description", "location"],
+  }).build();
+
+  const finalQuery = {
+    $and: [filter.getFilterQuery(), { status: JOBS_STATUS_ENUMS.OPEN }],
+  };
+
+  const results = await jobService.list({
+    query: finalQuery,
+    options: filter.getQueryOptions(),
+  });
+
+  const sanitizedDocs = results.docs.map((doc) => pick(doc, PUBLIC_JOB_FIELDS));
+
+  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
+
+  return new ApiResponse({
+    message: "Jobs retrieved",
+    statusCode: StatusCodes.OK,
+    data,
+    fieldName: "jobs",
+    pagination,
+  });
+};
+
+export const publicGet = async ({ req }: ControllerParams) => {
+  const job = await jobService.getOne({
+    query: { _id: req.params.id },
+  });
+
+  if (!job || job.status !== JOBS_STATUS_ENUMS.OPEN) {
+    throw new NotFoundException("Job not found.");
+  }
+
+  return new ApiResponse({
+    message: "Job retrieved.",
+    statusCode: StatusCodes.OK,
+    data: pick(job, PUBLIC_JOB_DETAIL_FIELDS),
     fieldName: "job",
   });
 };
