@@ -105,6 +105,24 @@ class FileManager {
     }
   }
 
+  async getFileAsBuffer(fileInformation: FileInformation): Promise<Buffer> {
+    const params = { Bucket: fileInformation.Bucket, Key: fileInformation.Key };
+    const response = await this.s3Client.send(new GetObjectCommand(params));
+
+    if (!response.Body) {
+      throw new Error("No file content received from S3");
+    }
+
+    const stream = response.Body as Readable;
+    const chunks: Buffer[] = [];
+
+    return new Promise((resolve, reject) => {
+      stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+      stream.on("error", reject);
+      stream.on("end", () => resolve(Buffer.concat(chunks)));
+    });
+  }
+
   async downloadFileFromS3(destinationPath: string, fileInformation: FileInformation): Promise<void> {
     const params = {
       Bucket: fileInformation.Bucket,
