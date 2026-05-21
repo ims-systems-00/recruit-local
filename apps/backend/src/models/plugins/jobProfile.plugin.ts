@@ -1,9 +1,9 @@
-import { Schema, Document, Model } from "mongoose";
+import { Schema, Document, Model, Types } from "mongoose";
 import { JobProfile } from "../job-profile.model";
 
 // 1. Define the input type for the fields we are adding
 export type JobProfileInput = {
-  jobProfileId?: Schema.Types.ObjectId | null;
+  jobProfileId?: Types.ObjectId | null;
 };
 
 // 2. Define the Document interface combining the input and Mongoose Document
@@ -11,7 +11,7 @@ export interface IJobProfileDoc extends JobProfileInput, Document {}
 
 // 3. Define the Model interface including the new static methods
 export interface IJobProfileModel<T extends IJobProfileDoc> extends Model<T> {
-  findByJobProfileId(jobProfileId: Schema.Types.ObjectId): Promise<T[]>;
+  findByJobProfileId(jobProfileId: Types.ObjectId): Promise<T[]>;
 }
 
 /**

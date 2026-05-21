@@ -9,6 +9,7 @@ import {
 } from "../../../common/helper";
 import { CvAbilityBuilder, CvAuthZEntity } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
+import { Types } from "mongoose";
 import * as cvService from "./cv.service";
 import * as cvExtractService from "./cv-extract.service";
 import { cvRoleScopedSecurityQuery } from "./cv.query";
@@ -190,9 +191,8 @@ export const extractAndCreate = async ({ req }: ControllerParams) => {
 
   const cv = await cvService.create({
     payload: {
-      ...(filledSchema as any),
-      jobProfileId,
-      userId,
+      jobProfileId: new Types.ObjectId(jobProfileId),
+      userId: new Types.ObjectId(userId),
       resumeStorage,
     },
   });
@@ -200,7 +200,10 @@ export const extractAndCreate = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV created from resume.",
     statusCode: StatusCodes.CREATED,
-    data: cv,
+    data: {
+      cv,
+      extractedData: filledSchema,
+    },
     fieldName: "cv",
   });
 };

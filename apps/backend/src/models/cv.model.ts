@@ -22,7 +22,7 @@ export interface CVInput extends IUserOwnedInput, JobProfileInput {
   address?: string;
   templateId?: string;
   colorProfile?: string;
-  status: CV_STATUS_ENUM;
+  status?: CV_STATUS_ENUM;
   resumeId?: Types.ObjectId;
 }
 
