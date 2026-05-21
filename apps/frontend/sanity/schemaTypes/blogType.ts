@@ -1,3 +1,4 @@
+import SanityDraftEditor from '@/app/studio/[[...tool]]/sections/sanity-draft-editor';
 import DraftEditor from '@/components/draft-editor/draft-editor';
 import { defineType, defineField, defineArrayMember } from 'sanity';
 
@@ -85,9 +86,9 @@ export const blogType = defineType({
             defineField({
               name: 'htmlString',
               title: 'Write your text here',
-              type: 'text',
+              type: 'string',
               components: {
-                input: DraftEditor,
+                input: SanityDraftEditor,
               },
             }),
           ],

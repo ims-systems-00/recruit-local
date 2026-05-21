@@ -1,18 +1,28 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
 import {
-  Editor,
-  EditorState,
-  RichUtils,
-  Modifier,
   CompositeDecorator,
-  AtomicBlockUtils,
   ContentBlock,
   ContentState,
+  convertFromRaw,
+  convertToRaw,
   DraftDecoratorComponentProps,
+  Editor,
+  EditorState,
+  RawDraftContentState,
+  RichUtils,
 } from 'draft-js';
+
 import 'draft-js/dist/Draft.css';
+
 import {
   Bold,
   Code,
@@ -27,36 +37,76 @@ import {
   Underline,
   Undo,
 } from 'lucide-react';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 
-type Align = 'left' | 'center' | 'right';
+// ============================================================
+// TYPES
+// ============================================================
+
+export interface DraftEditorProps {
+  value?: string | RawDraftContentState | null;
+
+  onChange?: (
+    raw: RawDraftContentState,
+    json: string,
+    editorState: EditorState,
+  ) => void;
+
+  placeholder?: string;
+
+  readOnly?: boolean;
+
+  minHeight?: number;
+
+  maxHeight?: number;
+
+  className?: string;
+
+  editorClassName?: string;
+
+  toolbarClassName?: string;
+
+  showToolbar?: boolean;
+}
+
+// ============================================================
+// CUSTOM INLINE STYLES
+// ============================================================
 
 const styleMap = {
   CODE: {
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: 'rgba(0,0,0,0.05)',
     fontFamily: '"Inconsolata", "Menlo", "Consolas", monospace',
-    fontSize: 16,
-    padding: 2,
+    fontSize: 14,
+    padding: '2px 4px',
+    borderRadius: '4px',
   },
 };
 
+// ============================================================
+// BLOCK STYLES
+// ============================================================
+
 function blockStyleFn(contentBlock: ContentBlock) {
   const type = contentBlock.getType();
+
   if (type === 'blockquote') {
-    return ' border-l-[5px] border-border py-1.5 px-3 my-2 italic ';
+    return 'border-l-4 border-border pl-4 italic my-2 text-muted-foreground';
   }
+
   return '';
 }
 
-// ---------------------------------------------
+// ============================================================
 // LINK DECORATOR
-// ---------------------------------------------
+// ============================================================
+
 const findLinkEntities = (
   contentBlock: ContentBlock,
   callback: (start: number, end: number) => void,
@@ -64,6 +114,7 @@ const findLinkEntities = (
 ) => {
   contentBlock.findEntityRanges((character) => {
     const entityKey = character.getEntity();
+
     return (
       entityKey !== null &&
       contentState.getEntity(entityKey).getType() === 'LINK'
@@ -71,9 +122,10 @@ const findLinkEntities = (
   }, callback);
 };
 
-const Link = (props: DraftDecoratorComponentProps) => {
+const LinkComponent = (props: DraftDecoratorComponentProps) => {
   const { contentState, entityKey, children } = props;
-  const { url } = contentState.getEntity(entityKey || '').getData();
+
+  const { url } = contentState.getEntity(entityKey!).getData();
 
   return (
     <a
@@ -87,172 +139,320 @@ const Link = (props: DraftDecoratorComponentProps) => {
   );
 };
 
-// ---------------------------------------------
-// MAIN EDITOR
-// ---------------------------------------------
-export default function DraftEditor() {
-  const decorator = new CompositeDecorator([
-    { strategy: findLinkEntities, component: Link },
-  ]);
+// ============================================================
+// HELPERS
+// ============================================================
 
-  const [editorState, setEditorState] = useState(() =>
-    EditorState.createEmpty(decorator),
-  );
+function createEditorState(
+  value: DraftEditorProps['value'],
+  decorator: CompositeDecorator,
+) {
+  if (!value) {
+    return EditorState.createEmpty(decorator);
+  }
+
+  try {
+    // STRINGIFIED JSON
+    if (typeof value === 'string') {
+      const parsed = JSON.parse(value);
+
+      return EditorState.createWithContent(convertFromRaw(parsed), decorator);
+    }
+
+    // RAW OBJECT
+    return EditorState.createWithContent(convertFromRaw(value), decorator);
+  } catch {
+    return EditorState.createEmpty(decorator);
+  }
+}
+
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
+
+export default function DraftEditor({
+  value,
+  onChange,
+  placeholder = 'Write something...',
+  readOnly = false,
+  minHeight = 180,
+  maxHeight = 300,
+  className = '',
+  editorClassName = '',
+  toolbarClassName = '',
+  showToolbar = true,
+}: DraftEditorProps) {
   const editorRef = useRef<Editor>(null);
 
-  const focusEditor = () => editorRef.current?.focus();
+  // ==========================================================
+  // DECORATOR
+  // ==========================================================
 
-  const handleKeyCommand = (cmd: string) => {
-    const newState = RichUtils.handleKeyCommand(editorState, cmd);
-    if (newState) {
-      setEditorState(newState);
-      return 'handled';
-    }
-    return 'not-handled';
+  const decorator = useMemo(
+    () =>
+      new CompositeDecorator([
+        {
+          strategy: findLinkEntities,
+          component: LinkComponent,
+        },
+      ]),
+    [],
+  );
+
+  // ==========================================================
+  // STATE
+  // ==========================================================
+
+  const [editorState, setEditorState] = useState(() =>
+    createEditorState(value, decorator),
+  );
+
+  // ==========================================================
+  // EXTERNAL VALUE SYNC
+  // ==========================================================
+
+  useEffect(() => {
+    if (!value) return;
+
+    setEditorState(createEditorState(value, decorator));
+  }, [value, decorator]);
+
+  // ==========================================================
+  // CHANGE HANDLER
+  // ==========================================================
+
+  const handleChange = useCallback(
+    (state: EditorState) => {
+      setEditorState(state);
+
+      const raw = convertToRaw(state.getCurrentContent());
+
+      const json = JSON.stringify(raw);
+
+      onChange?.(raw, json, state);
+    },
+    [onChange],
+  );
+
+  // ==========================================================
+  // COMMANDS
+  // ==========================================================
+
+  const handleKeyCommand = useCallback(
+    (command: string) => {
+      const newState = RichUtils.handleKeyCommand(editorState, command);
+
+      if (newState) {
+        handleChange(newState);
+
+        return 'handled';
+      }
+
+      return 'not-handled';
+    },
+    [editorState, handleChange],
+  );
+
+  // ==========================================================
+  // HELPERS
+  // ==========================================================
+
+  const focusEditor = () => {
+    editorRef.current?.focus();
   };
 
-  // INLINE STYLE
-  const toggleInline = (style: string) =>
-    setEditorState(RichUtils.toggleInlineStyle(editorState, style));
+  const toggleInline = (style: string) => {
+    handleChange(RichUtils.toggleInlineStyle(editorState, style));
+  };
 
-  // BLOCK STYLE
-  const toggleBlock = (blockType: string) =>
-    setEditorState(RichUtils.toggleBlockType(editorState, blockType));
+  const toggleBlock = (block: string) => {
+    handleChange(RichUtils.toggleBlockType(editorState, block));
+  };
 
-  // ADD LINK
+  // ==========================================================
+  // LINKS
+  // ==========================================================
+
   const addLink = () => {
-    const url = prompt('Enter URL:');
+    const selection = editorState.getSelection();
+
+    if (selection.isCollapsed()) {
+      alert('Please select text first');
+
+      return;
+    }
+
+    const url = window.prompt('Enter URL');
+
     if (!url) return;
 
-    const content = editorState.getCurrentContent();
-    const contentWithEntity = content.createEntity('LINK', 'MUTABLE', { url });
-    const entityKey = contentWithEntity.getLastCreatedEntityKey();
+    const contentState = editorState.getCurrentContent();
 
-    const newState = RichUtils.toggleLink(
-      editorState,
-      editorState.getSelection(),
+    const contentStateWithEntity = contentState.createEntity(
+      'LINK',
+      'MUTABLE',
+      { url },
+    );
+
+    const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+
+    const newEditorState = EditorState.set(editorState, {
+      currentContent: contentStateWithEntity,
+    });
+
+    const linkedState = RichUtils.toggleLink(
+      newEditorState,
+      newEditorState.getSelection(),
       entityKey,
     );
 
-    setEditorState(newState);
+    handleChange(linkedState);
   };
 
-  // REMOVE LINK
   const removeLink = () => {
-    setEditorState(
-      RichUtils.toggleLink(editorState, editorState.getSelection(), null),
-    );
+    const selection = editorState.getSelection();
+
+    if (selection.isCollapsed()) return;
+
+    handleChange(RichUtils.toggleLink(editorState, selection, null));
   };
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
 
   return (
-    <div className="space-y-spacing-lg w-full border rounded-lg p-spacing-lg bg-white">
+    <div className={`space-y-4 rounded-lg border bg-white p-4 ${className}`}>
+      {/* =================================================== */}
       {/* EDITOR */}
+      {/* =================================================== */}
+
       <div
         onClick={focusEditor}
-        className="cursor-text min-h-40 max-h-[172px] overflow-y-auto"
+        className={`cursor-text overflow-y-auto rounded-md border p-4 ${editorClassName}`}
+        style={{
+          minHeight,
+          maxHeight,
+        }}
       >
         <Editor
           ref={editorRef}
           editorState={editorState}
-          onChange={setEditorState}
+          onChange={handleChange}
           handleKeyCommand={handleKeyCommand}
           customStyleMap={styleMap}
-          placeholder="Write your content here..."
           blockStyleFn={blockStyleFn}
+          placeholder={placeholder}
+          readOnly={readOnly}
         />
       </div>
-      {/* Toolbar */}
 
-      <div className="bg-card flex gap-spacing-lg items-center p-1.5 rounded min-h-8 flex-wrap">
-        <span onClick={() => toggleInline('BOLD')} className="cursor-pointer">
-          <Bold className="w-4 h-4 text-title" />
-        </span>
-        <span onClick={() => toggleInline('ITALIC')} className="cursor-pointer">
-          <Italic className="w-4 h-4 text-title" />
-        </span>
-        <span
-          onClick={() => toggleInline('UNDERLINE')}
-          className="cursor-pointer"
+      {/* =================================================== */}
+      {/* TOOLBAR */}
+      {/* =================================================== */}
+
+      {showToolbar && !readOnly && (
+        <div
+          className={`flex flex-wrap items-center gap-3 rounded-md border p-2 ${toolbarClassName}`}
         >
-          <Underline className="w-[18px] h-[18px] text-title" />
-        </span>
+          {/* BOLD */}
+          <button type="button" onClick={() => toggleInline('BOLD')}>
+            <Bold className="h-4 w-4" />
+          </button>
 
-        <span className=" w-[0.8px] inline-block h-4 bg-border"></span>
+          {/* ITALIC */}
+          <button type="button" onClick={() => toggleInline('ITALIC')}>
+            <Italic className="h-4 w-4" />
+          </button>
 
-        <span onClick={addLink} className="cursor-pointer">
-          <LinkIcon className="w-4 h-4 text-title" />
-        </span>
+          {/* UNDERLINE */}
+          <button type="button" onClick={() => toggleInline('UNDERLINE')}>
+            <Underline className="h-4 w-4" />
+          </button>
 
-        <span onClick={removeLink} className="cursor-pointer">
-          <Link2Off className="w-4 h-4 text-title" />
-        </span>
+          {/* CODE */}
+          <button type="button" onClick={() => toggleInline('CODE')}>
+            <Code className="h-4 w-4" />
+          </button>
 
-        <span className=" w-[0.8px] inline-block h-4 bg-border"></span>
+          <div className="h-4 w-px bg-border" />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Heading className="w-4 h-4 text-title" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="min-w-0">
-            {[
-              'header-one',
-              'header-two',
-              'header-three',
-              'header-four',
-              'header-five',
-              'header-six',
-            ].map((h, i) => (
-              <DropdownMenuItem
-                key={h}
-                onClick={() => toggleBlock(h)}
-                className=" cursor-pointer text-sm "
-              >
-                H{i + 1}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          {/* ADD LINK */}
+          <button type="button" onClick={addLink}>
+            <LinkIcon className="h-4 w-4" />
+          </button>
 
-        <span
-          onClick={() => toggleBlock('unordered-list-item')}
-          className="cursor-pointer"
-        >
-          <List className="w-[18px] h-[18px] text-title" />
-        </span>
+          {/* REMOVE LINK */}
+          <button type="button" onClick={removeLink}>
+            <Link2Off className="h-4 w-4" />
+          </button>
 
-        <span
-          onClick={() => toggleBlock('ordered-list-item')}
-          className="cursor-pointer"
-        >
-          <ListOrdered className="w-[18px] h-[18px] text-title" />
-        </span>
-        <span className=" w-[0.8px] inline-block h-4 bg-border"></span>
+          <div className="h-4 w-px bg-border" />
 
-        <span
-          onClick={() => toggleBlock('blockquote')}
-          className="cursor-pointer"
-        >
-          <Quote className="w-4 h-4 text-title" />
-        </span>
-        <span onClick={() => toggleInline('CODE')} className="cursor-pointer">
-          <Code className="w-[18px] h-[18px] text-title" />
-        </span>
+          {/* HEADINGS */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button">
+                <Heading className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
 
-        <span className=" w-[0.8px] inline-block h-4 bg-border"></span>
+            <DropdownMenuContent>
+              {[
+                'header-one',
+                'header-two',
+                'header-three',
+                'header-four',
+                'header-five',
+                'header-six',
+              ].map((item, index) => (
+                <DropdownMenuItem key={item} onClick={() => toggleBlock(item)}>
+                  H{index + 1}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        <span
-          onClick={() => setEditorState(EditorState.undo(editorState))}
-          className="cursor-pointer text-sm"
-        >
-          <Undo className="w-4 h-4 text-title" />
-        </span>
-        <span
-          onClick={() => setEditorState(EditorState.redo(editorState))}
-          className="cursor-pointer"
-        >
-          <Redo className="w-4 h-4 text-title" />
-        </span>
-      </div>
+          {/* UL */}
+          <button
+            type="button"
+            onClick={() => toggleBlock('unordered-list-item')}
+          >
+            <List className="h-4 w-4" />
+          </button>
+
+          {/* OL */}
+          <button
+            type="button"
+            onClick={() => toggleBlock('ordered-list-item')}
+          >
+            <ListOrdered className="h-4 w-4" />
+          </button>
+
+          {/* BLOCKQUOTE */}
+          <button type="button" onClick={() => toggleBlock('blockquote')}>
+            <Quote className="h-4 w-4" />
+          </button>
+
+          <div className="h-4 w-px bg-border" />
+
+          {/* UNDO */}
+          <button
+            type="button"
+            onClick={() => handleChange(EditorState.undo(editorState))}
+          >
+            <Undo className="h-4 w-4" />
+          </button>
+
+          {/* REDO */}
+          <button
+            type="button"
+            onClick={() => handleChange(EditorState.redo(editorState))}
+          >
+            <Redo className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
