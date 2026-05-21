@@ -7,8 +7,33 @@ import BlogThreeImage from '@/public/images/blog-3.jpg';
 import BlogCard from './sections/blog-card';
 import FeaturedBlogCard from './sections/featured-blog-card';
 import AuthorImage from '@/public/images/author-default.png';
+import { client } from '@/sanity/lib/client';
+import { BLOGS_LIST_QUERY } from '@/sanity/lib/queries';
 
-export default function BlogsPage() {
+export interface SanityBlog {
+  slug: { current: string };
+  title: string;
+  date: string;
+  description: string;
+  thumbnailUrl?: string;
+  author?: {
+    name: string;
+    role?: string;
+    avatarSrc?: string;
+  };
+}
+
+export default async function BlogsPage() {
+  const blogs: SanityBlog[] = await client.fetch(
+    BLOGS_LIST_QUERY,
+    {},
+    { next: { revalidate: 10 } },
+  );
+
+  console.log(blogs, 'blogs');
+
+  if (!blogs) return null;
+
   return (
     <div>
       <Banner />
