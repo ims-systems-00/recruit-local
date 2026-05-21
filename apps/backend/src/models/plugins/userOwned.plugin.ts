@@ -1,8 +1,8 @@
-import { Schema } from "mongoose";
+import { Schema, Types } from "mongoose";
 import { modelNames } from "../constants";
 
 export interface IUserOwnedInput {
-  userId: Schema.Types.ObjectId;
+  userId: Types.ObjectId;
 }
 
 export const userOwnedPlugin = (schema: Schema) => {
