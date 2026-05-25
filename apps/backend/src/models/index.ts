@@ -35,3 +35,4 @@ export * from "./cv.model";
 export * from "./post.model";
 export * from "./reaction.model";
 export * from "./location.model";
+export * from "./job-title.model";
