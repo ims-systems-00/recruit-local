@@ -1,8 +1,8 @@
 import express from "express";
-import { list, get, create, update, softRemove, hardRemove, restore } from "./industry.controller";
+import { list, get, create, update, softRemove, hardRemove, restore } from "./work-mode.controller";
 import { handleController } from "../../../common/helper";
 import { validate } from "../../../common/middlewares";
-import { createBodySchema, updateBodySchema, idParamsSchema } from "./industry.validation";
+import { createBodySchema, updateBodySchema, idParamsSchema } from "./work-mode.validation";
 
 const router = express.Router();
 const validateBody = validate("body");

@@ -1,7 +1,7 @@
 import express from "express";
 import { list, get, create, update, softRemove, hardRemove, restore } from "./job-title.controller";
 import { handleController } from "../../../common/helper";
-import { deserializeUser, validate } from "../../../common/middlewares";
+import { validate } from "../../../common/middlewares";
 import { createBodySchema, updateBodySchema, idParamsSchema } from "./job-title.validation";
 
 const router = express.Router();
@@ -10,7 +10,6 @@ const validateParams = validate("params");
 
 router.get("/", handleController(list));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
-router.use(deserializeUser);
 router.post("/", validateBody(createBodySchema), handleController(create));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));
 router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemove));

@@ -1,8 +1,8 @@
 import express from "express";
-import { list, get, create, update, softRemove, hardRemove, restore } from "./industry.controller";
+import { list, get, create, update, softRemove, hardRemove, restore } from "./experience-level.controller";
 import { handleController } from "../../../common/helper";
 import { validate } from "../../../common/middlewares";
-import { createBodySchema, updateBodySchema, idParamsSchema } from "./industry.validation";
+import { createBodySchema, updateBodySchema, idParamsSchema } from "./experience-level.validation";
 
 const router = express.Router();
 const validateBody = validate("body");
