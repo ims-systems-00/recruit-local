@@ -20,7 +20,42 @@ async function extractTextFromBuffer(buffer: Buffer): Promise<string> {
   return data.text;
 }
 
-async function fillSchemaWithAI(resumeText: string, schema: object): Promise<object> {
+const CV_EXTRACTION_SCHEMA = {
+  name: "",
+  email: "",
+  phone: "",
+  address: "",
+  summary: "",
+  jobTitles: [],
+  industries: [],
+  workModes: [],
+  experienceLevels: [],
+  skills: [{ name: "", proficiencyLevel: "" }],
+  experience: [
+    {
+      jobTitle: "",
+      company: "",
+      location: "",
+      employmentType: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    },
+  ],
+  education: [
+    {
+      institution: "",
+      degree: "",
+      fieldOfStudy: "",
+      startDate: "",
+      endDate: "",
+      grade: "",
+    },
+  ],
+  interests: [{ name: "" }],
+};
+
+async function fillSchemaWithAI(resumeText: string): Promise<object> {
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
     response_format: { type: "json_object" },
@@ -34,7 +69,7 @@ async function fillSchemaWithAI(resumeText: string, schema: object): Promise<obj
       },
       {
         role: "user",
-        content: `Resume:\n${resumeText}\n\nSchema to fill:\n${JSON.stringify(schema)}`,
+        content: `Resume:\n${resumeText}\n\nSchema to fill:\n${JSON.stringify(CV_EXTRACTION_SCHEMA)}`,
       },
     ],
   });
@@ -46,10 +81,8 @@ const S3_TIMEOUT_MS = 30_000;
 
 export async function extractFromResume({
   resumeStorage,
-  schema,
 }: {
   resumeStorage: { Key: string; Bucket: string };
-  schema: object;
 }): Promise<object> {
   const fileManager = new FileManager(s3Client);
 
@@ -67,7 +100,7 @@ export async function extractFromResume({
   const resumeText = await extractTextFromBuffer(buffer);
   logger.info("[extractFromResume] Extracted text, sending to OpenAI", { chars: resumeText.length });
 
-  const result = await fillSchemaWithAI(resumeText, schema);
+  const result = await fillSchemaWithAI(resumeText);
   logger.info("[extractFromResume] OpenAI fill complete");
 
   return result;
