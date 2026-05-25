@@ -36,6 +36,10 @@ export const modelNames = {
   POST: "posts",
   REACTION: "reactions",
   LOCATION: "locations",
+  JOB_TITLE: "jobtitles",
+  INDUSTRY: "industries",
+  EXPERIENCE_LEVEL: "experiencelevels",
+  WORK_MODE: "workmodes",
 };
 
 export type ModelNames = (typeof modelNames)[keyof typeof modelNames];

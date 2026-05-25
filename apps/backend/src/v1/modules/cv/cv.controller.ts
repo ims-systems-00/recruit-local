@@ -12,6 +12,7 @@ import { AbilityAction } from "@rl/types";
 import { Types } from "mongoose";
 import * as cvService from "./cv.service";
 import * as cvExtractService from "./cv-extract.service";
+import { matchCvEntities } from "./cv-match.service";
 import { cvRoleScopedSecurityQuery } from "./cv.query";
 
 export const list = async ({ req }: ControllerParams) => {
@@ -181,28 +182,36 @@ export const extractAndCreate = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create a CV.`);
   }
 
-  const { resumeStorage, schema } = req.body;
+  const { resumeStorage } = req.body;
   const userId = req.session.user?._id;
   const jobProfileId = req.session.jobProfileId;
 
   if (!jobProfileId) throw new BadRequestException("No job profile found in session.");
 
-  const filledSchema = await cvExtractService.extractFromResume({ resumeStorage, schema });
+  const rawExtracted = await cvExtractService.extractFromResume({ resumeStorage }) as Record<string, unknown>;
+  const { jobTitles: _jt, industries: _ind, workModes: _wm, experienceLevels: _el, ...extractedData } = rawExtracted;
 
-  const cv = await cvService.create({
-    payload: {
-      jobProfileId: new Types.ObjectId(jobProfileId),
-      userId: new Types.ObjectId(userId),
-      resumeStorage,
-    },
-  });
+  const [cv, matched] = await Promise.all([
+    cvService.create({
+      payload: {
+        jobProfileId: new Types.ObjectId(jobProfileId),
+        userId: new Types.ObjectId(userId),
+        resumeStorage,
+      },
+    }),
+    matchCvEntities(rawExtracted as Record<string, string[]>),
+  ]);
 
   return new ApiResponse({
     message: "CV created from resume.",
     statusCode: StatusCodes.CREATED,
     data: {
       cv,
-      extractedData: filledSchema,
+      extractedData,
+      jobTitles: matched.jobTitles,
+      industries: matched.industries,
+      workModes: matched.workModes,
+      experienceLevels: matched.experienceLevels,
     },
     fieldName: "cv",
   });

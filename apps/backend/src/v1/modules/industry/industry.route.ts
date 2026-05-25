@@ -1,16 +1,13 @@
 import express from "express";
-
-import { list, get, create, update, softRemove, hardRemove, restore, extractAndCreate } from "./cv.controller";
+import { list, get, create, update, softRemove, hardRemove, restore } from "./industry.controller";
 import { handleController } from "../../../common/helper";
 import { validate } from "../../../common/middlewares";
-import { createBodySchema, updateBodySchema, idParamsSchema } from "./cv.validation";
+import { createBodySchema, updateBodySchema, idParamsSchema } from "./industry.validation";
 
 const router = express.Router();
 const validateBody = validate("body");
 const validateParams = validate("params");
 
-// cv routes
-router.post("/extract-and-create", handleController(extractAndCreate));
 router.get("/", handleController(list));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
 router.post("/", validateBody(createBodySchema), handleController(create));

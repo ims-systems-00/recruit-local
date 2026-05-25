@@ -114,8 +114,3 @@ export const updateBodySchema = Joi.object({
 export const idParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("CV ID"),
 });
-
-export const extractAndCreateBodySchema = Joi.object({
-  resumeStorage: pdfStorageSchema.required(),
-  schema: Joi.object().required().label("Extraction Schema"),
-});

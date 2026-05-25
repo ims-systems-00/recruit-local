@@ -20,21 +20,59 @@ async function extractTextFromBuffer(buffer: Buffer): Promise<string> {
   return data.text;
 }
 
-async function fillSchemaWithAI(resumeText: string, schema: object): Promise<object> {
+const CV_EXTRACTION_SCHEMA = {
+  name: "",
+  email: "",
+  phone: "",
+  address: "",
+  summary: "",
+  jobTitles: [],
+  industries: [],
+  workModes: [],
+  experienceLevels: [],
+  skills: [{ name: "", proficiencyLevel: "" }],
+  experience: [
+    {
+      jobTitle: "",
+      company: "",
+      location: "",
+      employmentType: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    },
+  ],
+  education: [
+    {
+      institution: "",
+      degree: "",
+      fieldOfStudy: "",
+      startDate: "",
+      endDate: "",
+      grade: "",
+    },
+  ],
+  interests: [{ name: "" }],
+};
+
+const SYSTEM_PROMPT = `You are a resume data parser. Fill the provided JSON schema using information found in the resume text. Return ONLY the filled JSON object.
+
+Field-specific rules:
+- jobTitles: List all job titles found in the experience section (e.g. "Software Engineer", "Frontend Developer").
+- industries: Infer the industry/sector from the companies and roles (e.g. "Information Technology", "Finance", "Healthcare"). Use broad industry names.
+- workModes: Look for any mention of remote, hybrid, or onsite/office work in the experience descriptions or anywhere in the resume. Return matching terms as-is (e.g. "Remote", "Hybrid", "Onsite"). Return empty array if no mention found.
+- experienceLevels: Calculate total years of professional experience from the experience section (treat "Present" as today). Then classify using these rules: 0–1 year → "Fresher"; 1–3 years → "Intermediate"; 3–7 years → "Expert"; 7+ years → "Lead". Return a single-element array with the matching level name.
+- Leave a field as an empty string or empty array if the data cannot be determined.`;
+
+async function fillSchemaWithAI(resumeText: string): Promise<object> {
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
     response_format: { type: "json_object" },
     messages: [
-      {
-        role: "system",
-        content:
-          "You are a resume data parser. Fill the provided JSON schema using only " +
-          "information found in the resume text. Return ONLY the filled JSON object. " +
-          "Leave a field as an empty string or empty array if the data is not present in the resume.",
-      },
+      { role: "system", content: SYSTEM_PROMPT },
       {
         role: "user",
-        content: `Resume:\n${resumeText}\n\nSchema to fill:\n${JSON.stringify(schema)}`,
+        content: `Resume:\n${resumeText}\n\nSchema to fill:\n${JSON.stringify(CV_EXTRACTION_SCHEMA)}`,
       },
     ],
   });
@@ -46,10 +84,8 @@ const S3_TIMEOUT_MS = 30_000;
 
 export async function extractFromResume({
   resumeStorage,
-  schema,
 }: {
   resumeStorage: { Key: string; Bucket: string };
-  schema: object;
 }): Promise<object> {
   const fileManager = new FileManager(s3Client);
 
@@ -67,7 +103,7 @@ export async function extractFromResume({
   const resumeText = await extractTextFromBuffer(buffer);
   logger.info("[extractFromResume] Extracted text, sending to OpenAI", { chars: resumeText.length });
 
-  const result = await fillSchemaWithAI(resumeText, schema);
+  const result = await fillSchemaWithAI(resumeText);
   logger.info("[extractFromResume] OpenAI fill complete");
 
   return result;

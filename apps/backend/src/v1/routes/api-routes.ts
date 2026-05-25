@@ -37,13 +37,22 @@ import actionRoutes from "../modules/action/action.route";
 import postRoutes from "../modules/post/post.route";
 import reactionRoute from "../modules/reaction/reaction.route";
 import valueRoutes from "../modules/value/value.route";
+import jobTitleRoutes from "../modules/job-title/job-title.route";
+import industryRoutes from "../modules/industry/industry.route";
+import experienceLevelRoutes from "../modules/experience-level/experience-level.route";
+import workModeRoutes from "../modules/work-mode/work-mode.route";
 
 const router = express.Router();
 
 const getApiRoutes = () => {
   router.use("/auth", authRoutes);
   router.use("/public", publicRoutes);
+
   router.use(deserializeUser);
+  router.use("/job-titles", jobTitleRoutes);
+  router.use("/industries", industryRoutes);
+  router.use("/experience-levels", experienceLevelRoutes);
+  router.use("/work-modes", workModeRoutes);
   router.use("/tenants", tenantRoutes);
   // router.use("/comment-activities", commentActivityRoutes);
   router.use("/file-medias", fileMediaRoutes);

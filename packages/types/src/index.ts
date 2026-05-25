@@ -20,3 +20,7 @@ export * from './file-media';
 export * from './model-names';
 export * from './cv';
 export * from './kyc';
+export * from './job-title';
+export * from './industry';
+export * from './experience-level';
+export * from './work-mode';
