@@ -1,12 +1,8 @@
 import React from 'react';
 import Banner from './sections/banner';
 
-import BlogOneImage from '@/public/images/blog-1.jpg';
-import BlogTwoImage from '@/public/images/blog-2.png';
-import BlogThreeImage from '@/public/images/blog-3.jpg';
 import BlogCard from './sections/blog-card';
 import FeaturedBlogCard from './sections/featured-blog-card';
-import AuthorImage from '@/public/images/author-default.png';
 import { client } from '@/sanity/lib/client';
 import { BLOGS_LIST_QUERY } from '@/sanity/lib/queries';
 import EmptyBox from '@/components/empty-box';
@@ -30,8 +26,6 @@ export default async function BlogsPage() {
     {},
     { next: { revalidate: 10 } },
   );
-
-  console.log(blogs, 'blogs');
 
   if (!blogs) return null;
 

@@ -9,6 +9,11 @@ import AuthorImage from '@/public/images/author-default.png';
 import BlogOneImage from '@/public/images/blog-1.jpg';
 import BlogTwoImage from '@/public/images/blog-2.png';
 import BlogThreeImage from '@/public/images/blog-3.jpg';
+import { client } from '@/sanity/lib/client';
+import { BLOG_QUERY, OTHER_INSIGHTS_QUERY } from '@/sanity/lib/queries';
+import { notFound } from 'next/navigation';
+import { formatDate } from '@/lib/utils';
+import { SanityBlog } from '../page';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -16,43 +21,48 @@ type PageProps = {
 
 export default async function BlogDetailsPage({ params }: PageProps) {
   const { slug } = await params;
+  // const post = await client.fetch(
+  //   BLOG_QUERY,
+  //   { slug: slug },
+  //   { next: { revalidate: 10 } },
+  // );
+  const [post, otherInsights] = await Promise.all([
+    client.fetch(BLOG_QUERY, { slug: slug }, { next: { revalidate: 10 } }),
+    client.fetch(
+      OTHER_INSIGHTS_QUERY,
+      { slug: slug },
+      { next: { revalidate: 10 } },
+    ),
+  ]);
+  if (!post) {
+    return notFound();
+  }
+  const { title, date, description, thumbnail, author, content } = post;
 
+  console.log(otherInsights, 'otherInsights');
   return (
     <div>
       <div className=" max-w-[920px] mx-auto py-spacing-9xl px-spacing-5xl space-y-spacing-6xl">
         <div className=" space-y-spacing-6xl">
           <p className=" text-label-sm font-label-sm-strong! text-text-brand-secondary">
-            POSTED ON JAN 24 , 2026
+            POSTED ON {formatDate(date)}
           </p>
           <p className=" text-heading-lg font-heading-lg-strong! text-text-gray-primary">
-            Recruit Local Launches Oldham Trading Platform Transforming Job
-            Search and Hiring Across UK Smart Cities
+            {title}
           </p>
-          <p className=" text-body-md text-text-gray-tertiary">
-            As Recruit Local scales, it can offer a complete package for local
-            economies. Whilst much of the potential relies on engagement and
-            investment from relevant parties, it can serve as a local hub to
-            manage career-development, recruitment, education, and local
-            authorities.
-          </p>
+          <p className=" text-body-md text-text-gray-tertiary">{description}</p>
         </div>
         <div className="relative overflow-hidden rounded-xl transition-all max-h-[488px]">
           <Image
-            src={BlogDetailsBanner}
-            alt={'blog image'}
+            src={thumbnail?.asset?.url || ''}
+            alt={title}
             width={1000}
             height={488}
             className="w-full h-full rounded-5xl max-h-[488px] object-cover"
           />
 
           <div className=" absolute bottom-0 left-0 right-0 p-spacing-3xl md:p-spacing-5xl bg-linear-to-t from-black/95 via-black/50 to-transparent transition-opacity duration-1000 ">
-            <p className="text-white text-body-sm">
-              Recruit Local is an innovative platform developed by Upturn Social
-              Enterprise, designed to address employment challenges within the
-              Greater Manchester region. The platform aims to connect local job
-              seekers, employers, and training providers, facilitating job
-              matching, skill development, and community engagement.
-            </p>
+            <p className="text-white text-body-sm">{description}</p>
           </div>
         </div>
         <Link
@@ -66,11 +76,11 @@ export default async function BlogDetailsPage({ params }: PageProps) {
         <div className=" bg-bg-brand-soft-secondary p-spacing-6xl rounded-4xl flex gap-spacing-6xl items-end">
           <div className="shrink-0">
             <Image
-              src={AuthorImage}
-              alt={'author image'}
+              src={author?.avatarSrc || ''}
+              alt={author?.name || ''}
               width={280}
               height={280}
-              className="w-full h-full rounded-lg max-w-[280px] max-h-[280px] object-cover"
+              className="w-full h-full rounded-lg min-w-[280px] min-h-[280px] max-w-[280px] max-h-[280px] object-cover"
             />
           </div>
           <div className=" space-y-spacing-lg">
@@ -93,17 +103,14 @@ export default async function BlogDetailsPage({ params }: PageProps) {
               </svg>
             </span>
             <p className=" text-body-md text-text-gray-primary italic">
-              This is a great opportunity for Oldham businesses to work together
-              and support each other. By keeping trade local, we can help our
-              economy grow, create more jobs, and make it easier for businesses
-              to find the services they need right on their doorstep.
+              {author?.bio || ''}
             </p>
             <div className=" space-y-spacing-3xs">
               <p className=" text-heading-sm font-heading-sm-strong! text-text-gray-primary">
-                Arooj Shah
+                {author?.name || ''}
               </p>
               <p className=" text-body-md text-text-gray-tertiary">
-                Councilor, Leader of Oldham Council
+                {author?.role || ''}
               </p>
             </div>
           </div>
@@ -208,37 +215,26 @@ export default async function BlogDetailsPage({ params }: PageProps) {
           />
         </div>
       </div>
-      <div className="max-w-[1280px] mx-auto px-spacing-5xl py-spacing-10xl space-y-spacing-8xl">
-        <p className=" text-heading-lg font-heading-lg-strong! text-text-gray-primary">
-          More Other Blogs
-        </p>
-        <div className=" grid md:grid-cols-2 lg:grid-cols-3 gap-spacing-4xl">
-          <BlogCard
-            image={BlogOneImage}
-            title="Stand Out Faster"
-            description="Learn how job seekers can improve resumes and get noticed."
-            readTime="7"
-            date="10 jan, 2026"
-            url="#"
-          />
-          <BlogCard
-            image={BlogTwoImage}
-            title="Build Better Teams"
-            description="Explore smarter ways to attract and retain top talent."
-            readTime="7"
-            date="10 jan, 2026"
-            url="#"
-          />
-          <BlogCard
-            image={BlogThreeImage}
-            title="Career Success"
-            description="Simple career advice to help professionals grow with confidence."
-            readTime="7"
-            date="10 jan, 2026"
-            url="#"
-          />
+      {Boolean(otherInsights?.length) && (
+        <div className="max-w-[1280px] mx-auto px-spacing-5xl py-spacing-10xl space-y-spacing-8xl">
+          <p className=" text-heading-lg font-heading-lg-strong! text-text-gray-primary">
+            More Other Blogs
+          </p>
+          <div className=" grid md:grid-cols-2 lg:grid-cols-3 gap-spacing-4xl">
+            {otherInsights?.map((blog: SanityBlog, index: number) => (
+              <BlogCard
+                key={index}
+                image={blog.thumbnailUrl || ''}
+                title={blog.title}
+                description={blog.description}
+                readTime="7"
+                date={blog.date}
+                url={`/blogs/${blog.slug.current}`}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -62,6 +62,11 @@ export const BLOG_QUERY = `*[_type == "blog" && slug.current == $slug][0] {
     asset->{ url },
     thumbnailDescription
   },
+  author-> {
+    name,
+    role,
+    "avatarSrc": avatar.asset->url
+  },
   content[] {
     ...,
     _type == 'quoteCard' => {
@@ -99,5 +104,7 @@ export const BLOGS_LIST_QUERY = `*[_type == "blog"] | order(date desc) {
 export const OTHER_INSIGHTS_QUERY = `*[_type == "blog" && slug.current != $slug][0...3]{
   title,
   "slug": slug.current,
-  "thumbnail": thumbnail.asset->url
+  "thumbnailUrl": thumbnail.asset->url,
+  description,
+  date
 }`;
