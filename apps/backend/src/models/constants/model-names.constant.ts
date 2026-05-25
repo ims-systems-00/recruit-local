@@ -37,6 +37,7 @@ export const modelNames = {
   REACTION: "reactions",
   LOCATION: "locations",
   JOB_TITLE: "jobtitles",
+  INDUSTRY: "industries",
 };
 
 export type ModelNames = (typeof modelNames)[keyof typeof modelNames];

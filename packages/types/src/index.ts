@@ -21,3 +21,4 @@ export * from './model-names';
 export * from './cv';
 export * from './kyc';
 export * from './job-title';
+export * from './industry';

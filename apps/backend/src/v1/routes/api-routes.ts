@@ -38,6 +38,7 @@ import postRoutes from "../modules/post/post.route";
 import reactionRoute from "../modules/reaction/reaction.route";
 import valueRoutes from "../modules/value/value.route";
 import jobTitleRoutes from "../modules/job-title/job-title.route";
+import industryRoutes from "../modules/industry/industry.route";
 
 const router = express.Router();
 
@@ -45,6 +46,7 @@ const getApiRoutes = () => {
   router.use("/auth", authRoutes);
   router.use("/public", publicRoutes);
   router.use("/job-titles", jobTitleRoutes);
+  router.use("/industries", industryRoutes);
   router.use(deserializeUser);
   router.use("/tenants", tenantRoutes);
   // router.use("/comment-activities", commentActivityRoutes);

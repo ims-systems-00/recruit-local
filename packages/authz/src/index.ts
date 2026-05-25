@@ -4,6 +4,7 @@ export * from './event.authz';
 export * from './tenant.authz';
 export * from './job.authz';
 export * from './job-title.authz';
+export * from './industry.authz';
 export * from './job-profile.authz';
 export * from './cv.authz';
 export * from './kyc.authz';
