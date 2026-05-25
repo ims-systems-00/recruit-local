@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import React from 'react';
+import React, { Fragment } from 'react';
 import BlogDetailsBanner from '@/public/images/blog-details-banner.png';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
@@ -14,6 +14,8 @@ import { BLOG_QUERY, OTHER_INSIGHTS_QUERY } from '@/sanity/lib/queries';
 import { notFound } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
 import { SanityBlog } from '../page';
+import DraftViewer from '@/components/draft-editor/draft-viewer';
+import VideoPlayer from '@/components/video-player';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -39,7 +41,7 @@ export default async function BlogDetailsPage({ params }: PageProps) {
   }
   const { title, date, description, thumbnail, author, content } = post;
 
-  console.log(otherInsights, 'otherInsights');
+  console.log(content, 'content');
   return (
     <div>
       <div className=" max-w-[920px] mx-auto py-spacing-9xl px-spacing-5xl space-y-spacing-6xl">
@@ -73,47 +75,63 @@ export default async function BlogDetailsPage({ params }: PageProps) {
           View In LinkedIn
           <ArrowUpRight />
         </Link>
-        <div className=" bg-bg-brand-soft-secondary p-spacing-6xl rounded-4xl flex gap-spacing-6xl items-end">
-          <div className="shrink-0">
-            <Image
-              src={author?.avatarSrc || ''}
-              alt={author?.name || ''}
-              width={280}
-              height={280}
-              className="w-full h-full rounded-lg min-w-[280px] min-h-[280px] max-w-[280px] max-h-[280px] object-cover"
-            />
-          </div>
-          <div className=" space-y-spacing-lg">
-            <span className=" inline-block">
-              <svg
-                width="30"
-                height="26"
-                viewBox="0 0 30 26"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M16.0727 26V14.4662C16.0727 7.7215 21.7822 2.23913 25.3417 0.07204C25.7934 -0.202576 26.2806 0.368435 25.9354 0.768048C24.9718 1.88356 21.1342 6.08138 20.4123 12.4132H29.7818V26H16.0727Z"
-                  fill="#364153"
-                />
-                <path
-                  d="M-2.57492e-05 26V14.4662C-2.57492e-05 7.7215 5.70945 2.23913 9.26892 0.07204C9.72063 -0.202576 10.2078 0.368435 9.86261 0.768048C8.89904 1.88356 5.06148 6.08138 4.33955 12.4132H13.7091V26H-2.57492e-05Z"
-                  fill="#364153"
-                />
-              </svg>
-            </span>
-            <p className=" text-body-md text-text-gray-primary italic">
-              {author?.bio || ''}
-            </p>
-            <div className=" space-y-spacing-3xs">
-              <p className=" text-heading-sm font-heading-sm-strong! text-text-gray-primary">
-                {author?.name || ''}
-              </p>
-              <p className=" text-body-md text-text-gray-tertiary">
-                {author?.role || ''}
-              </p>
-            </div>
-          </div>
+
+        <div className=" space-y-spacing-6xl">
+          {Boolean(content?.length) &&
+            content?.map((item: any, index: number) => (
+              <div key={index} className="text-body-md text-text-gray-primary ">
+                {item._type === 'classicEditor' && (
+                  <DraftViewer key={index} content={item.htmlString} />
+                )}
+                {item._type === 'quoteCard' && (
+                  <div className=" bg-bg-brand-soft-secondary p-spacing-6xl rounded-4xl flex gap-spacing-6xl items-end">
+                    <div className="shrink-0">
+                      <Image
+                        src={item?.personImage?.asset?.url || ''}
+                        alt={item?.name || ''}
+                        width={280}
+                        height={280}
+                        className="w-full h-full rounded-lg min-w-[280px] min-h-[280px] max-w-[280px] max-h-[280px] object-cover"
+                      />
+                    </div>
+                    <div className=" space-y-spacing-lg">
+                      <span className=" inline-block">
+                        <svg
+                          width="30"
+                          height="26"
+                          viewBox="0 0 30 26"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M16.0727 26V14.4662C16.0727 7.7215 21.7822 2.23913 25.3417 0.07204C25.7934 -0.202576 26.2806 0.368435 25.9354 0.768048C24.9718 1.88356 21.1342 6.08138 20.4123 12.4132H29.7818V26H16.0727Z"
+                            fill="#364153"
+                          />
+                          <path
+                            d="M-2.57492e-05 26V14.4662C-2.57492e-05 7.7215 5.70945 2.23913 9.26892 0.07204C9.72063 -0.202576 10.2078 0.368435 9.86261 0.768048C8.89904 1.88356 5.06148 6.08138 4.33955 12.4132H13.7091V26H-2.57492e-05Z"
+                            fill="#364153"
+                          />
+                        </svg>
+                      </span>
+                      <p className=" text-body-md text-text-gray-primary italic">
+                        {item?.quote || ''}
+                      </p>
+                      <div className=" space-y-spacing-3xs">
+                        <p className=" text-heading-sm font-heading-sm-strong! text-text-gray-primary">
+                          {item?.name || ''}
+                        </p>
+                        <p className=" text-body-md text-text-gray-tertiary">
+                          {item?.designation || ''}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {item._type === 'youtubeVideo' && (
+                  <VideoPlayer videoSrc={item?.url || ''} />
+                )}
+              </div>
+            ))}
         </div>
         <p className="text-body-md text-text-gray-primary">
           As of Spring 2024, a pilot version of the application has been
