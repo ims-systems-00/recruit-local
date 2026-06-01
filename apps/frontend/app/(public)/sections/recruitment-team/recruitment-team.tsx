@@ -5,6 +5,7 @@ import img1 from '@/public/images/team-1.svg';
 import img2 from '@/public/images/team-2.svg';
 import img3 from '@/public/images/team-3.svg';
 import img4 from '@/public/images/team-4.svg';
+import UglyTextWrapper from '@/components/ugly-text-wrapper';
 
 export default function RecruitmentTeam() {
   const images = [
@@ -48,7 +49,7 @@ export default function RecruitmentTeam() {
             href="#"
             className="text-label-md md:text-label-lg rounded-full font-label-lg-strong! flex items-center h-14 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
           >
-            Explore Employer Premium
+            <UglyTextWrapper> Explore Employer Premium </UglyTextWrapper>
           </Link>
         </div>
         <div className="group flex flex-col sm:flex-row gap-spacing-xl md:gap-spacing-5xl sm:h-52 md:h-64 lg:h-[352px]">

@@ -2,6 +2,7 @@ import { ArrowUpRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 import StatSection from './stat-section';
+import UglyTextWrapper from '@/components/ugly-text-wrapper';
 
 export default function Hero() {
   return (
@@ -25,7 +26,7 @@ export default function Hero() {
             href="/login"
             className="text-label-md rounded-full font-label-md-strong! flex items-center h-12 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
           >
-            Start Hiring Experts
+            <UglyTextWrapper> Start Hiring Experts </UglyTextWrapper>
             <ArrowUpRight />
           </Link>
         </div>
