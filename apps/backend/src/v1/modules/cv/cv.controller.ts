@@ -1,9 +1,18 @@
 import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
+import {
+  ApiResponse,
+  BadRequestException,
+  ControllerParams,
+  formatListResponse,
+  UnauthorizedException,
+} from "../../../common/helper";
 import { CvAbilityBuilder, CvAuthZEntity } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
+import { Types } from "mongoose";
 import * as cvService from "./cv.service";
+import * as cvExtractService from "./cv-extract.service";
+import { matchCvEntities } from "./cv-match.service";
 import { cvRoleScopedSecurityQuery } from "./cv.query";
 
 export const list = async ({ req }: ControllerParams) => {
@@ -161,6 +170,49 @@ export const hardRemove = async ({ req }: ControllerParams) => {
     message: "CV deleted permanently.",
     statusCode: StatusCodes.OK,
     data: { cv },
+    fieldName: "cv",
+  });
+};
+
+export const extractAndCreate = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new CvAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  if (!ability.can(AbilityAction.Create, CvAuthZEntity)) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create a CV.`);
+  }
+
+  const { resumeStorage } = req.body;
+  const userId = req.session.user?._id;
+  const jobProfileId = req.session.jobProfileId;
+
+  if (!jobProfileId) throw new BadRequestException("No job profile found in session.");
+
+  const rawExtracted = await cvExtractService.extractFromResume({ resumeStorage }) as Record<string, unknown>;
+  const { jobTitles: _jt, industries: _ind, workModes: _wm, experienceLevels: _el, ...extractedData } = rawExtracted;
+
+  const [cv, matched] = await Promise.all([
+    cvService.create({
+      payload: {
+        jobProfileId: new Types.ObjectId(jobProfileId),
+        userId: new Types.ObjectId(userId),
+        resumeStorage,
+      },
+    }),
+    matchCvEntities(rawExtracted as Record<string, string[]>),
+  ]);
+
+  return new ApiResponse({
+    message: "CV created from resume.",
+    statusCode: StatusCodes.CREATED,
+    data: {
+      cv,
+      extractedData,
+      jobTitles: matched.jobTitles,
+      industries: matched.industries,
+      workModes: matched.workModes,
+      experienceLevels: matched.experienceLevels,
+    },
     fieldName: "cv",
   });
 };

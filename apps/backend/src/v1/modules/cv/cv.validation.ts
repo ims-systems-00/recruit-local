@@ -10,6 +10,16 @@ const awsStorageSchema = Joi.object({
   Key: Joi.string().required().label("Key"),
 }).label("AWS Storage");
 
+const pdfStorageSchema = awsStorageSchema
+  .keys({
+    Name: Joi.string()
+      .pattern(/\.pdf$/i)
+      .required()
+      .label("Name")
+      .messages({ "string.pattern.base": "Only PDF files are allowed for CV resume upload." }),
+  })
+  .label("PDF Storage");
+
 const skillSchema = Joi.object({
   _id: subDocId,
   name: Joi.string().required().label("Skill Name"),
@@ -58,7 +68,7 @@ export const createBodySchema = Joi.object({
   address: Joi.string().optional().label("Address"),
 
   imageStorage: awsStorageSchema.optional(),
-  resumeStorage: awsStorageSchema.optional(),
+  resumeStorage: pdfStorageSchema.optional(),
 
   // Arrays (Optional on create, but must follow schema if provided)
   experience: Joi.array().items(experienceSchema).optional().label("Experience"),
@@ -84,7 +94,7 @@ export const updateBodySchema = Joi.object({
   address: Joi.string().optional().allow("").label("Address"),
 
   imageStorage: awsStorageSchema.optional().allow(null),
-  resumeStorage: awsStorageSchema.optional().allow(null),
+  resumeStorage: pdfStorageSchema.optional().allow(null),
 
   // In the "Single Update" approach, passing these arrays replaces the existing ones.
   experience: Joi.array().items(experienceSchema).optional(),

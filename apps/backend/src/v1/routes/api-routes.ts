@@ -15,6 +15,7 @@ import userRoutes from "../modules/user/user.route";
 import formBuilderRoutes from "../modules/forms/forms.routes";
 
 import { deserializeUser } from "../../common/middlewares";
+import publicRoutes from "./public.route";
 // import responseTemplateRoutes from "../modules/response-template/response-template.route";
 import jobProfileRoutes from "../modules/job-profile/job-profile.route";
 import educationRoutes from "../modules/education/education.route";
@@ -36,12 +37,22 @@ import actionRoutes from "../modules/action/action.route";
 import postRoutes from "../modules/post/post.route";
 import reactionRoute from "../modules/reaction/reaction.route";
 import valueRoutes from "../modules/value/value.route";
+import jobTitleRoutes from "../modules/job-title/job-title.route";
+import industryRoutes from "../modules/industry/industry.route";
+import experienceLevelRoutes from "../modules/experience-level/experience-level.route";
+import workModeRoutes from "../modules/work-mode/work-mode.route";
 
 const router = express.Router();
 
 const getApiRoutes = () => {
   router.use("/auth", authRoutes);
+  router.use("/public", publicRoutes);
+
   router.use(deserializeUser);
+  router.use("/job-titles", jobTitleRoutes);
+  router.use("/industries", industryRoutes);
+  router.use("/experience-levels", experienceLevelRoutes);
+  router.use("/work-modes", workModeRoutes);
   router.use("/tenants", tenantRoutes);
   // router.use("/comment-activities", commentActivityRoutes);
   router.use("/file-medias", fileMediaRoutes);
