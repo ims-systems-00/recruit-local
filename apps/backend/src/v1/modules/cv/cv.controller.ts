@@ -188,7 +188,7 @@ export const extractAndCreate = async ({ req }: ControllerParams) => {
 
   if (!jobProfileId) throw new BadRequestException("No job profile found in session.");
 
-  const rawExtracted = await cvExtractService.extractFromResume({ resumeStorage }) as Record<string, unknown>;
+  const rawExtracted = (await cvExtractService.extractFromResume({ resumeStorage })) as Record<string, unknown>;
   const { jobTitles: _jt, industries: _ind, workModes: _wm, experienceLevels: _el, ...extractedData } = rawExtracted;
 
   const [cv, matched] = await Promise.all([
