@@ -1,6 +1,6 @@
+'use client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import React from 'react';
 import CompanyLogo from '@/public/images/job_default.png';
 import {
   InputGroup,
@@ -9,8 +9,14 @@ import {
 } from '@/components/ui/input-group';
 import { Search } from 'lucide-react';
 import CardJobItem from './card-job-item';
+import { usePublicJobs } from '@/services/jobs/jobs.client';
+import CardJobItemSkelaton from './card-job-item-skelaton';
 
 export default function FindJobs() {
+  const { jobs, isLoading, isError, error, refetch, isFetching } =
+    usePublicJobs({
+      limit: 3,
+    });
   return (
     <section className="pt-spacing-10xl max-w-[1280px] mx-auto px-spacing-5xl">
       <div className=" flex flex-col lg:flex-row gap-spacing-8xl">
@@ -44,50 +50,15 @@ export default function FindJobs() {
                 Featured Jobs
               </p>
               <div className=" space-y-spacing-4xl">
-                {[1, 2, 3].map((item) => (
-                  <CardJobItem
-                    key={item}
-                    job={{
-                      title: 'Job Title',
-                      _id: '123',
-                      description: 'Job Description',
-                      email: 'test@test.com',
-                      number: '1234567890',
-                      aboutUs: 'About Us',
-                      totalApplications: 0,
-                      startDate: new Date().toISOString(),
-                      endDate: new Date().toISOString(),
-                      yearOfExperience: 0,
-                      responsibility: 'Responsibility',
-                      attachmentIds: [],
-                      category: 'Category',
-                      vacancy: 0,
-                      location: 'Location',
-                      workplace: 'Workplace',
-                      workingDays: 0,
-                      weekends: [],
-                      workingHours: { startTime: '09:00', endTime: '17:00' },
-                      employmentType: 'Employment Type',
-                      salary: 0,
-                      period: 'Period',
-                      requiredDocuments: [],
-                      status: 'Status',
-                      keywords: [],
-                      boardBackground: 'Board Background',
-                      boardSortBy: 'Board Sort By',
-                      boardSortOrder: 'Board Sort Order',
-                      deleteMarker: {
-                        status: false,
-                        deletedAt: null,
-                        dateScheduled: null,
-                      },
-                      tenantId: '123',
-                      locationAdditionalInfo: 'Location Additional Info',
-                      attachmentsStorage: [],
-                      attachments: [],
-                    }}
-                  />
-                ))}
+                {isLoading || isFetching ? (
+                  <div className=" space-y-spacing-4xl">
+                    {[1, 2, 3].map((item) => (
+                      <CardJobItemSkelaton key={item} />
+                    ))}
+                  </div>
+                ) : (
+                  jobs?.map((item) => <CardJobItem key={item._id} job={item} />)
+                )}
                 <div className=" flex justify-center items-center">
                   <Link
                     href="/jobs"
