@@ -42,7 +42,7 @@ export default function CardJobItem({
             /> */}
           </div>
           <div className=" space-y-spacing-2xs">
-            <Link href={`/candidate/job/${job?._id}`}>
+            <Link href={`/jobs/${job?._id}`}>
               <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
                 {job?.title || 'N/A'}
               </h4>
@@ -90,7 +90,7 @@ export default function CardJobItem({
             </Button>
           )}
           {!job?.alreadyApplied && isShowAppliedBtn && (
-            <Link href={`/candidate/job/${job?._id}/apply`}>
+            <Link href={`/jobs/${job?._id}/apply`}>
               <Button className=" cursor-pointer hover:bg-bg-gray-soft-primary bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
                 <Pointer />
                 <span>Apply Now</span>

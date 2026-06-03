@@ -90,7 +90,7 @@ export default function FindJobs() {
                 ))}
                 <div className=" flex justify-center items-center">
                   <Link
-                    href="#"
+                    href="/jobs"
                     className=" text-label-md font-label-md-strong! text-text-gray-secondary hover:underline"
                   >
                     View All
