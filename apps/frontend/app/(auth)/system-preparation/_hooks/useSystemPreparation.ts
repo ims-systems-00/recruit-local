@@ -1,11 +1,12 @@
 'use client';
 import { useEffect, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserInfo } from '@/services/user/user.client';
 import { ACCOUNT_TYPE_ENUMS } from '@rl/types';
 
 export const useSystemPreparation = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading: isUserLoading } = useUserInfo();
   const [isPending, startTransition] = useTransition();
 
@@ -16,6 +17,8 @@ export const useSystemPreparation = () => {
   useEffect(() => {
     if (!isUserLoading && user?._id) {
       startTransition(() => {
+        const redirect = searchParams.get('redirect');
+
         if (!isEmailVerified) {
           router.push('/accounts/verify-email');
           return;
@@ -24,6 +27,12 @@ export const useSystemPreparation = () => {
           router.push('/onboarding/create-organization');
           return;
         }
+
+        if (redirect) {
+          router.push(redirect);
+          return;
+        }
+
         if (userType === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
           router.push(`/recruiter/profile/${user?.tenantId}`);
           return;

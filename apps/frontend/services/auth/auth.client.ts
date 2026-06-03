@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation } from '@tanstack/react-query';
@@ -47,6 +47,7 @@ async function loginWithCredentials(email: string, password: string) {
 export function useLogin() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
 
   const {
     register,
@@ -62,7 +63,12 @@ export function useLogin() {
 
     onSuccess: () => {
       toast.success('Logged in successfully');
-      router.push('/system-preparation');
+      const redirect = searchParams.get('redirect');
+      if (redirect) {
+        router.push(`/system-preparation?redirect=${redirect}`);
+      } else {
+        router.push('/system-preparation');
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Invalid email or password');
