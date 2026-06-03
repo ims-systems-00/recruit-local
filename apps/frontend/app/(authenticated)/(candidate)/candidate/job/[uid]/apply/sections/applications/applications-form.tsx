@@ -26,12 +26,13 @@ import { useDeleteFileStorage } from '@/services/file-storage/file-storage.clien
 import AdditionalQueryField from './additional-query-field';
 import { QueryCard } from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/additional-queries';
 import { QUERY_TYPE_ENUMS, REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
-import { useAuth } from '@/services/user/user.client';
+import { useSession } from 'next-auth/react';
 
 export default function ApplicationsForm({ job }: { job: JobData }) {
   const { uid } = useParams();
 
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const { createApplication, isLoading: isCreatingApplication } =
     useCreateApplication();

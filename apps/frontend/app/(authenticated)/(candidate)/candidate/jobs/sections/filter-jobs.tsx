@@ -4,7 +4,6 @@ import React, { useMemo, useState } from 'react';
 import { CircleX, Filter, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-import { useAuth } from '@/services/user/user.client';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useJobs } from '@/services/jobs/jobs.client';
 import JobItemSkelaton from './job-item-skelaton';
@@ -36,8 +35,6 @@ import {
 } from '@/services/jobs/job.type';
 
 export default function FilterJobs({ onClose }: { onClose: () => void }) {
-  const { user } = useAuth();
-
   const workplaceAnchor = useComboboxAnchor();
   const employmentTypeAnchor = useComboboxAnchor();
   const salaryModeAnchor = useComboboxAnchor();
@@ -332,7 +329,9 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
             </div>
           ) : Boolean(jobs?.length) ? (
             <div className=" grid grid-cols-2 gap-spacing-4xl">
-              {jobs?.map((item) => <CardJobItem key={item._id} job={item} />)}
+              {jobs?.map((item) => (
+                <CardJobItem key={item._id} job={item} />
+              ))}
             </div>
           ) : (
             <EmptyBox

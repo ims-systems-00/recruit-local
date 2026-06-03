@@ -10,10 +10,11 @@ import { JobProfileCreateInput } from '@/services/job-profile/job-profile.type';
 import { createJobProfileSchema } from '@/services/job-profile/job-profile.validation';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useLogout } from '@/services/auth/auth.client';
-import { useAuth } from '@/services/user/user.client';
+import { useSession } from 'next-auth/react';
 
 export default function CreateJobProfileForm() {
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
   const { logout, isLoading: isLoggingOut } = useLogout();
 
   const {

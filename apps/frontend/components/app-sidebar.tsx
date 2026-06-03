@@ -36,8 +36,8 @@ import {
 } from '@/components/ui/sidebar';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/services/user/user.client';
 import { ACCOUNT_TYPE_ENUMS } from '@rl/types';
+import { useSession } from 'next-auth/react';
 
 const recruiterNavMain = [
   {
@@ -103,7 +103,8 @@ const footerNavs = [
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const { state, toggleSidebar } = useSidebar();
 

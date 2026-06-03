@@ -25,7 +25,7 @@ export default function CardJobItem({ job }: { job: Partial<JobData> }) {
             /> */}
           </div>
           <div className=" space-y-spacing-2xs">
-            <Link href={`/candidate/job/${job?._id}`}>
+            <Link href={`/jobs/${job?._id}`}>
               <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
                 {job?.title || 'N/A'}
               </h4>

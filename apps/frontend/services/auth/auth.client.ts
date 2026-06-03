@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signIn, useSession, signOut } from 'next-auth/react';
 import { loginSchema, LoginSchema } from '@/app/(auth)/login/login.schema';
 import { toast } from 'sonner';
@@ -48,6 +48,7 @@ export function useLogin() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -62,6 +63,7 @@ export function useLogin() {
       loginWithCredentials(payload.email, payload.password),
 
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user'] });
       toast.success('Logged in successfully');
       const redirect = searchParams.get('redirect');
       if (redirect) {
@@ -93,6 +95,7 @@ export function useLogin() {
 
 export function useLogout() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -105,6 +108,7 @@ export function useLogout() {
     },
     onSuccess: () => {
       toast.success('Logged out successfully');
+      queryClient.clear();
       router.push('/login');
     },
     onError: () => {

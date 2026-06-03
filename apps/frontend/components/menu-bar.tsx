@@ -13,7 +13,22 @@ import Link from 'next/link';
 import Image from 'next/image';
 import NavLogo from '@/public/images/NavLogo.svg';
 import { cn } from '@/lib/utils';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import { Button } from './ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { useAuth } from '@/services/user/user.client';
+import { ACCOUNT_TYPE_ENUMS } from '@rl/types';
+import { useLogout } from '@/services/auth/auth.client';
 
 const navItems = [
   {
@@ -40,7 +55,11 @@ const navItems = [
 
 export default function MenuBar() {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const { logout } = useLogout();
+  const router = useRouter();
 
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -104,18 +123,59 @@ export default function MenuBar() {
           ))}
         </div>
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-spacing-xl">
-          <Link
-            href="/login"
-            className=" px-spacing-lg text-label-sm font-label-sm-strong! text-text-gray-quinary "
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/sign-up"
-            className="text-label-sm rounded-full font-label-sm-strong! flex items-center h-10 justify-center py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
-          >
-            Register Now/Post Job
-          </Link>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className=" size-10 border border-border-gray-secondary cursor-pointer items-center justify-center">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback>
+                    {user.firstName?.charAt(0)} {user.lastName?.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-40 bg-bg-gray-soft-primary"
+                align="start"
+              >
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      user?.type === ACCOUNT_TYPE_ENUMS.CANDIDATE &&
+                        router.push(`/candidate/profile/${user?.jobProfileId}`);
+                      user?.type === ACCOUNT_TYPE_ENUMS.EMPLOYER &&
+                        router.push(`/recruiter/profile/${user?.tenantId}`);
+                    }}
+                    className=" cursor-pointer"
+                  >
+                    Profile
+                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => logout()}
+                    className=" cursor-pointer"
+                  >
+                    Log out
+                    <DropdownMenuShortcut>⌘L</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className=" px-spacing-lg text-label-sm font-label-sm-strong! text-text-gray-quinary "
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                className="text-label-sm rounded-full font-label-sm-strong! flex items-center h-10 justify-center py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
+              >
+                Register Now/Post Job
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 

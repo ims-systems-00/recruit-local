@@ -4,10 +4,10 @@ import { Bookmark, Building2, Loader2, Pointer } from 'lucide-react';
 import { JobData } from '@/services/jobs/job.type';
 import { cn, formatDate } from '@/lib/utils';
 
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useCreateFavourite } from '@/services/favourite/favourite.client';
+import { useSession } from 'next-auth/react';
 
 export default function CardJobItem({
   job,
@@ -18,6 +18,10 @@ export default function CardJobItem({
   isShowAppliedBtn?: boolean;
   isShowFavouriteBtn?: boolean;
 }) {
+  const { data: session } = useSession();
+
+  const user = session?.user;
+
   const { createFavourite, isPending } = useCreateFavourite();
   const onAddFavourite = async () => {
     await createFavourite({
@@ -25,6 +29,7 @@ export default function CardJobItem({
       itemType: 'jobs',
     });
   };
+
   return (
     <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs">
       <div className=" p-spacing-4xl space-y-spacing-4xl">
@@ -100,7 +105,7 @@ export default function CardJobItem({
           {isShowFavouriteBtn && (
             <Button
               onClick={onAddFavourite}
-              disabled={isPending || job?.alreadySaved}
+              disabled={isPending || job?.alreadySaved || !user?._id}
               className={cn(
                 'cursor-pointer hover:bg-bg-gray-soft-primary w-9! p-spacing-0! bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!',
                 job?.alreadySaved &&
