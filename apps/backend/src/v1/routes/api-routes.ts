@@ -41,6 +41,7 @@ import jobTitleRoutes from "../modules/job-title/job-title.route";
 import industryRoutes from "../modules/industry/industry.route";
 import experienceLevelRoutes from "../modules/experience-level/experience-level.route";
 import workModeRoutes from "../modules/work-mode/work-mode.route";
+import userInterestSurveyRoutes from "../modules/user-interest-survey/user-interest-survey.route";
 
 const router = express.Router();
 
@@ -84,6 +85,7 @@ const getApiRoutes = () => {
   router.use("/posts", postRoutes);
   router.use("/reactions", reactionRoute);
   router.use("/values", valueRoutes);
+  router.use("/user-interest-surveys", userInterestSurveyRoutes);
 
   return router;
 };
