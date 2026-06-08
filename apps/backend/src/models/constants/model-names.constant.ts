@@ -41,6 +41,7 @@ export const modelNames = {
   EXPERIENCE_LEVEL: "experiencelevels",
   WORK_MODE: "workmodes",
   USER_INTEREST_SURVEY: "userinterestsurveys",
+  VALUE: "values",
 };
 
 export type ModelNames = (typeof modelNames)[keyof typeof modelNames];
