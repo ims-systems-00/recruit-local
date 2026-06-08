@@ -59,7 +59,10 @@ export class UserInterestSurveyAbilityBuilder implements IAbilityBuilder {
       return this.buildAbility();
     }
 
-    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+    if (
+      this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER ||
+      this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE
+    ) {
       const currentUserId = this.session.user._id;
 
       if (currentUserId) {
@@ -70,11 +73,10 @@ export class UserInterestSurveyAbilityBuilder implements IAbilityBuilder {
           { userId: currentUserId },
         );
 
-        builder.can(
-          AbilityAction.Create,
-          UserInterestSurveyAuthZEntity,
-          ['interest', 'isSkipped'],
-        );
+        builder.can(AbilityAction.Create, UserInterestSurveyAuthZEntity, [
+          'interest',
+          'isSkipped',
+        ]);
 
         builder.can(
           AbilityAction.Update,
