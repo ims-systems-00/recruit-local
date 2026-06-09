@@ -1,4 +1,4 @@
-import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
@@ -30,6 +30,7 @@ export interface TenantInput {
 
   coreProducts?: string;
   coreServices?: string;
+  values?: Types.ObjectId[];
 }
 
 // Define an interface for Tenant document
@@ -121,6 +122,7 @@ const tenantSchema = new Schema<ITenantDoc>(
     coreServices: {
       type: String,
     },
+    values: [{ type: Schema.Types.ObjectId, ref: modelNames.VALUE }],
   },
   {
     timestamps: true,

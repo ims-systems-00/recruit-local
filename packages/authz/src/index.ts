@@ -13,3 +13,5 @@ export * from './kyc.authz';
 export * from './application.authz';
 export * from './favourite.authz';
 export * from './file-media.authz';
+export * from './user-interest-survey.authz';
+export * from './value.authz';

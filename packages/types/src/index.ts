@@ -24,3 +24,4 @@ export * from './job-title';
 export * from './industry';
 export * from './experience-level';
 export * from './work-mode';
+export * from './value';
