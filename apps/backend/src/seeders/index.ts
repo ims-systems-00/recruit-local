@@ -5,6 +5,11 @@ import { connectDB } from "../.config/database";
 
 // import { userSeeder } from "./user.seeder";
 // import { statusSeeder } from "./status.seeder";
+import { valueSeeder } from "./value.seeder";
+import { jobTitleSeeder } from "./job-title.seeder";
+import { industrySeeder } from "./industry.seeder";
+import { experienceLevelSeeder } from "./experience-level.seeder";
+import { workModeSeeder } from "./work-mode.seeder";
 import { logger } from "../common/helper/logger";
 
 const runSeeders = async () => {
@@ -15,6 +20,11 @@ const runSeeders = async () => {
     // Seeders to run
     // await userSeeder();
     // await statusSeeder();
+    await valueSeeder();
+    await jobTitleSeeder();
+    await industrySeeder();
+    await experienceLevelSeeder();
+    await workModeSeeder();
     logger.info("Seeding completed");
   } catch (error) {
     logger.error("Error connecting to MongoDB", error);
