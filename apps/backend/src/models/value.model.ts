@@ -4,7 +4,7 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { IBaseDoc } from "./interfaces/base.interface";
-import { IValue } from "@rl/types";
+import { IValue, ValueTypeEnum } from "@rl/types";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ValueInput extends IValue {}
@@ -19,8 +19,8 @@ interface IValueModel
 
 const valueSchema = new Schema<IValueDoc>(
   {
-    type: { type: String, required: true, trim: true },
-    value: { type: String, required: true, trim: true },
+    type: { type: String, enum: Object.values(ValueTypeEnum), required: true, trim: true },
+    label: { type: String, required: true, trim: true },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
