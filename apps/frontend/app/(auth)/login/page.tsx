@@ -25,9 +25,9 @@ export default function Login() {
   } = useLogin();
 
   return (
-    <div className=" min-h-screen flex justify-center items-center">
-      <div className="  w-[400px] rounded-lg flex flex-col gap-y-spacing-4xl px-spacing-sm sm:px-spacing-0">
-        <div>
+    <div className="  flex justify-center items-center">
+      <div className="  w-[692px] rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
+        {/* <div>
           <Link href="/">
             <Image
               className="max-h-[62px] max-w-[114px]"
@@ -37,15 +37,15 @@ export default function Login() {
               height={62}
             />
           </Link>
-        </div>
+        </div> */}
 
         <form
           onSubmit={onSubmit}
           className=" flex flex-col gap-y-spacing-5xl flex-1"
         >
           <div className="space-y-spacing-4xl">
-            <div className="space-y-spacing-xs">
-              <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-secondary">
+            <div className="space-y-spacing-lg">
+              <h4 className=" text-heading-sm font-heading-sm-strong! text-text-gray-primary">
                 Welcome Back !!
               </h4>
               <p className=" text-body-md text-text-gray-tertiary">
@@ -116,23 +116,21 @@ export default function Login() {
             </div>
           </div>
 
-          <div className=" flex-1 flex justify-between flex-col gap-y-spacing-5xl">
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className=" button-xl bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer"
-            >
-              {isLoading ? 'Logging in...' : 'Login'}
-            </Button>
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className=" button-xl bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer"
+          >
+            {isLoading ? 'Logging in...' : 'Login'}
+          </Button>
 
-            <div className=" flex justify-center">
-              <p className="text-body-md">
-                Don’t you have account?{' '}
-                <Link href="/sign-up" className=" text-text-brand-primary">
-                  Create Account
-                </Link>
-              </p>
-            </div>
+          <div className=" flex justify-center">
+            <p className="text-body-md">
+              Don’t you have account?{' '}
+              <Link href="/sign-up" className=" text-text-brand-primary">
+                Create Account
+              </Link>
+            </p>
           </div>
         </form>
       </div>
