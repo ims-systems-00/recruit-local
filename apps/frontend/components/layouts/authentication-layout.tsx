@@ -34,7 +34,7 @@ export default function AuthenticationLayout({
 }) {
   return (
     <div className=" min-h-screen flex flex-col justify-between gap-spacing-7xl">
-      <div className=" space-y-spacing-7xl">
+      <div className=" space-y-spacing-10xl">
         <div className=" border-b border-border-gray-secondary">
           <div className="max-w-[1280px] mx-auto px-spacing-5xl flex items-center justify-between h-15 ">
             <Link href="/">
