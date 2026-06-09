@@ -50,6 +50,7 @@ export const createBodySchema = Joi.object({
   visionStatement: Joi.string().allow("", null).label("Vision Statement"),
   coreProducts: Joi.string().allow("", null).label("Core Products"),
   coreServices: Joi.string().allow("", null).label("Core Services"),
+  values: Joi.array().items(Joi.string().custom(objectIdValidation).label("value")).optional().label("Values"),
 });
 
 export const updateBodySchema = createBodySchema.fork(Object.keys(createBodySchema.describe().keys), (schema) =>
