@@ -42,6 +42,7 @@ export const modelNames = {
   WORK_MODE: "workmodes",
   USER_INTEREST_SURVEY: "userinterestsurveys",
   VALUE: "values",
+  SALARY: "salaries",
 };
 
 export type ModelNames = (typeof modelNames)[keyof typeof modelNames];
