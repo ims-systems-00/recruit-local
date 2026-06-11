@@ -14,6 +14,7 @@ import { jobRoleScopedSecurityQuery } from "./job.query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { agenda } from "../../../agenda/config";
 import { JOB_NAME } from "../../../agenda/constants";
+import { salaryUpdateQueue } from "../../../queue/salaryUpdateQueue";
 import { list as listApplications } from "../application/application.service";
 import pick from "lodash/pick";
 
@@ -152,6 +153,16 @@ export const create = async ({ req }: ControllerParams) => {
 
   if (job.endDate && job.status === JOBS_STATUS_ENUMS.OPEN) {
     await agenda.schedule(new Date(job.endDate), JOB_NAME.EXPIRE_JOB_POST, { jobId: job.id.toString() });
+  }
+
+  if (job.title && job.salary) {
+    await salaryUpdateQueue.addJob("salary-update", {
+      jobId: job.id.toString(),
+      title: job.title,
+      salary: job.salary,
+      location: job.location,
+      yearOfExperience: job.yearOfExperience,
+    });
   }
 
   return new ApiResponse({

@@ -1,4 +1,4 @@
-import { Schema, model, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
+import { Schema, model, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
@@ -21,6 +21,7 @@ export interface JobProfileInput extends IUserOwnedInput {
   status: JOB_PROFILE_STATUS_ENUM;
   skills?: string;
   interests?: string;
+  values?: Types.ObjectId[];
 }
 
 export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, IBaseDoc {
@@ -79,6 +80,7 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
     interests: {
       type: String,
     },
+    values: [{ type: Schema.Types.ObjectId, ref: modelNames.VALUE }],
     visibility: {
       type: String,
       enum: Object.values(VISIBILITY),

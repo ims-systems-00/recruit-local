@@ -36,6 +36,7 @@ export const createBodySchema = Joi.object({
     .label("Languages"),
   skills: Joi.string().optional().label("Skills"),
   interests: Joi.string().optional().label("Interests"),
+  values: Joi.array().items(Joi.string().custom(objectIdValidation)).optional().label("Values"),
 });
 
 export const updateBodySchema = Joi.object({
@@ -68,6 +69,7 @@ export const updateBodySchema = Joi.object({
     .label("Languages"),
   skills: Joi.string().optional().label("Skills"),
   interests: Joi.string().optional().label("Interests"),
+  values: Joi.array().items(Joi.string().custom(objectIdValidation)).optional().label("Values"),
   visibility: Joi.string()
     .valid(...Object.values(VISIBILITY))
     .optional()

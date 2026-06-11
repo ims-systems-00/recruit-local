@@ -34,6 +34,7 @@ export const ALL_JOB_PROFILE_FIELDS = [
   'languages',
   'skills',
   'interests',
+  'values',
   'visibility',
   'status',
   'createdAt',
@@ -59,6 +60,7 @@ const CANDIDATE_MUTATION_FIELDS = [
   'languages',
   'skills',
   'interests',
+  'values',
   'visibility',
 ];
 

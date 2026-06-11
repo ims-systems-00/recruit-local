@@ -39,3 +39,6 @@ export * from "./job-title.model";
 export * from "./industry.model";
 export * from "./experience-level.model";
 export * from "./work-mode.model";
+export * from "./user-interest-survey.model";
+export * from "./value.model";
+export * from "./salary.model";
