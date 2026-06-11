@@ -15,3 +15,4 @@ export * from './favourite.authz';
 export * from './file-media.authz';
 export * from './user-interest-survey.authz';
 export * from './value.authz';
+export * from './salary.authz';
