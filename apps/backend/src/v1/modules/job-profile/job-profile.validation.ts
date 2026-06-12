@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
-import { PROFICIENCY, VISIBILITY, JOB_TITLE_ENUMS, INDUSTRY_ENUMS } from "@rl/types";
+import { PROFICIENCY, VISIBILITY, ONBOARDING_STEP_ENUMS } from "@rl/types";
 
 // --- Sub-Schemas ---
 
@@ -8,14 +8,9 @@ import { PROFICIENCY, VISIBILITY, JOB_TITLE_ENUMS, INDUSTRY_ENUMS } from "@rl/ty
 
 export const createBodySchema = Joi.object({
   name: Joi.string().optional().label("Name"),
-  jobTitle: Joi.array()
-    .items(Joi.string().valid(...Object.values(JOB_TITLE_ENUMS)))
-    .optional()
-    .label("Job Title"),
-  industry: Joi.array()
-    .items(Joi.string().valid(...Object.values(INDUSTRY_ENUMS)))
-    .optional()
-    .label("Industry"),
+  jobTitle: Joi.array().items(Joi.string()).optional().label("Job Title"),
+  industry: Joi.array().items(Joi.string()).optional().label("Industry"),
+  experienceLevel: Joi.string().optional().label("Experience Level"),
   address: Joi.string().optional().label("Address"),
   email: Joi.string().email().optional().label("Email"),
   contactNumber: Joi.string().optional().label("Contact Number"),
@@ -37,18 +32,17 @@ export const createBodySchema = Joi.object({
   skills: Joi.string().optional().label("Skills"),
   interests: Joi.string().optional().label("Interests"),
   values: Joi.array().items(Joi.string().custom(objectIdValidation)).optional().label("Values"),
+  onboardingStep: Joi.string()
+    .valid(...Object.values(ONBOARDING_STEP_ENUMS))
+    .optional()
+    .label("Onboarding Step"),
 });
 
 export const updateBodySchema = Joi.object({
   name: Joi.string().optional().label("Name"),
-  jobTitle: Joi.array()
-    .items(Joi.string().valid(...Object.values(JOB_TITLE_ENUMS)))
-    .optional()
-    .label("Job Title"),
-  industry: Joi.array()
-    .items(Joi.string().valid(...Object.values(INDUSTRY_ENUMS)))
-    .optional()
-    .label("Industry"),
+  jobTitle: Joi.array().items(Joi.string()).optional().label("Job Title"),
+  industry: Joi.array().items(Joi.string()).optional().label("Industry"),
+  experienceLevel: Joi.string().optional().label("Experience Level"),
   address: Joi.string().optional().label("Address"),
   email: Joi.string().email().optional().label("Email"),
   contactNumber: Joi.string().optional().label("Contact Number"),
@@ -70,6 +64,10 @@ export const updateBodySchema = Joi.object({
   skills: Joi.string().optional().label("Skills"),
   interests: Joi.string().optional().label("Interests"),
   values: Joi.array().items(Joi.string().custom(objectIdValidation)).optional().label("Values"),
+  onboardingStep: Joi.string()
+    .valid(...Object.values(ONBOARDING_STEP_ENUMS))
+    .optional()
+    .label("Onboarding Step"),
   visibility: Joi.string()
     .valid(...Object.values(VISIBILITY))
     .optional()

@@ -25,6 +25,7 @@ export const ALL_JOB_PROFILE_FIELDS = [
   'name',
   'jobTitle',
   'industry',
+  'experienceLevel',
   'address',
   'email',
   'contactNumber',
@@ -35,6 +36,7 @@ export const ALL_JOB_PROFILE_FIELDS = [
   'skills',
   'interests',
   'values',
+  'onboardingStep',
   'visibility',
   'status',
   'createdAt',
@@ -51,6 +53,7 @@ const CANDIDATE_MUTATION_FIELDS = [
   'name',
   'jobTitle',
   'industry',
+  'experienceLevel',
   'address',
   'email',
   'contactNumber',
@@ -61,6 +64,7 @@ const CANDIDATE_MUTATION_FIELDS = [
   'skills',
   'interests',
   'values',
+  'onboardingStep',
   'visibility',
 ];
 

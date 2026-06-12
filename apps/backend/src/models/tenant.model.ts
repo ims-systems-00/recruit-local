@@ -4,7 +4,7 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { AwsStorageTemplate } from "./templates/aws-storage.template";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
-import { TENANT_STATUS_ENUMS, TENANT_TYPE, INDUSTRY_ENUMS } from "@rl/types";
+import { TENANT_STATUS_ENUMS, TENANT_TYPE, INDUSTRY_ENUMS, ONBOARDING_STEP_ENUMS } from "@rl/types";
 import { modelNames } from "./constants";
 
 export interface TenantInput {
@@ -31,6 +31,7 @@ export interface TenantInput {
   coreProducts?: string;
   coreServices?: string;
   values?: Types.ObjectId[];
+  onboardingStep?: ONBOARDING_STEP_ENUMS;
 }
 
 // Define an interface for Tenant document
