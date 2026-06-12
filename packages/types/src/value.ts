@@ -1,4 +1,4 @@
-export enum ValueTypeEnum {
+export enum VALUE_TYPE_ENUM {
   GROWTH = 'growth',
   LEARNING = 'learning',
   CHALLENGE = 'challenge',
@@ -19,7 +19,7 @@ export enum ValueTypeEnum {
 }
 
 export interface IValue {
-  type: ValueTypeEnum;
+  type: VALUE_TYPE_ENUM;
   label: string;
   isActive?: boolean;
 }

@@ -1,5 +1,5 @@
 import { Value, ValueInput } from "../models";
-import { ValueTypeEnum } from "@rl/types";
+import { VALUE_TYPE_ENUM } from "@rl/types";
 import { logger } from "../common/helper/logger";
 
 const checkIfValueExists = async (type: string, label: string) => {
@@ -15,58 +15,58 @@ export const valueSeeder = async () => {
   try {
     const values: ValueInput[] = [
       // Screen 1 — growth, learning, challenge, innovation
-      { type: ValueTypeEnum.GROWTH, label: "Growth-oriented" },
-      { type: ValueTypeEnum.INNOVATION, label: "Entrepreneurial" },
-      { type: ValueTypeEnum.GROWTH, label: "Proactive" },
-      { type: ValueTypeEnum.GROWTH, label: "Sales" },
-      { type: ValueTypeEnum.CHALLENGE, label: "Resilient" },
-      { type: ValueTypeEnum.GROWTH, label: "Data-driven" },
-      { type: ValueTypeEnum.INNOVATION, label: "Innovative" },
-      { type: ValueTypeEnum.CHALLENGE, label: "Problem solver" },
-      { type: ValueTypeEnum.LEARNING, label: "Open-minded" },
+      { type: VALUE_TYPE_ENUM.GROWTH, label: "Growth-oriented" },
+      { type: VALUE_TYPE_ENUM.INNOVATION, label: "Entrepreneurial" },
+      { type: VALUE_TYPE_ENUM.GROWTH, label: "Proactive" },
+      { type: VALUE_TYPE_ENUM.GROWTH, label: "Sales" },
+      { type: VALUE_TYPE_ENUM.CHALLENGE, label: "Resilient" },
+      { type: VALUE_TYPE_ENUM.GROWTH, label: "Data-driven" },
+      { type: VALUE_TYPE_ENUM.INNOVATION, label: "Innovative" },
+      { type: VALUE_TYPE_ENUM.CHALLENGE, label: "Problem solver" },
+      { type: VALUE_TYPE_ENUM.LEARNING, label: "Open-minded" },
 
       // Screen 2 — work, communicate, organize, contribute
-      { type: ValueTypeEnum.WORK, label: "Ownership mentality" },
-      { type: ValueTypeEnum.CONTRIBUTE, label: "Collaborative" },
-      { type: ValueTypeEnum.WORK, label: "Independent" },
-      { type: ValueTypeEnum.ORGANIZE, label: "Organised workflow" },
-      { type: ValueTypeEnum.ORGANIZE, label: "Structured" },
-      { type: ValueTypeEnum.WORK, label: "Fast-paced" },
-      { type: ValueTypeEnum.WORK, label: "Flexible" },
-      { type: ValueTypeEnum.ORGANIZE, label: "Detail-oriented" },
-      { type: ValueTypeEnum.WORK, label: "Results-driven" },
+      { type: VALUE_TYPE_ENUM.WORK, label: "Ownership mentality" },
+      { type: VALUE_TYPE_ENUM.CONTRIBUTE, label: "Collaborative" },
+      { type: VALUE_TYPE_ENUM.WORK, label: "Independent" },
+      { type: VALUE_TYPE_ENUM.ORGANIZE, label: "Organised workflow" },
+      { type: VALUE_TYPE_ENUM.ORGANIZE, label: "Structured" },
+      { type: VALUE_TYPE_ENUM.WORK, label: "Fast-paced" },
+      { type: VALUE_TYPE_ENUM.WORK, label: "Flexible" },
+      { type: VALUE_TYPE_ENUM.ORGANIZE, label: "Detail-oriented" },
+      { type: VALUE_TYPE_ENUM.WORK, label: "Results-driven" },
 
       // Screen 3 — interpersonal, ethical, social
-      { type: ValueTypeEnum.INTERPERSONAL, label: "Empathy" },
-      { type: ValueTypeEnum.ETHICAL, label: "Integrity" },
-      { type: ValueTypeEnum.INTERPERSONAL, label: "Respect" },
-      { type: ValueTypeEnum.SOCIAL, label: "Diversity-minded" },
-      { type: ValueTypeEnum.INTERPERSONAL, label: "Psychological safety" },
-      { type: ValueTypeEnum.ETHICAL, label: "Fairness" },
-      { type: ValueTypeEnum.SOCIAL, label: "Community-oriented" },
-      { type: ValueTypeEnum.INTERPERSONAL, label: "Humility" },
-      { type: ValueTypeEnum.ETHICAL, label: "Ethical leadership" },
+      { type: VALUE_TYPE_ENUM.INTERPERSONAL, label: "Empathy" },
+      { type: VALUE_TYPE_ENUM.ETHICAL, label: "Integrity" },
+      { type: VALUE_TYPE_ENUM.INTERPERSONAL, label: "Respect" },
+      { type: VALUE_TYPE_ENUM.SOCIAL, label: "Diversity-minded" },
+      { type: VALUE_TYPE_ENUM.INTERPERSONAL, label: "Psychological safety" },
+      { type: VALUE_TYPE_ENUM.ETHICAL, label: "Fairness" },
+      { type: VALUE_TYPE_ENUM.SOCIAL, label: "Community-oriented" },
+      { type: VALUE_TYPE_ENUM.INTERPERSONAL, label: "Humility" },
+      { type: VALUE_TYPE_ENUM.ETHICAL, label: "Ethical leadership" },
 
       // Screen 4 — performance, development, collaboration
-      { type: ValueTypeEnum.DEVELOPMENT, label: "Mentorship" },
-      { type: ValueTypeEnum.DEVELOPMENT, label: "Coaching culture" },
-      { type: ValueTypeEnum.COLLABORATION, label: "Empowerment" },
-      { type: ValueTypeEnum.PERFORMANCE, label: "High-performance culture" },
-      { type: ValueTypeEnum.PERFORMANCE, label: "Team accountability" },
-      { type: ValueTypeEnum.COLLABORATION, label: "Servant leadership" },
-      { type: ValueTypeEnum.DEVELOPMENT, label: "Feedback culture" },
-      { type: ValueTypeEnum.PERFORMANCE, label: "Recognition culture" },
+      { type: VALUE_TYPE_ENUM.DEVELOPMENT, label: "Mentorship" },
+      { type: VALUE_TYPE_ENUM.DEVELOPMENT, label: "Coaching culture" },
+      { type: VALUE_TYPE_ENUM.COLLABORATION, label: "Empowerment" },
+      { type: VALUE_TYPE_ENUM.PERFORMANCE, label: "High-performance culture" },
+      { type: VALUE_TYPE_ENUM.PERFORMANCE, label: "Team accountability" },
+      { type: VALUE_TYPE_ENUM.COLLABORATION, label: "Servant leadership" },
+      { type: VALUE_TYPE_ENUM.DEVELOPMENT, label: "Feedback culture" },
+      { type: VALUE_TYPE_ENUM.PERFORMANCE, label: "Recognition culture" },
 
       // Screen 5 — motivation, meaning, fulfilment
-      { type: ValueTypeEnum.MOTIVATION, label: "Career progression" },
-      { type: ValueTypeEnum.MEANING, label: "Stability" },
-      { type: ValueTypeEnum.MOTIVATION, label: "Innovation" },
-      { type: ValueTypeEnum.MEANING, label: "Social good" },
-      { type: ValueTypeEnum.MOTIVATION, label: "Creativity" },
-      { type: ValueTypeEnum.FULFILMENT, label: "Autonomy" },
-      { type: ValueTypeEnum.MOTIVATION, label: "Learning opportunities" },
-      { type: ValueTypeEnum.MOTIVATION, label: "Leadership opportunities" },
-      { type: ValueTypeEnum.FULFILMENT, label: "Recognition" },
+      { type: VALUE_TYPE_ENUM.MOTIVATION, label: "Career progression" },
+      { type: VALUE_TYPE_ENUM.MEANING, label: "Stability" },
+      { type: VALUE_TYPE_ENUM.MOTIVATION, label: "Innovation" },
+      { type: VALUE_TYPE_ENUM.MEANING, label: "Social good" },
+      { type: VALUE_TYPE_ENUM.MOTIVATION, label: "Creativity" },
+      { type: VALUE_TYPE_ENUM.FULFILMENT, label: "Autonomy" },
+      { type: VALUE_TYPE_ENUM.MOTIVATION, label: "Learning opportunities" },
+      { type: VALUE_TYPE_ENUM.MOTIVATION, label: "Leadership opportunities" },
+      { type: VALUE_TYPE_ENUM.FULFILMENT, label: "Recognition" },
     ];
 
     await Promise.all(
