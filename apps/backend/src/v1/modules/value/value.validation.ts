@@ -9,6 +9,7 @@ export const createBodySchema = Joi.object({
     .label("Type"),
   label: Joi.string().min(2).max(200).required().label("Label"),
   isActive: Joi.boolean().optional().label("Is Active"),
+  weight: Joi.number().min(0).optional().label("Weight"),
 });
 
 export const updateBodySchema = Joi.object({
@@ -18,6 +19,7 @@ export const updateBodySchema = Joi.object({
     .label("Type"),
   label: Joi.string().min(2).max(200).optional().label("Label"),
   isActive: Joi.boolean().optional().label("Is Active"),
+  weight: Joi.number().min(0).optional().label("Weight"),
 });
 
 export const idParamsSchema = Joi.object({
