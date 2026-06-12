@@ -23,8 +23,9 @@ export const ALL_VALUE_FIELDS = [
   'isDeleted',
   'deletedAt',
   'type',
-  'value',
+  'label',
   'isActive',
+  'weight',
 ];
 
 export class ValueAuthZEntity {

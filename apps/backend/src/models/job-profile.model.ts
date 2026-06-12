@@ -3,14 +3,16 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { VISIBILITY, language, JOB_PROFILE_STATUS_ENUM, INDUSTRY_ENUMS, JOB_TITLE_ENUMS } from "@rl/types";
+import { VISIBILITY, language, JOB_PROFILE_STATUS_ENUM, JOB_TITLE_ENUMS, ONBOARDING_STEP_ENUMS } from "@rl/types";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { IBaseDoc } from "./interfaces/base.interface";
+import { String } from "lodash";
 
 export interface JobProfileInput extends IUserOwnedInput {
   name?: string;
   jobTitle?: JOB_TITLE_ENUMS[];
-  industry?: INDUSTRY_ENUMS[];
+  industry?: string[];
+  experienceLevel?: String;
   address?: string;
   email?: string;
   contactNumber?: string;
@@ -22,6 +24,7 @@ export interface JobProfileInput extends IUserOwnedInput {
   skills?: string;
   interests?: string;
   values?: Types.ObjectId[];
+  onboardingStep?: ONBOARDING_STEP_ENUMS;
 }
 
 export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, IBaseDoc {
@@ -51,7 +54,9 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
     },
     jobTitle: {
       type: [String],
-      enum: Object.values(JOB_TITLE_ENUMS),
+    },
+    experienceLevel: {
+      type: String,
     },
     address: {
       type: String,
@@ -90,6 +95,13 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       type: String,
       enum: Object.values(JOB_PROFILE_STATUS_ENUM),
       default: JOB_PROFILE_STATUS_ENUM.UNVERIFIED,
+    },
+    industry: {
+      type: [String],
+    },
+    onboardingStep: {
+      type: String,
+      enum: Object.values(ONBOARDING_STEP_ENUMS),
     },
   },
   {

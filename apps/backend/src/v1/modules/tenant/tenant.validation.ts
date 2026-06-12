@@ -1,6 +1,6 @@
 import Joi, { CustomHelpers } from "joi";
 import mongoose from "mongoose";
-import { TENANT_STATUS_ENUMS, TENANT_TYPE, INDUSTRY_ENUMS } from "@rl/types";
+import { TENANT_STATUS_ENUMS, TENANT_TYPE, ONBOARDING_STEP_ENUMS } from "@rl/types";
 
 // Custom validation for MongoDB ObjectId
 const objectIdValidation = (value: string, helpers: CustomHelpers) => {
@@ -20,9 +20,7 @@ const awsStorageSchema = Joi.object({
 export const createBodySchema = Joi.object({
   name: Joi.string().max(300).required().label("Name"),
   description: Joi.string().allow("", null).label("Description"),
-  industry: Joi.string()
-    .valid(...Object.values(INDUSTRY_ENUMS))
-    .label("Industry"),
+  industry: Joi.string().label("Industry"),
   type: Joi.string()
     .valid(...Object.values(TENANT_TYPE))
     .label("Type"),
@@ -51,6 +49,9 @@ export const createBodySchema = Joi.object({
   coreProducts: Joi.string().allow("", null).label("Core Products"),
   coreServices: Joi.string().allow("", null).label("Core Services"),
   values: Joi.array().items(Joi.string().custom(objectIdValidation).label("value")).optional().label("Values"),
+  onboardingStep: Joi.string()
+    .valid(...Object.values(ONBOARDING_STEP_ENUMS))
+    .label("Onboarding Step"),
 });
 
 export const updateBodySchema = createBodySchema.fork(Object.keys(createBodySchema.describe().keys), (schema) =>
