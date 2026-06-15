@@ -1,3 +1,4 @@
+import { PipelineStage } from "mongoose";
 import { IListParams, ListQueryParams } from "@rl/types";
 import { ValueInput, Value } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
@@ -40,6 +41,18 @@ export const getOneSoftDeleted = async ({ query = {} }: IListValueParams) => {
   ]);
   if (results.length === 0) throw new NotFoundException("Value not found in trash.");
   return results[0];
+};
+
+export const topThree = ({ query = {} }: IListValueParams) => {
+  const pipeline: PipelineStage[] = [
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    { $sort: { weight: -1, label: 1 } },
+    { $limit: 3 },
+    ...valueProjectQuery(),
+  ];
+
+  return Value.aggregate(pipeline);
 };
 
 export const create = async (payload: ValueInput) => {

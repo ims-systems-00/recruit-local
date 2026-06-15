@@ -1,22 +1,22 @@
-import { Job } from "bullmq";
+import { Types } from "mongoose";
 import { Value } from "../models";
 import { ReusableQueue } from "./Queue";
 
 export interface ValueWeightUpdateJobData {
-  labels: string[];
+  valueIds: string[];
 }
 
-const processValueWeightUpdate = async (job: Job<ValueWeightUpdateJobData>) => {
-  const { labels } = job.data;
-  if (!labels?.length) return;
+const processValueWeightUpdate = async (valueIds: string[]) => {
+  if (!valueIds?.length) return;
 
-  const cleanedLabels = labels.map((label) => label?.trim()).filter((label): label is string => Boolean(label));
+  const ids = valueIds.map((id) => id?.toString().trim()).filter((id): id is string => Types.ObjectId.isValid(id));
 
-  // Increment the weight of every value matching each provided label by +1.
-  await Promise.all(cleanedLabels.map((label) => Value.updateMany({ label }, { $inc: { weight: 1 } })));
+  if (!ids.length) return;
+
+  // Increment the weight of every value referenced by the job profile by +1.
+  await Value.updateMany({ _id: { $in: ids } }, { $inc: { weight: 1 } });
 };
 
-export const valueWeightUpdateQueue = new ReusableQueue<ValueWeightUpdateJobData>(
-  "value-weight-update-queue",
-  processValueWeightUpdate
+export const valueWeightUpdateQueue = new ReusableQueue<ValueWeightUpdateJobData>("value-weight-update-queue", (job) =>
+  processValueWeightUpdate(job.data.valueIds)
 );
