@@ -27,6 +27,25 @@ export const list = async ({ req }: ControllerParams) => {
   });
 };
 
+export const topThree = async ({ req }: ControllerParams) => {
+  const ability = new ValueAbilityBuilder(req.session).getAbility();
+  if (!ability.can(AbilityAction.Read, ValueAuthZEntity)) {
+    throw new UnauthorizedException("You are not authorized to read values.");
+  }
+
+  const filter = new MongoQuery(req.query, { searchFields: ["type", "label"] }).build();
+  const query = { ...filter.getFilterQuery(), isActive: true };
+
+  const values = await valueService.topThree({ query });
+
+  return new ApiResponse({
+    message: "Top three values retrieved.",
+    statusCode: StatusCodes.OK,
+    data: values,
+    fieldName: "values",
+  });
+};
+
 export const get = async ({ req }: ControllerParams) => {
   const ability = new ValueAbilityBuilder(req.session).getAbility();
   if (!ability.can(AbilityAction.Read, ValueAuthZEntity)) {
