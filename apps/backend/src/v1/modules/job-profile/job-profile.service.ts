@@ -6,6 +6,7 @@ import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../comm
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobProfileProjectQuery } from "./job-profile.query";
 import * as FileMediaService from "../file-media/file-media.service";
+import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
 import { modelNames } from "../../../models/constants";
 import {
   IJobProfileCreateParams,
@@ -73,6 +74,12 @@ export const create = async ({ payload, allowedFields }: IJobProfileCreateParams
 
   await jobProfile.save();
 
+  // Bump the weight of every value attached to the job profile.
+  if (payload.values?.length) {
+    const valueIds = payload.values.map((id) => id.toString());
+    await valueWeightUpdateQueue.addJob("value-weight-update", { valueIds });
+  }
+
   return getOne({
     query: { _id: jobProfileId } as any,
     allowedFields,
@@ -123,6 +130,14 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
   );
 
   if (!updatedJobProfile) throw new NotFoundException("Job Profile not found.");
+
+  // Bump the weight of values newly attached to the job profile.
+  if (payload.values?.length) {
+    const existingValueIds = new Set<string>((jobProfile.values ?? []).map((id: Types.ObjectId) => id.toString()));
+    const newValueIds = payload.values.map((id) => id.toString()).filter((id) => !existingValueIds.has(id));
+    if (newValueIds.length) await valueWeightUpdateQueue.addJob("value-weight-update", { valueIds: newValueIds });
+  }
+
   return updatedJobProfile;
 };
 
