@@ -7,6 +7,7 @@ import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
 import { tenantProjectionQuery } from "./tenant.query";
+import { populateValuesQuery } from "../value/value.query";
 import {
   IListTenantParams,
   ITenantGetParams,
@@ -35,6 +36,7 @@ export const list = ({ query = {}, options, session }: IListTenantParams) => {
   const aggregate = Tenant.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
+    ...populateValuesQuery(),
     ...tenantProjectionQuery(),
   ]);
 
@@ -47,6 +49,7 @@ export const getOne = async ({ query = {}, session }: ITenantGetParams): Promise
   const aggregate = Tenant.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
+    ...populateValuesQuery(),
     ...tenantProjectionQuery(),
   ]);
 

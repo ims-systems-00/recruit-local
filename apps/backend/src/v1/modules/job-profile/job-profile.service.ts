@@ -5,6 +5,7 @@ import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobProfileProjectQuery } from "./job-profile.query";
+import { populateValuesQuery } from "../value/value.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
 import { modelNames } from "../../../models/constants";
@@ -17,7 +18,12 @@ import {
 
 export const list = ({ query = {}, options, allowedFields }: IListJobProfileParams) => {
   return JobProfile.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...jobProfileProjectQuery(allowedFields)],
+    [
+      ...matchQuery(sanitizeQueryIds(query)),
+      ...excludeDeletedQuery(),
+      ...populateValuesQuery(),
+      ...jobProfileProjectQuery(allowedFields),
+    ],
     options
   );
 };
@@ -26,6 +32,7 @@ export const getOne = async ({ query = {}, allowedFields }: IJobProfileGetParams
   const jobProfiles = await JobProfile.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
+    ...populateValuesQuery(),
     ...jobProfileProjectQuery(allowedFields),
   ]);
   if (jobProfiles.length === 0) throw new NotFoundException("Job Profile not found.");
