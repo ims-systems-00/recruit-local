@@ -1,0 +1,19 @@
+branch-defaults:
+  default:
+    environment: rl-api-dev
+environment-defaults:
+  rl-api-dev:
+    branch: null
+    repository: null
+global:
+  application_name: rl
+  default_ec2_keyname: rl-key-pair
+  default_platform: Docker running on 64bit Amazon Linux 2023
+  default_region: eu-west-2
+  include_git_submodules: true
+  instance_profile: null
+  platform_name: null
+  platform_version: null
+  profile: null
+  sc: null
+  workspace_type: Application
