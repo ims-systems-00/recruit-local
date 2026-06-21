@@ -46,7 +46,14 @@ export class ReusableQueue<T extends object> {
       connection: redisConnection.options,
     });
 
+    this.setupCompletedJobListener();
     this.setupFailedJobListener();
+  }
+
+  private setupCompletedJobListener(): void {
+    this.queueEvents.on("completed", ({ jobId }) => {
+      console.log(`Job ${jobId} in queue ${this.queueName} has completed.`);
+    });
   }
 
   private setupFailedJobListener(): void {

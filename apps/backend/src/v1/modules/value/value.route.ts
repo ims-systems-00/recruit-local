@@ -1,5 +1,5 @@
 import express from "express";
-import { list, get, create, update, softRemove, hardRemove, restore } from "./value.controller";
+import { list, topThree, get, create, update, softRemove, hardRemove, restore } from "./value.controller";
 import { handleController } from "../../../common/helper";
 import { validate } from "../../../common/middlewares";
 import { createBodySchema, updateBodySchema, idParamsSchema } from "./value.validation";
@@ -9,6 +9,7 @@ const validateBody = validate("body");
 const validateParams = validate("params");
 
 router.get("/", handleController(list));
+router.get("/top-three", handleController(topThree));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
 router.post("/", validateBody(createBodySchema), handleController(create));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));

@@ -5,7 +5,9 @@ import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobProfileProjectQuery } from "./job-profile.query";
+import { populateValuesQuery } from "../value/value.query";
 import * as FileMediaService from "../file-media/file-media.service";
+import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
 import { modelNames } from "../../../models/constants";
 import {
   IJobProfileCreateParams,
@@ -16,7 +18,12 @@ import {
 
 export const list = ({ query = {}, options, allowedFields }: IListJobProfileParams) => {
   return JobProfile.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...jobProfileProjectQuery(allowedFields)],
+    [
+      ...matchQuery(sanitizeQueryIds(query)),
+      ...excludeDeletedQuery(),
+      ...populateValuesQuery(),
+      ...jobProfileProjectQuery(allowedFields),
+    ],
     options
   );
 };
@@ -25,6 +32,7 @@ export const getOne = async ({ query = {}, allowedFields }: IJobProfileGetParams
   const jobProfiles = await JobProfile.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
+    ...populateValuesQuery(),
     ...jobProfileProjectQuery(allowedFields),
   ]);
   if (jobProfiles.length === 0) throw new NotFoundException("Job Profile not found.");
@@ -72,6 +80,12 @@ export const create = async ({ payload, allowedFields }: IJobProfileCreateParams
   });
 
   await jobProfile.save();
+
+  // Bump the weight of every value attached to the job profile.
+  if (payload.values?.length) {
+    const valueIds = payload.values.map((id) => id.toString());
+    await valueWeightUpdateQueue.addJob("value-weight-update", { valueIds });
+  }
 
   return getOne({
     query: { _id: jobProfileId } as any,
@@ -123,6 +137,14 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
   );
 
   if (!updatedJobProfile) throw new NotFoundException("Job Profile not found.");
+
+  // Bump the weight of values newly attached to the job profile.
+  if (payload.values?.length) {
+    const existingValueIds = new Set<string>((jobProfile.values ?? []).map((id: Types.ObjectId) => id.toString()));
+    const newValueIds = payload.values.map((id) => id.toString()).filter((id) => !existingValueIds.has(id));
+    if (newValueIds.length) await valueWeightUpdateQueue.addJob("value-weight-update", { valueIds: newValueIds });
+  }
+
   return updatedJobProfile;
 };
 

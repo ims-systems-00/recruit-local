@@ -5,7 +5,9 @@ import { NotFoundException, FileManager } from "../../../common/helper";
 import { Tenant, ITenantDoc } from "../../../models";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
 import { tenantProjectionQuery } from "./tenant.query";
+import { populateValuesQuery } from "../value/value.query";
 import {
   IListTenantParams,
   ITenantGetParams,
@@ -34,6 +36,7 @@ export const list = ({ query = {}, options, session }: IListTenantParams) => {
   const aggregate = Tenant.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
+    ...populateValuesQuery(),
     ...tenantProjectionQuery(),
   ]);
 
@@ -46,6 +49,7 @@ export const getOne = async ({ query = {}, session }: ITenantGetParams): Promise
   const aggregate = Tenant.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
+    ...populateValuesQuery(),
     ...tenantProjectionQuery(),
   ]);
 
@@ -87,6 +91,13 @@ export const getOneSoftDeleted = async ({ query = {}, session }: ITenantGetParam
 export const create = async ({ payload, session }: ITenantCreateParams) => {
   let tenant = new Tenant(payload);
   tenant = await tenant.save({ session });
+
+  // Bump the weight of every value attached to the tenant.
+  if (tenant.values?.length) {
+    const valueIds = tenant.values.map((id) => id.toString());
+    await valueWeightUpdateQueue.addJob("value-weight-update", { valueIds });
+  }
+
   return tenant;
 };
 
@@ -101,6 +112,14 @@ export const update = async ({ query, payload, session }: ITenantUpdateParams) =
   );
 
   if (!updatedTenant) throw new NotFoundException("Tenant not found for update.");
+
+  // Bump the weight of values newly attached to the tenant.
+  if (payload.values?.length) {
+    const existingValueIds = new Set<string>((existing.values ?? []).map((id) => id.toString()));
+    const newValueIds = payload.values.map((id) => id.toString()).filter((id) => !existingValueIds.has(id));
+    if (newValueIds.length) await valueWeightUpdateQueue.addJob("value-weight-update", { valueIds: newValueIds });
+  }
+
   return updatedTenant;
 };
 

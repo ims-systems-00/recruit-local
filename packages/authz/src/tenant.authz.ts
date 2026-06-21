@@ -39,6 +39,9 @@ export class TenantAbilityBuilder implements IAbilityBuilder {
   getAbility(): AnyAbility {
     const builder = this.abilityBuilder;
 
+    // Every account type can read organisations (e.g. to view an organisation's values).
+    builder.can(AbilityAction.Read, TenantAuthZEntity);
+
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       builder.can(AbilityAction.Manage, TenantAuthZEntity);
     }
