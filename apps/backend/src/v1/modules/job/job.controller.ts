@@ -11,6 +11,7 @@ import * as jobService from "./job.service";
 import { JobAbilityBuilder, JobAuthZEntity, ALL_JOB_FIELDS } from "@rl/authz";
 import { AbilityAction, JOBS_STATUS_ENUMS } from "@rl/types";
 import { jobRoleScopedSecurityQuery } from "./job.query";
+import { toJobResponse, toJobResponseList } from "./job.dto";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { agenda } from "../../../agenda/config";
 import { JOB_NAME } from "../../../agenda/constants";
@@ -101,7 +102,7 @@ export const list = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Jobs retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: toJobResponseList(data),
     fieldName: "jobs",
     pagination,
   });
@@ -127,7 +128,7 @@ export const get = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job retrieved.",
     statusCode: StatusCodes.OK,
-    data: sanitized,
+    data: toJobResponse(sanitized),
     fieldName: "job",
   });
 };
@@ -168,7 +169,7 @@ export const create = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job created successfully.",
     statusCode: StatusCodes.CREATED,
-    data: getSanitizedJobResponse(job, ability),
+    data: toJobResponse(getSanitizedJobResponse(job, ability)),
     fieldName: "job",
   });
 };
@@ -203,7 +204,7 @@ export const update = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job updated.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedJobResponse(job, ability),
+    data: toJobResponse(getSanitizedJobResponse(job, ability)),
     fieldName: "job",
   });
 };
@@ -225,7 +226,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job moved to trash.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedJobResponse(job, ability),
+    data: toJobResponse(getSanitizedJobResponse(job, ability)),
     fieldName: "job",
   });
 };
@@ -247,7 +248,7 @@ export const restore = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job restored successfully.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedJobResponse(job, ability),
+    data: toJobResponse(getSanitizedJobResponse(job, ability)),
     fieldName: "job",
   });
 };
@@ -269,7 +270,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job permanently deleted.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedJobResponse(job, ability),
+    data: toJobResponse(getSanitizedJobResponse(job, ability)),
     fieldName: "job",
   });
 };
@@ -295,7 +296,7 @@ export const publicList = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Jobs retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: toJobResponseList(data),
     fieldName: "jobs",
     pagination,
   });
@@ -313,7 +314,7 @@ export const publicGet = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job retrieved.",
     statusCode: StatusCodes.OK,
-    data: pick(job, PUBLIC_JOB_DETAIL_FIELDS),
+    data: toJobResponse(pick(job, PUBLIC_JOB_DETAIL_FIELDS)),
     fieldName: "job",
   });
 };
