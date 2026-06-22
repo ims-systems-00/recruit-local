@@ -15,7 +15,13 @@ const toAdditionalQuery = (q: Record<string, unknown>): AdditionalQueryResponseD
  * internal bookkeeping fields are dropped.
  */
 export const toJobResponse = (doc: unknown): JobResponseDto => {
-  const d = { ...((doc ?? {}) as Record<string, unknown>) };
+  // Guard against a raw Mongoose document being passed in: spreading one would
+  // capture internal state (getters/setters, $__, version key) instead of data.
+  const source = doc as { toObject?: () => Record<string, unknown> } | null | undefined;
+  const d =
+    source && typeof source.toObject === "function"
+      ? source.toObject()
+      : { ...((doc ?? {}) as Record<string, unknown>) };
 
   // Drop internal fields that should never be exposed.
   delete d.__v;
