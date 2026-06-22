@@ -126,6 +126,7 @@ const tenantSchema = new Schema<ITenantDoc>(
     onboardingStep: {
       type: String,
       enum: Object.values(ONBOARDING_STEP_ENUMS),
+      default: ONBOARDING_STEP_ENUMS.NOT_STARTED,
     },
   },
   {
