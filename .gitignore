@@ -3,3 +3,4 @@ node_modules
 .DS_Store
 mongodb-replica.yml
 .github
+.test-scripts/
