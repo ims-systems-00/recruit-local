@@ -197,6 +197,10 @@ export const update = async ({ req }: ControllerParams) => {
     payload: req.body,
   });
 
+  // Cancel any previously scheduled expiration for this job to avoid duplicate
+  // tasks (e.g. an old endDate firing prematurely after the date is changed).
+  await agenda.cancel({ name: JOB_NAME.EXPIRE_JOB_POST, "data.jobId": job._id.toString() });
+
   if (job.endDate && job.status === JOBS_STATUS_ENUMS.OPEN) {
     await agenda.schedule(new Date(job.endDate), JOB_NAME.EXPIRE_JOB_POST, { jobId: job._id.toString() });
   }
