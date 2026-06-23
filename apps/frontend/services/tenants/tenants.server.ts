@@ -58,7 +58,7 @@ export async function getTenantById(
       message: res.data?.message,
     };
   } catch (error) {
-    return handleServerError(error, 'Failed to fetch post');
+    return handleServerError(error, 'Failed to fetch tenant');
   }
 }
 
