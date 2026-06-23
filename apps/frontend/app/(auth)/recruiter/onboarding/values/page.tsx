@@ -21,8 +21,6 @@ export default function ValuesPage() {
 
   const { tenant, isLoading: isTenantLoading } = useTenant(user?.tenantId);
 
-  console.log('user', user);
-
   if (isTenantLoading || !tenant) {
     return (
       <div className=" flex justify-center items-center bg-card">
@@ -68,13 +66,31 @@ export default function ValuesPage() {
     );
   }
   if (step === ONBOARDING_STEP_ENUMS.VALUES_STEP_3) {
-    return <ValuesStepThreeSection />;
+    return (
+      <ValuesStepThreeSection
+        existingValues={tenant?.values ?? []}
+        tenantId={user?.tenantId ?? ''}
+        tenantName={tenant?.name ?? ''}
+      />
+    );
   }
   if (step === ONBOARDING_STEP_ENUMS.VALUES_STEP_4) {
-    return <ValuesStepFourSection />;
+    return (
+      <ValuesStepFourSection
+        existingValues={tenant?.values ?? []}
+        tenantId={user?.tenantId ?? ''}
+        tenantName={tenant?.name ?? ''}
+      />
+    );
   }
   if (step === ONBOARDING_STEP_ENUMS.VALUES_STEP_5) {
-    return <ValuesStepFiveSection />;
+    return (
+      <ValuesStepFiveSection
+        existingValues={tenant?.values ?? []}
+        tenantId={user?.tenantId ?? ''}
+        tenantName={tenant?.name ?? ''}
+      />
+    );
   }
   return <InfoSection />;
 }

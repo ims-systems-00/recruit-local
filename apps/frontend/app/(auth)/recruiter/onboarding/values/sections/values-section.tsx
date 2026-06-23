@@ -44,6 +44,9 @@ export default function ValuesSection({
   progressValue,
   title,
   onSuccessNext,
+  onSuccessBack,
+  isBackDisabled = false,
+  isNextDisabled = false,
 }: {
   existingValues: ValueData[];
   tenantId: string;
@@ -53,6 +56,9 @@ export default function ValuesSection({
   progressValue: number;
   title: string;
   onSuccessNext?: () => void;
+  onSuccessBack?: () => void;
+  isBackDisabled?: boolean;
+  isNextDisabled?: boolean;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -277,7 +283,8 @@ export default function ValuesSection({
         </div>
         <div className=" flex justify-between items-center">
           <Button
-            disabled
+            disabled={isBackDisabled}
+            onClick={() => onSuccessBack?.()}
             variant="outline"
             className="text-label-md font-label-md-strong! cursor-pointer border-border-gray-primary h-12 rounded-lg text-text-gray-secondary"
           >
@@ -285,7 +292,7 @@ export default function ValuesSection({
           </Button>
           <Button
             onClick={handleSubmit(onSubmit)}
-            disabled={isUpdating}
+            disabled={isUpdating || isNextDisabled}
             className="bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-12 rounded-lg"
           >
             {isUpdating ? 'Saving...' : 'Continue'}

@@ -37,6 +37,11 @@ export default function ValuesStepTwoSection({
           getOnboardingValuesRoute(ONBOARDING_STEP_ENUMS.VALUES_STEP_3),
         );
       }}
+      onSuccessBack={() => {
+        router.push(
+          getOnboardingValuesRoute(ONBOARDING_STEP_ENUMS.VALUES_STEP_1),
+        );
+      }}
     />
   );
 }
