@@ -28,32 +28,31 @@ import {
   valuesStepSchema,
 } from '@/services/tenants/tenants.validation';
 
-const STEP_ONE_TYPES = [
-  VALUE_TYPE_ENUM.GROWTH,
-  VALUE_TYPE_ENUM.LEARNING,
-  VALUE_TYPE_ENUM.CHALLENGE,
-  VALUE_TYPE_ENUM.INNOVATION,
-];
-
-const STEP_ONE_VALUE_TYPES = {
-  in: STEP_ONE_TYPES,
-};
-
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
 
-const getStepValues = (values: ValueData[]) => {
-  return values.filter((item) => STEP_ONE_TYPES.includes(item.type));
+const getStepValues = (values: ValueData[], types: VALUE_TYPE_ENUM[]) => {
+  return values.filter((item) => types.includes(item.type));
 };
 
-export default function ValuesStepOneSection({
+export default function ValuesSection({
   existingValues,
   tenantId,
   tenantName,
+  types,
+  onboardingStep,
+  progressValue,
+  title,
+  onSuccessNext,
 }: {
   existingValues: ValueData[];
   tenantId: string;
   tenantName: string;
+  types: VALUE_TYPE_ENUM[];
+  onboardingStep: ONBOARDING_STEP_ENUMS;
+  progressValue: number;
+  title: string;
+  onSuccessNext?: () => void;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -62,8 +61,8 @@ export default function ValuesStepOneSection({
     resolver: yupResolver(valuesStepSchema),
     defaultValues: {
       tenantName: tenantName,
-      onboardingStep: ONBOARDING_STEP_ENUMS.VALUES_STEP_1,
-      values: getStepValues(existingValues).map((item) => item._id),
+      onboardingStep: onboardingStep,
+      values: getStepValues(existingValues, types).map((item) => item._id),
     },
   });
 
@@ -87,7 +86,7 @@ export default function ValuesStepOneSection({
     () => ({
       page,
       limit: PAGE_LIMIT,
-      type: STEP_ONE_VALUE_TYPES,
+      type: { in: types },
       search: debouncedSearch || undefined,
     }),
     [page, debouncedSearch],
@@ -121,7 +120,7 @@ export default function ValuesStepOneSection({
 
   const onSubmit = async (data: ValuesStepFormValues) => {
     const otherStepValueIds = existingValues
-      .filter((item) => !STEP_ONE_TYPES.includes(item.type))
+      .filter((item) => !types.includes(item.type))
       .map((item) => item._id);
 
     await updateTenant({
@@ -135,9 +134,10 @@ export default function ValuesStepOneSection({
         queryClient.invalidateQueries({
           queryKey: tenantKeys.detail(tenantId),
         });
-        router.push(
-          getOnboardingValuesRoute(ONBOARDING_STEP_ENUMS.VALUES_STEP_2),
-        );
+        // router.push(
+        //   getOnboardingValuesRoute(nextOnboardingStep),
+        // );
+        onSuccessNext?.();
       },
     });
   };
@@ -166,14 +166,14 @@ export default function ValuesStepOneSection({
     <div className=" flex justify-center items-center">
       <div className=" w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
         <div className=" flex items-center justify-between gap-spacing-lg">
-          <Progress value={20} className="w-full h-2.5" />
+          <Progress value={progressValue} className="w-full h-2.5" />
           <span className=" text-label-xs font-label-xs-strong! text-text-gray-secondary">
-            20%
+            {progressValue}%
           </span>
         </div>
         <div className=" space-y-spacing-lg">
           <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-secondary">
-            How you approach growth, learning, challenges, and innovation?
+            {title}
           </h4>
           <InputGroup className="  h-12 rounded-lg shadow-xs border-border-gray-primary">
             <InputGroupInput

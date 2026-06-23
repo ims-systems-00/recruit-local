@@ -1,8 +1,9 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { createTanent, updateTenant } from './tenants.server';
+import { createTanent, getTenantById, updateTenant } from './tenants.server';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 import {
   createOrganizationSchema,
   CreateOrganizationFormValues,
@@ -10,6 +11,34 @@ import {
 import { useMutation } from '@tanstack/react-query';
 import { TenantData } from './tenants.type';
 import { TenantUpdateInput } from './tenants.validation';
+
+export const tenantKeys = {
+  all: ['tenants'] as const,
+  details: () => [...tenantKeys.all, 'detail'] as const,
+  detail: (id: string) => [...tenantKeys.details(), id] as const,
+};
+
+export function useTenant(id?: string) {
+  const query = useQuery({
+    queryKey: tenantKeys.detail(id ?? ''),
+    enabled: !!id,
+    queryFn: async () => {
+      const response = await getTenantById(id!);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+  });
+
+  return {
+    tenant: query.data,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error as Error | null,
+    refetch: query.refetch,
+  };
+}
 
 export function useCreateTanent() {
   const router = useRouter();

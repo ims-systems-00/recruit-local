@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { ValueListFilters, ValueListResponse } from './value.type';
 import { getValues } from './value.server';
 
@@ -10,8 +10,8 @@ export const valueKeys = {
   detail: (id: string) => [...valueKeys.details(), id] as const,
 };
 
-// Hook to fetch list of posts
-export function useValues(filters: ValueListFilters = {}) {
+// Hook to fetch list of values
+export function useValues(filters: ValueListFilters = {}, isEnabled = true) {
   const query = useQuery<ValueListResponse, Error>({
     queryKey: valueKeys.list(filters),
     queryFn: async () => {
@@ -21,6 +21,7 @@ export function useValues(filters: ValueListFilters = {}) {
       }
       return response.data;
     },
+    enabled: isEnabled,
   });
 
   return {
@@ -32,4 +33,34 @@ export function useValues(filters: ValueListFilters = {}) {
     refetch: query.refetch,
     isFetching: query.isFetching,
   };
+}
+
+// Hook to fetch list of infinite values
+
+export function useInfiniteValues(
+  filters: ValueListFilters = {},
+  isEnabled = true,
+) {
+  return useInfiniteQuery({
+    queryKey: valueKeys.list(filters),
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await getValues({
+        ...filters,
+        page: pageParam,
+      });
+
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+
+      return response.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination?.hasNextPage
+        ? lastPage.pagination.page + 1
+        : undefined;
+    },
+    enabled: isEnabled,
+  });
 }

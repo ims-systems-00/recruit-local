@@ -1,4 +1,5 @@
-import { TENANT_TYPE } from '@rl/types';
+import { ONBOARDING_STEP_ENUMS, TENANT_TYPE } from '@rl/types';
+import { ValueData } from '../value';
 
 export type AwsStorageType = {
   Name: string;
@@ -34,6 +35,8 @@ export type TenantData = {
   visionStatement?: string;
   coreProducts?: string;
   coreServices?: string;
+  values?: ValueData[];
+  onboardingStep?: ONBOARDING_STEP_ENUMS;
   deleteMarker?: {
     status: boolean;
     deletedAt?: string | null;
