@@ -11,6 +11,7 @@ import {
 import { UserAbilityBuilder, UserAuthZEntity, ALL_USER_FIELDS } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import { roleScopedSecurityQuery } from "./user.query";
+import { toUserResponse, toUserResponseList } from "./user.dto";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 
 const caslFieldOptions = {
@@ -58,7 +59,7 @@ export const list = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Users retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: toUserResponseList(data),
     fieldName: "users",
     pagination,
   });
@@ -78,7 +79,7 @@ export const getOne = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "User retrieved.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedUserResponse(user, ability),
+    data: toUserResponse(getSanitizedUserResponse(user, ability)),
     fieldName: "user",
   });
 };
@@ -112,7 +113,7 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Soft deleted users retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: toUserResponseList(data),
     fieldName: "users",
     pagination,
   });
@@ -131,7 +132,7 @@ export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Deleted user retrieved.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedUserResponse(user, ability),
+    data: toUserResponse(getSanitizedUserResponse(user, ability)),
     fieldName: "user",
   });
 };
@@ -149,7 +150,7 @@ export const create = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "User created.",
     statusCode: StatusCodes.CREATED,
-    data: getSanitizedUserResponse(user, ability),
+    data: toUserResponse(getSanitizedUserResponse(user, ability)),
     fieldName: "user",
   });
 };
@@ -182,7 +183,7 @@ export const update = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "User updated.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedUserResponse(user, ability),
+    data: toUserResponse(getSanitizedUserResponse(user, ability)),
     fieldName: "user",
   });
 };
@@ -202,7 +203,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "User moved to trash.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedUserResponse(user, ability),
+    data: toUserResponse(getSanitizedUserResponse(user, ability)),
     fieldName: "user",
   });
 };
@@ -222,7 +223,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "User permanently deleted.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedUserResponse(user, ability),
+    data: toUserResponse(getSanitizedUserResponse(user, ability)),
     fieldName: "user",
   });
 };
@@ -242,7 +243,7 @@ export const restore = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "User restored from trash.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedUserResponse(user, ability),
+    data: toUserResponse(getSanitizedUserResponse(user, ability)),
     fieldName: "user",
   });
 };
@@ -267,7 +268,7 @@ export const updateUserProfileImage = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "User profile image updated.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedUserResponse(updatedUser, ability),
+    data: toUserResponse(getSanitizedUserResponse(updatedUser, ability)),
     fieldName: "user",
   });
 };
