@@ -54,7 +54,7 @@ export function useJobProfiles(filters: JobProfileListFilters = {}) {
   };
 }
 
-export function useJobProfile(id: string) {
+export function useJobProfile(id: string, isEnabled?: boolean) {
   const query = useQuery<JobProfile, Error>({
     queryKey: jobProfileKeys.detail(id),
     queryFn: async () => {
@@ -62,7 +62,7 @@ export function useJobProfile(id: string) {
       if (!response.success) throw new Error(response.message);
       return response.data as JobProfile;
     },
-    enabled: !!id,
+    enabled: !!id && isEnabled,
   });
 
   return {

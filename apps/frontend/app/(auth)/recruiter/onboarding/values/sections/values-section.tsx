@@ -140,9 +140,7 @@ export default function ValuesSection({
         queryClient.invalidateQueries({
           queryKey: tenantKeys.detail(tenantId),
         });
-        // router.push(
-        //   getOnboardingValuesRoute(nextOnboardingStep),
-        // );
+
         onSuccessNext?.();
       },
     });

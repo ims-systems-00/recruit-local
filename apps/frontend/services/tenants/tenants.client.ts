@@ -4,13 +4,13 @@ import { useForm } from 'react-hook-form';
 import { createTanent, getTenantById, updateTenant } from './tenants.server';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
-import {
-  createOrganizationSchema,
-  CreateOrganizationFormValues,
-} from '@/app/(auth)/onboarding/create-organization/create-organization.schema';
 import { useMutation } from '@tanstack/react-query';
 import { TenantData } from './tenants.type';
 import { TenantUpdateInput } from './tenants.validation';
+import {
+  CreateOrganizationFormValues,
+  createOrganizationSchema,
+} from '@/app/(auth)/recruiter/onboarding/create-organization/create-organization.schema';
 
 export const tenantKeys = {
   all: ['tenants'] as const,
@@ -18,10 +18,10 @@ export const tenantKeys = {
   detail: (id: string) => [...tenantKeys.details(), id] as const,
 };
 
-export function useTenant(id?: string) {
+export function useTenant(id?: string, isEnabled?: boolean) {
   const query = useQuery({
     queryKey: tenantKeys.detail(id ?? ''),
-    enabled: !!id,
+    enabled: !!id && isEnabled,
     queryFn: async () => {
       const response = await getTenantById(id!);
       if (!response.success) {
