@@ -13,7 +13,7 @@ export default function LogoutPage() {
   }, []);
 
   return (
-    <div className=" min-h-screen flex justify-center items-center bg-card">
+    <div className=" flex justify-center items-center bg-card">
       <div className="shadow-regular rounded-md p-12 flex items-center gap-spacing-4xl">
         <div className="min-w-[145px] animate-spin animation-duration-[2s]">
           <Image

@@ -69,7 +69,7 @@ export const useSystemPreparation = () => {
       }
 
       if (isCandidate && !jobProfile?._id) {
-        router.push('/onboarding/create-job-profile');
+        router.push('/candidate/onboarding/personalisation');
         return;
       }
 
