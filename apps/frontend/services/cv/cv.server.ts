@@ -9,6 +9,7 @@ import {
   cvListResponseSchema,
   cvItemResponseSchema,
   cvActionResponseSchema,
+  extractAndCreateCvSchema,
 } from './cv.validation';
 import type {
   CvApiResponse,
@@ -17,6 +18,7 @@ import type {
   CvCreateInput,
   CvUpdateInput,
   CvListFilters,
+  ExtractAndCreateCvInput,
 } from './cv.type';
 
 const API_ENDPOINT = '/cvs';
@@ -198,5 +200,35 @@ export async function hardDeleteCv(id: string): Promise<CvApiResponse<null>> {
     };
   } catch (error) {
     return handleServerError(error, 'Failed to permanently delete CV');
+  }
+}
+
+/**
+ * CREATE CV
+ */
+export async function extractAndCreateCv(
+  payload: ExtractAndCreateCvInput,
+): Promise<CvApiResponse<Cv>> {
+  try {
+    const validatedPayload = await extractAndCreateCvSchema.validate(payload, {
+      abortEarly: false,
+    });
+
+    const res = await axiosServer.post(
+      `${API_ENDPOINT}/extract-and-create`,
+      validatedPayload,
+    );
+
+    // const validatedResponse = await cvItemResponseSchema.validate(res.data, {
+    //     stripUnknown: true,
+    // });
+
+    return {
+      success: true,
+      data: res.data.cv,
+      message: res.data.message || 'CV created successfully',
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to create CV');
   }
 }

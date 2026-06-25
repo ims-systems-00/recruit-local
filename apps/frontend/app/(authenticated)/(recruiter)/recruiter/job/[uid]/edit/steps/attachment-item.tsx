@@ -16,7 +16,7 @@ export default function AttachmentItem({
   isDeleting: boolean;
 }) {
   return (
-    <div className=" p-spacing-2xl rounded-2xl bg-bg-gray-soft-primary border border-border-gray-secondary flex justify-between gap-spacing-2xl">
+    <div className="w-full p-spacing-2xl rounded-2xl bg-bg-gray-soft-primary border border-border-gray-secondary flex justify-between gap-spacing-2xl">
       <div className=" flex gap-spacing-lg items-center ">
         <div className=" min-w-10 w-10 h-10 flex items-center justify-center relative">
           <svg

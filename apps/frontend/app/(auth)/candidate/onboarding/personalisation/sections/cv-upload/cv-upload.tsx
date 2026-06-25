@@ -4,8 +4,72 @@ import AttachmentForm, {
   UploadedFile,
 } from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/attachment-form';
 import { Button } from '@/components/ui/button';
-
+import { useDeleteFileStorage } from '@/services/file-storage';
+import { ExtractAndCreateCvInput } from '@/services/cv/cv.type';
+import { useExtractAndCreateCv } from '@/services/cv';
+import { useForm } from 'react-hook-form';
+import { createCvSchema } from '@/services/cv/cv.validation';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import AttachmentItem from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/attachment-item';
 export default function CvUploadSection() {
+  const { deleteFile, isLoading: isDeleting } = useDeleteFileStorage();
+
+  const schema = createCvSchema as yup.ObjectSchema<ExtractAndCreateCvInput>;
+
+  const { extractAndCreateCv, isPending: isCreatingCv } =
+    useExtractAndCreateCv();
+  const methods = useForm<ExtractAndCreateCvInput>({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      jobProfileId: '',
+      resumeStorage: undefined,
+    },
+    mode: 'onSubmit',
+  });
+
+  const {
+    register,
+    control,
+    formState: { errors },
+    handleSubmit,
+    watch,
+    setValue,
+  } = methods;
+
+  const onSubmit = async (data: ExtractAndCreateCvInput) => {
+    console.log(data);
+    const payload = {
+      payload: data,
+      onSuccessCallback: () => {
+        console.log(data);
+      },
+    };
+    extractAndCreateCv(payload);
+  };
+
+  const resumeStorage =
+    watch('resumeStorage') || (null as unknown as UploadedFile);
+
+  const handleRemoveAttachment = async (item: UploadedFile) => {
+    try {
+      const res = await deleteFile({
+        fileKey: item.Key,
+      });
+
+      if (res?.success) {
+        setValue('resumeStorage', null as unknown as UploadedFile, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  console.log('errors', errors);
+
   return (
     <div className=" flex justify-center items-center">
       <div className=" w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col items-center justify-center gap-y-spacing-4xl p-spacing-5xl">
@@ -26,7 +90,10 @@ export default function CvUploadSection() {
         </div>
         <AttachmentForm
           onUploadFile={(files: UploadedFile[]) => {
-            console.log(files);
+            setValue('resumeStorage', files[0] as UploadedFile, {
+              shouldDirty: true,
+              shouldValidate: true,
+            });
           }}
           multiple={false}
           accept={{
@@ -34,12 +101,28 @@ export default function CvUploadSection() {
             'application/msword': ['.doc', '.docx'],
           }}
         />
+        {errors.resumeStorage && (
+          <p className="text-xs text-text-error-primary">
+            {errors.resumeStorage.message}
+          </p>
+        )}
+        {resumeStorage?.Key && (
+          <AttachmentItem
+            key={resumeStorage?.Key}
+            isDeleting={isDeleting}
+            item={resumeStorage as UploadedFile}
+            onDelete={handleRemoveAttachment}
+          />
+        )}
         <div className=" w-full flex justify-end">
           <Button
-            type="submit"
+            onClick={() => {
+              console.log('button clicked');
+              handleSubmit(onSubmit);
+            }}
             className=" cursor-pointer text-base bg-bg-brand-solid-primary border-primary text-white rounded-lg h-10"
           >
-            Continue
+            {isCreatingCv ? 'Creating CV...' : 'Continue'}
           </Button>
         </div>
       </div>
