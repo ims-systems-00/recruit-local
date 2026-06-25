@@ -4,6 +4,7 @@ import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedExceptio
 import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
 import { AbilityAction, ACCOUNT_TYPE_ENUMS } from "@rl/types";
 import * as certificationService from "./certification.service";
+import { toCertificationResponse, toCertificationResponseList } from "./certification.dto";
 
 export const list = async ({ req }: ControllerParams) => {
   const filter = new MongoQuery(req.query, {
@@ -25,7 +26,7 @@ export const list = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Certifications retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: toCertificationResponseList(data),
     fieldName: "certifications",
     pagination,
   });
@@ -46,7 +47,7 @@ export const get = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Certification retrieved.",
     statusCode: StatusCodes.OK,
-    data: certification,
+    data: toCertificationResponse(certification),
     fieldName: "certification",
   });
 };
@@ -67,7 +68,7 @@ export const update = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Certification updated.",
     statusCode: StatusCodes.OK,
-    data: certification,
+    data: toCertificationResponse(certification),
     fieldName: "certification",
   });
 };
@@ -89,7 +90,7 @@ export const create = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Certification created.",
     statusCode: StatusCodes.CREATED,
-    data: certification,
+    data: toCertificationResponse(certification),
     fieldName: "certification",
   });
 };
@@ -109,7 +110,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Certification deleted.",
     statusCode: StatusCodes.OK,
-    data: certification,
+    data: toCertificationResponse(certification),
     fieldName: "certification",
   });
 };
@@ -129,7 +130,7 @@ export const restore = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Certification restored.",
     statusCode: StatusCodes.OK,
-    data: certification,
+    data: toCertificationResponse(certification),
     fieldName: "certification",
   });
 };
@@ -149,7 +150,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Certification permanently deleted.",
     statusCode: StatusCodes.OK,
-    data: certification,
+    data: toCertificationResponse(certification),
     fieldName: "certification",
   });
 };

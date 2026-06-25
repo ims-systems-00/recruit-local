@@ -11,6 +11,7 @@ export * from './job-profile.authz';
 export * from './cv.authz';
 export * from './kyc.authz';
 export * from './application.authz';
+export * from './education.authz';
 export * from './favourite.authz';
 export * from './file-media.authz';
 export * from './user-interest-survey.authz';

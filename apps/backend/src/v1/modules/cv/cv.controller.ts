@@ -14,6 +14,7 @@ import * as cvService from "./cv.service";
 import * as cvExtractService from "./cv-extract.service";
 import { matchCvEntities } from "./cv-match.service";
 import { cvRoleScopedSecurityQuery } from "./cv.query";
+import { toCvResponse, toCvResponseList } from "./cv.dto";
 
 export const list = async ({ req }: ControllerParams) => {
   const abilityBuilder = new CvAbilityBuilder(req.session);
@@ -42,7 +43,7 @@ export const list = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CVs retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: toCvResponseList(data),
     fieldName: "cvs",
     pagination,
   });
@@ -61,7 +62,7 @@ export const get = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV retrieved.",
     statusCode: StatusCodes.OK,
-    data: cv,
+    data: toCvResponse(cv),
     fieldName: "cv",
   });
 };
@@ -85,7 +86,7 @@ export const update = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV updated.",
     statusCode: StatusCodes.OK,
-    data: cv,
+    data: toCvResponse(cv),
     fieldName: "cv",
   });
 };
@@ -108,7 +109,7 @@ export const create = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV created successfully.",
     statusCode: StatusCodes.CREATED,
-    data: cv,
+    data: toCvResponse(cv),
     fieldName: "cv",
   });
 };
@@ -128,7 +129,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV removed successfully.",
     statusCode: StatusCodes.OK,
-    data: { cv },
+    data: { cv: toCvResponse(cv) },
     fieldName: "cv",
   });
 };
@@ -149,7 +150,7 @@ export const restore = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV restored successfully.",
     statusCode: StatusCodes.OK,
-    data: { cv },
+    data: { cv: toCvResponse(cv) },
     fieldName: "cv",
   });
 };
@@ -169,7 +170,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV deleted permanently.",
     statusCode: StatusCodes.OK,
-    data: { cv },
+    data: { cv: toCvResponse(cv) },
     fieldName: "cv",
   });
 };
@@ -206,7 +207,7 @@ export const extractAndCreate = async ({ req }: ControllerParams) => {
     message: "CV created from resume.",
     statusCode: StatusCodes.CREATED,
     data: {
-      cv,
+      cv: toCvResponse(cv),
       extractedData,
       jobTitles: matched.jobTitles,
       industries: matched.industries,
