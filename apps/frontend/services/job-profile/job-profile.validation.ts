@@ -33,8 +33,14 @@ export const jobProfileSchema = yup.object({
   email: yup.string().email().nullable().optional(),
   contactNumber: yup.string().nullable().optional(),
   portfolioUrl: yup.string().url().nullable().optional(),
-  headline: yup.string().nullable().optional(),
   address: yup.string().nullable().optional(),
+  jobTitle: yup.array().of(yup.string().required()).nullable().optional(),
+  industry: yup.array().of(yup.string().required()).nullable().optional(),
+  experienceLevel: yup
+    .array()
+    .of(yup.string().required())
+    .nullable()
+    .optional(),
   summary: yup.string().nullable().optional(),
   skills: yup.string().nullable().optional(),
   interests: yup.string().nullable().optional(),
@@ -64,8 +70,10 @@ export const createJobProfileSchema = yup.object({
   email: yup.string().email().optional(),
   contactNumber: yup.string().optional(),
   portfolioUrl: yup.string().url().optional(),
-  headline: yup.string().optional(),
   summary: yup.string().optional(),
+  jobTitle: yup.array().of(yup.string().required()).optional(),
+  industry: yup.array().of(yup.string().required()).optional(),
+  experienceLevel: yup.array().of(yup.string().required()).optional(),
   keywords: yup.array().of(yup.string().required()).optional(),
   skills: yup.string().optional(),
   interests: yup.string().optional(),
@@ -82,7 +90,9 @@ export const updateJobProfileSchema = yup.object({
   email: yup.string().email().optional(),
   contactNumber: yup.string().optional(),
   portfolioUrl: yup.string().url().optional(),
-  headline: yup.string().optional(),
+  jobTitle: yup.array().of(yup.string().required()).optional(),
+  industry: yup.array().of(yup.string().required()).optional(),
+  experienceLevel: yup.array().of(yup.string().required()).optional(),
   summary: yup.string().optional(),
   skills: yup.string().optional(),
   interests: yup.string().optional(),

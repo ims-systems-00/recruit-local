@@ -12,7 +12,11 @@ import { createCvSchema } from '@/services/cv/cv.validation';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import AttachmentItem from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/attachment-item';
-export default function CvUploadSection() {
+export default function CvUploadSection({
+  jobProfileId,
+}: {
+  jobProfileId: string;
+}) {
   const { deleteFile, isLoading: isDeleting } = useDeleteFileStorage();
 
   const schema = createCvSchema as yup.ObjectSchema<ExtractAndCreateCvInput>;
@@ -22,7 +26,7 @@ export default function CvUploadSection() {
   const methods = useForm<ExtractAndCreateCvInput>({
     resolver: yupResolver(schema),
     defaultValues: {
-      jobProfileId: '',
+      jobProfileId: jobProfileId,
       resumeStorage: undefined,
     },
     mode: 'onSubmit',
@@ -116,10 +120,7 @@ export default function CvUploadSection() {
         )}
         <div className=" w-full flex justify-end">
           <Button
-            onClick={() => {
-              console.log('button clicked');
-              handleSubmit(onSubmit);
-            }}
+            onClick={handleSubmit(onSubmit)}
             className=" cursor-pointer text-base bg-bg-brand-solid-primary border-primary text-white rounded-lg h-10"
           >
             {isCreatingCv ? 'Creating CV...' : 'Continue'}
