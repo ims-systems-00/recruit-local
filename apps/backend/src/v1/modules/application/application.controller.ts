@@ -14,6 +14,7 @@ import * as jobService from "../job/job.service";
 import { withTransaction } from "../../../common/helper/database-transaction";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { applicationRoleScopedSecurityQuery } from "./application.query";
+import { toApplicationResponse, toApplicationResponseList } from "./application.dto";
 
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_APPLICATION_FIELDS,
@@ -69,7 +70,7 @@ export const list = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Applications retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: toApplicationResponseList(data),
     fieldName: "applications",
     pagination,
   });
@@ -90,7 +91,7 @@ export const get = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Application retrieved.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedAppResponse(application, ability),
+    data: toApplicationResponse(getSanitizedAppResponse(application, ability)),
     fieldName: "application",
   });
 };
@@ -120,7 +121,7 @@ export const update = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Application updated.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedAppResponse(application, ability),
+    data: toApplicationResponse(getSanitizedAppResponse(application, ability)),
     fieldName: "application",
   });
 };
@@ -155,7 +156,7 @@ export const create = async ({ req }: ControllerParams) => {
     return new ApiResponse({
       message: "Application created.",
       statusCode: StatusCodes.CREATED,
-      data: getSanitizedAppResponse(application, ability),
+      data: toApplicationResponse(getSanitizedAppResponse(application, ability)),
       fieldName: "application",
     });
   });
@@ -187,7 +188,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
       message: "Application deleted.",
       statusCode: StatusCodes.OK,
       data: {
-        application: getSanitizedAppResponse(application, ability),
+        application: toApplicationResponse(getSanitizedAppResponse(application, ability)),
         deleted,
       },
       fieldName: "application",
@@ -213,7 +214,7 @@ export const restore = async ({ req }: ControllerParams) => {
     message: "Application restored.",
     statusCode: StatusCodes.OK,
     data: {
-      application: getSanitizedAppResponse(application, ability),
+      application: toApplicationResponse(getSanitizedAppResponse(application, ability)),
       restored,
     },
     fieldName: "application",
@@ -237,7 +238,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Application permanently deleted.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedAppResponse(application, ability),
+    data: toApplicationResponse(getSanitizedAppResponse(application, ability)),
     fieldName: "application",
   });
 };
@@ -266,7 +267,7 @@ export const statusUpdate = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Application status updated.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedAppResponse(application, ability),
+    data: toApplicationResponse(getSanitizedAppResponse(application, ability)),
     fieldName: "application",
   });
 };
@@ -291,7 +292,7 @@ export const moveItemOnBoard = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Application moved on board.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedAppResponse(application, ability),
+    data: toApplicationResponse(getSanitizedAppResponse(application, ability)),
     fieldName: "application",
   });
 };
