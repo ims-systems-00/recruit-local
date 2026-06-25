@@ -42,6 +42,7 @@ export default function JobTitleSection({
   const onSubmit = (data: JobProfileUpdateInput) => {
     let payload = {
       jobTitle: data.jobTitle || [],
+      onboardingStep: ONBOARDING_STEP_ENUMS.JOB_TITLE,
     };
     updateJobProfile({
       id: jobProfileId,

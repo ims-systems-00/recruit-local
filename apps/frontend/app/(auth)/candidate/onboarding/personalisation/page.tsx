@@ -9,6 +9,7 @@ import Image from 'next/image';
 import LoaderSvg from '@/public/images/loader.svg';
 import JobTitleSection from './sections/job-title';
 import IndustrySection from './sections/industry';
+import ExperienceLevelSection from './sections/experience-level';
 
 export default function PersonalisationPage() {
   const searchParams = useSearchParams();
@@ -61,9 +62,14 @@ export default function PersonalisationPage() {
       />
     );
   }
-  //   if (step === ONBOARDING_STEP_ENUMS.VALUES_STEP_4) {
-  //     return <ValuesStepFourSection />;
-  //   }
+  if (step === ONBOARDING_STEP_ENUMS.EXPERIENCE_LEVEL) {
+    return (
+      <ExperienceLevelSection
+        jobProfileId={jobProfileId || ''}
+        existingExperienceLevels={jobProfile?.experienceLevel || ''}
+      />
+    );
+  }
   //   if (step === ONBOARDING_STEP_ENUMS.VALUES_STEP_5) {
   //     return <ValuesStepFiveSection />;
   //   }

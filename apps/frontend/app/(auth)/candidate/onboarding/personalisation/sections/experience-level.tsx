@@ -1,14 +1,8 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Search } from 'lucide-react';
 import { ONBOARDING_STEP_ENUMS } from '@rl/types';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
@@ -19,20 +13,22 @@ import { cn } from '@/lib/utils';
 import { Resolver, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { MAX_INDUSTRIES_STEP_SELECTION } from '@/services/industry/industry.validation';
-import { useInfiniteIndustries } from '@/services/industry/industry.client';
 import { updateJobProfileSchema } from '@/services/job-profile/job-profile.validation';
 import { JobProfileUpdateInput } from '@/services/job-profile/job-profile.type';
 import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
+import { MAX_EXPERIENCE_LEVELS_STEP_SELECTION } from '@/services/experience-level/experience-level.validation';
+import { useInfiniteExperienceLevels } from '@/services/experience-level/experience-level.client';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
 
-export default function ValuesSection({
+export default function ExperienceLevelSection({
   jobProfileId,
-  existingIndustries,
+  existingExperienceLevels,
 }: {
   jobProfileId: string;
-  existingIndustries: string[];
+  existingExperienceLevels: string;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -50,11 +46,11 @@ export default function ValuesSection({
       updateJobProfileSchema,
     ) as Resolver<JobProfileUpdateInput>,
     defaultValues: {
-      industry: existingIndustries,
+      experienceLevel: existingExperienceLevels,
     },
   });
 
-  const selectedIndustries = watch('industry');
+  const selectedExperienceLevels = watch('experienceLevel');
 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -77,45 +73,15 @@ export default function ValuesSection({
     isFetchingNextPage,
     isLoading,
     isError,
-  } = useInfiniteIndustries(listFilters);
+  } = useInfiniteExperienceLevels(listFilters);
 
-  const industries = data?.pages.flatMap((page) => page.industries) ?? [];
-
-  const isMaxSelected =
-    selectedIndustries?.length &&
-    selectedIndustries?.length >= MAX_INDUSTRIES_STEP_SELECTION;
-
-  const handleToggle = (industryId: string, checked: boolean) => {
-    const current = selectedIndustries || [];
-
-    if (checked) {
-      if (
-        current.length >= MAX_INDUSTRIES_STEP_SELECTION &&
-        !current.includes(industryId)
-      ) {
-        return;
-      }
-
-      setValue('industry', [...current, industryId], {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    } else {
-      setValue(
-        'industry',
-        current.filter((id) => id !== industryId),
-        {
-          shouldDirty: true,
-          shouldValidate: true,
-        },
-      );
-    }
-  };
+  const experienceLevels =
+    data?.pages.flatMap((page) => page.experienceLevels) ?? [];
 
   const onSubmit = async (data: JobProfileUpdateInput) => {
     const payload = {
-      industry: data.industry,
-      onboardingStep: ONBOARDING_STEP_ENUMS.INDUSTRY,
+      experienceLevel: data.experienceLevel,
+      onboardingStep: ONBOARDING_STEP_ENUMS.EXPERIENCE_LEVEL,
     };
 
     await updateJobProfile({
@@ -126,7 +92,7 @@ export default function ValuesSection({
           queryKey: jobProfileKeys.detail(jobProfileId),
         });
         router.push(
-          `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.EXPERIENCE_LEVEL}`,
+          `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.WORK_MODE}`,
         );
       },
     });
@@ -163,24 +129,11 @@ export default function ValuesSection({
         </div>
         <div className=" space-y-spacing-lg">
           <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-secondary">
-            What industry would you like to work in?
+            What is your Experience Level ?
           </h4>
           <p className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary">
-            Select up to 3
+            We will use this to find suitable jobs.
           </p>
-          <InputGroup className="  h-12 rounded-lg shadow-xs border-border-gray-primary">
-            <InputGroupInput
-              type="text"
-              placeholder="Search industry..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-              }}
-            />
-            <InputGroupAddon>
-              <Search className=" text-fg-gray-tertiary" />
-            </InputGroupAddon>
-          </InputGroup>
         </div>
         <div className=" space-y-spacing-lg">
           <div
@@ -191,41 +144,34 @@ export default function ValuesSection({
               Array.from({ length: 5 }).map((_, index) => (
                 <MultiCheckboxSkeleton key={index} />
               ))
-            ) : industries.length > 0 ? (
+            ) : experienceLevels.length > 0 ? (
               <>
-                {industries.map((item) => {
-                  const isSelected = selectedIndustries?.includes(item._id);
-                  const isDisabled = isMaxSelected && !isSelected;
-
-                  return (
+                <RadioGroup
+                  value={selectedExperienceLevels || ''}
+                  onValueChange={(value) =>
+                    setValue('experienceLevel', value, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  {experienceLevels.map((item) => (
                     <div
                       key={item._id}
-                      className={cn(
-                        ' flex items-center gap-spacing-lg p-spacing-2xl rounded-2xl border border-border-gray-secondary min-h-14',
-                        isDisabled && 'opacity-50 cursor-not-allowed',
-                      )}
+                      className="flex items-center gap-spacing-lg p-spacing-2xl rounded-2xl border border-border-gray-secondary min-h-14"
                     >
-                      <Checkbox
-                        id={item._id}
-                        name={item._id}
-                        checked={isSelected}
-                        disabled={isDisabled || false}
-                        onCheckedChange={(checked) =>
-                          handleToggle(item._id, checked === true)
-                        }
-                      />
+                      <RadioGroupItem value={item._id} id={item._id} />
                       <Label
                         htmlFor={item._id}
                         className={cn(
                           ' text-label-md font-label-md-strong! text-text-gray-secondary',
-                          isDisabled && 'cursor-not-allowed',
                         )}
                       >
                         {item.name}
                       </Label>
                     </div>
-                  );
-                })}
+                  ))}
+                </RadioGroup>
                 {isFetchingNextPage && (
                   <div className=" space-y-spacing-lg">
                     {Array.from({ length: 2 }).map((_, index) => (
@@ -238,8 +184,8 @@ export default function ValuesSection({
               <div className=" flex items-center justify-center p-spacing-5xl border border-border-gray-secondary rounded-lg">
                 <p className=" text-label-md font-label-md-strong! text-text-gray-quaternary">
                   {isError
-                    ? 'Failed to load industries'
-                    : 'No industries found'}
+                    ? 'Failed to load experience levels'
+                    : 'No experience levels found'}
                 </p>
               </div>
             )}
@@ -250,7 +196,7 @@ export default function ValuesSection({
             disabled={isUpdating}
             onClick={() =>
               router.push(
-                `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.JOB_TITLE}`,
+                `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.INDUSTRY}`,
               )
             }
             variant="outline"

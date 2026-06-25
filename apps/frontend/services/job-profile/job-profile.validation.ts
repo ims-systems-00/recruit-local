@@ -36,11 +36,8 @@ export const jobProfileSchema = yup.object({
   address: yup.string().nullable().optional(),
   jobTitle: yup.array().of(yup.string().required()).nullable().optional(),
   industry: yup.array().of(yup.string().required()).nullable().optional(),
-  experienceLevel: yup
-    .array()
-    .of(yup.string().required())
-    .nullable()
-    .optional(),
+  experienceLevel: yup.string().nullable().optional(),
+  onboardingStep: yup.string().nullable().optional(),
   summary: yup.string().nullable().optional(),
   skills: yup.string().nullable().optional(),
   interests: yup.string().nullable().optional(),
@@ -92,7 +89,8 @@ export const updateJobProfileSchema = yup.object({
   portfolioUrl: yup.string().url().optional(),
   jobTitle: yup.array().of(yup.string().required()).optional(),
   industry: yup.array().of(yup.string().required()).optional(),
-  experienceLevel: yup.array().of(yup.string().required()).optional(),
+  experienceLevel: yup.string().optional(),
+  onboardingStep: yup.string().optional(),
   summary: yup.string().optional(),
   skills: yup.string().optional(),
   interests: yup.string().optional(),
