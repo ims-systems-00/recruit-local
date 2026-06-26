@@ -1,0 +1,37 @@
+'use client';
+import { useRouter } from 'next/navigation';
+import { getOnboardingValuesRoute } from '../helpers/onboarding-route';
+import { ONBOARDING_STEP_ENUMS, VALUE_TYPE_ENUM } from '@rl/types';
+import ValuesSection from './values-section';
+import { ValueData } from '@/services/value/value.type';
+
+const STEP_FIVE_TYPES = [VALUE_TYPE_ENUM.MEANING, VALUE_TYPE_ENUM.FULFILMENT];
+
+export default function ValuesStepFiveSection({
+  existingValues,
+  jobProfileId,
+}: {
+  existingValues: ValueData[];
+  jobProfileId: string;
+}) {
+  const router = useRouter();
+
+  return (
+    <ValuesSection
+      existingValues={existingValues}
+      jobProfileId={jobProfileId}
+      types={STEP_FIVE_TYPES}
+      onboardingStep={ONBOARDING_STEP_ENUMS.VALUES_STEP_5}
+      progressValue={90}
+      title="What motivates you professionally and what gives your work meaning and fulfilment?"
+      onSuccessNext={() => {
+        router.push(`/system-preparation`);
+      }}
+      onSuccessBack={() => {
+        router.push(
+          getOnboardingValuesRoute(ONBOARDING_STEP_ENUMS.VALUES_STEP_4),
+        );
+      }}
+    />
+  );
+}

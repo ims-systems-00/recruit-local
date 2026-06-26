@@ -1,11 +1,12 @@
 import * as yup from 'yup';
-import { PROFICIENCY, VISIBILITY } from '@rl/types';
+import { ONBOARDING_STEP_ENUMS, PROFICIENCY, VISIBILITY } from '@rl/types';
 
 import {
   objectIdSchema,
   deleteMarkerSchema,
   paginationSchema,
 } from '@/services/shared';
+import { valueSchema } from '../value/value.validation';
 
 // --- SUB-SCHEMAS ---
 export const languageSchema = yup.object({
@@ -35,6 +36,8 @@ export const jobProfileSchema = yup.object({
   portfolioUrl: yup.string().url().nullable().optional(),
   address: yup.string().nullable().optional(),
   jobTitle: yup.array().of(yup.string().required()).nullable().optional(),
+  values: yup.array().of(valueSchema).nullable().optional(),
+
   industry: yup.array().of(yup.string().required()).nullable().optional(),
   experienceLevel: yup.string().nullable().optional(),
   onboardingStep: yup.string().nullable().optional(),
@@ -91,6 +94,7 @@ export const updateJobProfileSchema = yup.object({
   industry: yup.array().of(yup.string().required()).optional(),
   experienceLevel: yup.string().optional(),
   onboardingStep: yup.string().optional(),
+  values: yup.array().of(yup.string()).optional(),
   summary: yup.string().optional(),
   skills: yup.string().optional(),
   interests: yup.string().optional(),
@@ -118,3 +122,24 @@ export const jobProfileItemResponseSchema = yup.object({
   jobProfile: jobProfileSchema.required(),
   message: yup.string().optional(),
 });
+
+export const CANDIDATE_MAX_VALUES_STEP_SELECTION = 5;
+
+export const candidateValuesStepSchema = yup.object({
+  onboardingStep: yup
+    .string()
+    .oneOf(Object.values(ONBOARDING_STEP_ENUMS))
+    .required(),
+  values: yup
+    .array()
+    .of(yup.string().required())
+    .max(
+      CANDIDATE_MAX_VALUES_STEP_SELECTION,
+      `You can select a maximum of ${CANDIDATE_MAX_VALUES_STEP_SELECTION} mindsets`,
+    )
+    .required(),
+});
+
+export type CandidateValuesStepFormValues = yup.InferType<
+  typeof candidateValuesStepSchema
+>;
