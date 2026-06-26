@@ -1,0 +1,11 @@
+/node_modules/
+*.log
+*.swp
+package-lock.json
+yarn.lock
+.env*
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+.ebextensions.examples
