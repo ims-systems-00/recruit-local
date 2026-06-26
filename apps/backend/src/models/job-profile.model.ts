@@ -3,15 +3,16 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { VISIBILITY, language, JOB_PROFILE_STATUS_ENUM, JOB_TITLE_ENUMS, ONBOARDING_STEP_ENUMS } from "@rl/types";
+import { VISIBILITY, language, JOB_PROFILE_STATUS_ENUM, ONBOARDING_STEP_ENUMS } from "@rl/types";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { String } from "lodash";
 
 export interface JobProfileInput extends IUserOwnedInput {
   name?: string;
-  jobTitle?: JOB_TITLE_ENUMS[];
+  jobTitle?: string[];
   industry?: string[];
+  workMode?: string[];
   experienceLevel?: String;
   address?: string;
   email?: string;
@@ -97,6 +98,9 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       default: JOB_PROFILE_STATUS_ENUM.UNVERIFIED,
     },
     industry: {
+      type: [String],
+    },
+    workMode: {
       type: [String],
     },
     onboardingStep: {
