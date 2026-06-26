@@ -10,6 +10,8 @@ import LoaderSvg from '@/public/images/loader.svg';
 import JobTitleSection from './sections/job-title';
 import IndustrySection from './sections/industry';
 import ExperienceLevelSection from './sections/experience-level';
+import WorkModeSection from './sections/work-mode';
+import LocationSection from './sections/location';
 
 export default function PersonalisationPage() {
   const searchParams = useSearchParams();
@@ -70,8 +72,22 @@ export default function PersonalisationPage() {
       />
     );
   }
-  //   if (step === ONBOARDING_STEP_ENUMS.VALUES_STEP_5) {
-  //     return <ValuesStepFiveSection />;
-  //   }
+  if (step === ONBOARDING_STEP_ENUMS.WORK_MODE) {
+    return (
+      <WorkModeSection
+        jobProfileId={jobProfileId || ''}
+        existingWorkModes={jobProfile?.workMode || []}
+      />
+    );
+  }
+
+  if (step === ONBOARDING_STEP_ENUMS.LOCATION) {
+    return (
+      <LocationSection
+        jobProfileId={jobProfileId || ''}
+        existingLocation={jobProfile?.address || ''}
+      />
+    );
+  }
   return <InfoSection />;
 }

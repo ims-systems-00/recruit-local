@@ -18,21 +18,21 @@ import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Resolver, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { MAX_INDUSTRIES_STEP_SELECTION } from '@/services/industry/industry.validation';
-import { useInfiniteIndustries } from '@/services/industry/industry.client';
+import { useInfiniteWorkModes } from '@/services/work-mode/work-mode.client';
 import { updateJobProfileSchema } from '@/services/job-profile/job-profile.validation';
 import { JobProfileUpdateInput } from '@/services/job-profile/job-profile.type';
 import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
+import { MAX_WORK_MODES_STEP_SELECTION } from '@/services/work-mode/work-mode.validation';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
 
-export default function IndustrySection({
+export default function WorkModeSection({
   jobProfileId,
-  existingIndustries,
+  existingWorkModes,
 }: {
   jobProfileId: string;
-  existingIndustries: string[];
+  existingWorkModes: string[];
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -50,11 +50,11 @@ export default function IndustrySection({
       updateJobProfileSchema,
     ) as Resolver<JobProfileUpdateInput>,
     defaultValues: {
-      industry: existingIndustries,
+      workMode: existingWorkModes,
     },
   });
 
-  const selectedIndustries = watch('industry');
+  const selectedWorkModes = watch('workMode');
 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -77,33 +77,33 @@ export default function IndustrySection({
     isFetchingNextPage,
     isLoading,
     isError,
-  } = useInfiniteIndustries(listFilters);
+  } = useInfiniteWorkModes(listFilters);
 
-  const industries = data?.pages.flatMap((page) => page.industries) ?? [];
+  const workModes = data?.pages.flatMap((page) => page.workModes) ?? [];
 
   const isMaxSelected =
-    selectedIndustries?.length &&
-    selectedIndustries?.length >= MAX_INDUSTRIES_STEP_SELECTION;
+    selectedWorkModes?.length &&
+    selectedWorkModes?.length >= MAX_WORK_MODES_STEP_SELECTION;
 
-  const handleToggle = (industryId: string, checked: boolean) => {
-    const current = selectedIndustries || [];
+  const handleToggle = (workModeId: string, checked: boolean) => {
+    const current = selectedWorkModes || [];
 
     if (checked) {
       if (
-        current.length >= MAX_INDUSTRIES_STEP_SELECTION &&
-        !current.includes(industryId)
+        current.length >= MAX_WORK_MODES_STEP_SELECTION &&
+        !current.includes(workModeId)
       ) {
         return;
       }
 
-      setValue('industry', [...current, industryId], {
+      setValue('workMode', [...current, workModeId], {
         shouldDirty: true,
         shouldValidate: true,
       });
     } else {
       setValue(
-        'industry',
-        current.filter((id) => id !== industryId),
+        'workMode',
+        current.filter((id) => id !== workModeId),
         {
           shouldDirty: true,
           shouldValidate: true,
@@ -114,8 +114,8 @@ export default function IndustrySection({
 
   const onSubmit = async (data: JobProfileUpdateInput) => {
     const payload = {
-      industry: data.industry,
-      onboardingStep: ONBOARDING_STEP_ENUMS.INDUSTRY,
+      workMode: data.workMode,
+      onboardingStep: ONBOARDING_STEP_ENUMS.WORK_MODE,
     };
 
     await updateJobProfile({
@@ -126,7 +126,7 @@ export default function IndustrySection({
           queryKey: jobProfileKeys.detail(jobProfileId),
         });
         router.push(
-          `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.EXPERIENCE_LEVEL}`,
+          `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.LOCATION}`,
         );
       },
     });
@@ -156,31 +156,18 @@ export default function IndustrySection({
     <div className=" flex justify-center items-center">
       <div className=" w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
         <div className=" flex items-center justify-between gap-spacing-lg">
-          <Progress value={20} className="w-full h-2.5" />
+          <Progress value={30} className="w-full h-2.5" />
           <span className=" text-label-xs font-label-xs-strong! text-text-gray-secondary">
-            {20}%
+            {30}%
           </span>
         </div>
         <div className=" space-y-spacing-lg">
           <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-secondary">
-            What industry would you like to work in?
+            What is your preferred work mode?
           </h4>
           <p className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary">
-            Select up to 3
+            We will use this to match your work preferences.
           </p>
-          <InputGroup className="  h-12 rounded-lg shadow-xs border-border-gray-primary">
-            <InputGroupInput
-              type="text"
-              placeholder="Search industry..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-              }}
-            />
-            <InputGroupAddon>
-              <Search className=" text-fg-gray-tertiary" />
-            </InputGroupAddon>
-          </InputGroup>
         </div>
         <div className=" space-y-spacing-lg">
           <div
@@ -191,10 +178,10 @@ export default function IndustrySection({
               Array.from({ length: 5 }).map((_, index) => (
                 <MultiCheckboxSkeleton key={index} />
               ))
-            ) : industries.length > 0 ? (
+            ) : workModes.length > 0 ? (
               <>
-                {industries.map((item) => {
-                  const isSelected = selectedIndustries?.includes(item._id);
+                {workModes.map((item) => {
+                  const isSelected = selectedWorkModes?.includes(item._id);
                   const isDisabled = isMaxSelected && !isSelected;
 
                   return (
@@ -238,8 +225,8 @@ export default function IndustrySection({
               <div className=" flex items-center justify-center p-spacing-5xl border border-border-gray-secondary rounded-lg">
                 <p className=" text-label-md font-label-md-strong! text-text-gray-quaternary">
                   {isError
-                    ? 'Failed to load industries'
-                    : 'No industries found'}
+                    ? 'Failed to load work modes'
+                    : 'No work modes found'}
                 </p>
               </div>
             )}
@@ -250,7 +237,7 @@ export default function IndustrySection({
             disabled={isUpdating}
             onClick={() =>
               router.push(
-                `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.JOB_TITLE}`,
+                `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.EXPERIENCE_LEVEL}`,
               )
             }
             variant="outline"

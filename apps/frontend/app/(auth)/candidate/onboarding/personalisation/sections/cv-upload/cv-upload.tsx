@@ -123,7 +123,7 @@ export default function CvUploadSection({
             onClick={handleSubmit(onSubmit)}
             className=" cursor-pointer text-base bg-bg-brand-solid-primary border-primary text-white rounded-lg h-10"
           >
-            {isCreatingCv ? 'Creating CV...' : 'Continue'}
+            {isCreatingCv ? 'Analysing CV...' : 'Continue'}
           </Button>
         </div>
       </div>
