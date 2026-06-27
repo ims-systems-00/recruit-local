@@ -14,6 +14,7 @@ import * as cvService from "./cv.service";
 import * as cvExtractService from "./cv-extract.service";
 import { matchCvEntities } from "./cv-match.service";
 import { cvRoleScopedSecurityQuery } from "./cv.query";
+import { toCvResponse, toCvResponseList } from "./cv.dto";
 
 export const list = async ({ req }: ControllerParams) => {
   const abilityBuilder = new CvAbilityBuilder(req.session);
@@ -42,7 +43,7 @@ export const list = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CVs retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: toCvResponseList(data),
     fieldName: "cvs",
     pagination,
   });
@@ -61,7 +62,7 @@ export const get = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV retrieved.",
     statusCode: StatusCodes.OK,
-    data: cv,
+    data: toCvResponse(cv),
     fieldName: "cv",
   });
 };
@@ -85,7 +86,7 @@ export const update = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV updated.",
     statusCode: StatusCodes.OK,
-    data: cv,
+    data: toCvResponse(cv),
     fieldName: "cv",
   });
 };
@@ -108,7 +109,7 @@ export const create = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV created successfully.",
     statusCode: StatusCodes.CREATED,
-    data: cv,
+    data: toCvResponse(cv),
     fieldName: "cv",
   });
 };
@@ -128,7 +129,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV removed successfully.",
     statusCode: StatusCodes.OK,
-    data: { cv },
+    data: { cv: toCvResponse(cv) },
     fieldName: "cv",
   });
 };
@@ -149,7 +150,7 @@ export const restore = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV restored successfully.",
     statusCode: StatusCodes.OK,
-    data: { cv },
+    data: { cv: toCvResponse(cv) },
     fieldName: "cv",
   });
 };
@@ -169,7 +170,43 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "CV deleted permanently.",
     statusCode: StatusCodes.OK,
-    data: { cv },
+    data: { cv: toCvResponse(cv) },
+    fieldName: "cv",
+  });
+};
+
+export const extract = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new CvAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  const cv = await cvService.getOne({ query: { _id: req.params.id } });
+
+  if (!cv || !ability.can(AbilityAction.Read, new CvAuthZEntity(cv))) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read this CV.`);
+  }
+
+  const resumeStorage = cv.resume?.storageInformation as { Bucket?: string; Key?: string } | undefined;
+  if (!resumeStorage?.Bucket || !resumeStorage?.Key) {
+    throw new BadRequestException("This CV has no uploaded resume to extract from.");
+  }
+
+  const rawExtracted = (await cvExtractService.extractFromResume({
+    resumeStorage: { Bucket: resumeStorage.Bucket, Key: resumeStorage.Key },
+  })) as Record<string, unknown>;
+  const { jobTitles: _jt, industries: _ind, workModes: _wm, experienceLevels: _el, ...extractedData } = rawExtracted;
+
+  const matched = await matchCvEntities(rawExtracted as Record<string, string[]>);
+
+  return new ApiResponse({
+    message: "CV data extracted.",
+    statusCode: StatusCodes.OK,
+    data: {
+      extractedData,
+      jobTitles: matched.jobTitles,
+      industries: matched.industries,
+      workModes: matched.workModes,
+      experienceLevels: matched.experienceLevels,
+    },
     fieldName: "cv",
   });
 };
@@ -206,7 +243,7 @@ export const extractAndCreate = async ({ req }: ControllerParams) => {
     message: "CV created from resume.",
     statusCode: StatusCodes.CREATED,
     data: {
-      cv,
+      cv: toCvResponse(cv),
       extractedData,
       jobTitles: matched.jobTitles,
       industries: matched.industries,

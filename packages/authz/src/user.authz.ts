@@ -39,11 +39,25 @@ export const ALL_USER_FIELDS = [
   'kycStatus',
 ];
 
-// Helper to clean up array filtering
+// Helper: build a field list by removing the given fields from ALL_USER_FIELDS.
 const omitFields = (fieldsToOmit: string[]) =>
   ALL_USER_FIELDS.filter((field) => !fieldsToOmit.includes(field));
 
-// Baseline Fields (Self)
+// Base groups shared across rules.
+const SENSITIVE_FIELDS = ['password']; // never read or mass-assigned
+const NON_READABLE_FIELDS = [...SENSITIVE_FIELDS, 'isDeleted', 'deletedAt']; // hidden from every read
+
+// Everything except the sensitive fields — admin-level read / manage scope.
+const NON_SENSITIVE_FIELDS = omitFields(SENSITIVE_FIELDS);
+
+// Read scopes per role. A candidate exposes the same fields whether viewed by
+// itself or by an employer, so one list covers both cases.
+const CANDIDATE_READ_FIELDS = omitFields([...NON_READABLE_FIELDS, 'role', 'tenantId']);
+const EMPLOYER_SELF_READ_FIELDS = omitFields([...NON_READABLE_FIELDS, 'tenantId']);
+const EMPLOYER_PUBLIC_READ_FIELDS = omitFields([...NON_READABLE_FIELDS, 'role', 'jobProfileId']);
+
+// Update scopes. Self-service is limited to personal details (and the user's own
+// password); everything else is system- or admin-managed.
 const SELF_UPDATE_FIELDS = omitFields([
   '_id',
   'id',
@@ -54,57 +68,20 @@ const SELF_UPDATE_FIELDS = omitFields([
   'updatedAt',
   'tenantId',
   'jobProfileId',
-  'isDeleted',
-  'deletedAt',
   'type',
   'role',
   'kycStatus',
-]);
-
-const SELF_READ_FIELDS_CANDIDATE = omitFields([
-  'password',
-  'tenantId',
-  'isDeleted',
-  'deletedAt',
-  'role',
-]);
-
-const SELF_READ_FIELDS_EMPLOYER = omitFields([
-  'password',
-  'tenantId',
   'isDeleted',
   'deletedAt',
 ]);
-
-// Public / Cross-Role Viewing Fields
-const PUBLIC_CANDIDATE_FIELDS = omitFields([
-  'role',
-  'tenantId',
-  'password',
-  'isDeleted',
-  'deletedAt',
-]);
-const PUBLIC_EMPLOYER_FIELDS = omitFields([
-  'role',
-  'jobProfileId',
-  'password',
-  'isDeleted',
-  'deletedAt',
-]);
-
-// Tenant Admin Fields
-const TENANT_ADMIN_READ_FIELDS = omitFields(['password']);
 const TENANT_ADMIN_UPDATE_FIELDS = omitFields([
-  'password',
+  ...SENSITIVE_FIELDS,
   'tenantId',
   'type',
   'isDeleted',
   'deletedAt',
   'kycStatus',
 ]);
-
-// Platform Admin Fields
-const PLATFORM_ADMIN_FIELDS = omitFields(['password']);
 
 // --- 2. AUTHZ ENTITY ---
 export class UserAuthZEntity {
@@ -163,7 +140,7 @@ export class UserAbilityBuilder implements IAbilityBuilder {
 
     // PLATFORM ADMIN
     if (user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
-      can(AbilityAction.Manage, UserAuthZEntity, PLATFORM_ADMIN_FIELDS);
+      can(AbilityAction.Manage, UserAuthZEntity, NON_SENSITIVE_FIELDS);
 
       // Early return: Platform Admins don't need the other granular rules evaluated
       return this.buildAbility();
@@ -172,17 +149,17 @@ export class UserAbilityBuilder implements IAbilityBuilder {
     // EMPLOYER
     if (user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
       // own
-      can(AbilityAction.Read, UserAuthZEntity, SELF_READ_FIELDS_EMPLOYER, {
+      can(AbilityAction.Read, UserAuthZEntity, EMPLOYER_SELF_READ_FIELDS, {
         _id: user._id,
       });
       // View coworkers in the same tenant
-      can(AbilityAction.Read, UserAuthZEntity, PUBLIC_EMPLOYER_FIELDS, {
+      can(AbilityAction.Read, UserAuthZEntity, EMPLOYER_PUBLIC_READ_FIELDS, {
         type: ACCOUNT_TYPE_ENUMS.EMPLOYER,
         tenantId: tenantId,
       });
 
       // View candidates across the platform
-      can(AbilityAction.Read, UserAuthZEntity, PUBLIC_CANDIDATE_FIELDS, {
+      can(AbilityAction.Read, UserAuthZEntity, CANDIDATE_READ_FIELDS, {
         type: ACCOUNT_TYPE_ENUMS.CANDIDATE,
       });
     }
@@ -193,7 +170,7 @@ export class UserAbilityBuilder implements IAbilityBuilder {
       user.role === USER_ROLE_ENUMS.ADMIN
     ) {
       // Broad read access to their entire tenant
-      can(AbilityAction.Read, UserAuthZEntity, TENANT_ADMIN_READ_FIELDS, {
+      can(AbilityAction.Read, UserAuthZEntity, NON_SENSITIVE_FIELDS, {
         tenantId: tenantId,
       });
 
@@ -214,11 +191,11 @@ export class UserAbilityBuilder implements IAbilityBuilder {
 
     // CANDIDATE
     if (user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
-      can(AbilityAction.Read, UserAuthZEntity, SELF_READ_FIELDS_CANDIDATE, {
+      can(AbilityAction.Read, UserAuthZEntity, CANDIDATE_READ_FIELDS, {
         _id: user._id,
       });
       // View employers across the platform
-      can(AbilityAction.Read, UserAuthZEntity, PUBLIC_EMPLOYER_FIELDS, {
+      can(AbilityAction.Read, UserAuthZEntity, EMPLOYER_PUBLIC_READ_FIELDS, {
         type: ACCOUNT_TYPE_ENUMS.EMPLOYER,
       });
     }

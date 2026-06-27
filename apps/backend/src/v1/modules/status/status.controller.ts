@@ -2,6 +2,7 @@ import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
 import * as statusService from "./status.service";
+import { toStatusResponse, toStatusResponseList } from "./status.dto";
 
 export const list = async ({ req }: ControllerParams) => {
   const filter = new MongoQuery(req.query, {
@@ -17,7 +18,7 @@ export const list = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Statuses retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: toStatusResponseList(data),
     fieldName: "statuses",
     pagination,
   });
@@ -31,7 +32,7 @@ export const get = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Status retrieved.",
     statusCode: StatusCodes.OK,
-    data: status,
+    data: toStatusResponse(status),
     fieldName: "status",
   });
 };
@@ -50,7 +51,7 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Soft deleted statuses retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: toStatusResponseList(data),
     fieldName: "statuses",
     pagination,
   });
@@ -64,7 +65,7 @@ export const getOneSoftDeleted = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Deleted status retrieved",
     statusCode: StatusCodes.OK,
-    data: status,
+    data: toStatusResponse(status),
     fieldName: "status",
   });
 };
@@ -78,7 +79,7 @@ export const create = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Status created.",
     statusCode: StatusCodes.CREATED,
-    data: status,
+    data: toStatusResponse(status),
     fieldName: "status",
   });
 };
@@ -92,7 +93,7 @@ export const update = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Status updated.",
     statusCode: StatusCodes.OK,
-    data: status,
+    data: toStatusResponse(status),
     fieldName: "status",
   });
 };
@@ -106,7 +107,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Status moved to trash.",
     statusCode: StatusCodes.OK,
-    data: status,
+    data: toStatusResponse(status),
     fieldName: "status",
   });
 };
@@ -120,7 +121,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Status permanently deleted.",
     statusCode: StatusCodes.OK,
-    data: status,
+    data: toStatusResponse(status),
     fieldName: "status",
   });
 };
@@ -133,7 +134,7 @@ export const restore = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Status restored from trash.",
     statusCode: StatusCodes.OK,
-    data: status,
+    data: toStatusResponse(status),
     fieldName: "status",
   });
 };

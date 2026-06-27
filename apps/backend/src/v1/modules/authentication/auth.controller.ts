@@ -4,6 +4,7 @@ import * as tokenService from "../token";
 import { ApiResponse, ControllerParams } from "../../../common/helper";
 import { UserPayload } from "./auth.interface";
 import { pick } from "../../../common/helper";
+import { toAuthUserResponse } from "./auth.dto";
 
 const cookieOptions = {
   httpOnly: true,
@@ -27,19 +28,7 @@ export const registration = async ({ req }: ControllerParams): Promise<ApiRespon
   return new ApiResponse({
     message: responseMessage,
     statusCode: StatusCodes.CREATED,
-    data: pick(user, [
-      "id",
-      "firstName",
-      "lastName",
-      "fullName",
-      "email",
-      "emailVerificationStatus",
-      "type",
-      "role",
-      "tenantId",
-      "jobProfileId",
-      "kycStatus",
-    ]),
+    data: toAuthUserResponse(user),
     fieldName: "user",
   });
 };
@@ -53,19 +42,7 @@ export const login = async ({ req }: ControllerParams): Promise<ApiResponse> => 
   const { accessToken: accessTokenRes, refreshToken: refreshTokenRes } = await tokenService.getTokenPairForUser(user);
 
   const responseData = {
-    ...pick(user, [
-      "id",
-      "firstName",
-      "lastName",
-      "fullName",
-      "email",
-      "emailVerificationStatus",
-      "type",
-      "role",
-      "tenantId",
-      "jobProfileId",
-      "kycStatus",
-    ]),
+    ...toAuthUserResponse(user),
     accessToken: accessTokenRes,
     refreshToken: refreshTokenRes,
   };
@@ -110,17 +87,7 @@ export const verifyRegistration = async ({ req }: ControllerParams): Promise<Api
   const { accessToken, refreshToken } = await tokenService.getTokenPairForUser(user);
 
   const responseData = {
-    ...pick(user, [
-      "id",
-      "firstName",
-      "lastName",
-      "fullName",
-      "email",
-      "emailVerificationStatus",
-      "type",
-      "role",
-      "tenantId",
-    ]),
+    ...toAuthUserResponse(user),
     accessToken,
     refreshToken,
   };
@@ -153,17 +120,7 @@ export const resendVerification = async ({ req }: ControllerParams): Promise<Api
   return new ApiResponse({
     message: "Account verification link sent to your email.",
     statusCode: StatusCodes.OK,
-    data: pick(user, [
-      "_id",
-      "firstName",
-      "lastName",
-      "fullName",
-      "email",
-      "emailVerificationStatus",
-      "type",
-      "role",
-      "tenantId",
-    ]),
+    data: toAuthUserResponse(user),
     fieldName: "user",
   });
 };
@@ -194,17 +151,7 @@ export const verifyRecovery = async ({ req }: ControllerParams): Promise<ApiResp
   const { accessToken: accessTokenRes, refreshToken: refreshTokenRes } = await tokenService.getTokenPairForUser(user);
 
   const responseData = {
-    ...pick(user, [
-      "id",
-      "firstName",
-      "lastName",
-      "fullName",
-      "email",
-      "emailVerificationStatus",
-      "type",
-      "role",
-      "tenantId",
-    ]),
+    ...toAuthUserResponse(user),
     accessToken: accessTokenRes,
     refreshToken: refreshTokenRes,
   };
@@ -245,11 +192,8 @@ export const refreshAccessToken = async ({ req }: ControllerParams): Promise<Api
 
   const { accessToken: accessTokenRes, refreshToken: refreshTokenRes } = await tokenService.getTokenPairForUser(user);
   const responseData = {
-    user: {
-      ...pick(user, ["_id", "firstName", "lastName", "fullName", "email", "emailVerificationStatus", "type", "role"]),
-      role: user.role,
-    },
-    tenantId: user.tenantId,
+    user: toAuthUserResponse(user),
+    tenantId: user.tenantId != null ? String(user.tenantId) : null,
     accessToken: accessTokenRes,
     refreshToken: refreshTokenRes,
   };
