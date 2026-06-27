@@ -5,7 +5,7 @@ import { ONBOARDING_STEP_ENUMS, VALUE_TYPE_ENUM } from '@rl/types';
 import ValuesSection from './values-section';
 import { ValueData } from '@/services/value/value.type';
 
-const STEP_FIVE_TYPES = [VALUE_TYPE_ENUM.MEANING, VALUE_TYPE_ENUM.FULFILMENT];
+const STEP_FIVE_TYPES = [VALUE_TYPE_ENUM.TEAM_DYNAMICS];
 
 export default function ValuesStepFiveSection({
   existingValues,

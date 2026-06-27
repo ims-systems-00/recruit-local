@@ -5,12 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ValueData } from '@/services/value/value.type';
 import ValuesSection from './values-section';
 
-const STEP_ONE_TYPES = [
-  VALUE_TYPE_ENUM.GROWTH,
-  VALUE_TYPE_ENUM.LEARNING,
-  VALUE_TYPE_ENUM.CHALLENGE,
-  VALUE_TYPE_ENUM.INNOVATION,
-];
+const STEP_ONE_TYPES = [VALUE_TYPE_ENUM.MINDSET];
 
 export default function ValuesStepOneSection({
   existingValues,

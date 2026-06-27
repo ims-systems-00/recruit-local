@@ -5,11 +5,7 @@ import { ONBOARDING_STEP_ENUMS, VALUE_TYPE_ENUM } from '@rl/types';
 import ValuesSection from './values-section';
 import { ValueData } from '@/services/value/value.type';
 
-const STEP_THREE_TYPES = [
-  VALUE_TYPE_ENUM.INTERPERSONAL,
-  VALUE_TYPE_ENUM.ETHICAL,
-  VALUE_TYPE_ENUM.SOCIAL,
-];
+const STEP_THREE_TYPES = [VALUE_TYPE_ENUM.CULTURE_AND_BEHAVIOR];
 
 export default function ValuesStepThreeSection({
   existingValues,

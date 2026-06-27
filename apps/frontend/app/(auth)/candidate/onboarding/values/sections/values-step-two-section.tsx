@@ -5,12 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ValueData } from '@/services/value/value.type';
 import ValuesSection from './values-section';
 
-const STEP_TWO_TYPES = [
-  VALUE_TYPE_ENUM.WORK,
-  VALUE_TYPE_ENUM.COMMUNICATE,
-  VALUE_TYPE_ENUM.ORGANIZE,
-  VALUE_TYPE_ENUM.CONTRIBUTE,
-];
+const STEP_TWO_TYPES = [VALUE_TYPE_ENUM.WORKING_STYLE];
 
 export default function ValuesStepTwoSection({
   existingValues,

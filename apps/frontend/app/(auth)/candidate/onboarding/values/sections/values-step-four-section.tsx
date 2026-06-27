@@ -5,11 +5,7 @@ import { ONBOARDING_STEP_ENUMS, VALUE_TYPE_ENUM } from '@rl/types';
 import ValuesSection from './values-section';
 import { ValueData } from '@/services/value/value.type';
 
-const STEP_FOUR_TYPES = [
-  VALUE_TYPE_ENUM.PERFORMANCE,
-  VALUE_TYPE_ENUM.DEVELOPMENT,
-  VALUE_TYPE_ENUM.COLLABORATION,
-];
+const STEP_FOUR_TYPES = [VALUE_TYPE_ENUM.LEADERSHIP];
 export default function ValuesStepFourSection({
   existingValues,
   jobProfileId,
