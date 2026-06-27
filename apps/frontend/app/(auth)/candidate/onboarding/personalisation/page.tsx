@@ -54,7 +54,12 @@ export default function PersonalisationPage() {
     return <CvUploadSection jobProfileId={jobProfileId || ''} />;
   }
   if (step === ONBOARDING_STEP_ENUMS.JOB_TITLE) {
-    return <JobTitleSection jobProfileId={jobProfileId || ''} />;
+    return (
+      <JobTitleSection
+        jobProfileId={jobProfileId || ''}
+        existingJobTitles={jobProfile?.jobTitle || []}
+      />
+    );
   }
   if (step === ONBOARDING_STEP_ENUMS.INDUSTRY) {
     return (
