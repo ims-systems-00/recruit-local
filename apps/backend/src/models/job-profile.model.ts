@@ -3,9 +3,10 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { VISIBILITY, language, JOB_PROFILE_STATUS_ENUM, ONBOARDING_STEP_ENUMS } from "@rl/types";
+import { VISIBILITY, language, JOB_PROFILE_STATUS_ENUM, ONBOARDING_STEP_ENUMS, StoredCompletion } from "@rl/types";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { IBaseDoc } from "./interfaces/base.interface";
+import { completionMongooseDefinition } from "./templates/completion.template";
 import { String } from "lodash";
 
 export interface JobProfileInput extends IUserOwnedInput {
@@ -30,6 +31,7 @@ export interface JobProfileInput extends IUserOwnedInput {
 
 export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, IBaseDoc {
   visibility: VISIBILITY;
+  completion?: StoredCompletion;
 }
 
 interface IJobProfileModel
@@ -108,6 +110,7 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       enum: Object.values(ONBOARDING_STEP_ENUMS),
       default: ONBOARDING_STEP_ENUMS.NOT_STARTED,
     },
+    completion: { type: completionMongooseDefinition, default: () => ({}) },
   },
   {
     timestamps: true,

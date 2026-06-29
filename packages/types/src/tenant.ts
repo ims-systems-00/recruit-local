@@ -1,5 +1,6 @@
 import { TENANT_STATUS_ENUMS, TENANT_TYPE } from './tenant.enum';
 import { ONBOARDING_STEP_ENUMS } from './onboarding';
+import { Completion } from './completion';
 
 /** AWS storage descriptor attached to a tenant logo. */
 export interface TenantStorageDto {
@@ -44,6 +45,7 @@ export interface TenantResponseDto {
   values?: string[];
   onboardingStep?: ONBOARDING_STEP_ENUMS;
   isRecruitmentEnabled?: boolean;
+  completion?: Completion; // expanded breakdown (percentage + sections + missing)
   createdAt?: string; // ISO
   updatedAt?: string; // ISO
 }

@@ -3,6 +3,7 @@ import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { educationProjectQuery } from "./education.query";
 import { Education, EducationInput } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
+import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 import { IListParams, ListQueryParams } from "@rl/types";
 
 type IListEducationParams = IListParams<EducationInput>;
@@ -45,6 +46,7 @@ export const getOneSoftDeleted = async ({ query = {} }: IListEducationParams) =>
 export const create = async (payload: EducationInput) => {
   let education = new Education(payload);
   education = await education.save();
+  await enqueueProfileCompletion(education.userId);
   return education;
 };
 
@@ -57,6 +59,7 @@ export const update = async ({
 }) => {
   const updatedEducation = await Education.findOneAndUpdate(sanitizeQueryIds(query), { $set: payload }, { new: true });
   if (!updatedEducation) throw new NotFoundException("Education Profile not found.");
+  await enqueueProfileCompletion(updatedEducation.userId);
   return updatedEducation;
 };
 
@@ -64,6 +67,7 @@ export const softRemove = async ({ query }: { query: IEducationQueryParams }) =>
   const { deleted } = await Education.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Education Profile not found to delete.");
   const result = await getOneSoftDeleted({ query });
+  await enqueueProfileCompletion(result?.userId);
   return result;
 };
 
@@ -71,6 +75,7 @@ export const hardRemove = async ({ query }: { query: IEducationQueryParams }) =>
   const result = await getOneSoftDeleted({ query });
   const deletedEducation = await Education.findOneAndDelete(sanitizeQueryIds(query));
   if (!deletedEducation) throw new NotFoundException("Education Profile not found to delete.");
+  await enqueueProfileCompletion(result?.userId);
   return result;
 };
 
@@ -78,5 +83,6 @@ export const restore = async ({ query }: { query: IEducationQueryParams }) => {
   const { restored } = await Education.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Education Profile not found in trash.");
   const result = await getOne({ query });
+  await enqueueProfileCompletion(result?.userId);
   return result;
 };

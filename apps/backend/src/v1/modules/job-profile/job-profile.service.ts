@@ -5,6 +5,7 @@ import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobProfileProjectQuery } from "./job-profile.query";
+import { recomputeProfileCompletion } from "./profile-completion.service";
 import { populateValuesQuery } from "../value/value.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
@@ -87,6 +88,9 @@ export const create = async ({ payload, allowedFields }: IJobProfileCreateParams
     await valueWeightUpdateQueue.addJob("value-weight-update", { valueIds });
   }
 
+  // Compute the initial completion from the freshly-created profile.
+  await recomputeProfileCompletion(jobProfile.userId);
+
   return getOne({
     query: { _id: jobProfileId } as any,
     allowedFields,
@@ -145,7 +149,10 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
     if (newValueIds.length) await valueWeightUpdateQueue.addJob("value-weight-update", { valueIds: newValueIds });
   }
 
-  return updatedJobProfile;
+  // Profile fields changed — recompute completion and return the fresh document.
+  await recomputeProfileCompletion(jobProfile.userId);
+
+  return getOne({ query: { _id: jobProfile._id } as any, allowedFields });
 };
 
 export const softDelete = async ({ query, allowedFields }: IJobProfileGetParams) => {

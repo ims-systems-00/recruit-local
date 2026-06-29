@@ -6,6 +6,7 @@ import { Tenant, ITenantDoc } from "../../../models";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
+import { recomputeTenantCompletion } from "./tenant-completion.service";
 import { tenantProjectionQuery } from "./tenant.query";
 import { populateValuesQuery } from "../value/value.query";
 import {
@@ -98,6 +99,9 @@ export const create = async ({ payload, session }: ITenantCreateParams) => {
     await valueWeightUpdateQueue.addJob("value-weight-update", { valueIds });
   }
 
+  const completion = await recomputeTenantCompletion(String(tenant._id));
+  if (completion) tenant.completion = completion;
+
   return tenant;
 };
 
@@ -119,6 +123,9 @@ export const update = async ({ query, payload, session }: ITenantUpdateParams) =
     const newValueIds = payload.values.map((id) => id.toString()).filter((id) => !existingValueIds.has(id));
     if (newValueIds.length) await valueWeightUpdateQueue.addJob("value-weight-update", { valueIds: newValueIds });
   }
+
+  const completion = await recomputeTenantCompletion(String(updatedTenant._id));
+  if (completion) updatedTenant.completion = completion;
 
   return updatedTenant;
 };
@@ -161,6 +168,11 @@ export const updateLogo = async ({ tenantId, logoType, file, session }: ITenantU
   );
 
   if (!updatedTenant) throw new NotFoundException("Tenant not found for update.");
+
+  // Logo just changed — branding may now be complete.
+  const completion = await recomputeTenantCompletion(String(updatedTenant._id));
+  if (completion) updatedTenant.completion = completion;
+
   return updatedTenant;
 };
 

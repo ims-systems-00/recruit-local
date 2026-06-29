@@ -2,6 +2,7 @@ import { StatusCodes } from "http-status-codes";
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
 import * as jobProfileService from "./job-profile.service";
+import { recomputeProfileCompletion } from "./profile-completion.service";
 import * as applicationService from "../application/application.service";
 import * as jobService from "../job/job.service";
 import { update as updateUser } from "../user";
@@ -12,7 +13,8 @@ import {
   JobAbilityBuilder,
   JobAuthZEntity,
 } from "@rl/authz";
-import { AbilityAction } from "@rl/types";
+import { AbilityAction, PROFILE_COMPLETION_SECTIONS } from "@rl/types";
+import { expandCompletion } from "@rl/utils";
 import { jobProfileRoleScopedSecurityQuery } from "./job-profile.query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 
@@ -21,18 +23,35 @@ const caslFieldOptions = {
 };
 
 /**
+ * Replaces the lean stored `completion` with the full breakdown so job-profile
+ * responses match the tenant shape ({ percentage, sections, missing, computedAt }).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const expandProfileCompletion = (doc: any) => {
+  if (doc && doc.completion) {
+    doc.completion = expandCompletion(
+      PROFILE_COMPLETION_SECTIONS,
+      doc.completion.completeSections ?? [],
+      doc.completion.computedAt ?? null
+    );
+  }
+  return doc;
+};
+
+/**
  * Internal helper to keep the controller clean.
  * Sanitizes a single job profile document based on 'Read' permissions.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getSanitizedResponse = (doc: any, ability: any) => {
-  return sanitizeDocument<JobProfileAuthZEntity>(
+  const sanitized = sanitizeDocument<JobProfileAuthZEntity>(
     doc,
     ability,
     AbilityAction.Read,
     JobProfileAuthZEntity,
     caslFieldOptions
   );
+  return expandProfileCompletion(sanitized);
 };
 
 export const list = async ({ req }: ControllerParams) => {
@@ -64,7 +83,7 @@ export const list = async ({ req }: ControllerParams) => {
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
+  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs.map(expandProfileCompletion) });
 
   return new ApiResponse({
     message: "Job Profiles retrieved",
@@ -87,11 +106,41 @@ export const getOne = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You do not have permission to view this job profile.");
   }
 
+  // Lazily compute completion for profiles that predate the feature (self-heals on read).
+  if (!jobProfile.completion?.computedAt) {
+    const stored = await recomputeProfileCompletion(jobProfile.userId);
+    if (stored) jobProfile.completion = stored;
+  }
+
   return new ApiResponse({
     message: "Job Profile retrieved.",
     statusCode: StatusCodes.OK,
     data: getSanitizedResponse(jobProfile, ability),
     fieldName: "jobProfile",
+  });
+};
+
+export const getCompletion = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new JobProfileAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  const jobProfile = await jobProfileService.getOne({ query: { _id: req.params.id } });
+
+  if (!jobProfile || !ability.can(AbilityAction.Read, new JobProfileAuthZEntity(jobProfile))) {
+    throw new UnauthorizedException("You do not have permission to view this job profile.");
+  }
+
+  // Recompute on demand so the breakdown is always fresh.
+  const stored = await recomputeProfileCompletion(jobProfile.userId);
+  const completion = stored
+    ? expandCompletion(PROFILE_COMPLETION_SECTIONS, stored.completeSections, stored.computedAt)
+    : null;
+
+  return new ApiResponse({
+    message: "Job profile completion retrieved.",
+    statusCode: StatusCodes.OK,
+    data: completion,
+    fieldName: "completion",
   });
 };
 
@@ -192,7 +241,7 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
+  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs.map(expandProfileCompletion) });
 
   return new ApiResponse({
     message: "Soft deleted job profiles retrieved",
@@ -253,7 +302,7 @@ export const create = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job Profile created.",
     statusCode: StatusCodes.CREATED,
-    data: jobProfile,
+    data: expandProfileCompletion(jobProfile),
     fieldName: "jobProfile",
   });
 };

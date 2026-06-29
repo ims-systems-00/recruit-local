@@ -9,6 +9,7 @@ import { userProjectionQuery } from "./user.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
+import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 import { IListUserParams, IUserGetParams, IUserCreateParams, IUserUpdateParams } from "./user.interface";
 
 export const list = ({ query = {}, options, session }: IListUserParams) => {
@@ -105,6 +106,10 @@ export const update = async ({ query, payload, session }: IUserUpdateParams) => 
   );
 
   if (!updatedUser) throw new NotFoundException("User not found.");
+
+  // The profile photo feeds completion — recompute when it changes.
+  if (payload.profileImageId !== undefined) await enqueueProfileCompletion(updatedUser._id);
+
   return updatedUser;
 };
 
@@ -202,6 +207,9 @@ export const updateUserProfileImage = async ({
       console.error(`Failed to delete old profile image for User ${user._id}`, error);
     }
   }
+
+  // The profile photo section just became complete — recompute.
+  await enqueueProfileCompletion(user._id);
 
   return updatedUser;
 };

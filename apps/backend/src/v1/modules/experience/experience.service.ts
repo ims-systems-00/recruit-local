@@ -3,6 +3,7 @@ import { ExperienceInput, Experience } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
+import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 // Assuming this query file exists following your pattern
 import { experienceProjectionQuery } from "./experience.query";
 
@@ -46,6 +47,7 @@ export const getOneSoftDeleted = async ({ query = {} }: IListExperienceParams) =
 export const create = async (payload: ExperienceInput) => {
   let experience = new Experience(payload);
   experience = await experience.save();
+  await enqueueProfileCompletion(experience.userId);
   return experience;
 };
 
@@ -62,6 +64,7 @@ export const update = async ({
     { new: true }
   );
   if (!updatedExperience) throw new NotFoundException("Experience not found.");
+  await enqueueProfileCompletion(updatedExperience.userId);
   return updatedExperience;
 };
 
@@ -69,6 +72,7 @@ export const softRemove = async ({ query }: { query: IExperienceQueryParams }) =
   const { deleted } = await Experience.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Experience not found to delete.");
   const result = await getOneSoftDeleted({ query });
+  await enqueueProfileCompletion(result?.userId);
   return result;
 };
 
@@ -76,6 +80,7 @@ export const hardRemove = async ({ query }: { query: IExperienceQueryParams }) =
   const result = await getOneSoftDeleted({ query });
   const deletedExperience = await Experience.findOneAndDelete(sanitizeQueryIds(query));
   if (!deletedExperience) throw new NotFoundException("Experience not found to delete.");
+  await enqueueProfileCompletion(result?.userId);
   return result;
 };
 
@@ -83,5 +88,6 @@ export const restore = async ({ query }: { query: IExperienceQueryParams }) => {
   const { restored } = await Experience.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Experience not found in trash.");
   const result = await getOne({ query });
+  await enqueueProfileCompletion(result?.userId);
   return result;
 };
