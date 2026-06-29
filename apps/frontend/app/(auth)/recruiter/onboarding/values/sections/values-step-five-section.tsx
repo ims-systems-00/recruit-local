@@ -1,14 +1,5 @@
 'use client';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Search } from 'lucide-react';
+
 import { useRouter } from 'next/navigation';
 import { getOnboardingValuesRoute } from '../helpers/onboarding-route';
 import { ONBOARDING_STEP_ENUMS, VALUE_TYPE_ENUM } from '@rl/types';
