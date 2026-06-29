@@ -52,6 +52,7 @@ export const createBodySchema = Joi.object({
   onboardingStep: Joi.string()
     .valid(...Object.values(ONBOARDING_STEP_ENUMS))
     .label("Onboarding Step"),
+  isRecruitmentEnabled: Joi.boolean().label("Is Recruitment Enabled"),
 });
 
 export const updateBodySchema = createBodySchema.fork(Object.keys(createBodySchema.describe().keys), (schema) =>

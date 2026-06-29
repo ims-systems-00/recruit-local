@@ -1,11 +1,25 @@
 import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import { TenantAbilityBuilder, TenantAuthZEntity } from "@rl/authz";
-import { AbilityAction, USER_ROLE_ENUMS } from "@rl/types";
+import { TenantAbilityBuilder, TenantAuthZEntity, ALL_TENANT_FIELDS } from "@rl/authz";
+import { AbilityAction, TenantResponseDto, USER_ROLE_ENUMS } from "@rl/types";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
+import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import * as tenantService from "./tenant.service";
 import { update as updateUser } from "../user/user.service";
 import { tenantRoleScopedSecurityQuery } from "./tenant.query";
+import { toTenantResponse, toTenantResponseList } from "./tenant.dto";
+
+const caslFieldOptions = {
+  fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_TENANT_FIELDS,
+};
+
+/**
+ * Internal helper to keep the controller clean.
+ * Sanitizes a single tenant document based on 'Read' permissions.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getSanitizedTenantResponse = (doc: any, ability: any) =>
+  sanitizeDocument<TenantResponseDto>(doc, ability, AbilityAction.Read, TenantAuthZEntity, caslFieldOptions);
 
 export const list = async ({ req }: ControllerParams) => {
   const abilityBuilder = new TenantAbilityBuilder(req.session);
@@ -30,12 +44,21 @@ export const list = async ({ req }: ControllerParams) => {
   };
 
   const results = await tenantService.list({ query: finalQuery, options });
-  const { data, pagination } = formatListResponse(results);
+
+  const sanitizedDocs = sanitizeDocuments<TenantResponseDto>(
+    results.docs,
+    ability,
+    AbilityAction.Read,
+    TenantAuthZEntity,
+    caslFieldOptions
+  );
+
+  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
 
   return new ApiResponse({
     message: "Organisations retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: toTenantResponseList(data),
     fieldName: "tenants",
     pagination,
   });
@@ -54,7 +77,7 @@ export const get = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Organisation retrieved.",
     statusCode: StatusCodes.OK,
-    data: tenant,
+    data: toTenantResponse(getSanitizedTenantResponse(tenant, ability)),
     fieldName: "tenant",
   });
 };
@@ -69,12 +92,15 @@ export const update = async ({ req }: ControllerParams) => {
 
   const existingTenant = await tenantService.getOne({ query: { _id: req.params.id } });
 
-  if (
-    !existingTenant ||
-    !ability.can(AbilityAction.Update, new TenantAuthZEntity({ _id: existingTenant._id?.toString() ?? null }))
-  ) {
+  const authZEntity = new TenantAuthZEntity({ _id: existingTenant?._id?.toString() ?? null });
+
+  // Row-Level Check
+  if (!existingTenant || !ability.can(AbilityAction.Update, authZEntity)) {
     throw new UnauthorizedException(`User is not authorized to update this organisation.`);
   }
+
+  // Field-Level Check
+  validateUpdatePayload(req.body, ability, AbilityAction.Update, authZEntity);
 
   const tenant = await tenantService.update({
     query: { _id: req.params.id },
@@ -84,7 +110,7 @@ export const update = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Organisation updated.",
     statusCode: StatusCodes.OK,
-    data: tenant,
+    data: toTenantResponse(getSanitizedTenantResponse(tenant, ability)),
     fieldName: "tenant",
   });
 };
@@ -118,7 +144,7 @@ export const updateLogo = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Organisation logo updated.",
     statusCode: StatusCodes.OK,
-    data: tenant,
+    data: toTenantResponse(getSanitizedTenantResponse(tenant, ability)),
     fieldName: "tenant",
   });
 };
@@ -154,7 +180,7 @@ export const create = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Organisation created.",
     statusCode: StatusCodes.CREATED,
-    data: tenant,
+    data: toTenantResponse(getSanitizedTenantResponse(tenant, ability)),
     fieldName: "tenant",
   });
 };
@@ -177,7 +203,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: `${deleted} organisation(s) moved to trash.`,
     statusCode: StatusCodes.OK,
-    data: tenant,
+    data: toTenantResponse(getSanitizedTenantResponse(tenant, ability)),
     fieldName: "tenant",
   });
 };
@@ -195,7 +221,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Organisation removed.",
     statusCode: StatusCodes.OK,
-    data: tenant,
+    data: toTenantResponse(getSanitizedTenantResponse(tenant, ability)),
     fieldName: "tenant",
   });
 };
@@ -234,7 +260,7 @@ export const restore = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: `${restored} organisation restored.`,
     statusCode: StatusCodes.OK,
-    data: tenant,
+    data: toTenantResponse(getSanitizedTenantResponse(tenant, ability)),
     fieldName: "tenant",
   });
 };
