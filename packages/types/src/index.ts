@@ -29,3 +29,4 @@ export * from './onboarding';
 export * from './status';
 export * from './application';
 export * from './certification';
+export * from './tenant';

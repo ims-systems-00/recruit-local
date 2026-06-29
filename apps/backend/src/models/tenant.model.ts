@@ -32,6 +32,7 @@ export interface TenantInput {
   coreServices?: string;
   values?: Types.ObjectId[];
   onboardingStep?: ONBOARDING_STEP_ENUMS;
+  isRecruitmentEnabled?: boolean;
 }
 
 // Define an interface for Tenant document
@@ -127,6 +128,10 @@ const tenantSchema = new Schema<ITenantDoc>(
       type: String,
       enum: Object.values(ONBOARDING_STEP_ENUMS),
       default: ONBOARDING_STEP_ENUMS.NOT_STARTED,
+    },
+    isRecruitmentEnabled: {
+      type: Boolean,
+      default: false,
     },
   },
   {
