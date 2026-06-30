@@ -16,6 +16,7 @@ interface ValueItemProps {
   tenantName: string;
   existingValues: ValueData[];
   types: VALUE_TYPE_ENUM[];
+  values: ValueData[];
 }
 
 export default function ValueItem({
@@ -28,6 +29,7 @@ export default function ValueItem({
   tenantName,
   existingValues,
   types,
+  values,
 }: ValueItemProps) {
   const [open, setOpen] = useState(false);
 
@@ -57,12 +59,12 @@ export default function ValueItem({
         </div>
 
         <div className="flex flex-wrap gap-spacing-2xl">
-          {existingValues.length === 0 ? (
+          {values.length === 0 ? (
             <span className="inline-flex min-h-6 items-center rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark">
               No values found
             </span>
           ) : (
-            existingValues.map((value) => (
+            values.map((value) => (
               <span
                 key={value._id}
                 className="inline-flex min-h-6 items-center rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark"

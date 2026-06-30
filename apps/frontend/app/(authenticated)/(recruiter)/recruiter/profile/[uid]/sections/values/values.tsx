@@ -48,7 +48,7 @@ const VALUE_LIST = [
     title:
       'What motivates you professionally and what gives your work meaning and fulfilment?',
     placeholder: 'Search your purpose and motivation...',
-    type: VALUE_TYPE_ENUM.TEAM_DYNAMICS,
+    type: VALUE_TYPE_ENUM.MOTIVATION,
   },
 ];
 
@@ -81,7 +81,8 @@ export default function Values({ profile }: { profile: TenantData }) {
               title={item.title}
               placeholder={item.placeholder}
               type={item.type}
-              existingValues={getFilteredValues(item.type) ?? []}
+              values={getFilteredValues(item.type) ?? []}
+              existingValues={values ?? []}
               tenantId={profile._id}
               tenantName={profile.name}
               types={[item.type]}
