@@ -162,7 +162,7 @@ export const valuesStepSchema = yup.object({
     .of(yup.string().required())
     .max(
       MAX_VALUES_STEP_SELECTION,
-      `You can select a maximum of ${MAX_VALUES_STEP_SELECTION} mindsets`,
+      `You can select a maximum of ${MAX_VALUES_STEP_SELECTION}`,
     )
     .required(),
 });

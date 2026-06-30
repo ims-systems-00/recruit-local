@@ -1,64 +1,64 @@
 'use client';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+
+import React, { useState } from 'react';
+import { Search } from 'lucide-react';
+
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Search } from 'lucide-react';
-import { ONBOARDING_STEP_ENUMS, VALUE_TYPE_ENUM } from '@rl/types';
-import { useInfiniteValues } from '@/services/value/value.client';
-import { useCallback, useMemo, useState } from 'react';
-import { useDebounce } from '@/hooks/useDebounce';
-import ValuesSkeleton from './values-skeleton';
+import { useForm, type Resolver } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
-import { cn } from '@/lib/utils';
-import { ValueData } from '@/services/value/value.type';
-import { Resolver, useForm } from 'react-hook-form';
+
 import { yupResolver } from '@hookform/resolvers/yup';
-import {
-  jobProfileKeys,
-  useUpdateJobProfile,
-} from '@/services/job-profile/job-profile.client';
+import { VALUE_TYPE_ENUM } from '@rl/types';
+import { ValueData } from '@/services/value';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useCallback, useMemo } from 'react';
+import { useInfiniteValues } from '@/services/value/value.client';
+import { Button } from '@/components/ui/button';
+import ValuesSkeleton from './values-skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import {
   CANDIDATE_MAX_VALUES_STEP_SELECTION,
-  candidateValuesStepSchema,
   CandidateValuesStepFormValues,
+  candidateValuesStepSchema,
 } from '@/services/job-profile/job-profile.validation';
+import { useUpdateJobProfile } from '@/services/job-profile';
 
 const PAGE_LIMIT = 10;
+
 const SCROLL_THRESHOLD = 80;
 
 const getStepValues = (values: ValueData[], types: VALUE_TYPE_ENUM[]) => {
   return values.filter((item) => types.includes(item.type));
 };
 
-export default function ValuesSection({
-  existingValues,
-  jobProfileId,
-  types,
-  onboardingStep,
-  progressValue,
-  title,
-  onSuccessNext,
-  onSuccessBack,
-  isBackDisabled = false,
-  isNextDisabled = false,
-}: {
-  existingValues: ValueData[];
-  jobProfileId: string;
-  types: VALUE_TYPE_ENUM[];
-  onboardingStep: ONBOARDING_STEP_ENUMS;
-  progressValue: number;
+interface EditValueDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   title: string;
-  onSuccessNext?: () => void;
-  onSuccessBack?: () => void;
-  isBackDisabled?: boolean;
-  isNextDisabled?: boolean;
-}) {
+  placeholder: string;
+  profileId: string;
+  existingValues: ValueData[];
+  types: VALUE_TYPE_ENUM[];
+  onSuccess: (values: ValueData[]) => void;
+}
+
+export default function EditValueDialog({
+  open,
+  onOpenChange,
+  title,
+  placeholder,
+  profileId,
+  existingValues,
+  types,
+  onSuccess,
+}: EditValueDialogProps) {
   const queryClient = useQueryClient();
 
   const form = useForm<CandidateValuesStepFormValues>({
@@ -66,7 +66,7 @@ export default function ValuesSection({
       candidateValuesStepSchema,
     ) as Resolver<CandidateValuesStepFormValues>,
     defaultValues: {
-      onboardingStep: onboardingStep,
+      onboardingStep: undefined,
       values: getStepValues(existingValues, types).map((item) => item._id),
     },
   });
@@ -125,22 +125,25 @@ export default function ValuesSection({
   };
 
   const onSubmit = async (data: CandidateValuesStepFormValues) => {
-    const otherStepValueIds = existingValues
-      .filter((item) => !types.includes(item.type))
-      .map((item) => item._id);
+    const selectedValueObjects = values.filter((item) =>
+      data.values.includes(item._id),
+    );
+
+    const otherValues = existingValues.filter(
+      (item) => !types.includes(item.type),
+    );
+
+    const updatedValues = [...otherValues, ...selectedValueObjects];
 
     await updateJobProfile({
-      id: jobProfileId,
+      id: profileId,
       payload: {
-        values: [...otherStepValueIds, ...data.values] as string[],
-        onboardingStep: data.onboardingStep,
+        values: updatedValues.map((item) => item._id),
       },
       onSuccessCallback: () => {
-        queryClient.invalidateQueries({
-          queryKey: jobProfileKeys.detail(jobProfileId),
-        });
+        onSuccess(updatedValues);
 
-        onSuccessNext?.();
+        onOpenChange(false);
       },
     });
   };
@@ -164,46 +167,46 @@ export default function ValuesSection({
   );
 
   const isInitialLoading = isLoading;
-
   return (
-    <div className=" flex justify-center items-center">
-      <div className=" w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
-        <div className=" flex items-center justify-between gap-spacing-lg">
-          <Progress value={progressValue} className="w-full h-2.5" />
-          <span className=" text-label-xs font-label-xs-strong! text-text-gray-secondary">
-            {progressValue}%
-          </span>
-        </div>
-        <div className=" space-y-spacing-lg">
-          <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-secondary">
-            {title}
-          </h4>
-          <InputGroup className="  h-12 rounded-lg shadow-xs border-border-gray-primary">
-            <InputGroupInput
-              type="text"
-              placeholder="Search your mindset..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-              }}
-            />
-            <InputGroupAddon>
-              <Search className=" text-fg-gray-tertiary" />
-            </InputGroupAddon>
-          </InputGroup>
-          <div className=" flex items-center gap-spacing-2xl">
-            <span>Top 3 Most Important tags </span>
-            <span className=" cursor-pointer inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-sm font-label-sm-strong! text-others-gray-dark border border-border-gray-primary">
-              Growth-oriented
-            </span>
-            <span className=" cursor-pointer inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-sm font-label-sm-strong! text-others-gray-dark border border-border-gray-primary">
-              Entrepreneurial
-            </span>
-            <span className=" cursor-pointer inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-sm font-label-sm-strong! text-others-gray-dark border border-border-gray-primary">
-              Proactive
-            </span>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[692px] bg-bg-gray-soft-primary shadow-xs gap-y-spacing-4xl">
+        <DialogTitle asChild>
+          <div className="space-y-spacing-lg">
+            <h4 className="text-label-lg font-label-lg-strong! text-text-gray-secondary">
+              {title}
+            </h4>
+
+            <InputGroup className="h-12 rounded-lg border-border-gray-primary shadow-xs">
+              <InputGroupInput
+                type="text"
+                placeholder={placeholder}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <InputGroupAddon>
+                <Search className="text-fg-gray-tertiary" />
+              </InputGroupAddon>
+            </InputGroup>
+
+            <div className="flex items-center gap-spacing-2xl">
+              <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                Top 3 Most Important tags
+              </span>
+
+              <span className="inline-flex min-h-6 cursor-pointer items-center justify-center rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark">
+                Growth-oriented
+              </span>
+
+              <span className="inline-flex min-h-6 cursor-pointer items-center justify-center rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark">
+                Entrepreneurial
+              </span>
+
+              <span className="inline-flex min-h-6 cursor-pointer items-center justify-center rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark">
+                Proactive
+              </span>
+            </div>
           </div>
-        </div>
+        </DialogTitle>
         <div className=" space-y-spacing-lg">
           <div className=" flex items-center justify-between gap-spacing-lg">
             <p className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary">
@@ -222,7 +225,7 @@ export default function ValuesSection({
           )}
           <div
             onScroll={handleScroll}
-            className=" max-h-[500px] overflow-y-auto space-y-spacing-lg"
+            className=" max-h-[400px] overflow-y-auto space-y-spacing-lg"
           >
             {isInitialLoading ? (
               Array.from({ length: 5 }).map((_, index) => (
@@ -280,24 +283,23 @@ export default function ValuesSection({
             )}
           </div>
         </div>
-        <div className=" flex justify-between items-center">
+        <div className=" flex justify-end items-center gap-spacing-2xl">
           <Button
-            disabled={isBackDisabled}
-            onClick={() => onSuccessBack?.()}
+            onClick={() => onOpenChange(false)}
             variant="outline"
-            className="text-label-md font-label-md-strong! cursor-pointer border-border-gray-primary h-12 rounded-lg text-text-gray-secondary"
+            className="text-label-md font-label-md-strong! cursor-pointer border-border-gray-primary h-10 rounded-lg text-text-gray-secondary"
           >
-            Back
+            Cancel
           </Button>
           <Button
             onClick={handleSubmit(onSubmit)}
-            disabled={isUpdating || isNextDisabled}
-            className="bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-12 rounded-lg"
+            disabled={isUpdating}
+            className="bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg"
           >
-            {isUpdating ? 'Saving...' : 'Continue'}
+            {isUpdating ? 'Saving...' : 'Confirm'}
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

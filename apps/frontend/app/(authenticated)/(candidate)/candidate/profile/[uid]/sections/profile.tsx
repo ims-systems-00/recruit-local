@@ -23,6 +23,7 @@ import TakenTests from './taken-tests/taken-tests';
 import Applied from './applied/applied';
 import Saved from './saved/saved';
 import Documents from './documents/documents';
+import Values from './values/values';
 
 export default function Profile({
   jobProfileData,
@@ -41,7 +42,7 @@ export default function Profile({
     ) as Resolver<JobProfileUpdateInput>,
     defaultValues: {
       name: jobProfileDetails?.name || '',
-      headline: jobProfileDetails?.headline || '',
+      jobTitle: jobProfileDetails?.jobTitle || [],
       email: jobProfileDetails?.email || '',
       contactNumber: jobProfileDetails?.contactNumber || '',
       address: jobProfileDetails?.address || '',
@@ -90,6 +91,11 @@ export default function Profile({
       label: 'About',
       component: <About profile={jobProfileDetails} />,
       editable: false,
+    },
+    {
+      value: 'values',
+      label: 'Values',
+      component: <Values profile={jobProfileDetails} />,
     },
     {
       value: 'work-experience',
@@ -178,7 +184,8 @@ export default function Profile({
               {jobProfileDetails?.name || 'N/A'}
             </h4>
             <p className=" text-body-sm text-text-gray-tertiary">
-              {jobProfileDetails?.headline || 'N/A'}
+              {/* {jobProfileDetails?.jobTitle?.join('|') || 'N/A'} */}
+              Here i need job title as string
             </p>
             <div className=" flex items-center gap-spacing-xs">
               {/* {jobProfileDetails?.linkedin && (

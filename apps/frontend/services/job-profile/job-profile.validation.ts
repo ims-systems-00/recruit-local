@@ -133,13 +133,13 @@ export const candidateValuesStepSchema = yup.object({
   onboardingStep: yup
     .string()
     .oneOf(Object.values(ONBOARDING_STEP_ENUMS))
-    .required(),
+    .optional(),
   values: yup
     .array()
     .of(yup.string().required())
     .max(
       CANDIDATE_MAX_VALUES_STEP_SELECTION,
-      `You can select a maximum of ${CANDIDATE_MAX_VALUES_STEP_SELECTION} mindsets`,
+      `You can select a maximum of ${CANDIDATE_MAX_VALUES_STEP_SELECTION}`,
     )
     .required(),
 });
