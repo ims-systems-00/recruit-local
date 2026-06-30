@@ -53,6 +53,10 @@ export const ALL_TENANT_FIELDS = [
   'isRecruitmentEnabled',
 ];
 
+// `completion` is server-computed: readable by everyone, but never client-writable,
+// so it is added to the read list only (not to the manage/write grants below).
+export const ALL_TENANT_READ_FIELDS = [...ALL_TENANT_FIELDS, 'completion'];
+
 export class TenantAuthZEntity {
   public readonly _id: string | null;
   constructor({ _id }: { _id: string | null }) {
@@ -78,7 +82,7 @@ export class TenantAbilityBuilder implements IAbilityBuilder {
     const builder = this.abilityBuilder;
 
     // Every account type can read all fields of organisations (e.g. to view an organisation's values).
-    builder.can(AbilityAction.Read, TenantAuthZEntity, ALL_TENANT_FIELDS);
+    builder.can(AbilityAction.Read, TenantAuthZEntity, ALL_TENANT_READ_FIELDS);
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       builder.can(AbilityAction.Manage, TenantAuthZEntity, ALL_TENANT_FIELDS);

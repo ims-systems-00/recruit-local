@@ -15,6 +15,7 @@
     "stop:docker": "docker compose -f ../docker-compose.dev.yml down",
     "seed:dev": "env-cmd -f ./.env.dev ts-node ./src/seeders/index.ts",
     "seed": "node dist/src/seeders/index.js",
+    "backfill:completion:dev": "env-cmd -f ./.env.dev ts-node ./src/scripts/backfill-completion.ts",
     "migrate:dev": "env-cmd -f ./.env.dev migrate-mongo up",
     "migrate-down:dev": "env-cmd -f ./.env.dev migrate-mongo down",
     "migrate": "migrate-mongo"

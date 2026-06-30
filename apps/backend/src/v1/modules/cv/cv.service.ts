@@ -5,6 +5,7 @@ import { cvProjectQuery, populateCvResumeQuery } from "./cv.query";
 import { NotFoundException } from "../../../common/helper";
 import { CV, CVInput } from "../../../models/cv.model";
 import { CV_STATUS_ENUM, IListParams, ListQueryParams } from "@rl/types";
+import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { VISIBILITY_ENUM } from "@rl/types";
@@ -117,6 +118,7 @@ export const create = async ({ payload }: ICVCreateParams) => {
   });
 
   cv = await cv.save();
+  await enqueueProfileCompletion(cv.userId);
   return cv;
 };
 
@@ -191,6 +193,7 @@ export const update = async ({ query, payload }: ICVUpdateParams) => {
   );
 
   if (!updatedCV) throw new NotFoundException("CV not found.");
+  await enqueueProfileCompletion(updatedCV.userId);
   return updatedCV;
 };
 
@@ -199,6 +202,7 @@ export const softDelete = async ({ query }: ICVGetParams) => {
   const { deleted } = await CV.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("CV not found to delete.");
   const cv = await getOneSoftDeleted({ query: sanitizeQueryIds(query) });
+  await enqueueProfileCompletion(cv?.userId);
   return { cv };
 };
 
@@ -225,6 +229,7 @@ export const hardDelete = async ({ query }: ICVGetParams) => {
 
   const deletedCV = await CV.findOneAndDelete({ _id: cv._id });
   if (!deletedCV) throw new NotFoundException("CV not found to delete.");
+  await enqueueProfileCompletion(cv?.userId);
   return { cv: deletedCV };
 };
 
@@ -232,5 +237,6 @@ export const restore = async ({ query }: ICVGetParams) => {
   const { restored } = await CV.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("CV not found in trash.");
   const cv = await getOne({ query: sanitizeQueryIds(query) });
+  await enqueueProfileCompletion(cv?.userId);
   return { cv };
 };

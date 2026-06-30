@@ -5,6 +5,7 @@ import { AwsStorageTemplate } from "../../../models/templates/aws-storage.templa
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { certificationProjectionQuery } from "./certification.query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
+import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 import * as FileMediaService from "../file-media/file-media.service";
 import { Types } from "mongoose";
 import { modelNames } from "../../../models/constants";
@@ -85,6 +86,7 @@ export const create = async ({ payload }: ICertificationCreateParams) => {
 
   certification = await certification.save();
 
+  await enqueueProfileCompletion(certification.userId);
   return certification;
 };
 
@@ -133,12 +135,14 @@ export const update = async ({ query, payload }: ICertificationUpdateParams) => 
     { new: true }
   );
 
+  await enqueueProfileCompletion(updatedCertification?.userId);
   return updatedCertification;
 };
 
 export const softRemove = async ({ query }: ICertificationGetParams) => {
   const { deleted } = await Certification.softDelete(query);
   const result = await getSoftDeletedOne({ query });
+  await enqueueProfileCompletion(result?.userId);
   return result;
 };
 
@@ -158,6 +162,7 @@ export const hardDelete = async ({ query }: ICertificationGetParams) => {
 
   const deletedCertification = await Certification.findOneAndDelete({ _id: certification._id });
   if (!deletedCertification) throw new NotFoundException("Certification not found to delete.");
+  await enqueueProfileCompletion(certification?.userId);
   return certification;
 };
 
@@ -165,5 +170,6 @@ export const restore = async ({ query }: ICertificationGetParams) => {
   const { restored } = await Certification.restore(query);
   if (!restored) throw new NotFoundException("Certification not found in trash.");
   const result = await getOne({ query });
+  await enqueueProfileCompletion(result?.userId);
   return result;
 };
