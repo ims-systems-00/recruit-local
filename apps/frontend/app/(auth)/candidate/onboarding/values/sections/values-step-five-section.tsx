@@ -25,7 +25,9 @@ export default function ValuesStepFiveSection({
       progressValue={90}
       title="What motivates you professionally and what gives your work meaning and fulfilment?"
       onSuccessNext={() => {
-        router.push(`/system-preparation`);
+        router.push(
+          getOnboardingValuesRoute(ONBOARDING_STEP_ENUMS.NOTICE_BY_EMPLOYEE),
+        );
       }}
       onSuccessBack={() => {
         router.push(

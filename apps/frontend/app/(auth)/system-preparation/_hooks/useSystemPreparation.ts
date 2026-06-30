@@ -34,6 +34,8 @@ const NEXT_CANDIDATE_ONBOARDING_VALUES_STEP: Record<string, string> = {
   [ONBOARDING_STEP_ENUMS.VALUES_STEP_2]: ONBOARDING_STEP_ENUMS.VALUES_STEP_3,
   [ONBOARDING_STEP_ENUMS.VALUES_STEP_3]: ONBOARDING_STEP_ENUMS.VALUES_STEP_4,
   [ONBOARDING_STEP_ENUMS.VALUES_STEP_4]: ONBOARDING_STEP_ENUMS.VALUES_STEP_5,
+  [ONBOARDING_STEP_ENUMS.VALUES_STEP_5]:
+    ONBOARDING_STEP_ENUMS.NOTICE_BY_EMPLOYEE,
 };
 
 const getRedirectPath = ({
@@ -98,7 +100,7 @@ const getRedirectPath = ({
       return '/candidate/onboarding/values';
     }
 
-    if (jobProfile.onboardingStep !== ONBOARDING_STEP_ENUMS.VALUES_STEP_5) {
+    if (jobProfile.onboardingStep !== ONBOARDING_STEP_ENUMS.COMPLETED) {
       return `/candidate/onboarding/values?step=${
         NEXT_CANDIDATE_ONBOARDING_VALUES_STEP[jobProfile.onboardingStep ?? '']
       }`;

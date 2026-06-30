@@ -11,6 +11,7 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import LoaderSvg from '@/public/images/loader.svg';
 import { useJobProfile } from '@/services/job-profile/job-profile.client';
+import NoticeByEmployeeSection from './sections/notice-by-employee-section';
 
 export default function ValuesPage() {
   const searchParams = useSearchParams();
@@ -85,6 +86,14 @@ export default function ValuesPage() {
     return (
       <ValuesStepFiveSection
         existingValues={jobProfile?.values || []}
+        jobProfileId={jobProfileId || ''}
+      />
+    );
+  }
+  if (step === ONBOARDING_STEP_ENUMS.NOTICE_BY_EMPLOYEE) {
+    return (
+      <NoticeByEmployeeSection
+        existingVisibility={jobProfile?.visibility || undefined}
         jobProfileId={jobProfileId || ''}
       />
     );
