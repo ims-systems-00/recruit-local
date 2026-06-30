@@ -28,6 +28,7 @@ import ValuesSkeleton from './values-skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { TenantData } from '@/services/tenants/tenants.type';
 
 const PAGE_LIMIT = 10;
 
@@ -46,6 +47,7 @@ interface EditValueDialogProps {
   tenantName: string;
   existingValues: ValueData[];
   types: VALUE_TYPE_ENUM[];
+  onSuccess: (values: ValueData[]) => void;
 }
 
 export default function EditValueDialog({
@@ -57,13 +59,12 @@ export default function EditValueDialog({
   tenantName,
   existingValues,
   types,
+  onSuccess,
 }: EditValueDialogProps) {
   const queryClient = useQueryClient();
 
   const form = useForm<ValuesStepFormValues>({
-    resolver: yupResolver(
-      valuesStepSchema,
-    ) as Resolver<ValuesStepFormValues>,
+    resolver: yupResolver(valuesStepSchema) as Resolver<ValuesStepFormValues>,
     defaultValues: {
       tenantName: tenantName,
       onboardingStep: undefined,
@@ -86,8 +87,6 @@ export default function EditValueDialog({
   const [page, setPage] = useState(1);
 
   const debouncedSearch = useDebounce(search, 500);
-
-  console.log('errors', errors);
 
   const listFilters = useMemo(
     () => ({
@@ -126,20 +125,24 @@ export default function EditValueDialog({
   };
 
   const onSubmit = async (data: ValuesStepFormValues) => {
-    const otherStepValueIds = existingValues
-      .filter((item) => !types.includes(item.type))
-      .map((item) => item._id);
+    const selectedValueObjects = values.filter((item) =>
+      data.values.includes(item._id),
+    );
+
+    const otherValues = existingValues.filter(
+      (item) => !types.includes(item.type),
+    );
+
+    const updatedValues = [...otherValues, ...selectedValueObjects];
 
     await updateTenant({
       id: tenantId,
       data: {
         name: data.tenantName,
-        values: [...otherStepValueIds, ...data.values],
+        values: updatedValues.map((item) => item._id),
       },
       onSuccessNext: () => {
-        queryClient.invalidateQueries({
-          queryKey: tenantKeys.detail(tenantId),
-        });
+        onSuccess(updatedValues);
 
         onOpenChange(false);
       },

@@ -17,6 +17,7 @@ interface ValueItemProps {
   existingValues: ValueData[];
   types: VALUE_TYPE_ENUM[];
   values: ValueData[];
+  onSuccess: (values: ValueData[]) => void;
 }
 
 export default function ValueItem({
@@ -30,6 +31,7 @@ export default function ValueItem({
   existingValues,
   types,
   values,
+  onSuccess,
 }: ValueItemProps) {
   const [open, setOpen] = useState(false);
 
@@ -85,6 +87,7 @@ export default function ValueItem({
         tenantName={tenantName}
         existingValues={existingValues}
         types={[type]}
+        onSuccess={onSuccess}
       />
     </>
   );

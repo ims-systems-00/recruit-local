@@ -1,6 +1,6 @@
 'use client';
 import { Brain, Layers2, Star, Target, Users } from 'lucide-react';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { TenantData } from '@/services/tenants/tenants.type';
 import { VALUE_TYPE_ENUM } from '@rl/types';
 import ValueItem from './value-item';
@@ -53,9 +53,14 @@ const VALUE_LIST = [
 ];
 
 export default function Values({ profile }: { profile: TenantData }) {
-  const values = profile.values;
+  // const values = profile.values;
 
-  console.log('values', values);
+  const [values, setValues] = useState(profile.values ?? []);
+
+  // Sync when the server prop changes (e.g. after router.refresh())
+  useEffect(() => {
+    setValues(profile.values ?? []);
+  }, [profile.values]);
 
   const getFilteredValues = useCallback(
     (type: VALUE_TYPE_ENUM) => {
@@ -86,6 +91,7 @@ export default function Values({ profile }: { profile: TenantData }) {
               tenantId={profile._id}
               tenantName={profile.name}
               types={[item.type]}
+              onSuccess={setValues}
             />
           ))}
         </div>
