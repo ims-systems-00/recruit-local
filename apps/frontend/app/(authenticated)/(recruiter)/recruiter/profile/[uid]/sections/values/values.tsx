@@ -77,7 +77,7 @@ export default function Values({ profile }: { profile: TenantData }) {
             Values
           </h4>
         </div>
-        <div className="grid grid-cols-2 gap-spacing-2xl">
+        <div className="grid lg:grid-cols-2 gap-spacing-2xl">
           {VALUE_LIST.map((item) => (
             <ValueItem
               key={item.id}
