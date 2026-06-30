@@ -1,75 +1,72 @@
 'use client';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+
+import React, { useState } from 'react';
+import { Search } from 'lucide-react';
+
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Search } from 'lucide-react';
-import { ONBOARDING_STEP_ENUMS, VALUE_TYPE_ENUM } from '@rl/types';
-import { getOnboardingValuesRoute } from '../helpers/onboarding-route';
-import { useRouter } from 'next/navigation';
-import { useInfiniteValues, useValues } from '@/services/value/value.client';
-import { useCallback, useMemo, useState } from 'react';
-import { useDebounce } from '@/hooks/useDebounce';
-import ValuesSkeleton from './values-skeleton';
-import { useUpdateTenant, tenantKeys } from '@/services/tenants/tenants.client';
+import { useForm, type Resolver } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
-import { cn } from '@/lib/utils';
-import { ValueData } from '@/services/value/value.type';
-import { Resolver, useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
 import {
   MAX_VALUES_STEP_SELECTION,
   ValuesStepFormValues,
   valuesStepSchema,
 } from '@/services/tenants/tenants.validation';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { VALUE_TYPE_ENUM } from '@rl/types';
+import { ValueData } from '@/services/value';
+import { tenantKeys, useUpdateTenant } from '@/services/tenants/tenants.client';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useCallback, useMemo } from 'react';
+import { useInfiniteValues } from '@/services/value/value.client';
+import { Button } from '@/components/ui/button';
+import ValuesSkeleton from './values-skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 const PAGE_LIMIT = 10;
+
 const SCROLL_THRESHOLD = 80;
 
 const getStepValues = (values: ValueData[], types: VALUE_TYPE_ENUM[]) => {
   return values.filter((item) => types.includes(item.type));
 };
 
-export default function ValuesSection({
-  existingValues,
-  tenantId,
-  tenantName,
-  types,
-  onboardingStep,
-  progressValue,
-  title,
-  onSuccessNext,
-  onSuccessBack,
-  isBackDisabled = false,
-  isNextDisabled = false,
-}: {
-  existingValues: ValueData[];
+interface EditValueDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  placeholder: string;
   tenantId: string;
   tenantName: string;
+  existingValues: ValueData[];
   types: VALUE_TYPE_ENUM[];
-  onboardingStep: ONBOARDING_STEP_ENUMS;
-  progressValue: number;
-  title: string;
-  onSuccessNext?: () => void;
-  onSuccessBack?: () => void;
-  isBackDisabled?: boolean;
-  isNextDisabled?: boolean;
-}) {
-  const router = useRouter();
+}
+
+export default function EditValueDialog({
+  open,
+  onOpenChange,
+  title,
+  placeholder,
+  tenantId,
+  tenantName,
+  existingValues,
+  types,
+}: EditValueDialogProps) {
   const queryClient = useQueryClient();
 
-  console.log('existingValues', existingValues);
-
   const form = useForm<ValuesStepFormValues>({
-    resolver: yupResolver(valuesStepSchema) as Resolver<ValuesStepFormValues>,
+    resolver: yupResolver(
+      valuesStepSchema,
+    ) as Resolver<ValuesStepFormValues>,
     defaultValues: {
       tenantName: tenantName,
-      onboardingStep: onboardingStep,
+      onboardingStep: undefined,
       values: getStepValues(existingValues, types).map((item) => item._id),
     },
   });
@@ -89,6 +86,8 @@ export default function ValuesSection({
   const [page, setPage] = useState(1);
 
   const debouncedSearch = useDebounce(search, 500);
+
+  console.log('errors', errors);
 
   const listFilters = useMemo(
     () => ({
@@ -136,14 +135,13 @@ export default function ValuesSection({
       data: {
         name: data.tenantName,
         values: [...otherStepValueIds, ...data.values],
-        onboardingStep: data.onboardingStep,
       },
       onSuccessNext: () => {
         queryClient.invalidateQueries({
           queryKey: tenantKeys.detail(tenantId),
         });
 
-        onSuccessNext?.();
+        onOpenChange(false);
       },
     });
   };
@@ -167,46 +165,46 @@ export default function ValuesSection({
   );
 
   const isInitialLoading = isLoading;
-
   return (
-    <div className=" flex justify-center items-center">
-      <div className=" w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
-        <div className=" flex items-center justify-between gap-spacing-lg">
-          <Progress value={progressValue} className="w-full h-2.5" />
-          <span className=" text-label-xs font-label-xs-strong! text-text-gray-secondary">
-            {progressValue}%
-          </span>
-        </div>
-        <div className=" space-y-spacing-lg">
-          <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-secondary">
-            {title}
-          </h4>
-          <InputGroup className="  h-12 rounded-lg shadow-xs border-border-gray-primary">
-            <InputGroupInput
-              type="text"
-              placeholder="Search your mindset..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-              }}
-            />
-            <InputGroupAddon>
-              <Search className=" text-fg-gray-tertiary" />
-            </InputGroupAddon>
-          </InputGroup>
-          <div className=" flex items-center gap-spacing-2xl">
-            <span>Top 3 Most Important tags </span>
-            <span className=" cursor-pointer inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-sm font-label-sm-strong! text-others-gray-dark border border-border-gray-primary">
-              Growth-oriented
-            </span>
-            <span className=" cursor-pointer inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-sm font-label-sm-strong! text-others-gray-dark border border-border-gray-primary">
-              Entrepreneurial
-            </span>
-            <span className=" cursor-pointer inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-sm font-label-sm-strong! text-others-gray-dark border border-border-gray-primary">
-              Proactive
-            </span>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[692px] bg-bg-gray-soft-primary shadow-xs gap-y-spacing-4xl">
+        <DialogTitle asChild>
+          <div className="space-y-spacing-lg">
+            <h4 className="text-label-lg font-label-lg-strong! text-text-gray-secondary">
+              {title}
+            </h4>
+
+            <InputGroup className="h-12 rounded-lg border-border-gray-primary shadow-xs">
+              <InputGroupInput
+                type="text"
+                placeholder={placeholder}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <InputGroupAddon>
+                <Search className="text-fg-gray-tertiary" />
+              </InputGroupAddon>
+            </InputGroup>
+
+            <div className="flex items-center gap-spacing-2xl">
+              <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                Top 3 Most Important tags
+              </span>
+
+              <span className="inline-flex min-h-6 cursor-pointer items-center justify-center rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark">
+                Growth-oriented
+              </span>
+
+              <span className="inline-flex min-h-6 cursor-pointer items-center justify-center rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark">
+                Entrepreneurial
+              </span>
+
+              <span className="inline-flex min-h-6 cursor-pointer items-center justify-center rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark">
+                Proactive
+              </span>
+            </div>
           </div>
-        </div>
+        </DialogTitle>
         <div className=" space-y-spacing-lg">
           <div className=" flex items-center justify-between gap-spacing-lg">
             <p className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary">
@@ -223,7 +221,7 @@ export default function ValuesSection({
           )}
           <div
             onScroll={handleScroll}
-            className=" max-h-[500px] overflow-y-auto space-y-spacing-lg"
+            className=" max-h-[400px] overflow-y-auto space-y-spacing-lg"
           >
             {isInitialLoading ? (
               Array.from({ length: 5 }).map((_, index) => (
@@ -281,24 +279,23 @@ export default function ValuesSection({
             )}
           </div>
         </div>
-        <div className=" flex justify-between items-center">
+        <div className=" flex justify-end items-center gap-spacing-2xl">
           <Button
-            disabled={isBackDisabled}
-            onClick={() => onSuccessBack?.()}
+            onClick={() => onOpenChange(false)}
             variant="outline"
-            className="text-label-md font-label-md-strong! cursor-pointer border-border-gray-primary h-12 rounded-lg text-text-gray-secondary"
+            className="text-label-md font-label-md-strong! cursor-pointer border-border-gray-primary h-10 rounded-lg text-text-gray-secondary"
           >
-            Back
+            Cancel
           </Button>
           <Button
             onClick={handleSubmit(onSubmit)}
-            disabled={isUpdating || isNextDisabled}
-            className="bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-12 rounded-lg"
+            disabled={isUpdating}
+            className="bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg"
           >
-            {isUpdating ? 'Saving...' : 'Continue'}
+            {isUpdating ? 'Saving...' : 'Confirm'}
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

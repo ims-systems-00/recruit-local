@@ -151,10 +151,12 @@ export const MAX_VALUES_STEP_SELECTION = 5;
 
 export const valuesStepSchema = yup.object({
   tenantName: yup.string().required('Tenant name is required'),
+
   onboardingStep: yup
     .string()
     .oneOf(Object.values(ONBOARDING_STEP_ENUMS))
-    .required(),
+    .optional(),
+
   values: yup
     .array()
     .of(yup.string().required())

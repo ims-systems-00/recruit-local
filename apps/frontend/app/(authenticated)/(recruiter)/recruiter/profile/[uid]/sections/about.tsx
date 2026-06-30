@@ -21,7 +21,7 @@ export default function About({ profile }: { profile: TenantData }) {
   return (
     <div className=" space-y-spacing-4xl">
       <div className=" flex justify-between items-center">
-        <h4 className=" text-text-gray-secondary text-heading-sm font-heading-sm-strong!">
+        <h4 className=" text-text-gray-primary text-label-xl font-label-xl-strong!">
           About
         </h4>
       </div>

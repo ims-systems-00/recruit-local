@@ -25,6 +25,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { TENANT_TYPE } from '@rl/types';
 import Link from 'next/link';
 import EditServicesAndProducts from './edit-services-and-products';
+import Values from './values/values';
 
 export default function Profile({ tenantData }: { tenantData: TenantData }) {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -109,6 +110,11 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
         <ServicesAndProducts profile={tenantDetails} />
       ),
       editable: true,
+    },
+    {
+      value: 'values',
+      label: 'Values',
+      component: <Values profile={tenantDetails} />,
     },
     {
       value: 'achievements',
