@@ -1,9 +1,28 @@
-import { TenantResponseDto, TENANT_COMPLETION_SECTIONS } from "@rl/types";
+import { TenantResponseDto, ValueResponseDto, TENANT_COMPLETION_SECTIONS } from "@rl/types";
 import { expandCompletion } from "@rl/utils";
 
 const toIso = (v: unknown): string => (v instanceof Date ? v.toISOString() : (v as string));
 
 const has = (obj: Record<string, unknown>, key: string): boolean => Object.prototype.hasOwnProperty.call(obj, key);
+
+/**
+ * Serializes a populated value document (from `populateValuesQuery`) into its
+ * public shape: ObjectId -> string, dates -> ISO, internal fields dropped.
+ * Falls back to a bare `_id` string if a raw ObjectId slips through unpopulated.
+ */
+const toValueResponse = (v: unknown): ValueResponseDto | string => {
+  if (!v || typeof v !== "object") return String(v);
+  const val = v as Record<string, unknown>;
+  return {
+    _id: String(val._id),
+    type: val.type,
+    label: val.label,
+    isActive: val.isActive,
+    weight: val.weight,
+    createdAt: has(val, "createdAt") ? toIso(val.createdAt) : undefined,
+    updatedAt: has(val, "updatedAt") ? toIso(val.updatedAt) : undefined,
+  } as ValueResponseDto;
+};
 
 /**
  * Serializes a (possibly partial) sanitized tenant into its public HTTP shape.
@@ -26,7 +45,7 @@ export const toTenantResponse = (doc: unknown): TenantResponseDto => {
 
   if (has(d, "_id")) d._id = String(d._id);
   if (has(d, "id")) d.id = String(d.id);
-  if (has(d, "values") && Array.isArray(d.values)) d.values = d.values.map(String);
+  if (has(d, "values") && Array.isArray(d.values)) d.values = d.values.map(toValueResponse);
   if (has(d, "createdAt")) d.createdAt = toIso(d.createdAt);
   if (has(d, "updatedAt")) d.updatedAt = toIso(d.updatedAt);
 
