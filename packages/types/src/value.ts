@@ -22,7 +22,4 @@ export interface ValueResponseDto {
   type: VALUE_TYPE_ENUM;
   label: string;
   isActive?: boolean;
-  weight?: number;
-  createdAt?: string; // ISO
-  updatedAt?: string; // ISO
 }

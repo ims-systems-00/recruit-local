@@ -17,6 +17,7 @@ import { AbilityAction, PROFILE_COMPLETION_SECTIONS } from "@rl/types";
 import { expandCompletion } from "@rl/utils";
 import { jobProfileRoleScopedSecurityQuery } from "./job-profile.query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
+import { toValueResponseList } from "../value/value.dto";
 
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_PROFILE_FIELDS,
@@ -39,6 +40,18 @@ const expandProfileCompletion = (doc: any) => {
 };
 
 /**
+ * Finalizes a job-profile document for the HTTP response: serializes the
+ * populated `values` array into clean value DTOs (ObjectId -> string, dates ->
+ * ISO, internal fields dropped) and expands the lean completion into the full
+ * breakdown. Used by both the single-doc and list read paths.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const finalizeJobProfile = (doc: any) => {
+  if (doc && Array.isArray(doc.values)) doc.values = toValueResponseList(doc.values);
+  return expandProfileCompletion(doc);
+};
+
+/**
  * Internal helper to keep the controller clean.
  * Sanitizes a single job profile document based on 'Read' permissions.
  */
@@ -51,7 +64,7 @@ const getSanitizedResponse = (doc: any, ability: any) => {
     JobProfileAuthZEntity,
     caslFieldOptions
   );
-  return expandProfileCompletion(sanitized);
+  return finalizeJobProfile(sanitized);
 };
 
 export const list = async ({ req }: ControllerParams) => {
@@ -83,7 +96,7 @@ export const list = async ({ req }: ControllerParams) => {
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs.map(expandProfileCompletion) });
+  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs.map(finalizeJobProfile) });
 
   return new ApiResponse({
     message: "Job Profiles retrieved",
@@ -241,7 +254,7 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs.map(expandProfileCompletion) });
+  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs.map(finalizeJobProfile) });
 
   return new ApiResponse({
     message: "Soft deleted job profiles retrieved",
