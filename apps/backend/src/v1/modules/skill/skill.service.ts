@@ -3,6 +3,7 @@ import { SkillInput, Skill } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
+import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 // Assuming this query file exists following your pattern
 import { skillProjectQuery } from "./skill.query";
 
@@ -46,12 +47,14 @@ export const getOneSoftDeleted = async ({ query = {} }: IListSkillParams) => {
 export const create = async (payload: SkillInput) => {
   let skill = new Skill(payload);
   skill = await skill.save();
+  await enqueueProfileCompletion(skill.userId);
   return skill;
 };
 
 export const update = async ({ query, payload }: { query: ISkillQueryParams; payload: Partial<SkillInput> }) => {
   const updatedSkill = await Skill.findOneAndUpdate(sanitizeQueryIds(query), { $set: payload }, { new: true });
   if (!updatedSkill) throw new NotFoundException("Skill not found.");
+  await enqueueProfileCompletion(updatedSkill.userId);
   return updatedSkill;
 };
 
@@ -59,6 +62,7 @@ export const softRemove = async ({ query }: { query: ISkillQueryParams }) => {
   const { deleted } = await Skill.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Skill not found to delete.");
   const result = await getOneSoftDeleted({ query });
+  await enqueueProfileCompletion(result?.userId);
   return result;
 };
 
@@ -66,6 +70,7 @@ export const hardRemove = async ({ query }: { query: ISkillQueryParams }) => {
   const result = await getOneSoftDeleted({ query });
   const deletedSkill = await Skill.findOneAndDelete(sanitizeQueryIds(query));
   if (!deletedSkill) throw new NotFoundException("Skill not found to delete.");
+  await enqueueProfileCompletion(result?.userId);
   return result;
 };
 
@@ -73,5 +78,6 @@ export const restore = async ({ query }: { query: ISkillQueryParams }) => {
   const { restored } = await Skill.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Skill not found in trash.");
   const result = await getOne({ query });
+  await enqueueProfileCompletion(result?.userId);
   return result;
 };

@@ -5,6 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import * as tenantService from "./tenant.service";
+import { recomputeTenantCompletion } from "./tenant-completion.service";
 import { update as updateUser } from "../user/user.service";
 import { tenantRoleScopedSecurityQuery } from "./tenant.query";
 import { toTenantResponse, toTenantResponseList } from "./tenant.dto";
@@ -72,6 +73,12 @@ export const get = async ({ req }: ControllerParams) => {
 
   if (!tenant || !ability.can(AbilityAction.Read, new TenantAuthZEntity({ _id: tenant._id?.toString() ?? null }))) {
     throw new UnauthorizedException("You do not have permission to view this organisation.");
+  }
+
+  // Lazily compute completion for organisations that predate the feature (self-heals on read).
+  if (!tenant.completion?.computedAt) {
+    const completion = await recomputeTenantCompletion(String(tenant._id));
+    if (completion) tenant.completion = completion;
   }
 
   return new ApiResponse({

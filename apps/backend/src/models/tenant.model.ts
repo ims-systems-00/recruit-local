@@ -4,8 +4,9 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { awsStorageTemplateMongooseDefinition } from "./templates/aws-storage.template";
 import { AwsStorageTemplate } from "./templates/aws-storage.template";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
-import { TENANT_STATUS_ENUMS, TENANT_TYPE, ONBOARDING_STEP_ENUMS } from "@rl/types";
+import { TENANT_STATUS_ENUMS, TENANT_TYPE, ONBOARDING_STEP_ENUMS, StoredCompletion } from "@rl/types";
 import { modelNames } from "./constants";
+import { completionMongooseDefinition } from "./templates/completion.template";
 
 export interface TenantInput {
   name: string;
@@ -33,6 +34,7 @@ export interface TenantInput {
   values?: Types.ObjectId[];
   onboardingStep?: ONBOARDING_STEP_ENUMS;
   isRecruitmentEnabled?: boolean;
+  completion?: StoredCompletion;
 }
 
 // Define an interface for Tenant document
@@ -133,6 +135,7 @@ const tenantSchema = new Schema<ITenantDoc>(
       type: Boolean,
       default: false,
     },
+    completion: { type: completionMongooseDefinition, default: () => ({}) },
   },
   {
     timestamps: true,

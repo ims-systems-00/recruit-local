@@ -40,6 +40,7 @@ export const ALL_JOB_PROFILE_FIELDS = [
   'onboardingStep',
   'visibility',
   'status',
+  'completion',
   'createdAt',
   'updatedAt',
 ];
