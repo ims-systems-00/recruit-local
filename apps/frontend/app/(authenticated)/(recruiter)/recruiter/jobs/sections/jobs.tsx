@@ -168,7 +168,13 @@ export const userColumns: ColumnDef<JobData>[] = [
   },
 ];
 
-export default function Jobs() {
+export default function Jobs({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
 
@@ -216,14 +222,14 @@ export default function Jobs() {
   };
 
   return (
-    <div className=" p-spacing-4xl">
+    <div>
       <div className=" flex justify-between items-center gap-spacing-2xl">
         <div className=" space-y-spacing-2xs">
           <h3 className=" text-body-xl font-body-xl-strong! text-text-gray-primary">
-            Job Listing
+            {title}
           </h3>
           <p className=" capitalize text-label-sm text-text-gray-tertiary">
-            Create and view Your all jobs
+            {description}
           </p>
         </div>
         <div className=" flex items-center gap-spacing-2xl">

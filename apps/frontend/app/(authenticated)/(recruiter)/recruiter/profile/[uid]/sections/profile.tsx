@@ -26,6 +26,7 @@ import { TENANT_TYPE } from '@rl/types';
 import Link from 'next/link';
 import EditServicesAndProducts from './edit-services-and-products';
 import Values from './values/values';
+import Jobs from '../../../jobs/sections/jobs';
 
 export default function Profile({ tenantData }: { tenantData: TenantData }) {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -97,34 +98,41 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       ),
       editable: true,
     },
-    {
-      value: 'services-and-products',
-      label: 'Services and Products',
-      component: isEditMode ? (
-        <EditServicesAndProducts
-          register={register}
-          control={control}
-          errors={errors}
-        />
-      ) : (
-        <ServicesAndProducts profile={tenantDetails} />
-      ),
-      editable: true,
-    },
+    // {
+    //   value: 'services-and-products',
+    //   label: 'Services and Products',
+    //   component: isEditMode ? (
+    //     <EditServicesAndProducts
+    //       register={register}
+    //       control={control}
+    //       errors={errors}
+    //     />
+    //   ) : (
+    //     <ServicesAndProducts profile={tenantDetails} />
+    //   ),
+    //   editable: true,
+    // },
     {
       value: 'values',
       label: 'Values',
       component: <Values profile={tenantDetails} />,
     },
+    // {
+    //   value: 'achievements',
+    //   label: 'Achievements',
+    //   component: <Achievements />,
+    // },
+    // {
+    //   value: 'current-recruitment',
+    //   label: 'Current Recruitment',
+    //   component: <CurrentRecruitment />,
+    // },
     {
-      value: 'achievements',
-      label: 'Achievements',
-      component: <Achievements />,
-    },
-    {
-      value: 'current-recruitment',
-      label: 'Current Recruitment',
-      component: <CurrentRecruitment />,
+      value: 'jobs',
+      label: 'Jobs',
+      component: (
+        <Jobs title="Jobs" description="Create and view Your all jobs" />
+      ),
     },
     {
       value: 'activities',

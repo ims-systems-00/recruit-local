@@ -21,8 +21,9 @@ export default function JobLists() {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-
-      <Jobs />
+      <div className=" p-spacing-4xl">
+        <Jobs title="My Jobs" description="Create and view Your all jobs" />
+      </div>
     </div>
   );
 }
