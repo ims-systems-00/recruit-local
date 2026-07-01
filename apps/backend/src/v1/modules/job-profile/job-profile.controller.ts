@@ -18,6 +18,7 @@ import { expandCompletion } from "@rl/utils";
 import { jobProfileRoleScopedSecurityQuery } from "./job-profile.query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { toValueResponseList } from "../value/value.dto";
+import { toNamedRefResponse, toNamedRefResponseList } from "./job-profile.dto";
 
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_PROFILE_FIELDS,
@@ -48,6 +49,11 @@ const expandProfileCompletion = (doc: any) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const finalizeJobProfile = (doc: any) => {
   if (doc && Array.isArray(doc.values)) doc.values = toValueResponseList(doc.values);
+  if (doc && Array.isArray(doc.jobTitle)) doc.jobTitle = toNamedRefResponseList(doc.jobTitle);
+  if (doc && Array.isArray(doc.industry)) doc.industry = toNamedRefResponseList(doc.industry);
+  if (doc && Array.isArray(doc.workMode)) doc.workMode = toNamedRefResponseList(doc.workMode);
+  if (doc && doc.experienceLevel && typeof doc.experienceLevel === "object")
+    doc.experienceLevel = toNamedRefResponse(doc.experienceLevel);
   return expandProfileCompletion(doc);
 };
 
@@ -315,7 +321,7 @@ export const create = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job Profile created.",
     statusCode: StatusCodes.CREATED,
-    data: expandProfileCompletion(jobProfile),
+    data: finalizeJobProfile(jobProfile),
     fieldName: "jobProfile",
   });
 };

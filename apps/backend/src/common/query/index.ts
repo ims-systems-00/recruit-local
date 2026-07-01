@@ -1,4 +1,4 @@
-import { PipelineStage } from "mongoose";
+import { Model, PipelineStage } from "mongoose";
 import { accessibleBy } from "@casl/mongoose";
 import { AnyMongoAbility } from "@casl/ability";
 import { AbilityAction } from "../../types/ability";
@@ -44,6 +44,38 @@ export const onlyDeletedQuery = (): PipelineStage[] => {
     },
   ];
 };
+
+/**
+ * Reusable $lookup that replaces a parent document's array of ObjectIds (`field`)
+ * with the populated, non-soft-deleted catalog documents from `model`. Mirrors
+ * `populateValuesQuery` but is generic over any catalog model (JobTitle,
+ * Industry, WorkMode, ...), projecting all of the target's schema fields except
+ * `__v`.
+ */
+export const populateNamedRefQuery = <T>(model: Model<T>, field: string): PipelineStage[] => {
+  const selectedFields = Object.keys(model.schema.paths).filter((path) => path !== "__v");
+  return [
+    {
+      $lookup: {
+        from: model.collection.name,
+        localField: field,
+        foreignField: "_id",
+        as: field,
+        pipeline: [...excludeDeletedQuery(), ...projectQuery(selectedFields)] as PipelineStage.Lookup["$lookup"]["pipeline"],
+      },
+    },
+  ];
+};
+
+/**
+ * Single-reference variant of `populateNamedRefQuery`: replaces a parent's
+ * scalar ObjectId (`field`) with the one populated catalog document (or `null`
+ * when the ref is missing / soft-deleted), flattening the `$lookup` array.
+ */
+export const populateSingleNamedRefQuery = <T>(model: Model<T>, field: string): PipelineStage[] => [
+  ...populateNamedRefQuery(model, field),
+  { $addFields: { [field]: { $ifNull: [{ $arrayElemAt: [`$${field}`, 0] }, null] } } },
+];
 
 export const populateStatusQuery = (): PipelineStage[] => {
   return [
