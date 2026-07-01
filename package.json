@@ -14,7 +14,11 @@
     "backend:dev": "pnpm --filter @rl/backend start:dev",
     "frontend:dev": "pnpm --filter @rl/frontend dev",
     "start:dev": "concurrently --kill-others \"pnpm backend:dev\" \"pnpm frontend:dev\"",
-    "seed:dev": "pnpm --filter @rl/backend seed:dev"
+    "seed:dev": "pnpm --filter @rl/backend seed:dev",
+    "seed": "pnpm --filter @rl/backend seed",
+    "migrate:dev": "pnpm --filter @rl/backend migrate:dev",
+    "migrate-down:dev": "pnpm --filter @rl/backend migrate-down:dev",
+    "migrate": "pnpm --filter @rl/backend migrate"
   },
   "keywords": [],
   "author": "",
