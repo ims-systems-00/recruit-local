@@ -18,6 +18,7 @@ import {
   Settings,
   Settings2,
   SquareTerminal,
+  Rocket,
 } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
@@ -41,14 +42,19 @@ import { useSession } from 'next-auth/react';
 
 const recruiterNavMain = [
   {
-    title: 'Job Listing',
-    url: '/recruiter/jobs',
-    icon: ListTodo,
-  },
-  {
     title: 'News Feed',
     url: '/recruiter/news-feed',
     icon: Newspaper,
+  },
+  {
+    title: 'My Jobs',
+    url: '/recruiter/jobs',
+    icon: Rocket,
+  },
+  {
+    title: 'Discover Jobs',
+    url: '/recruiter/discover-jobs',
+    icon: ListTodo,
   },
   // {
   //   title: 'Models',
