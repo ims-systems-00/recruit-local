@@ -12,7 +12,11 @@ import { Search } from 'lucide-react';
 import { ONBOARDING_STEP_ENUMS, VALUE_TYPE_ENUM } from '@rl/types';
 import { getOnboardingValuesRoute } from '../helpers/onboarding-route';
 import { useRouter } from 'next/navigation';
-import { useInfiniteValues, useValues } from '@/services/value/value.client';
+import {
+  useGetTopThreeValues,
+  useInfiniteValues,
+  useValues,
+} from '@/services/value/value.client';
 import { useCallback, useMemo, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import ValuesSkeleton from './values-skeleton';
@@ -27,6 +31,7 @@ import {
   ValuesStepFormValues,
   valuesStepSchema,
 } from '@/services/tenants/tenants.validation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -108,6 +113,9 @@ export default function ValuesSection({
     isLoading,
     isError,
   } = useInfiniteValues(listFilters);
+
+  const { values: topThreeValues, isLoading: isTopThreeLoading } =
+    useGetTopThreeValues(types[0]);
 
   const values = data?.pages.flatMap((page) => page.values) ?? [];
 
@@ -196,15 +204,25 @@ export default function ValuesSection({
           </InputGroup>
           <div className=" flex items-center gap-spacing-2xl">
             <span>Top 3 Most Important tags </span>
-            <span className=" cursor-pointer inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-sm font-label-sm-strong! text-others-gray-dark border border-border-gray-primary">
-              Growth-oriented
-            </span>
-            <span className=" cursor-pointer inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-sm font-label-sm-strong! text-others-gray-dark border border-border-gray-primary">
-              Entrepreneurial
-            </span>
-            <span className=" cursor-pointer inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-sm font-label-sm-strong! text-others-gray-dark border border-border-gray-primary">
-              Proactive
-            </span>
+            {isTopThreeLoading ? (
+              <div className=" flex items-center gap-spacing-2xl">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <Skeleton
+                    key={`loading-${index}`}
+                    className="h-4 w-20 bg-gray-200"
+                  />
+                ))}
+              </div>
+            ) : (
+              topThreeValues.map((item) => (
+                <span
+                  key={item._id}
+                  className=" cursor-pointer whitespace-nowrap inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-sm font-label-sm-strong! text-others-gray-dark border border-border-gray-primary"
+                >
+                  {item.label}
+                </span>
+              ))
+            )}
           </div>
         </div>
         <div className=" space-y-spacing-lg">

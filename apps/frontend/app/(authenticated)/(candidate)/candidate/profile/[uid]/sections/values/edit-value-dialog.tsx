@@ -17,7 +17,10 @@ import { VALUE_TYPE_ENUM } from '@rl/types';
 import { ValueData } from '@/services/value';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useCallback, useMemo } from 'react';
-import { useInfiniteValues } from '@/services/value/value.client';
+import {
+  useGetTopThreeValues,
+  useInfiniteValues,
+} from '@/services/value/value.client';
 import { Button } from '@/components/ui/button';
 import ValuesSkeleton from './values-skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,6 +32,7 @@ import {
   candidateValuesStepSchema,
 } from '@/services/job-profile/job-profile.validation';
 import { useUpdateJobProfile } from '@/services/job-profile';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const PAGE_LIMIT = 10;
 
@@ -96,6 +100,9 @@ export default function EditValueDialog({
     }),
     [page, debouncedSearch],
   );
+
+  const { values: topThreeValues, isLoading: isTopThreeLoading } =
+    useGetTopThreeValues(types[0]);
 
   const {
     data,
@@ -193,17 +200,25 @@ export default function EditValueDialog({
                 Top 3 Most Important tags
               </span>
 
-              <span className="inline-flex min-h-6 cursor-pointer items-center justify-center rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark">
-                Growth-oriented
-              </span>
-
-              <span className="inline-flex min-h-6 cursor-pointer items-center justify-center rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark">
-                Entrepreneurial
-              </span>
-
-              <span className="inline-flex min-h-6 cursor-pointer items-center justify-center rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark">
-                Proactive
-              </span>
+              {isTopThreeLoading ? (
+                <div className=" flex items-center gap-spacing-2xl">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <Skeleton
+                      key={`loading-${index}`}
+                      className="h-4 w-20 bg-gray-200"
+                    />
+                  ))}
+                </div>
+              ) : (
+                topThreeValues.map((item) => (
+                  <span
+                    key={item._id}
+                    className=" cursor-pointer whitespace-nowrap inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-label-sm font-label-sm-strong! text-others-gray-dark border border-border-gray-primary"
+                  >
+                    {item.label}
+                  </span>
+                ))
+              )}
             </div>
           </div>
         </DialogTitle>
