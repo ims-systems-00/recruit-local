@@ -7,14 +7,13 @@ import { VISIBILITY, language, JOB_PROFILE_STATUS_ENUM, ONBOARDING_STEP_ENUMS, S
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { completionMongooseDefinition } from "./templates/completion.template";
-import { String } from "lodash";
 
 export interface JobProfileInput extends IUserOwnedInput {
   name?: string;
-  jobTitle?: string[];
-  industry?: string[];
-  workMode?: string[];
-  experienceLevel?: String;
+  jobTitle?: Types.ObjectId[];
+  industry?: Types.ObjectId[];
+  workMode?: Types.ObjectId[];
+  experienceLevel?: Types.ObjectId;
   address?: string;
   email?: string;
   contactNumber?: string;
@@ -55,12 +54,8 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
     name: {
       type: String,
     },
-    jobTitle: {
-      type: [String],
-    },
-    experienceLevel: {
-      type: String,
-    },
+    jobTitle: [{ type: Schema.Types.ObjectId, ref: modelNames.JOB_TITLE }],
+    experienceLevel: { type: Schema.Types.ObjectId, ref: modelNames.EXPERIENCE_LEVEL },
     address: {
       type: String,
     },
@@ -99,12 +94,8 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       enum: Object.values(JOB_PROFILE_STATUS_ENUM),
       default: JOB_PROFILE_STATUS_ENUM.UNVERIFIED,
     },
-    industry: {
-      type: [String],
-    },
-    workMode: {
-      type: [String],
-    },
+    industry: [{ type: Schema.Types.ObjectId, ref: modelNames.INDUSTRY }],
+    workMode: [{ type: Schema.Types.ObjectId, ref: modelNames.WORK_MODE }],
     onboardingStep: {
       type: String,
       enum: Object.values(ONBOARDING_STEP_ENUMS),

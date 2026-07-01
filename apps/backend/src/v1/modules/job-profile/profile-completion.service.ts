@@ -5,6 +5,8 @@ import { computeCompletion } from "@rl/utils";
 
 const filledStr = (v: unknown): boolean => typeof v === "string" && v.trim().length > 0;
 const filledArr = (v: unknown): boolean => Array.isArray(v) && v.length > 0;
+// A catalog reference (ObjectId) counts as filled whenever it is present.
+const filledRef = (v: unknown): boolean => v != null && String(v).trim().length > 0;
 
 /**
  * Recompute and persist the completion of a candidate's job profile.
@@ -53,7 +55,7 @@ export const recomputeProfileCompletion = async (
       filledArr(jobProfile.jobTitle) &&
       filledArr(jobProfile.industry) &&
       filledArr(jobProfile.workMode) &&
-      filledStr(jobProfile.experienceLevel as unknown as string),
+      filledRef(jobProfile.experienceLevel),
     photo: Boolean(user?.profileImageId),
     experience: experienceCount > 0,
     education: educationCount > 0,
