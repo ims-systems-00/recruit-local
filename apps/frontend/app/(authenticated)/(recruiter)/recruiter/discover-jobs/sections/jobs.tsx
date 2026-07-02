@@ -41,16 +41,16 @@ export default function Jobs() {
       label: 'All Jobs',
       component: <JobLists filters={filters} onPageChange={setPage} />,
     },
-    {
-      value: 'for',
-      label: 'For you',
-      component: <JobLists filters={filters} onPageChange={setPage} />,
-    },
-    {
-      value: 'applied',
-      label: 'Applied',
-      component: <AppliedJobs />,
-    },
+    // {
+    //   value: 'for',
+    //   label: 'For you',
+    //   component: <JobLists filters={filters} onPageChange={setPage} />,
+    // },
+    // {
+    //   value: 'applied',
+    //   label: 'Applied',
+    //   component: <AppliedJobs />,
+    // },
     {
       value: 'saved',
       label: 'Saved',
