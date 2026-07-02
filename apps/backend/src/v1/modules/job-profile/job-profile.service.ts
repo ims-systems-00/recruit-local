@@ -1,8 +1,14 @@
 import { Types } from "mongoose";
 import { VISIBILITY_ENUM } from "@rl/types";
-import { JobProfile } from "../../../models";
+import { JobProfile, JobTitle, Industry, WorkMode, ExperienceLevel } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  populateNamedRefQuery,
+  populateSingleNamedRefQuery,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobProfileProjectQuery } from "./job-profile.query";
 import { recomputeProfileCompletion } from "./profile-completion.service";
@@ -23,6 +29,10 @@ export const list = ({ query = {}, options, allowedFields }: IListJobProfilePara
       ...matchQuery(sanitizeQueryIds(query)),
       ...excludeDeletedQuery(),
       ...populateValuesQuery(),
+      ...populateNamedRefQuery(JobTitle, "jobTitle"),
+      ...populateNamedRefQuery(Industry, "industry"),
+      ...populateNamedRefQuery(WorkMode, "workMode"),
+      ...populateSingleNamedRefQuery(ExperienceLevel, "experienceLevel"),
       ...jobProfileProjectQuery(allowedFields),
     ],
     options
@@ -34,6 +44,9 @@ export const getOne = async ({ query = {}, allowedFields }: IJobProfileGetParams
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...populateValuesQuery(),
+    ...populateNamedRefQuery(JobTitle, "jobTitle"),
+    ...populateNamedRefQuery(Industry, "industry"),
+    ...populateNamedRefQuery(WorkMode, "workMode"),
     ...jobProfileProjectQuery(allowedFields),
   ]);
   if (jobProfiles.length === 0) throw new NotFoundException("Job Profile not found.");

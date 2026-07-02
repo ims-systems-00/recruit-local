@@ -8,10 +8,10 @@ import { PROFICIENCY, VISIBILITY, ONBOARDING_STEP_ENUMS } from "@rl/types";
 
 export const createBodySchema = Joi.object({
   name: Joi.string().optional().label("Name"),
-  jobTitle: Joi.array().items(Joi.string()).optional().label("Job Title"),
-  industry: Joi.array().items(Joi.string()).optional().label("Industry"),
-  workMode: Joi.array().items(Joi.string()).optional().label("Work Mode"),
-  experienceLevel: Joi.string().optional().label("Experience Level"),
+  jobTitle: Joi.array().items(Joi.string().custom(objectIdValidation)).optional().label("Job Title"),
+  industry: Joi.array().items(Joi.string().custom(objectIdValidation)).optional().label("Industry"),
+  workMode: Joi.array().items(Joi.string().custom(objectIdValidation)).optional().label("Work Mode"),
+  experienceLevel: Joi.string().custom(objectIdValidation).optional().label("Experience Level"),
   address: Joi.string().optional().label("Address"),
   email: Joi.string().email().optional().label("Email"),
   contactNumber: Joi.string().optional().label("Contact Number"),
@@ -41,10 +41,10 @@ export const createBodySchema = Joi.object({
 
 export const updateBodySchema = Joi.object({
   name: Joi.string().optional().label("Name"),
-  jobTitle: Joi.array().items(Joi.string()).optional().label("Job Title"),
-  industry: Joi.array().items(Joi.string()).optional().label("Industry"),
-  workMode: Joi.array().items(Joi.string()).optional().label("Work Mode"),
-  experienceLevel: Joi.string().optional().label("Experience Level"),
+  jobTitle: Joi.array().items(Joi.string().custom(objectIdValidation)).optional().label("Job Title"),
+  industry: Joi.array().items(Joi.string().custom(objectIdValidation)).optional().label("Industry"),
+  workMode: Joi.array().items(Joi.string().custom(objectIdValidation)).optional().label("Work Mode"),
+  experienceLevel: Joi.string().custom(objectIdValidation).optional().label("Experience Level"),
   address: Joi.string().optional().label("Address"),
   email: Joi.string().email().optional().label("Email"),
   contactNumber: Joi.string().optional().label("Contact Number"),
