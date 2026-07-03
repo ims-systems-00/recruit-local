@@ -6,7 +6,7 @@ import { modelNames } from "./constants";
 
 export interface IFavouriteInput {
   tenantId?: Schema.Types.ObjectId;
-  jobProfileId: Schema.Types.ObjectId;
+  jobProfileId?: Schema.Types.ObjectId;
   itemId: Schema.Types.ObjectId;
   itemType: typeof modelNames;
 }
@@ -33,7 +33,7 @@ const favouriteSchema = new Schema<IFavouriteDoc>(
     jobProfileId: {
       type: Schema.Types.ObjectId,
       ref: modelNames.JOB_PROFILE,
-      required: true,
+      required: false,
       index: true,
     },
     itemId: {
@@ -52,8 +52,16 @@ const favouriteSchema = new Schema<IFavouriteDoc>(
   }
 );
 
+// A favourite is owned by exactly one context: a tenant (employer) OR a job profile (candidate).
+favouriteSchema.pre("validate", function (next) {
+  if (!this.tenantId === !this.jobProfileId) {
+    return next(new Error("A favourite must have exactly one of tenantId or jobProfileId."));
+  }
+  next();
+});
+
 // Enforce uniqueness ONLY when the document is NOT deleted
-// Use sparse index to handle null tenantId for candidates without tenant association
+// Use sparse index to handle the null owner field (tenantId for candidates, jobProfileId for employers)
 favouriteSchema.index(
   { tenantId: 1, jobProfileId: 1, itemId: 1, itemType: 1 },
   {
