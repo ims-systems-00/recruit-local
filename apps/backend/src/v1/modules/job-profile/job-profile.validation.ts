@@ -4,6 +4,13 @@ import { PROFICIENCY, VISIBILITY, ONBOARDING_STEP_ENUMS } from "@rl/types";
 
 // --- Sub-Schemas ---
 
+// Reusable storage schema for AWS templates (profile/cover photo uploads).
+const awsStorageSchema = Joi.object({
+  Name: Joi.string().label("Name"),
+  Bucket: Joi.string().label("Bucket"),
+  Key: Joi.string().label("Key"),
+}).allow(null);
+
 // --- Main Schemas ---
 
 export const createBodySchema = Joi.object({
@@ -37,6 +44,8 @@ export const createBodySchema = Joi.object({
     .valid(...Object.values(ONBOARDING_STEP_ENUMS))
     .optional()
     .label("Onboarding Step"),
+  profileImageStorage: awsStorageSchema.label("Profile Image Storage"),
+  coverPhotoStorage: awsStorageSchema.label("Cover Photo Storage"),
 });
 
 export const updateBodySchema = Joi.object({
@@ -74,6 +83,8 @@ export const updateBodySchema = Joi.object({
     .valid(...Object.values(VISIBILITY))
     .optional()
     .label("Visibility"),
+  profileImageStorage: awsStorageSchema.label("Profile Image Storage"),
+  coverPhotoStorage: awsStorageSchema.label("Cover Photo Storage"),
 });
 
 export const idParamsSchema = Joi.object({
