@@ -1,4 +1,4 @@
-import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
+import { Schema, model, Document, Model, PaginateModel, AggregatePaginateModel } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { passwordHashPlugin, PasswordHashInput, IPasswordHashDoc } from "./plugins/password-hash.plugin";
@@ -18,7 +18,6 @@ export interface UserInput extends PasswordHashInput, TenantInput, JobProfileInp
   firstName: string;
   lastName: string;
   email: string;
-  profileImageId?: Types.ObjectId;
   role?: USER_ROLE_ENUMS;
   type?: ACCOUNT_TYPE_ENUMS;
 }
@@ -56,10 +55,6 @@ const userSchema = new Schema<IUserDoc>(
       type: String,
       unique: true,
       required: true,
-    },
-    profileImageId: {
-      type: Schema.Types.ObjectId,
-      ref: modelNames.FILE_MEDIA,
     },
     type: {
       type: String,

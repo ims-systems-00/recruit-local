@@ -14,6 +14,8 @@ export const tenantRoleScopedSecurityQuery = (ability: ReturnType<TenantAbilityB
 export const tenantProjectionQuery = (): PipelineStage[] => {
   const fieldsToExclude: (keyof ITenantDoc | "__v")[] = ["__v"];
   const selectedFields = Object.keys(omit(Tenant.schema.paths, fieldsToExclude));
+  // Populated FileMedia objects are not schema paths, so keep them in the projection.
+  selectedFields.push("profileImage", "coverPhoto");
 
   return projectQuery(selectedFields);
 };

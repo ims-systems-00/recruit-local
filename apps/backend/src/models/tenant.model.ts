@@ -20,6 +20,8 @@ export interface TenantInput {
   logoSquareStorage?: AwsStorageTemplate;
   logoRectangleSrc?: string;
   logoRectangleStorage?: AwsStorageTemplate;
+  profileImageId?: Types.ObjectId;
+  coverPhotoId?: Types.ObjectId;
   officeAddress?: string;
   addressInMap?: string;
   status?: TENANT_STATUS_ENUMS;
@@ -87,6 +89,14 @@ const tenantSchema = new Schema<ITenantDoc>(
       type: String,
     },
     logoRectangleStorage: awsStorageTemplateMongooseDefinition,
+    profileImageId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.FILE_MEDIA,
+    },
+    coverPhotoId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.FILE_MEDIA,
+    },
 
     // Aligned with officeAddress in interface
     officeAddress: {

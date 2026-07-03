@@ -58,7 +58,6 @@ export interface UserResponseDto {
   lastName?: string;
   fullName?: string;
   email?: string;
-  profileImageId?: string | null;
   type?: ACCOUNT_TYPE_ENUMS | null;
   role?: USER_ROLE_ENUMS | null;
   emailVerificationStatus?: EMAIL_VERIFICATION_STATUS_ENUMS;

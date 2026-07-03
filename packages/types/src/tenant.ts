@@ -2,6 +2,7 @@ import { TENANT_STATUS_ENUMS, TENANT_TYPE } from './tenant.enum';
 import { ONBOARDING_STEP_ENUMS } from './onboarding';
 import { Completion } from './completion';
 import { ValueResponseDto } from './value';
+import { FileMediaRefDto } from './file-media';
 
 /** AWS storage descriptor attached to a tenant logo. */
 export interface TenantStorageDto {
@@ -32,6 +33,8 @@ export interface TenantResponseDto {
   logoSquareStorage?: TenantStorageDto | null;
   logoRectangleSrc?: string;
   logoRectangleStorage?: TenantStorageDto | null;
+  profileImage?: FileMediaRefDto | null; // populated (present only when looked up)
+  coverPhoto?: FileMediaRefDto | null; // populated (present only when looked up)
   officeAddress?: string;
   addressInMap?: string;
   addressInMapLat?: number;

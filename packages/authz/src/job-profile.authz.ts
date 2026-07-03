@@ -41,6 +41,17 @@ export const ALL_JOB_PROFILE_FIELDS = [
   'visibility',
   'status',
   'completion',
+  // Profile & cover photos (FileMedia refs).
+  'profileImageId',
+  'coverPhotoId',
+  'profileImage',
+  'profileImage.*',
+  'coverPhoto',
+  'coverPhoto.*',
+  'profileImageStorage',
+  'profileImageStorage.*',
+  'coverPhotoStorage',
+  'coverPhotoStorage.*',
   'createdAt',
   'updatedAt',
 ];
@@ -69,6 +80,11 @@ const CANDIDATE_MUTATION_FIELDS = [
   'values',
   'onboardingStep',
   'visibility',
+  // Photo uploads: candidate submits the transient `*Storage` templates.
+  'profileImageStorage',
+  'profileImageStorage.*',
+  'coverPhotoStorage',
+  'coverPhotoStorage.*',
 ];
 
 // --- 2. AUTHZ ENTITY ---

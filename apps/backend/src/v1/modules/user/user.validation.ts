@@ -23,9 +23,3 @@ export const updateBodySchema = Joi.object({
     .optional()
     .label("Role"),
 });
-
-export const profileImageBodySchema = Joi.object({
-  Name: Joi.string().required().label("Name"),
-  Bucket: Joi.string().required().label("Bucket"),
-  Key: Joi.string().required().label("Key"),
-});
