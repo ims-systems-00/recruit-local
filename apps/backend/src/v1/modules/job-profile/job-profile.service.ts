@@ -16,6 +16,7 @@ import { recomputeProfileCompletion } from "./profile-completion.service";
 import { populateValuesQuery } from "../value/value.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
+import { enqueueProfileKeywords } from "../../../queue/keywordUpdateQueue";
 import { modelNames } from "../../../models/constants";
 import {
   IJobProfileCreateParams,
@@ -169,6 +170,9 @@ export const create = async ({ payload, allowedFields }: IJobProfileCreateParams
   // Compute the initial completion from the freshly-created profile.
   await recomputeProfileCompletion(jobProfile.userId);
 
+  // Rebuild match keywords off the request path.
+  await enqueueProfileKeywords(jobProfileId);
+
   return getOne({
     query: { _id: jobProfileId } as any,
     allowedFields,
@@ -232,6 +236,9 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
 
   // Profile fields changed — recompute completion and return the fresh document.
   await recomputeProfileCompletion(jobProfile.userId);
+
+  // Rebuild match keywords off the request path.
+  await enqueueProfileKeywords(jobProfile._id);
 
   return getOne({ query: { _id: jobProfile._id } as any, allowedFields });
 };
