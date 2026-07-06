@@ -1,4 +1,5 @@
 'use client';
+import React, { Suspense } from 'react';
 import InfoSection from './sections/info';
 import { useSearchParams } from 'next/navigation';
 import { ONBOARDING_STEP_ENUMS } from '@rl/types';
@@ -12,7 +13,7 @@ import { useTenant } from '@/services/tenants/tenants.client';
 import Image from 'next/image';
 import LoaderSvg from '@/public/images/loader.svg';
 
-export default function ValuesPage() {
+function ValuesPageContent() {
   const searchParams = useSearchParams();
   const step = searchParams.get('step');
 
@@ -93,4 +94,12 @@ export default function ValuesPage() {
     );
   }
   return <InfoSection />;
+}
+
+export default function ValuesPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center bg-card"><p>Loading...</p></div>}>
+      <ValuesPageContent />
+    </Suspense>
+  );
 }

@@ -1,4 +1,5 @@
 'use client';
+import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ONBOARDING_STEP_ENUMS } from '@rl/types';
 import CvUploadSection from './sections/cv-upload/cv-upload';
@@ -13,7 +14,7 @@ import ExperienceLevelSection from './sections/experience-level';
 import WorkModeSection from './sections/work-mode';
 import LocationSection from './sections/location';
 
-export default function PersonalisationPage() {
+function PersonalisationPageContent() {
   const searchParams = useSearchParams();
   const step = searchParams.get('step');
 
@@ -95,4 +96,12 @@ export default function PersonalisationPage() {
     );
   }
   return <InfoSection />;
+}
+
+export default function PersonalisationPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center bg-card"><p>Loading...</p></div>}>
+      <PersonalisationPageContent />
+    </Suspense>
+  );
 }

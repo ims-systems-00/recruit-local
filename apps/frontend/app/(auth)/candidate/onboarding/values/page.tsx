@@ -1,4 +1,5 @@
 'use client';
+import React, { Suspense } from 'react';
 import InfoSection from './sections/info';
 import { useSearchParams } from 'next/navigation';
 import { ONBOARDING_STEP_ENUMS } from '@rl/types';
@@ -13,7 +14,7 @@ import LoaderSvg from '@/public/images/loader.svg';
 import { useJobProfile } from '@/services/job-profile/job-profile.client';
 import NoticeByEmployeeSection from './sections/notice-by-employee-section';
 
-export default function ValuesPage() {
+function ValuesPageContent() {
   const searchParams = useSearchParams();
   const step = searchParams.get('step');
 
@@ -99,4 +100,12 @@ export default function ValuesPage() {
     );
   }
   return <InfoSection />;
+}
+
+export default function ValuesPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center bg-card"><p>Loading...</p></div>}>
+      <ValuesPageContent />
+    </Suspense>
+  );
 }

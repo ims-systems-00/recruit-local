@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import React from 'react';
+import React, { Suspense } from 'react';
 import Logo from '@/public/images/logo.svg';
 import { Button } from '@/components/ui/button';
 import { EyeClosed, LockKeyholeOpen, MailIcon } from 'lucide-react';
@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useLogin } from '@/services/auth/auth.client';
 
-export default function Login() {
+function LoginForm() {
   const {
     register,
     onSubmit,
@@ -27,18 +27,6 @@ export default function Login() {
   return (
     <div className="  flex justify-center items-center">
       <div className="  w-[692px] rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
-        {/* <div>
-          <Link href="/">
-            <Image
-              className="max-h-[62px] max-w-[114px]"
-              alt="Logo"
-              src={Logo}
-              width={114}
-              height={62}
-            />
-          </Link>
-        </div> */}
-
         <form
           onSubmit={onSubmit}
           className=" flex flex-col gap-y-spacing-5xl flex-1"
@@ -126,7 +114,7 @@ export default function Login() {
 
           <div className=" flex justify-center">
             <p className="text-body-md">
-              Don’t you have account?{' '}
+              Don&rsquo;t you have account?{' '}
               <Link href="/sign-up" className=" text-text-brand-primary">
                 Create Account
               </Link>
@@ -135,5 +123,13 @@ export default function Login() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center"><p>Loading...</p></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
