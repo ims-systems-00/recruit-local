@@ -54,6 +54,12 @@ const finalizeJobProfile = (doc: any) => {
   if (doc && Array.isArray(doc.workMode)) doc.workMode = toNamedRefResponseList(doc.workMode);
   if (doc && doc.experienceLevel && typeof doc.experienceLevel === "object")
     doc.experienceLevel = toNamedRefResponse(doc.experienceLevel);
+  // The raw photo ids are redundant with the populated objects' `_id` — expose
+  // only the populated `profileImage` / `coverPhoto` (with `src`).
+  if (doc) {
+    delete doc.profileImageId;
+    delete doc.coverPhotoId;
+  }
   return expandProfileCompletion(doc);
 };
 

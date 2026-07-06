@@ -29,7 +29,6 @@ export const toUserResponse = (doc: unknown): UserResponseDto => {
   if (has(d, "id")) d.id = String(d.id);
   if (has(d, "tenantId")) d.tenantId = d.tenantId == null ? null : String(d.tenantId);
   if (has(d, "jobProfileId")) d.jobProfileId = d.jobProfileId == null ? null : String(d.jobProfileId);
-  if (has(d, "profileImageId")) d.profileImageId = d.profileImageId == null ? null : String(d.profileImageId);
   if (has(d, "createdAt")) d.createdAt = toIso(d.createdAt);
   if (has(d, "updatedAt")) d.updatedAt = toIso(d.updatedAt);
 

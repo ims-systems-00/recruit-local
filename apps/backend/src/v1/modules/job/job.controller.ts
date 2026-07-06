@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
 } from "../../../common/helper";
 import * as jobService from "./job.service";
+import * as jobProfileService from "../job-profile/job-profile.service";
 import { JobAbilityBuilder, JobAuthZEntity, ALL_JOB_FIELDS } from "@rl/authz";
 import { AbilityAction, JOBS_STATUS_ENUMS } from "@rl/types";
 import { jobRoleScopedSecurityQuery } from "./job.query";
@@ -66,6 +67,19 @@ const getSanitizedJobResponse = (doc: any, ability: any) => {
   return sanitizeDocument<JobAuthZEntity>(doc, ability, AbilityAction.Read, JobAuthZEntity, caslFieldOptions);
 };
 
+/**
+ * Loads a seeker's profile keywords for match ranking. Returns [] (plain list)
+ * if the profile is missing so a stale session id never 404s the jobs list.
+ */
+const getProfileKeywords = async (jobProfileId: string): Promise<string[]> => {
+  try {
+    const profile = await jobProfileService.getOne({ query: { _id: jobProfileId } });
+    return (profile?.keywords ?? []).map((k: string) => k.toLowerCase());
+  } catch {
+    return [];
+  }
+};
+
 export const list = async ({ req }: ControllerParams) => {
   const abilityBuilder = new JobAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
@@ -74,7 +88,11 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read jobs.`);
   }
 
-  const filter = new MongoQuery(req.query, {
+  // `matched` opts a seeker into profile-based ranking; it is not a real filter
+  // field, so strip it before building the Mongo query.
+  const { matched, ...restQuery } = req.query;
+
+  const filter = new MongoQuery(restQuery, {
     searchFields: ["title", "description", "company", "location"],
   }).build();
 
@@ -82,11 +100,23 @@ export const list = async ({ req }: ControllerParams) => {
     $and: [filter.getFilterQuery(), jobRoleScopedSecurityQuery(ability)],
   };
 
+  const options = filter.getQueryOptions();
+  let matchKeywords: string[] | undefined;
+
+  if (matched && req.session.jobProfileId) {
+    matchKeywords = await getProfileKeywords(req.session.jobProfileId);
+    if (matchKeywords.length) {
+      // Ranking is the point of matched mode — sort best-match first.
+      options.sort = "-matchScore -createdAt";
+    }
+  }
+
   const results = await jobService.list({
     query: finalQuery,
-    options: filter.getQueryOptions(),
+    options,
     tenantId: req.session.tenantId,
     jobProfileId: req.session.jobProfileId,
+    matchKeywords,
   });
 
   const sanitizedDocs = sanitizeDocuments<JobAuthZEntity>(

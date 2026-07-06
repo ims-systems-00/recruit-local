@@ -1,7 +1,9 @@
 import { Model, PipelineStage } from "mongoose";
 import { accessibleBy } from "@casl/mongoose";
 import { AnyMongoAbility } from "@casl/ability";
+import { VISIBILITY_ENUM } from "@rl/types";
 import { AbilityAction } from "../../types/ability";
+import { modelNames } from "../../models/constants";
 
 type Constructor<T> = new (...args: any[]) => T;
 
@@ -76,6 +78,61 @@ export const populateSingleNamedRefQuery = <T>(model: Model<T>, field: string): 
   ...populateNamedRefQuery(model, field),
   { $addFields: { [field]: { $ifNull: [{ $arrayElemAt: [`$${field}`, 0] }, null] } } },
 ];
+
+/**
+ * Reusable single-FileMedia populate: replaces a parent's scalar ObjectId
+ * (`lookupField`) with the referenced FileMedia document exposed under `asField`,
+ * adding a public `src` URL (only for PUBLIC visibility) and stripping internal
+ * fields. Flattens the `$lookup` array via `$unwind` while preserving documents
+ * whose reference is missing/null. Mirrors the KYC document populate pattern.
+ */
+export const populateFileMediaQuery = (lookupField: string, asField: string): PipelineStage[] => {
+  const baseUrl = process.env.PUBLIC_MEDIA_BASE_URL || "";
+
+  return [
+    {
+      $lookup: {
+        from: modelNames.FILE_MEDIA,
+        let: { documentId: `$${lookupField}` },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$_id", "$$documentId"] },
+            },
+          },
+          {
+            $addFields: {
+              src: {
+                $cond: {
+                  if: { $eq: ["$visibility", VISIBILITY_ENUM.PUBLIC] },
+                  then: { $concat: [baseUrl, "/", "$storageInformation.Key"] },
+                  else: null,
+                },
+              },
+            },
+          },
+          {
+            $project: {
+              deleteMarker: 0,
+              __v: 0,
+              collectionName: 0,
+              collectionDocument: 0,
+              createdAt: 0,
+              updatedAt: 0,
+            },
+          },
+        ],
+        as: asField,
+      },
+    },
+    {
+      $unwind: {
+        path: `$${asField}`,
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+  ];
+};
 
 export const populateStatusQuery = (): PipelineStage[] => {
   return [

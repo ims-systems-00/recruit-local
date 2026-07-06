@@ -247,28 +247,3 @@ export const restore = async ({ req }: ControllerParams) => {
     fieldName: "user",
   });
 };
-
-export const updateUserProfileImage = async ({ req }: ControllerParams) => {
-  const abilityBuilder = new UserAbilityBuilder(req.session);
-  const ability = abilityBuilder.getAbility();
-
-  const existingUser = await userService.getOne({ query: { _id: req.params.id } });
-
-  const authZEntity = new UserAuthZEntity(existingUser);
-
-  if (!existingUser || !ability.can(AbilityAction.Update, authZEntity, "profileImage")) {
-    throw new UnauthorizedException(`Not authorized to update profile image.`);
-  }
-
-  const updatedUser = await userService.updateUserProfileImage({
-    query: { _id: req.params.id },
-    payload: req.body,
-  });
-
-  return new ApiResponse({
-    message: "User profile image updated.",
-    statusCode: StatusCodes.OK,
-    data: toUserResponse(getSanitizedUserResponse(updatedUser, ability)),
-    fieldName: "user",
-  });
-};

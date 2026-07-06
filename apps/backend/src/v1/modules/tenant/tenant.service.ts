@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ClientSession } from "mongoose";
+import { ClientSession, Types } from "mongoose";
 import { S3Client } from "@aws-sdk/client-s3";
+import { VISIBILITY_ENUM } from "@rl/types";
 import { NotFoundException, FileManager } from "../../../common/helper";
 import { Tenant, ITenantDoc } from "../../../models";
+import { modelNames } from "../../../models/constants";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateFileMediaQuery } from "../../../common/query";
 import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
+import * as FileMediaService from "../file-media/file-media.service";
 import { recomputeTenantCompletion } from "./tenant-completion.service";
 import { tenantProjectionQuery } from "./tenant.query";
 import { populateValuesQuery } from "../value/value.query";
@@ -15,6 +18,7 @@ import {
   ITenantUpdateParams,
   ITenantCreateParams,
   ITenantUpdateLogoParams,
+  ITenantPhotoStorage,
 } from "./tenant.interface";
 
 export interface ITenantBulkParams {
@@ -33,11 +37,67 @@ const s3Client = new S3Client({
 
 // --- Service Methods ---
 
+// Photo fields that are uploaded as an inline `*Storage` template and persisted
+// as a FileMedia ObjectId reference.
+const PHOTO_STORAGE_FIELDS: { storageKey: keyof ITenantPhotoStorage; idKey: "profileImageId" | "coverPhotoId" }[] = [
+  { storageKey: "profileImageStorage", idKey: "profileImageId" },
+  { storageKey: "coverPhotoStorage", idKey: "coverPhotoId" },
+];
+
+/**
+ * Resolves any inline photo upload templates on a write payload into FileMedia
+ * documents: for each provided `*Storage`, creates a FileMedia (or clears the
+ * ref when `null`), writes the new id into the matching `*Id` field, hard-deletes
+ * the FileMedia it replaces, and returns a clean payload with the transient
+ * `*Storage` keys removed (safe to persist).
+ */
+const resolvePhotoStorage = async (
+  tenantId: Types.ObjectId,
+  payload: ITenantUpdateParams["payload"],
+  existing?: ITenantDoc
+): Promise<Partial<ITenantDoc>> => {
+  const { profileImageStorage, coverPhotoStorage, ...clean } = payload;
+  const storageByKey: ITenantPhotoStorage = { profileImageStorage, coverPhotoStorage };
+
+  for (const { storageKey, idKey } of PHOTO_STORAGE_FIELDS) {
+    const storage = storageByKey[storageKey];
+    if (storage === undefined) continue; // field not part of this write
+
+    let newId: Types.ObjectId | null = null;
+    if (storage) {
+      const fileMedia = await FileMediaService.create({
+        payload: {
+          collectionName: modelNames.TENANT,
+          collectionDocument: tenantId,
+          storageInformation: storage,
+          visibility: VISIBILITY_ENUM.PUBLIC,
+        },
+      });
+      newId = fileMedia._id as Types.ObjectId;
+    }
+    (clean as any)[idKey] = newId;
+
+    // Remove the FileMedia this write replaces (non-fatal on error).
+    const previousId = existing?.[idKey];
+    if (previousId) {
+      try {
+        await FileMediaService.hardDelete({ query: { _id: previousId.toString() } });
+      } catch (error) {
+        console.error(`Failed to delete old ${idKey} for Tenant ${tenantId}`, error);
+      }
+    }
+  }
+
+  return clean as Partial<ITenantDoc>;
+};
+
 export const list = ({ query = {}, options, session }: IListTenantParams) => {
   const aggregate = Tenant.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...populateValuesQuery(),
+    ...populateFileMediaQuery("profileImageId", "profileImage"),
+    ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
     ...tenantProjectionQuery(),
   ]);
 
@@ -51,6 +111,8 @@ export const getOne = async ({ query = {}, session }: ITenantGetParams): Promise
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...populateValuesQuery(),
+    ...populateFileMediaQuery("profileImageId", "profileImage"),
+    ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
     ...tenantProjectionQuery(),
   ]);
 
@@ -90,7 +152,10 @@ export const getOneSoftDeleted = async ({ query = {}, session }: ITenantGetParam
 };
 
 export const create = async ({ payload, session }: ITenantCreateParams) => {
-  let tenant = new Tenant(payload);
+  const tenantId = new Types.ObjectId();
+  const cleanPayload = await resolvePhotoStorage(tenantId, payload);
+
+  let tenant = new Tenant({ ...cleanPayload, _id: tenantId });
   tenant = await tenant.save({ session });
 
   // Bump the weight of every value attached to the tenant.
@@ -109,9 +174,11 @@ export const update = async ({ query, payload, session }: ITenantUpdateParams) =
   const sanitizedQuery = sanitizeQueryIds(query);
   const existing = await getOne({ query: sanitizedQuery, session });
 
+  const cleanPayload = await resolvePhotoStorage(existing._id as Types.ObjectId, payload, existing);
+
   const updatedTenant = await Tenant.findOneAndUpdate(
     { _id: existing._id },
-    { $set: payload },
+    { $set: cleanPayload },
     { new: true, runValidators: true, session }
   );
 
@@ -124,10 +191,12 @@ export const update = async ({ query, payload, session }: ITenantUpdateParams) =
     if (newValueIds.length) await valueWeightUpdateQueue.addJob("value-weight-update", { valueIds: newValueIds });
   }
 
-  const completion = await recomputeTenantCompletion(String(updatedTenant._id));
-  if (completion) updatedTenant.completion = completion;
+  await recomputeTenantCompletion(String(updatedTenant._id));
 
-  return updatedTenant;
+  // Re-fetch through the read pipeline so the response includes the populated
+  // values and profile/cover photos (findOneAndUpdate returns only raw ObjectId
+  // refs). Mirrors how the job-profile update service returns its document.
+  return getOne({ query: { _id: String(updatedTenant._id) }, session });
 };
 
 export const updateLogo = async ({ tenantId, logoType, file, session }: ITenantUpdateLogoParams) => {

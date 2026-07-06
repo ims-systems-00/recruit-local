@@ -18,6 +18,7 @@ import {
   IJobIncrementStatsParams,
 } from "./job.interface";
 import * as statusService from "../status/status.service";
+import { enqueueJobKeywords } from "../../../queue/keywordUpdateQueue";
 
 /**
  * Helper to fetch tenant data for job autofill
@@ -38,11 +39,20 @@ const getMongoSession = (session?: ClientSession) => {
   return session && typeof (session as any).inTransaction === "function" ? session : undefined;
 };
 
-export const list = ({ query = {}, options, session, tenantId, jobProfileId }: IJobListParams) => {
+export const list = ({ query = {}, options, session, tenantId, jobProfileId, matchKeywords }: IJobListParams) => {
   const aggregate = Job.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...jobProjectionQuery(),
+    ...(matchKeywords?.length
+      ? [
+          {
+            $addFields: {
+              matchScore: { $size: { $setIntersection: [{ $ifNull: ["$keywords", []] }, matchKeywords] } },
+            },
+          },
+        ]
+      : []),
     ...alreadyAlliped(jobProfileId),
     ...alreadysaved(tenantId, jobProfileId),
   ]);
@@ -154,6 +164,7 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
   });
 
   job = await job.save({ session });
+  await enqueueJobKeywords(job.id);
   return job;
 };
 
@@ -208,6 +219,8 @@ export const update = async ({ query, payload, session }: IJobUpdateParams) => {
   );
 
   if (!updatedJob) throw new NotFoundException("Job not found.");
+
+  await enqueueJobKeywords((updatedJob as any)._id);
 
   const jobResponse = await getOne({ query: { _id: (updatedJob as any)._id.toString() }, session });
   return jobResponse;

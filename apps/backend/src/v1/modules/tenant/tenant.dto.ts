@@ -6,6 +6,14 @@ const toIso = (v: unknown): string => (v instanceof Date ? v.toISOString() : (v 
 
 const has = (obj: Record<string, unknown>, key: string): boolean => Object.prototype.hasOwnProperty.call(obj, key);
 
+// Stringify the `_id` of a populated FileMedia reference (or pass through null).
+const toFileMediaRef = (v: unknown): unknown => {
+  if (v == null) return null;
+  const f = v as Record<string, unknown>;
+  if (has(f, "_id")) f._id = String(f._id);
+  return f;
+};
+
 /**
  * Serializes a (possibly partial) sanitized tenant into its public HTTP shape.
  * A field that was sanitized away stays absent. ObjectIds become strings, dates
@@ -28,6 +36,12 @@ export const toTenantResponse = (doc: unknown): TenantResponseDto => {
   if (has(d, "_id")) d._id = String(d._id);
   if (has(d, "id")) d.id = String(d.id);
   if (has(d, "values") && Array.isArray(d.values)) d.values = d.values.map(toValueResponse);
+  // The raw photo ids are redundant with the populated objects' `_id` — expose
+  // only the populated `profileImage` / `coverPhoto` (with `src`).
+  delete d.profileImageId;
+  delete d.coverPhotoId;
+  if (has(d, "profileImage")) d.profileImage = toFileMediaRef(d.profileImage);
+  if (has(d, "coverPhoto")) d.coverPhoto = toFileMediaRef(d.coverPhoto);
   if (has(d, "createdAt")) d.createdAt = toIso(d.createdAt);
   if (has(d, "updatedAt")) d.updatedAt = toIso(d.updatedAt);
 

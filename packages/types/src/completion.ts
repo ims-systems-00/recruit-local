@@ -50,9 +50,10 @@ export const PROFILE_COMPLETION_SECTIONS: CompletionSection[] = [
 
 /** Employer/organisation (tenant) sections (sum = 100). */
 export const TENANT_COMPLETION_SECTIONS: CompletionSection[] = [
-  { key: "basics", label: "Organisation basics", weight: 20 },
+  { key: "basics", label: "Organisation basics", weight: 15 },
   { key: "contact", label: "Contact details", weight: 15 },
-  { key: "branding", label: "Logo & branding", weight: 15 },
+  { key: "branding", label: "Logo & branding", weight: 10 },
+  { key: "photo", label: "Profile photo", weight: 10 },
   { key: "web", label: "Web presence", weight: 10 },
   { key: "missionVision", label: "Mission & vision", weight: 15 },
   { key: "offerings", label: "Products & services", weight: 15 },

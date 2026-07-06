@@ -21,5 +21,7 @@ export const jobProfileProjectQuery = (allowedFields?: string[]): PipelineStage[
     const fieldsToExclude: (keyof IJobProfileDoc | "__v")[] = ["__v"];
     selectedFields = Object.keys(omit(JobProfile.schema.paths, fieldsToExclude));
   }
+  // Populated FileMedia objects are not schema paths, so keep them in the projection.
+  selectedFields.push("profileImage", "coverPhoto");
   return projectQuery(selectedFields);
 };

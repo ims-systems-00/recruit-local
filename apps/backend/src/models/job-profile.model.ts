@@ -26,6 +26,8 @@ export interface JobProfileInput extends IUserOwnedInput {
   interests?: string;
   values?: Types.ObjectId[];
   onboardingStep?: ONBOARDING_STEP_ENUMS;
+  profileImageId?: Types.ObjectId;
+  coverPhotoId?: Types.ObjectId;
 }
 
 export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, IBaseDoc {
@@ -96,6 +98,14 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
     },
     industry: [{ type: Schema.Types.ObjectId, ref: modelNames.INDUSTRY }],
     workMode: [{ type: Schema.Types.ObjectId, ref: modelNames.WORK_MODE }],
+    profileImageId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.FILE_MEDIA,
+    },
+    coverPhotoId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.FILE_MEDIA,
+    },
     onboardingStep: {
       type: String,
       enum: Object.values(ONBOARDING_STEP_ENUMS),

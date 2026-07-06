@@ -34,6 +34,7 @@ export const recomputeTenantCompletion = async (
       filledNum(tenant.size),
     contact: filledStr(tenant.phone) && filledStr(tenant.email) && filledStr(tenant.officeAddress),
     branding: filledStr(tenant.logoSquareSrc) || filledStr(tenant.logoRectangleSrc),
+    photo: Boolean(tenant.profileImageId),
     web: filledStr(tenant.website) && filledStr(tenant.linkedIn),
     missionVision: filledStr(tenant.missionStatement) && filledStr(tenant.visionStatement),
     offerings: filledStr(tenant.coreProducts) && filledStr(tenant.coreServices),

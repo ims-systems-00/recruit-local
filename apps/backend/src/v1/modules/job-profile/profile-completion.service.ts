@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { JobProfile, User, Experience, Education, Skill, Certification, CV } from "../../../models";
+import { JobProfile, Experience, Education, Skill, Certification, CV } from "../../../models";
 import { PROFILE_COMPLETION_SECTIONS, CV_STATUS_ENUM, StoredCompletion } from "@rl/types";
 import { computeCompletion } from "@rl/utils";
 
@@ -32,8 +32,7 @@ export const recomputeProfileCompletion = async (
   // Active (not soft-deleted) records owned by this user.
   const activeFilter = { userId: uid, "deleteMarker.status": { $ne: true } };
 
-  const [user, experienceCount, educationCount, skillCount, certificationCount, cvDoc] = await Promise.all([
-    User.findById(uid).select("profileImageId"),
+  const [experienceCount, educationCount, skillCount, certificationCount, cvDoc] = await Promise.all([
     Experience.countDocuments(activeFilter),
     Education.countDocuments(activeFilter),
     Skill.countDocuments(activeFilter),
@@ -56,7 +55,7 @@ export const recomputeProfileCompletion = async (
       filledArr(jobProfile.industry) &&
       filledArr(jobProfile.workMode) &&
       filledRef(jobProfile.experienceLevel),
-    photo: Boolean(user?.profileImageId),
+    photo: filledRef(jobProfile.profileImageId),
     experience: experienceCount > 0,
     education: educationCount > 0,
     skills: skillCount >= 3 || filledStr(jobProfile.skills),

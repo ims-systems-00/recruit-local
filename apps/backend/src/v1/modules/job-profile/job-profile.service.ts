@@ -8,6 +8,7 @@ import {
   onlyDeletedQuery,
   populateNamedRefQuery,
   populateSingleNamedRefQuery,
+  populateFileMediaQuery,
 } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobProfileProjectQuery } from "./job-profile.query";
@@ -15,13 +16,71 @@ import { recomputeProfileCompletion } from "./profile-completion.service";
 import { populateValuesQuery } from "../value/value.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
+import { enqueueProfileKeywords } from "../../../queue/keywordUpdateQueue";
 import { modelNames } from "../../../models/constants";
 import {
   IJobProfileCreateParams,
   IJobProfileGetParams,
   IJobProfileUpdateParams,
+  IJobProfilePhotoStorage,
   IListJobProfileParams,
 } from "./job-profile.interface";
+
+// Photo fields uploaded as an inline `*Storage` template and persisted as a
+// FileMedia ObjectId reference.
+const PHOTO_STORAGE_FIELDS: {
+  storageKey: keyof IJobProfilePhotoStorage;
+  idKey: "profileImageId" | "coverPhotoId";
+}[] = [
+  { storageKey: "profileImageStorage", idKey: "profileImageId" },
+  { storageKey: "coverPhotoStorage", idKey: "coverPhotoId" },
+];
+
+/**
+ * Resolves any inline photo upload templates on a write payload into FileMedia
+ * documents: for each provided `*Storage`, creates a public FileMedia (or clears
+ * the ref when `null`), hard-deletes the FileMedia it replaces, and returns a map
+ * of `{ profileImageId?, coverPhotoId? }` to merge into the persisted document.
+ * Only fields actually present on the payload are touched.
+ */
+const resolvePhotoStorage = async (
+  jobProfileId: Types.ObjectId,
+  payload: IJobProfilePhotoStorage,
+  existing?: { profileImageId?: Types.ObjectId; coverPhotoId?: Types.ObjectId }
+): Promise<Partial<Record<"profileImageId" | "coverPhotoId", Types.ObjectId | null>>> => {
+  const ids: Partial<Record<"profileImageId" | "coverPhotoId", Types.ObjectId | null>> = {};
+
+  for (const { storageKey, idKey } of PHOTO_STORAGE_FIELDS) {
+    const storage = payload[storageKey];
+    if (storage === undefined) continue; // field not part of this write
+
+    let newId: Types.ObjectId | null = null;
+    if (storage) {
+      const fileMedia = await FileMediaService.create({
+        payload: {
+          collectionName: modelNames.JOB_PROFILE,
+          collectionDocument: jobProfileId,
+          storageInformation: storage,
+          visibility: VISIBILITY_ENUM.PUBLIC,
+        },
+      });
+      newId = fileMedia._id as Types.ObjectId;
+    }
+    ids[idKey] = newId;
+
+    // Remove the FileMedia this write replaces (non-fatal on error).
+    const previousId = existing?.[idKey];
+    if (previousId) {
+      try {
+        await FileMediaService.hardDelete({ query: { _id: previousId.toString() } });
+      } catch (error) {
+        console.error(`Failed to delete old ${idKey} for JobProfile ${jobProfileId}`, error);
+      }
+    }
+  }
+
+  return ids;
+};
 
 export const list = ({ query = {}, options, allowedFields }: IListJobProfileParams) => {
   return JobProfile.aggregatePaginate(
@@ -33,6 +92,8 @@ export const list = ({ query = {}, options, allowedFields }: IListJobProfilePara
       ...populateNamedRefQuery(Industry, "industry"),
       ...populateNamedRefQuery(WorkMode, "workMode"),
       ...populateSingleNamedRefQuery(ExperienceLevel, "experienceLevel"),
+      ...populateFileMediaQuery("profileImageId", "profileImage"),
+      ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
       ...jobProfileProjectQuery(allowedFields),
     ],
     options
@@ -47,6 +108,8 @@ export const getOne = async ({ query = {}, allowedFields }: IJobProfileGetParams
     ...populateNamedRefQuery(JobTitle, "jobTitle"),
     ...populateNamedRefQuery(Industry, "industry"),
     ...populateNamedRefQuery(WorkMode, "workMode"),
+    ...populateFileMediaQuery("profileImageId", "profileImage"),
+    ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
     ...jobProfileProjectQuery(allowedFields),
   ]);
   if (jobProfiles.length === 0) throw new NotFoundException("Job Profile not found.");
@@ -85,12 +148,15 @@ export const create = async ({ payload, allowedFields }: IJobProfileCreateParams
     kycDocumentId = fileMedia._id;
   }
 
-  const { kycDocumentStorage, ...cleanPayload } = payload;
+  const photoIds = await resolvePhotoStorage(jobProfileId, payload);
+
+  const { kycDocumentStorage, profileImageStorage, coverPhotoStorage, ...cleanPayload } = payload;
 
   const jobProfile = new JobProfile({
     ...cleanPayload,
     _id: jobProfileId,
     kycDocumentId: kycDocumentId,
+    ...photoIds,
   });
 
   await jobProfile.save();
@@ -103,6 +169,9 @@ export const create = async ({ payload, allowedFields }: IJobProfileCreateParams
 
   // Compute the initial completion from the freshly-created profile.
   await recomputeProfileCompletion(jobProfile.userId);
+
+  // Rebuild match keywords off the request path.
+  await enqueueProfileKeywords(jobProfileId);
 
   return getOne({
     query: { _id: jobProfileId } as any,
@@ -137,7 +206,9 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
     }
   }
 
-  const { kycDocumentStorage, ...cleanPayload } = payload;
+  const photoIds = await resolvePhotoStorage(jobProfile._id, payload, jobProfile);
+
+  const { kycDocumentStorage, profileImageStorage, coverPhotoStorage, ...cleanPayload } = payload;
 
   const updatedJobProfile = await JobProfile.findOneAndUpdate(
     { _id: jobProfile._id },
@@ -145,6 +216,7 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
       $set: {
         ...cleanPayload,
         kycDocumentId: updatedKycDocumentId,
+        ...photoIds,
       },
     },
     {
@@ -164,6 +236,9 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
 
   // Profile fields changed — recompute completion and return the fresh document.
   await recomputeProfileCompletion(jobProfile.userId);
+
+  // Rebuild match keywords off the request path.
+  await enqueueProfileKeywords(jobProfile._id);
 
   return getOne({ query: { _id: jobProfile._id } as any, allowedFields });
 };

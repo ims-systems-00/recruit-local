@@ -33,6 +33,9 @@ export const createBodySchema = Joi.object({
   logoRectangleSrc: Joi.string().uri().allow("", null).label("Logo Rectangle Src"),
   logoRectangleStorage: awsStorageSchema.label("Logo Rectangle Storage"),
 
+  profileImageStorage: awsStorageSchema.label("Profile Image Storage"),
+  coverPhotoStorage: awsStorageSchema.label("Cover Photo Storage"),
+
   officeAddress: Joi.string().allow("", null).label("Office Address"),
   addressInMap: Joi.string().allow("", null).label("Address In Map"),
 

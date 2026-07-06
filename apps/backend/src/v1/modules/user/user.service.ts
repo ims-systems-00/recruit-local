@@ -1,15 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClientSession } from "mongoose"; // Added missing import
-import { VISIBILITY_ENUM } from "@rl/types";
 import { User } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { userProjectionQuery } from "./user.query";
-import * as FileMediaService from "../file-media/file-media.service";
-import { modelNames } from "../../../models/constants";
-import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
-import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 import { IListUserParams, IUserGetParams, IUserCreateParams, IUserUpdateParams } from "./user.interface";
 
 export const list = ({ query = {}, options, session }: IListUserParams) => {
@@ -107,9 +102,6 @@ export const update = async ({ query, payload, session }: IUserUpdateParams) => 
 
   if (!updatedUser) throw new NotFoundException("User not found.");
 
-  // The profile photo feeds completion — recompute when it changes.
-  if (payload.profileImageId !== undefined) await enqueueProfileCompletion(updatedUser._id);
-
   return updatedUser;
 };
 
@@ -138,19 +130,6 @@ export const hardDelete = async ({ query, session }: IUserGetParams) => {
   // Fetch sanitized document before deleting it
   const user = await getOneSoftDeleted({ query: sanitizedQuery, session });
 
-  // Clean up related files in S3
-  if (user.profileImageId) {
-    try {
-      // Assuming FileMediaService has also been updated to accept sessions
-      await FileMediaService.hardDelete({
-        query: { _id: user.profileImageId.toString() },
-        // session,
-      });
-    } catch (error) {
-      console.error("Failed to delete attached profile image for User:", error);
-    }
-  }
-
   const deletedUser = await User.findOneAndDelete({ _id: user._id }, { session });
   if (!deletedUser) throw new NotFoundException("User not found to delete.");
 
@@ -166,50 +145,4 @@ export const restore = async ({ query, session }: IUserGetParams) => {
   // Return sanitized document
   const user = await getOne({ query: sanitizedQuery, session });
   return user;
-};
-
-export const updateUserProfileImage = async ({
-  query,
-  payload,
-  session,
-}: Omit<IUserUpdateParams, "payload"> & { payload: AwsStorageTemplate }) => {
-  const sanitizedQuery = sanitizeQueryIds(query);
-  const user = await getOne({ query: sanitizedQuery, session });
-
-  const fileMedia = await FileMediaService.create({
-    payload: {
-      collectionName: modelNames.USER,
-      collectionDocument: user._id,
-      storageInformation: payload,
-      visibility: VISIBILITY_ENUM.PUBLIC,
-    },
-    // session, // Passing session down to file media service
-  });
-
-  const previousProfileImageStorage = user.profileImageId;
-
-  const updatedUser = await User.findOneAndUpdate(
-    { _id: user._id },
-    { $set: { profileImageId: fileMedia._id } },
-    {
-      new: true,
-      session,
-    }
-  );
-
-  if (previousProfileImageStorage) {
-    try {
-      await FileMediaService.hardDelete({
-        query: { _id: previousProfileImageStorage.toString() },
-        // session,
-      });
-    } catch (error) {
-      console.error(`Failed to delete old profile image for User ${user._id}`, error);
-    }
-  }
-
-  // The profile photo section just became complete — recompute.
-  await enqueueProfileCompletion(user._id);
-
-  return updatedUser;
 };

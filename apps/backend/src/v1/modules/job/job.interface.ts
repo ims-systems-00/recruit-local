@@ -21,6 +21,8 @@ export interface IJobCreateParams extends IServiceCreateParams<IJobInput> {
 export interface IJobListParams extends IServiceListParams<IJobDoc> {
   tenantId?: string;
   jobProfileId?: string;
+  // When set, jobs get a `matchScore` = keyword overlap with these, for ranking.
+  matchKeywords?: string[];
 }
 export interface IJobGetParams extends IServiceGetParams<IJobDoc> {
   tenantId?: string;
