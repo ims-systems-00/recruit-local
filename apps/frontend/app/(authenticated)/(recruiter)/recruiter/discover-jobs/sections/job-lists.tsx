@@ -30,12 +30,7 @@ export default function JobLists({
       ) : Boolean(jobs?.length) ? (
         <div className=" grid grid-cols-2 gap-spacing-4xl">
           {jobs?.map((item) => (
-            <CardJobItem
-              key={item._id}
-              job={item}
-              isShowAppliedBtn={false}
-              isShowFavouriteBtn={false}
-            />
+            <CardJobItem key={item._id} job={item} isShowAppliedBtn={false} />
           ))}
         </div>
       ) : (
