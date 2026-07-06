@@ -23,6 +23,20 @@ export type TenantData = {
   logoRectangleSrc?: string;
   logoRectangleStorage?: AwsStorageType;
 
+  coverPhoto: {
+    _id: string;
+    src: string;
+    visibility: string;
+    storageInformation: AwsStorageType;
+    thumbnail: AwsStorageType;
+  };
+  profileImage: {
+    _id: string;
+    src: string;
+    visibility: string;
+    storageInformation: AwsStorageType;
+  };
+
   officeAddress?: string;
   addressInMap?: string;
 

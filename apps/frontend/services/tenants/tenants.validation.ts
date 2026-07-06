@@ -119,6 +119,34 @@ export const tenantUpdateSchema = yup.object({
     })
     .default(undefined),
 
+  profileImageStorage: awsStorageSchema
+    .optional()
+    .transform((value) => {
+      // If value is empty object or undefined, return undefined
+      if (
+        !value ||
+        (typeof value === 'object' && Object.keys(value).length === 0)
+      ) {
+        return undefined;
+      }
+      return value;
+    })
+    .default(undefined),
+
+  coverPhotoStorage: awsStorageSchema
+    .optional()
+    .transform((value) => {
+      // If value is empty object or undefined, return undefined
+      if (
+        !value ||
+        (typeof value === 'object' && Object.keys(value).length === 0)
+      ) {
+        return undefined;
+      }
+      return value;
+    })
+    .default(undefined),
+
   officeAddress: yup.string().optional(),
 
   addressInMap: yup.string().optional(),

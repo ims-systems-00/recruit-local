@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import RecruitProfileDefault from '@/public/images/recruit_profile_default.svg';
 import RecruitDefaultLogo from '@/public/images/recruit_default_logo.png';
 import { Button } from '@/components/ui/button';
-import { Globe, Linkedin } from 'lucide-react';
+import { Camera, Globe, Linkedin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import About from './about';
 import ServicesAndProducts from './services-and-products';
@@ -27,6 +27,8 @@ import Link from 'next/link';
 import EditServicesAndProducts from './edit-services-and-products';
 import Values from './values/values';
 import Jobs from '../../../jobs/sections/jobs';
+import { cn } from '@/lib/utils';
+import FileUploader from '@/components/file-uploader';
 
 export default function Profile({ tenantData }: { tenantData: TenantData }) {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -34,7 +36,10 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
 
   const [tenantDetails, setTenantDetails] = useState(tenantData);
 
+  console.log('tenantDetails', tenantDetails);
+
   const { updateTenant, isPending } = useUpdateTenant();
+
   const methods = useForm<TenantUpdateInput>({
     resolver: yupResolver(tenantUpdateSchema) as Resolver<TenantUpdateInput>,
     defaultValues: {
@@ -54,6 +59,8 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       visionStatement: tenantDetails?.visionStatement,
       coreProducts: tenantDetails?.coreProducts,
       coreServices: tenantDetails?.coreServices,
+      profileImageStorage: tenantDetails?.profileImage?.storageInformation,
+      coverPhotoStorage: tenantDetails?.coverPhoto?.storageInformation,
     },
     mode: 'onSubmit',
   });
@@ -165,21 +172,90 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
     <div>
       <header className=" p-spacing-4xl rounded-2xl">
         <div className=" h-[244px] relative">
-          <Image
-            className="max-h-[244px] rounded-3xl w-full object-cover h-full"
-            alt="Recruit Profile Default"
-            src={RecruitProfileDefault}
-            height={244}
-          />
+          <div>
+            <Image
+              className="max-h-[244px] rounded-3xl w-full object-cover h-full"
+              alt="Recruit Profile Default"
+              src={tenantDetails?.coverPhoto?.src || RecruitProfileDefault}
+              height={244}
+              width={1900}
+            />
+            {isEditMode && (
+              <FileUploader
+                onUpload={async (files) => {
+                  console.log(files);
+                  await updateTenant({
+                    id: tenantDetails._id,
+                    data: {
+                      name: tenantDetails?.name,
+                      coverPhotoStorage: files[0],
+                    },
+                    onSuccessNext: (newData) => {
+                      console.log('newData', newData);
+
+                      setTenantDetails((prev) => ({ ...prev, ...newData }));
+                    },
+                  });
+                }}
+              >
+                {({ open, disabled }) => (
+                  <Button
+                    type="button"
+                    disabled={disabled || isPending}
+                    onClick={open}
+                    className="hover:bg-bg-gray-soft-primary cursor-pointer h-9 z-10 absolute top-6 right-6 bg-bg-gray-soft-primary border border-border-gray-primary flex items-center justify-center"
+                  >
+                    <Camera className=" size-5 text-fg-gray-secondary" />
+                    <span className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                      Edit Cover Photo
+                    </span>
+                  </Button>
+                )}
+              </FileUploader>
+            )}
+          </div>
 
           <div className=" w-40 h-40 absolute -bottom-[100px] left-0">
-            <Image
-              className="max-h-40 max-w-40 w-40 h-40 rounded-full "
-              alt="Logo"
-              src={RecruitDefaultLogo}
-              width={160}
-              height={160}
-            />
+            <div className="relative w-40 h-40">
+              {isEditMode && (
+                <FileUploader
+                  onUpload={async (files) => {
+                    console.log(files);
+                    await updateTenant({
+                      id: tenantDetails._id,
+                      data: {
+                        name: tenantDetails?.name,
+                        profileImageStorage: files[0],
+                      },
+                      onSuccessNext: (newData) => {
+                        setTenantDetails((prev) => ({ ...prev, ...newData }));
+                      },
+                    });
+                  }}
+                >
+                  {({ open, disabled }) => (
+                    <Button
+                      type="button"
+                      disabled={disabled}
+                      onClick={open}
+                      className=" hover:bg-others-gray-gray-zero cursor-pointer z-10 absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-12 h-12 bg-others-gray-gray-zero rounded-full flex items-center justify-center"
+                    >
+                      <Camera className=" size-7 text-others-gray-default" />
+                    </Button>
+                  )}
+                </FileUploader>
+              )}
+              <Image
+                className={cn(
+                  'max-h-40 max-w-40 w-40 h-40 rounded-full object-cover',
+                  isEditMode && 'blur-[2px]',
+                )}
+                alt="Logo"
+                src={tenantDetails?.profileImage?.src || RecruitDefaultLogo}
+                width={160}
+                height={160}
+              />
+            </div>
           </div>
         </div>
         <div className=" pl-44 flex justify-between items-center gap-4 py-spacing-xl">

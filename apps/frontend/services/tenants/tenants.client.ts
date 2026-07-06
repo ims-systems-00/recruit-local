@@ -100,7 +100,7 @@ export function useUpdateTenant() {
 
       if (response.success) {
         toast.success(response.message || 'Tenant updated successfully');
-        onSuccessNext?.(data as Partial<TenantData>);
+        onSuccessNext?.(response?.data as Partial<TenantData>);
       } else {
         toast.error(response.message);
       }
