@@ -30,7 +30,7 @@ export default function About({ profile }: { profile: TenantData }) {
           <p className=" text-body-lg text-text-gray-tertiary">
             {profile?.description || 'N/A'}
           </p>
-          <div className=" grid grid-cols-2 gap-spacing-lg">
+          <div className=" grid grid-cols-3 gap-spacing-lg">
             <ProfileInfoCard
               title="Industry"
               subtitle={
@@ -41,6 +41,11 @@ export default function About({ profile }: { profile: TenantData }) {
                   : 'N/A'
               }
               icon={<ShieldCheck />}
+            />
+            <ProfileInfoCard
+              title="Organisation type"
+              subtitle={profile.type}
+              icon={<Building />}
             />
             <ProfileInfoCard
               title="Employers"
@@ -59,6 +64,7 @@ export default function About({ profile }: { profile: TenantData }) {
               subtitle={profile.email}
               icon={<Mailbox />}
             />
+
             <ProfileInfoCard
               title="Contact Number"
               subtitle={profile.phone}

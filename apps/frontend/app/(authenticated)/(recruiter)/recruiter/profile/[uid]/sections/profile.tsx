@@ -98,12 +98,14 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
     {
       value: 'about',
       label: 'About',
-      component: isEditMode ? (
-        <EditProfile register={register} control={control} errors={errors} />
-      ) : (
+      component: (
+        // isEditMode ? (
+        //   <EditProfile register={register} control={control} errors={errors} />
+        // ) : (
         <About profile={tenantDetails} />
       ),
-      editable: true,
+      // ),
+      // editable: true,
     },
     // {
     //   value: 'services-and-products',
@@ -153,10 +155,12 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
     },
   ];
 
-  const visibleTabs = useMemo(() => {
-    if (!isEditMode) return tabs;
-    return tabs.filter((tab) => tab.editable);
-  }, [isEditMode, tabs]);
+  // const visibleTabs = useMemo(() => {
+  //   if (!isEditMode) return tabs;
+  //   return tabs.filter((tab) => tab.editable);
+  // }, [isEditMode, tabs]);
+
+  const visibleTabs = tabs;
 
   const handleEdit = useCallback(() => {
     setIsEditMode(true);
@@ -318,34 +322,38 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
         </div>
       </header>
       <div className="px-spacing-4xl pb-spacing-4xl">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="w-full gap-spacing-4xl"
-        >
-          <TabsList className="w-full bg-bg-gray-soft-secondary h-11 justify-start overflow-x-auto">
-            {visibleTabs.map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className="px-spacing-lg text-label-md font-label-md-strong! 
+        {isEditMode ? (
+          <EditProfile register={register} control={control} errors={errors} />
+        ) : (
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full gap-spacing-4xl"
+          >
+            <TabsList className="w-full bg-bg-gray-soft-secondary h-11 justify-start overflow-x-auto">
+              {visibleTabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="px-spacing-lg text-label-md font-label-md-strong! 
                           data-[state=active]:shadow-sm 
                           flex-0 
                           data-[state=active]:bg-bg-gray-soft-primary 
                           text-text-gray-quaternary 
                           dark:data-[state=active]:text-text-gray-secondary"
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          {visibleTabs.map((tab) => (
-            <TabsContent key={tab.value} value={tab.value}>
-              {tab.component}
-            </TabsContent>
-          ))}
-        </Tabs>
+            {visibleTabs.map((tab) => (
+              <TabsContent key={tab.value} value={tab.value}>
+                {tab.component}
+              </TabsContent>
+            ))}
+          </Tabs>
+        )}
       </div>
     </div>
   );
