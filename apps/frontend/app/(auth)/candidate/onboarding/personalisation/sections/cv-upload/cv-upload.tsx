@@ -1,0 +1,132 @@
+'use client';
+import { Progress } from '@/components/ui/progress';
+import AttachmentForm, {
+  UploadedFile,
+} from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/attachment-form';
+import { Button } from '@/components/ui/button';
+import { useDeleteFileStorage } from '@/services/file-storage';
+import { ExtractAndCreateCvInput } from '@/services/cv/cv.type';
+import { useExtractAndCreateCv } from '@/services/cv';
+import { useForm } from 'react-hook-form';
+import { createCvSchema } from '@/services/cv/cv.validation';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import AttachmentItem from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/attachment-item';
+export default function CvUploadSection({
+  jobProfileId,
+}: {
+  jobProfileId: string;
+}) {
+  const { deleteFile, isLoading: isDeleting } = useDeleteFileStorage();
+
+  const schema = createCvSchema as yup.ObjectSchema<ExtractAndCreateCvInput>;
+
+  const { extractAndCreateCv, isPending: isCreatingCv } =
+    useExtractAndCreateCv();
+  const methods = useForm<ExtractAndCreateCvInput>({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      jobProfileId: jobProfileId,
+      resumeStorage: undefined,
+    },
+    mode: 'onSubmit',
+  });
+
+  const {
+    register,
+    control,
+    formState: { errors },
+    handleSubmit,
+    watch,
+    setValue,
+  } = methods;
+
+  const onSubmit = async (data: ExtractAndCreateCvInput) => {
+    console.log(data);
+    const payload = {
+      payload: data,
+      onSuccessCallback: () => {
+        console.log(data);
+      },
+    };
+    extractAndCreateCv(payload);
+  };
+
+  const resumeStorage =
+    watch('resumeStorage') || (null as unknown as UploadedFile);
+
+  const handleRemoveAttachment = async (item: UploadedFile) => {
+    try {
+      const res = await deleteFile({
+        fileKey: item.Key,
+      });
+
+      if (res?.success) {
+        setValue('resumeStorage', null as unknown as UploadedFile, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  console.log('errors', errors);
+
+  return (
+    <div className=" flex justify-center items-center">
+      <div className=" w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col items-center justify-center gap-y-spacing-4xl p-spacing-5xl">
+        <div className="w-full flex items-center justify-between gap-spacing-lg">
+          <Progress value={10} className="w-full h-2.5" />
+          <span className=" text-label-xs font-label-xs-strong! text-text-gray-secondary">
+            10%
+          </span>
+        </div>
+        <div className="w-full space-y-spacing-2xs">
+          <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-secondary">
+            Upload Your CV to Get Started
+          </h4>
+          <p className=" text-label-sm text-text-gray-quaternary">
+            Upload one CV, and Alice AI will pre-fill your details. Just review,
+            edit, and continue.
+          </p>
+        </div>
+        <AttachmentForm
+          onUploadFile={(files: UploadedFile[]) => {
+            setValue('resumeStorage', files[0] as UploadedFile, {
+              shouldDirty: true,
+              shouldValidate: true,
+            });
+          }}
+          multiple={false}
+          accept={{
+            'application/pdf': ['.pdf'],
+            'application/msword': ['.doc', '.docx'],
+          }}
+        />
+        {errors.resumeStorage && (
+          <p className="text-xs text-text-error-primary">
+            {errors.resumeStorage.message}
+          </p>
+        )}
+        {resumeStorage?.Key && (
+          <AttachmentItem
+            key={resumeStorage?.Key}
+            isDeleting={isDeleting}
+            item={resumeStorage as UploadedFile}
+            onDelete={handleRemoveAttachment}
+          />
+        )}
+        <div className=" w-full flex justify-end">
+          <Button
+            onClick={handleSubmit(onSubmit)}
+            className=" cursor-pointer text-base bg-bg-brand-solid-primary border-primary text-white rounded-lg h-10"
+          >
+            {isCreatingCv ? 'Analysing CV...' : 'Continue'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
