@@ -1,10 +1,17 @@
-import { TENANT_TYPE } from '@rl/types';
+import { ONBOARDING_STEP_ENUMS, TENANT_TYPE } from '@rl/types';
+import { ValueData } from '../value';
 
 export type AwsStorageType = {
   Name: string;
   Bucket: string;
   Key: string;
 };
+
+export interface StoredCompletion {
+  percentage: number;
+  completeSections: string[];
+  computedAt?: Date | string | null;
+}
 
 export type TenantData = {
   _id: string;
@@ -22,6 +29,20 @@ export type TenantData = {
   logoRectangleSrc?: string;
   logoRectangleStorage?: AwsStorageType;
 
+  coverPhoto: {
+    _id: string;
+    src: string;
+    visibility: string;
+    storageInformation: AwsStorageType;
+    thumbnail: AwsStorageType;
+  };
+  profileImage: {
+    _id: string;
+    src: string;
+    visibility: string;
+    storageInformation: AwsStorageType;
+  };
+
   officeAddress?: string;
   addressInMap?: string;
 
@@ -34,6 +55,10 @@ export type TenantData = {
   visionStatement?: string;
   coreProducts?: string;
   coreServices?: string;
+  values?: ValueData[];
+  onboardingStep?: ONBOARDING_STEP_ENUMS;
+  completion?: StoredCompletion;
+  isRecruitmentEnabled?: boolean;
   deleteMarker?: {
     status: boolean;
     deletedAt?: string | null;

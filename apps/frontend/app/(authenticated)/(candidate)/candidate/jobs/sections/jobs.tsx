@@ -10,14 +10,15 @@ import {
 import { Filter, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-import { useAuth } from '@/services/user/user.client';
+import { useSession } from 'next-auth/react';
 import JobLists from './job-lists';
 import { useDebounce } from '@/hooks/useDebounce';
 import FilterJobs from './filter-jobs';
 import AppliedJobs from './applied-jobs';
 
 export default function Jobs() {
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');

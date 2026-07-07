@@ -10,10 +10,11 @@ import { JobProfileCreateInput } from '@/services/job-profile/job-profile.type';
 import { createJobProfileSchema } from '@/services/job-profile/job-profile.validation';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useLogout } from '@/services/auth/auth.client';
-import { useAuth } from '@/services/user/user.client';
+import { useSession } from 'next-auth/react';
 
 export default function CreateJobProfileForm() {
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
   const { logout, isLoading: isLoggingOut } = useLogout();
 
   const {
@@ -43,7 +44,7 @@ export default function CreateJobProfileForm() {
         <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
           Job Profile Title
         </Label>
-        <div className=" space-y-spacing-3xs">
+        {/* <div className=" space-y-spacing-3xs">
           <InputGroup className="h-10 rounded-lg shadow-light">
             <InputGroupInput
               type="text"
@@ -54,7 +55,7 @@ export default function CreateJobProfileForm() {
           {errors.headline && (
             <p className="text-sm text-red-500">{errors.headline.message}</p>
           )}
-        </div>
+        </div> */}
       </div>
       <div className=" flex justify-end items-center gap-4 pt-3 border-t border-border">
         <Button

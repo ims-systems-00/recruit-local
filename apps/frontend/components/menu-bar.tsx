@@ -13,9 +13,53 @@ import Link from 'next/link';
 import Image from 'next/image';
 import NavLogo from '@/public/images/NavLogo.svg';
 import { cn } from '@/lib/utils';
+import { usePathname, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import { Button } from './ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { useAuth } from '@/services/user/user.client';
+import { ACCOUNT_TYPE_ENUMS } from '@rl/types';
+import { useLogout } from '@/services/auth/auth.client';
+
+const navItems = [
+  {
+    label: 'Home',
+    href: '/',
+  },
+  {
+    label: 'Find Job',
+    href: '/jobs',
+  },
+  {
+    label: 'Pricing',
+    href: '/pricing',
+  },
+  {
+    label: 'Blogs',
+    href: '/blogs',
+  },
+  {
+    label: 'Contact us',
+    href: '/contact',
+  },
+];
 
 export default function MenuBar() {
+  const pathname = usePathname();
+  const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const { logout } = useLogout();
+  const router = useRouter();
 
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -64,51 +108,74 @@ export default function MenuBar() {
             <Menu aria-hidden="true" className="size-6" />
           </button>
         </div>
-        <div className="hidden lg:flex lg:gap-x-12 text-text-gray-quinary">
-          <Link
-            href="/"
-            className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-          >
-            Home
-          </Link>
-          <Link
-            href="/jobs"
-            className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-          >
-            Find Job
-          </Link>
-          <Link
-            href="/pricing"
-            className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-          >
-            Pricing
-          </Link>
-          <Link
-            href="/blogs"
-            className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-          >
-            Blogs
-          </Link>
-          <Link
-            href="/contact"
-            className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-          >
-            Contact us
-          </Link>
+        <div className="hidden lg:flex lg:gap-x-spacing-3xl text-text-gray-quinary">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'px-spacing-lg text-label-sm font-label-sm-strong! hover:text-text-brand-secondary',
+                pathname === item.href && 'text-text-brand-secondary',
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-spacing-xl">
-          <Link
-            href="/login"
-            className=" text-label-sm font-label-sm-strong! text-text-gray-quinary "
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/sign-up"
-            className="text-label-sm rounded-full font-label-sm-strong! flex items-center h-10 justify-center py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
-          >
-            Register Now/Post Job
-          </Link>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className=" size-10 border border-border-gray-secondary cursor-pointer items-center justify-center">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback>
+                    {user.firstName?.charAt(0)} {user.lastName?.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-40 bg-bg-gray-soft-primary"
+                align="start"
+              >
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      user?.type === ACCOUNT_TYPE_ENUMS.CANDIDATE &&
+                        router.push(`/candidate/profile/${user?.jobProfileId}`);
+                      user?.type === ACCOUNT_TYPE_ENUMS.EMPLOYER &&
+                        router.push(`/recruiter/profile/${user?.tenantId}`);
+                    }}
+                    className=" cursor-pointer"
+                  >
+                    Profile
+                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => logout()}
+                    className=" cursor-pointer"
+                  >
+                    Log out
+                    <DropdownMenuShortcut>⌘L</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className=" px-spacing-lg text-label-sm font-label-sm-strong! text-text-gray-quinary "
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                className="text-label-sm rounded-full font-label-sm-strong! flex items-center h-10 justify-center py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
+              >
+                Register Now/Post Job
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
@@ -134,55 +201,28 @@ export default function MenuBar() {
 
           <div>
             {/* Navigation */}
-            <div className="pb-6 flex flex-col gap-spacing-xl text-text-gray-quinary">
-              <SheetClose asChild>
-                <Link
-                  href="/"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Home
-                </Link>
-              </SheetClose>
-              <SheetClose asChild>
-                <Link
-                  href="/jobs"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Find Job
-                </Link>
-              </SheetClose>
-              <SheetClose asChild>
-                <Link
-                  href="/pricing"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Pricing
-                </Link>
-              </SheetClose>
-              <SheetClose asChild>
-                <Link
-                  href="/blogs"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Blogs
-                </Link>
-              </SheetClose>
-              <SheetClose asChild>
-                <Link
-                  href="/contact"
-                  className=" text-label-sm font-label-sm-strong! hover:text-text-brand-secondary "
-                >
-                  Contact us
-                </Link>
-              </SheetClose>
+            <div className="pb-spacing-4xl flex flex-col gap-spacing-xl text-text-gray-quinary">
+              {navItems.map((item) => (
+                <SheetClose asChild key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      ' text-label-sm font-label-sm-strong! hover:text-text-brand-secondary ',
+                      pathname === item.href && 'text-text-brand-secondary',
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                </SheetClose>
+              ))}
             </div>
 
             {/* Auth */}
-            <div className="pb-6 flex flex-col gap-spacing-xl">
+            <div className="pb-spacing-4xl flex flex-col gap-spacing-xl">
               <SheetClose asChild>
                 <Link
                   href="/login"
-                  className=" text-label-sm font-label-sm-strong! text-text-gray-quinary "
+                  className=" px-spacing-lg text-label-sm font-label-sm-strong! text-text-gray-quinary "
                 >
                   Sign In
                 </Link>

@@ -41,9 +41,9 @@ export default function SignUpForm() {
       className=" flex flex-col gap-y-spacing-6xl flex-1"
     >
       <div className="space-y-spacing-4xl">
-        <div className="space-y-spacing-xs">
-          <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-secondary">
-            Welcome to Recruit Local
+        <div className="space-y-spacing-lg">
+          <h4 className=" text-heading-sm font-heading-sm-strong! text-text-gray-primary">
+            Create your account
           </h4>
           <p className=" text-body-md text-text-gray-tertiary">
             Sign Up to Unlock Exclusive Features
@@ -52,7 +52,7 @@ export default function SignUpForm() {
 
         <div className="space-y-spacing-2xl">
           <div className="space-y-spacing-2xl">
-            <div className=" grid grid-cols-1 gap-spacing-2xl">
+            <div className=" grid md:grid-cols-2 gap-spacing-2xl">
               <div className="space-y-spacing-xs">
                 <Label className=" text-label-sm font-label-sm-strong!">
                   First Name
@@ -141,50 +141,57 @@ export default function SignUpForm() {
                 )}
               </div>
             </div>
-
-            <div className="space-y-spacing-xs">
-              <Label className="text-label-sm font-label-sm-strong!">
-                New Password
-              </Label>
-              <div className=" space-y-2">
-                <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
-                  <InputGroupInput
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Set a New Password"
-                    {...register('password')}
-                  />
-                  <InputGroupAddon align="inline-end" onClick={togglePassword}>
-                    {showPassword ? <Eye /> : <EyeClosed />}
-                  </InputGroupAddon>
-                </InputGroup>
-                {errors.password && (
-                  <p className="text-sm text-red-500">
-                    {errors.password.message}
-                  </p>
-                )}
+            <div className=" grid md:grid-cols-2 gap-spacing-2xl">
+              <div className="space-y-spacing-xs">
+                <Label className="text-label-sm font-label-sm-strong!">
+                  Set password
+                </Label>
+                <div className=" space-y-2">
+                  <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
+                    <InputGroupInput
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      {...register('password')}
+                    />
+                    <InputGroupAddon
+                      align="inline-end"
+                      onClick={togglePassword}
+                    >
+                      {showPassword ? <Eye /> : <EyeClosed />}
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {errors.password && (
+                    <p className="text-sm text-red-500">
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-spacing-xs">
-              <Label className="text-label-sm font-label-sm-strong!">
-                Confirm Password
-              </Label>
-              <div className=" space-y-2">
-                <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
-                  <InputGroupInput
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Rewrite the password"
-                    {...register('confirmPassword')}
-                  />
-                  <InputGroupAddon align="inline-end" onClick={togglePassword}>
-                    {showPassword ? <Eye /> : <EyeClosed />}
-                  </InputGroupAddon>
-                </InputGroup>
-                {errors.confirmPassword && (
-                  <p className="text-sm text-red-500">
-                    {errors.confirmPassword.message}
-                  </p>
-                )}
+              <div className="space-y-spacing-xs">
+                <Label className="text-label-sm font-label-sm-strong!">
+                  Confirm Password
+                </Label>
+                <div className=" space-y-2">
+                  <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
+                    <InputGroupInput
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Rewrite the password"
+                      {...register('confirmPassword')}
+                    />
+                    <InputGroupAddon
+                      align="inline-end"
+                      onClick={togglePassword}
+                    >
+                      {showPassword ? <Eye /> : <EyeClosed />}
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {errors.confirmPassword && (
+                    <p className="text-sm text-red-500">
+                      {errors.confirmPassword.message}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>

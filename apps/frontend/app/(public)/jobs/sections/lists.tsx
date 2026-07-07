@@ -29,7 +29,7 @@ import {
   WORKPLACE_OPTIONS,
 } from '@/services/jobs/job.type';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useJobs } from '@/services/jobs/jobs.client';
+import { usePublicJobs } from '@/services/jobs/jobs.client';
 import CardJobItem from './card-job-item';
 import PaginationComponent from './pagination-component';
 import JobItemSkelaton from './job-item-skelaton';
@@ -74,7 +74,7 @@ export default function JobLists() {
     isLoading: isJobLoading,
     pagination,
     isFetching,
-  } = useJobs(filters);
+  } = usePublicJobs(filters);
 
   const onFilterJobs = () => {
     setIsFilterJobsOpen((prev) => !prev);
@@ -349,7 +349,9 @@ export default function JobLists() {
             </div>
           ) : Boolean(jobs?.length) ? (
             <div className=" grid grid-cols-2 gap-spacing-4xl">
-              {jobs?.map((item) => <CardJobItem key={item._id} job={item} />)}
+              {jobs?.map((item) => (
+                <CardJobItem key={item._id} job={item} />
+              ))}
             </div>
           ) : (
             <EmptyBox

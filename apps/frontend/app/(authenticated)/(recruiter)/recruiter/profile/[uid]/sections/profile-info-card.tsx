@@ -21,7 +21,7 @@ export default function ProfileInfoCard({
         <p className="text-label-md font-label-md-strong! text-text-gray-primary">
           {title}
         </p>
-        <p className="text-label-sm text-text-gray-tertiary">
+        <p className="text-label-sm text-text-gray-tertiary capitalize">
           {subtitle || 'N/A'}
         </p>
       </div>

@@ -48,17 +48,17 @@ export async function getTenantById(
       `${API_ENDPOINT}/${id}`,
     );
 
-    const backendResponse = await tenantsItemResponseSchema.validate(res.data, {
-      stripUnknown: true,
-    });
+    // const backendResponse = await tenantsItemResponseSchema.validate(res.data, {
+    //   stripUnknown: true,
+    // });
 
     return {
       success: true,
-      data: backendResponse.tenant,
-      message: backendResponse.message,
+      data: res.data?.tenant,
+      message: res.data?.message,
     };
   } catch (error) {
-    return handleServerError(error, 'Failed to fetch post');
+    return handleServerError(error, 'Failed to fetch tenant');
   }
 }
 
@@ -67,6 +67,7 @@ export async function updateTenant(
   payload: Partial<TenantUpdateInput>,
 ): Promise<ApiResponse<TenantData>> {
   try {
+    console.log('payload', payload, 'id', id);
     await tenantsIdParamsSchema.validate({ id });
     const validatedData = await tenantUpdateSchema.validate(payload, {
       abortEarly: false,
@@ -77,6 +78,8 @@ export async function updateTenant(
       validatedData,
     );
 
+    console.log('res', res.data);
+
     const backendResponse = res.data;
 
     return {
@@ -85,6 +88,7 @@ export async function updateTenant(
       message: backendResponse.message,
     };
   } catch (error) {
-    return handleServerError(error, 'Failed to update post');
+    console.log('error', error);
+    return handleServerError(error, 'Failed to update tenant');
   }
 }

@@ -18,6 +18,7 @@ import {
   Settings,
   Settings2,
   SquareTerminal,
+  Rocket,
 } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
@@ -36,19 +37,24 @@ import {
 } from '@/components/ui/sidebar';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/services/user/user.client';
 import { ACCOUNT_TYPE_ENUMS } from '@rl/types';
+import { useSession } from 'next-auth/react';
 
 const recruiterNavMain = [
-  {
-    title: 'Job Listing',
-    url: '/recruiter/jobs',
-    icon: ListTodo,
-  },
   {
     title: 'News Feed',
     url: '/recruiter/news-feed',
     icon: Newspaper,
+  },
+  {
+    title: 'My Jobs',
+    url: '/recruiter/jobs',
+    icon: Rocket,
+  },
+  {
+    title: 'Discover Jobs',
+    url: '/recruiter/discover-jobs',
+    icon: ListTodo,
   },
   // {
   //   title: 'Models',
@@ -103,7 +109,8 @@ const footerNavs = [
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const { state, toggleSidebar } = useSidebar();
 

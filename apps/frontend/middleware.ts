@@ -19,9 +19,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/system-preparation', request.url));
   }
 
-  if (!token && url.pathname.startsWith('/recruiter')) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  // if (
+  //   !token &&
+  //   (url.pathname.startsWith('/recruiter') ||
+  //     url.pathname.startsWith('/candidate'))
+  // ) {
+  //   return NextResponse.redirect(new URL('/login', request.url));
+  // }
+
+  if (
+    !token &&
+    (url.pathname.startsWith('/recruiter') ||
+      url.pathname.startsWith('/candidate'))
+  ) {
+    const loginUrl = new URL('/login', request.url);
+
+    const redirectPath = url.pathname + url.search;
+
+    loginUrl.searchParams.set('redirect', redirectPath);
+
+    return NextResponse.redirect(loginUrl);
   }
+
   if (!token && url.pathname.startsWith('/system-preparation')) {
     return NextResponse.redirect(new URL('/logout', request.url));
   }

@@ -22,6 +22,7 @@ import type {
 import { useRouter } from 'next/navigation';
 import { JobListResponse } from '../jobs/job.type';
 import { useSession } from 'next-auth/react';
+import { ONBOARDING_STEP_ENUMS } from '@rl/types';
 
 // --- QUERY KEYS ---
 export const jobProfileKeys = {
@@ -54,7 +55,7 @@ export function useJobProfiles(filters: JobProfileListFilters = {}) {
   };
 }
 
-export function useJobProfile(id: string) {
+export function useJobProfile(id: string, isEnabled?: boolean) {
   const query = useQuery<JobProfile, Error>({
     queryKey: jobProfileKeys.detail(id),
     queryFn: async () => {
@@ -62,7 +63,7 @@ export function useJobProfile(id: string) {
       if (!response.success) throw new Error(response.message);
       return response.data as JobProfile;
     },
-    enabled: !!id,
+    enabled: !!id && isEnabled,
   });
 
   return {
@@ -84,7 +85,9 @@ export function useCreateJobProfile() {
       if (response.success) {
         toast.success(response.message || 'Job profile created successfully');
         queryClient.invalidateQueries({ queryKey: jobProfileKeys.all });
-        router.push(`/candidate/profile/${response.data?._id}`);
+        router.push(
+          `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.CV_UPLOAD}`,
+        );
       } else {
         toast.error(response.message);
       }

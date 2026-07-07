@@ -1,5 +1,9 @@
 import * as yup from 'yup';
-import { TENANT_STATUS_ENUMS, TENANT_TYPE } from '@rl/types';
+import {
+  ONBOARDING_STEP_ENUMS,
+  TENANT_STATUS_ENUMS,
+  TENANT_TYPE,
+} from '@rl/types';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 
 export const awsStorageSchema = yup.object({
@@ -36,6 +40,7 @@ export const tenantsSchema = yup.object({
   visionStatement: yup.string().optional(),
   coreProducts: yup.string().optional(),
   coreServices: yup.string().optional(),
+  values: yup.array().of(yup.string()).optional(),
 });
 
 export const tenantsIdParamsSchema = yup.object({
@@ -114,6 +119,34 @@ export const tenantUpdateSchema = yup.object({
     })
     .default(undefined),
 
+  profileImageStorage: awsStorageSchema
+    .optional()
+    .transform((value) => {
+      // If value is empty object or undefined, return undefined
+      if (
+        !value ||
+        (typeof value === 'object' && Object.keys(value).length === 0)
+      ) {
+        return undefined;
+      }
+      return value;
+    })
+    .default(undefined),
+
+  coverPhotoStorage: awsStorageSchema
+    .optional()
+    .transform((value) => {
+      // If value is empty object or undefined, return undefined
+      if (
+        !value ||
+        (typeof value === 'object' && Object.keys(value).length === 0)
+      ) {
+        return undefined;
+      }
+      return value;
+    })
+    .default(undefined),
+
   officeAddress: yup.string().optional(),
 
   addressInMap: yup.string().optional(),
@@ -131,6 +164,36 @@ export const tenantUpdateSchema = yup.object({
   coreProducts: yup.string().optional(),
 
   coreServices: yup.string().optional(),
+
+  values: yup.array().of(yup.string()).optional(),
+
+  onboardingStep: yup
+    .string()
+    .oneOf(Object.values(ONBOARDING_STEP_ENUMS))
+    .optional(),
+  isRecruitmentEnabled: yup.boolean().optional(),
 });
 
 export type TenantUpdateInput = yup.InferType<typeof tenantUpdateSchema>;
+
+export const MAX_VALUES_STEP_SELECTION = 5;
+
+export const valuesStepSchema = yup.object({
+  tenantName: yup.string().required('Tenant name is required'),
+
+  onboardingStep: yup
+    .string()
+    .oneOf(Object.values(ONBOARDING_STEP_ENUMS))
+    .optional(),
+
+  values: yup
+    .array()
+    .of(yup.string().required())
+    .max(
+      MAX_VALUES_STEP_SELECTION,
+      `You can select a maximum of ${MAX_VALUES_STEP_SELECTION}`,
+    )
+    .required(),
+});
+
+export type ValuesStepFormValues = yup.InferType<typeof valuesStepSchema>;

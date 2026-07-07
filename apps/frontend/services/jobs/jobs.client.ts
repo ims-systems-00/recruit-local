@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { createJob, getJobs, updateJob } from './jobs.server';
+import { createJob, getJobs, getPublicJobs, updateJob } from './jobs.server';
 import { JobData, JobListFilters, JobListResponse } from './job.type';
 import { MultiStepJobFormValues } from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/job.schema';
 
@@ -103,5 +103,30 @@ export function useCreateJob() {
   return {
     onSubmit,
     isLoading: mutation.isPending,
+  };
+}
+
+//for public user
+
+export function usePublicJobs(filters: JobListFilters = {}) {
+  const query = useQuery<JobListResponse, Error>({
+    queryKey: ['public-jobs', filters],
+    queryFn: async () => {
+      const response = await getPublicJobs(filters);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+  });
+
+  return {
+    jobs: query.data?.docs || [],
+    pagination: query.data?.pagination,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+    isFetching: query.isFetching,
   };
 }

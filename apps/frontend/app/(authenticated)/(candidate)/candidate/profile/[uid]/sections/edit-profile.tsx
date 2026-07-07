@@ -94,7 +94,7 @@ export default function EditProfile({
                 )}
               </div>
             </div>
-            <div className="space-y-spacing-xs">
+            {/* <div className="space-y-spacing-xs">
               <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                 Title
               </Label>
@@ -118,7 +118,7 @@ export default function EditProfile({
                   </p>
                 )}
               </div>
-            </div>
+            </div> */}
             <div className="space-y-spacing-xs col-span-2">
               <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                 Address

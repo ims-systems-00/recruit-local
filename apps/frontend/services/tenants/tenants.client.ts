@@ -1,15 +1,44 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { createTanent, updateTenant } from './tenants.server';
+import { createTanent, getTenantById, updateTenant } from './tenants.server';
 import { toast } from 'sonner';
-import {
-  createOrganizationSchema,
-  CreateOrganizationFormValues,
-} from '@/app/(auth)/onboarding/create-organization/create-organization.schema';
+import { useQuery } from '@tanstack/react-query';
 import { useMutation } from '@tanstack/react-query';
 import { TenantData } from './tenants.type';
 import { TenantUpdateInput } from './tenants.validation';
+import {
+  CreateOrganizationFormValues,
+  createOrganizationSchema,
+} from '@/app/(auth)/recruiter/onboarding/create-organization/create-organization.schema';
+
+export const tenantKeys = {
+  all: ['tenants'] as const,
+  details: () => [...tenantKeys.all, 'detail'] as const,
+  detail: (id: string) => [...tenantKeys.details(), id] as const,
+};
+
+export function useTenant(id?: string, isEnabled?: boolean) {
+  const query = useQuery({
+    queryKey: tenantKeys.detail(id ?? ''),
+    enabled: !!id && isEnabled,
+    queryFn: async () => {
+      const response = await getTenantById(id!);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+  });
+
+  return {
+    tenant: query.data,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error as Error | null,
+    refetch: query.refetch,
+  };
+}
 
 export function useCreateTanent() {
   const router = useRouter();
@@ -28,7 +57,7 @@ export function useCreateTanent() {
       }
       toast.success(res.data.message);
       form.reset();
-      router.push('/recruiter/profile');
+      router.push('/recruiter/onboarding/values');
     },
     onError: () => {
       toast.error('Something went wrong. Please try again.');
@@ -71,7 +100,7 @@ export function useUpdateTenant() {
 
       if (response.success) {
         toast.success(response.message || 'Tenant updated successfully');
-        onSuccessNext?.(data as Partial<TenantData>);
+        onSuccessNext?.(response?.data as Partial<TenantData>);
       } else {
         toast.error(response.message);
       }

@@ -10,6 +10,7 @@ import {
   softDeleteCv,
   hardDeleteCv,
   restoreCv,
+  extractAndCreateCv,
 } from './cv.server';
 import type {
   CvCreateInput,
@@ -17,6 +18,7 @@ import type {
   Cv,
   CvListResponse,
   CvListFilters,
+  ExtractAndCreateCvInput,
 } from './cv.type';
 
 // --- QUERY KEYS ---
@@ -180,4 +182,41 @@ export function useRestoreCv() {
   });
 
   return { restoreCv: mutation.mutateAsync, isLoading: mutation.isPending };
+}
+
+export function useExtractAndCreateCv() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (payload: ExtractAndCreateCvInput) =>
+      extractAndCreateCv(payload),
+  });
+
+  const extractAndCreateCvAsync = async ({
+    payload,
+    onSuccessCallback,
+  }: {
+    payload: ExtractAndCreateCvInput;
+    onSuccessCallback?: (data: Cv) => void;
+  }) => {
+    try {
+      const response = await mutation.mutateAsync(payload);
+
+      if (response.success) {
+        toast.success(response.message || 'CV created successfully');
+        queryClient.invalidateQueries({ queryKey: cvKeys.all });
+        onSuccessCallback?.(response.data as Cv);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create CV');
+    }
+  };
+
+  return {
+    extractAndCreateCv: extractAndCreateCvAsync,
+    isPending: mutation.isPending,
+    error: mutation.error,
+  };
 }

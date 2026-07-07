@@ -103,7 +103,7 @@ export default function PricingPage() {
           </div>
         </div>
         <div className=" space-y-spacing-7xl">
-          <div className=" grid grid-cols-3 gap-spacing-4xl items-center">
+          <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-4xl items-center">
             <PricingCardItem
               isPopular={false}
               title="Starter Plan"

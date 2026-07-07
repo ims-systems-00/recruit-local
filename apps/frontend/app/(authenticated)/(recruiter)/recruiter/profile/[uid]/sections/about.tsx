@@ -21,7 +21,7 @@ export default function About({ profile }: { profile: TenantData }) {
   return (
     <div className=" space-y-spacing-4xl">
       <div className=" flex justify-between items-center">
-        <h4 className=" text-text-gray-secondary text-heading-sm font-heading-sm-strong!">
+        <h4 className=" text-text-gray-primary text-label-xl font-label-xl-strong!">
           About
         </h4>
       </div>
@@ -30,7 +30,7 @@ export default function About({ profile }: { profile: TenantData }) {
           <p className=" text-body-lg text-text-gray-tertiary">
             {profile?.description || 'N/A'}
           </p>
-          <div className=" grid grid-cols-2 gap-spacing-lg">
+          <div className=" grid grid-cols-3 gap-spacing-lg">
             <ProfileInfoCard
               title="Industry"
               subtitle={
@@ -41,6 +41,11 @@ export default function About({ profile }: { profile: TenantData }) {
                   : 'N/A'
               }
               icon={<ShieldCheck />}
+            />
+            <ProfileInfoCard
+              title="Organisation type"
+              subtitle={profile.type}
+              icon={<Building />}
             />
             <ProfileInfoCard
               title="Employers"
@@ -59,6 +64,7 @@ export default function About({ profile }: { profile: TenantData }) {
               subtitle={profile.email}
               icon={<Mailbox />}
             />
+
             <ProfileInfoCard
               title="Contact Number"
               subtitle={profile.phone}

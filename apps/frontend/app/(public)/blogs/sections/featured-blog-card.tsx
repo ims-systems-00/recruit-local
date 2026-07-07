@@ -33,7 +33,7 @@ export default function FeaturedBlogCard({
       </div>
       <div className=" flex flex-col justify-between gap-y-spacing-2xl">
         <div className=" space-y-spacing-lg">
-          <p className=" text-heading-md font-heading-md-strong! text-text-gray-primary line-clamp-4">
+          <p className=" text-heading-sm md:text-heading-md font-heading-md-strong! text-text-gray-primary line-clamp-4">
             {title}
           </p>
           <Link

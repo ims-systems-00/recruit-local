@@ -1,14 +1,36 @@
 import React from 'react';
 import Banner from './sections/banner';
 
-import BlogOneImage from '@/public/images/blog-1.jpg';
-import BlogTwoImage from '@/public/images/blog-2.png';
-import BlogThreeImage from '@/public/images/blog-3.jpg';
 import BlogCard from './sections/blog-card';
 import FeaturedBlogCard from './sections/featured-blog-card';
-import AuthorImage from '@/public/images/author-default.png';
+import { client } from '@/sanity/lib/client';
+import { BLOGS_LIST_QUERY } from '@/sanity/lib/queries';
+import EmptyBox from '@/components/empty-box';
 
-export default function BlogsPage() {
+export interface SanityBlog {
+  slug: { current: string };
+  title: string;
+  date: string;
+  description: string;
+  thumbnailUrl?: string;
+  author?: {
+    name: string;
+    role?: string;
+    avatarSrc?: string;
+  };
+}
+
+export default async function BlogsPage() {
+  const blogs: SanityBlog[] = await client.fetch(
+    BLOGS_LIST_QUERY,
+    {},
+    { next: { revalidate: 10 } },
+  );
+
+  if (!blogs) return null;
+
+  const [featuredBlog, ...restBlogs] = blogs || [];
+
   return (
     <div>
       <Banner />
@@ -25,44 +47,35 @@ export default function BlogsPage() {
             job seekers
           </p>
         </div>
-        <div className=" space-y-spacing-4xl">
-          <div>
-            <FeaturedBlogCard
-              image={BlogOneImage}
-              title="Recruit Local Launches Oldham Trading Platform Transforming Job Search and Hiring Across UK Smart Cities"
-              url="/blogs/recruit-local-launches-oldham-trading-platform-transforming-job-search-and-hiring-across-uk-smart-cities"
-              authorName="Anwar Ali"
-              authorRole="CEO & Founder"
-              authorImage={AuthorImage}
-            />
+        {Boolean(blogs?.length) ? (
+          <div className=" space-y-spacing-4xl">
+            <div>
+              <FeaturedBlogCard
+                image={featuredBlog.thumbnailUrl || ''}
+                title={featuredBlog.title}
+                url={`/blogs/${featuredBlog.slug.current}`}
+                authorName={featuredBlog.author?.name || ''}
+                authorRole={featuredBlog.author?.role || ''}
+                authorImage={featuredBlog.author?.avatarSrc || ''}
+              />
+            </div>
+            <div className=" grid md:grid-cols-2 lg:grid-cols-3 gap-spacing-4xl">
+              {restBlogs.map((blog, index) => (
+                <BlogCard
+                  key={index}
+                  image={blog.thumbnailUrl || ''}
+                  title={blog.title}
+                  description={blog.description}
+                  readTime="7"
+                  date={blog.date}
+                  url={`/blogs/${blog.slug.current}`}
+                />
+              ))}
+            </div>
           </div>
-          <div className=" grid md:grid-cols-2 lg:grid-cols-3 gap-spacing-4xl">
-            <BlogCard
-              image={BlogOneImage}
-              title="Stand Out Faster"
-              description="Learn how job seekers can improve resumes and get noticed."
-              readTime="7"
-              date="10 jan, 2026"
-              url="/blogs/stand-out-faster"
-            />
-            <BlogCard
-              image={BlogTwoImage}
-              title="Build Better Teams"
-              description="Explore smarter ways to attract and retain top talent."
-              readTime="7"
-              date="10 jan, 2026"
-              url="/blogs/build-better-teams"
-            />
-            <BlogCard
-              image={BlogThreeImage}
-              title="Career Success"
-              description="Simple career advice to help professionals grow with confidence."
-              readTime="7"
-              date="10 jan, 2026"
-              url="/blogs/career-success"
-            />
-          </div>
-        </div>
+        ) : (
+          <EmptyBox title="No Blogs Found" description="No blogs found" />
+        )}
       </div>
     </div>
   );

@@ -2,12 +2,12 @@ import React from 'react';
 import Profile from './sections/profile';
 import { getTenantById } from '@/services/tenants/tenants.server';
 interface Props {
-  params: {
+  params: Promise<{
     uid: string;
-  };
+  }>;
 }
 export default async function ProfilePage({ params }: Props) {
-  const { uid } = params;
+  const { uid } = await params;
 
   const response = await getTenantById(uid);
 

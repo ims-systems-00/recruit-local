@@ -178,3 +178,8 @@ export const cvActionResponseSchema = yup.object({
   message: yup.string().optional(),
   statusCode: yup.number().optional(),
 });
+
+export const extractAndCreateCvSchema = yup.object({
+  jobProfileId: objectIdSchema.required('Job Profile ID is required'),
+  resumeStorage: awsStorageSchema.required('Resume Storage is required'),
+});

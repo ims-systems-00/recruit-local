@@ -10,7 +10,7 @@ export default function ValueBased() {
             VALUE BASED ASSESSMENT
           </p>
           <div className=" space-y-spacing-2xl">
-            <p className=" text-heading-xl font-heading-xl-strong! max-w-[768px]">
+            <p className=" text-heading-md md:text-heading-xl font-heading-xl-strong! max-w-[768px]">
               Not Just matching skills Matching Values
             </p>
             <p className="text-body-md text-text-gray-quinary max-w-[768px]">

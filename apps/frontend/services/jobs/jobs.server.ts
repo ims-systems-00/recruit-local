@@ -25,6 +25,7 @@ type ErrorResponse = {
 export type ApiResponse<T = any> = SuccessResponse<T> | ErrorResponse;
 
 const API_ENDPOINT = '/jobs';
+const PUBLIC_API_ENDPOINT = '/public/jobs';
 
 export async function createJob(data: { title: string }): Promise<ApiResponse> {
   try {
@@ -114,5 +115,69 @@ export async function updateJob({
     };
   } catch (error) {
     return handleServerError(error, 'Failed');
+  }
+}
+
+//for public user
+
+export async function getPublicJobs(
+  params?: JobListFilters,
+): Promise<ApiResponse<JobListResponse>> {
+  try {
+    const res = await axiosServer.get<JobListBackendResponse>(
+      PUBLIC_API_ENDPOINT,
+      {
+        params: {
+          page: params?.page || 1,
+          limit: params?.limit || 10,
+          search: params?.search,
+          status: params?.status,
+          employmentType: params?.employmentType,
+          workplace: params?.workplace,
+          salaryMode: params?.salaryMode,
+          period: params?.period,
+        },
+        paramsSerializer: (params) =>
+          qs.stringify(params, { arrayFormat: 'brackets' }),
+      },
+    );
+    // const backendResponse = await postListResponseSchema.validate(res.data, {
+    //   stripUnknown: true,
+    // });
+
+    return {
+      success: true,
+      data: {
+        docs: res.data.jobs || [],
+        pagination: res.data.pagination,
+      },
+      message: res.data.message || 'Successful',
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to fetch posts');
+  }
+}
+
+export async function getPublicJobById(
+  id: string,
+): Promise<ApiResponse<JobData>> {
+  try {
+    await jobIdParamsSchema.validate({ id });
+
+    const res = await axiosServer.get<JobItemBackendResponse>(
+      `${PUBLIC_API_ENDPOINT}/${id}`,
+    );
+
+    // const backendResponse = await postItemResponseSchema.validate(res.data, {
+    //   stripUnknown: true,
+    // });
+
+    return {
+      success: true,
+      data: res.data.job,
+      message: res.data.message || 'Successful',
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to fetch post');
   }
 }
