@@ -7,6 +7,12 @@ export type AwsStorageType = {
   Key: string;
 };
 
+export interface StoredCompletion {
+  percentage: number;
+  completeSections: string[];
+  computedAt?: Date | string | null;
+}
+
 export type TenantData = {
   _id: string;
   name: string;
@@ -51,6 +57,8 @@ export type TenantData = {
   coreServices?: string;
   values?: ValueData[];
   onboardingStep?: ONBOARDING_STEP_ENUMS;
+  completion?: StoredCompletion;
+  isRecruitmentEnabled?: boolean;
   deleteMarker?: {
     status: boolean;
     deletedAt?: string | null;

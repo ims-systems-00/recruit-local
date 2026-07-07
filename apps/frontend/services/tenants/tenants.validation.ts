@@ -171,6 +171,7 @@ export const tenantUpdateSchema = yup.object({
     .string()
     .oneOf(Object.values(ONBOARDING_STEP_ENUMS))
     .optional(),
+  isRecruitmentEnabled: yup.boolean().optional(),
 });
 
 export type TenantUpdateInput = yup.InferType<typeof tenantUpdateSchema>;
