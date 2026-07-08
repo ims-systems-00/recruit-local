@@ -11,6 +11,7 @@ import {
   CreateOrganizationFormValues,
   createOrganizationSchema,
 } from '@/app/(auth)/recruiter/onboarding/create-organization/create-organization.schema';
+import { useSession } from 'next-auth/react';
 
 export const tenantKeys = {
   all: ['tenants'] as const,
@@ -42,7 +43,7 @@ export function useTenant(id?: string, isEnabled?: boolean) {
 
 export function useCreateTanent() {
   const router = useRouter();
-
+  const { data: session, update } = useSession();
   const form = useForm<CreateOrganizationFormValues>({
     resolver: yupResolver(createOrganizationSchema),
   });
@@ -56,6 +57,12 @@ export function useCreateTanent() {
         return;
       }
       toast.success(res.data.message);
+      update({
+        user: {
+          ...session?.user,
+          tenantId: res.data?._id,
+        },
+      });
       form.reset();
       router.push('/recruiter/onboarding/values');
     },

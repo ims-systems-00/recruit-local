@@ -28,7 +28,7 @@ export function useRefreshSession() {
 }
 
 export function useUserInfo() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
 
   const router = useRouter();
 
@@ -44,6 +44,15 @@ export function useUserInfo() {
 
         throw new Error(res.message);
       }
+
+      await update({
+        user: {
+          ...session?.user,
+          tenantId: res.data?.user?.tenantId,
+          jobProfileId: res.data?.user?.jobProfileId,
+          emailVerificationStatus: res.data?.user?.emailVerificationStatus,
+        },
+      });
 
       return res.data?.user;
     },

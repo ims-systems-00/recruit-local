@@ -78,13 +78,22 @@ export function useJobProfile(id: string, isEnabled?: boolean) {
 export function useCreateJobProfile() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { data: session, update } = useSession();
 
   const mutation = useMutation({
     mutationFn: (payload: JobProfileCreateInput) => createJobProfile(payload),
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       if (response.success) {
-        toast.success(response.message || 'Job profile created successfully');
         queryClient.invalidateQueries({ queryKey: jobProfileKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['user'] });
+
+        await update({
+          user: {
+            ...session?.user,
+            jobProfileId: response.data?._id,
+          },
+        });
+
         router.push(
           `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.CV_UPLOAD}`,
         );

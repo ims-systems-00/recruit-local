@@ -5,20 +5,26 @@ import AttachmentForm, {
 } from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/attachment-form';
 import { Button } from '@/components/ui/button';
 import { useDeleteFileStorage } from '@/services/file-storage';
-import { ExtractAndCreateCvInput } from '@/services/cv/cv.type';
+import { Cv, ExtractAndCreateCvInput } from '@/services/cv/cv.type';
 import { useExtractAndCreateCv } from '@/services/cv';
 import { useForm } from 'react-hook-form';
 import { createCvSchema } from '@/services/cv/cv.validation';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import AttachmentItem from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/attachment-item';
+import { ONBOARDING_STEP_ENUMS } from '@rl/types';
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { jobProfileKeys } from '@/services/job-profile';
+
 export default function CvUploadSection({
   jobProfileId,
 }: {
   jobProfileId: string;
 }) {
   const { deleteFile, isLoading: isDeleting } = useDeleteFileStorage();
-
+  const queryClient = useQueryClient();
+  const router = useRouter();
   const schema = createCvSchema as yup.ObjectSchema<ExtractAndCreateCvInput>;
 
   const { extractAndCreateCv, isPending: isCreatingCv } =
@@ -45,8 +51,12 @@ export default function CvUploadSection({
     console.log(data);
     const payload = {
       payload: data,
-      onSuccessCallback: () => {
-        console.log(data);
+      onSuccessCallback: (data: Cv) => {
+        console.log(data, 'data');
+
+        router.push(
+          `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.JOB_TITLE}`,
+        );
       },
     };
     extractAndCreateCv(payload);

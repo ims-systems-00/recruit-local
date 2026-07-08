@@ -21,6 +21,8 @@ function PersonalisationPageContent() {
   const { data: session } = useSession();
   const jobProfileId = session?.user?.jobProfileId;
 
+  console.log('session', session);
+
   const { jobProfile, isLoading: isJobProfileLoading } = useJobProfile(
     jobProfileId || '',
   );
@@ -52,12 +54,12 @@ function PersonalisationPageContent() {
   }
 
   if (step === ONBOARDING_STEP_ENUMS.CV_UPLOAD) {
-    return <CvUploadSection jobProfileId={jobProfileId || ''} />;
+    return <CvUploadSection jobProfileId={jobProfile?._id || ''} />;
   }
   if (step === ONBOARDING_STEP_ENUMS.JOB_TITLE) {
     return (
       <JobTitleSection
-        jobProfileId={jobProfileId || ''}
+        jobProfileId={jobProfile?._id || ''}
         existingJobTitles={jobProfile?.jobTitle || []}
       />
     );
@@ -65,7 +67,7 @@ function PersonalisationPageContent() {
   if (step === ONBOARDING_STEP_ENUMS.INDUSTRY) {
     return (
       <IndustrySection
-        jobProfileId={jobProfileId || ''}
+        jobProfileId={jobProfile?._id || ''}
         existingIndustries={jobProfile?.industry || []}
       />
     );
@@ -73,7 +75,7 @@ function PersonalisationPageContent() {
   if (step === ONBOARDING_STEP_ENUMS.EXPERIENCE_LEVEL) {
     return (
       <ExperienceLevelSection
-        jobProfileId={jobProfileId || ''}
+        jobProfileId={jobProfile?._id || ''}
         existingExperienceLevels={jobProfile?.experienceLevel || ''}
       />
     );
@@ -81,7 +83,7 @@ function PersonalisationPageContent() {
   if (step === ONBOARDING_STEP_ENUMS.WORK_MODE) {
     return (
       <WorkModeSection
-        jobProfileId={jobProfileId || ''}
+        jobProfileId={jobProfile?._id || ''}
         existingWorkModes={jobProfile?.workMode || []}
       />
     );
@@ -90,7 +92,7 @@ function PersonalisationPageContent() {
   if (step === ONBOARDING_STEP_ENUMS.LOCATION) {
     return (
       <LocationSection
-        jobProfileId={jobProfileId || ''}
+        jobProfileId={jobProfile?._id || ''}
         existingLocation={jobProfile?.address || ''}
       />
     );
