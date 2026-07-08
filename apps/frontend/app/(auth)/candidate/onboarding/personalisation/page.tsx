@@ -25,7 +25,7 @@ function PersonalisationPageContent() {
     jobProfileId || '',
   );
 
-  if (isJobProfileLoading || !jobProfile) {
+  if (isJobProfileLoading || !session?.user?._id) {
     return (
       <div className=" flex justify-center items-center bg-card">
         <div className="rounded-md p-12 flex items-center flex-col gap-spacing-4xl">
@@ -100,7 +100,13 @@ function PersonalisationPageContent() {
 
 export default function PersonalisationPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center items-center bg-card"><p>Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center bg-card">
+          <p>Loading...</p>
+        </div>
+      }
+    >
       <PersonalisationPageContent />
     </Suspense>
   );
