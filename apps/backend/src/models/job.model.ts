@@ -147,4 +147,7 @@ jobSchema.plugin(aggregatePaginate);
 jobSchema.plugin(tenantDataPlugin);
 jobSchema.plugin(automaticReferencePlugin({ model: modelNames.JOB, referencePrefix: "JOB" }));
 
+// Backs the keyword `$in` lookup used by profile feed rebuild (profile -> matching jobs).
+jobSchema.index({ keywords: 1 });
+
 export const Job = model<IJobDoc, IJobModel>(modelNames.JOB, jobSchema);
