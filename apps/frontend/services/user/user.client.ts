@@ -51,6 +51,7 @@ export function useUserInfo() {
           tenantId: res.data?.user?.tenantId,
           jobProfileId: res.data?.user?.jobProfileId,
           emailVerificationStatus: res.data?.user?.emailVerificationStatus,
+          type: res.data?.user?.type,
         },
       });
 

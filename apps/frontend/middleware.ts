@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { ACCOUNT_TYPE_ENUMS } from '@rl/types';
+import {
+  isPrivateCandidateRoute,
+  isPrivateRecruiterRoute,
+} from './lib/functions';
 export { default } from 'next-auth/middleware';
 
 export const config = {
@@ -26,6 +31,26 @@ export async function middleware(request: NextRequest) {
   // ) {
   //   return NextResponse.redirect(new URL('/login', request.url));
   // }
+
+  if (
+    token &&
+    !token.user?.tenantId &&
+    !token.user?.jobProfileId &&
+    (isPrivateRecruiterRoute(url.pathname) ||
+      isPrivateCandidateRoute(url.pathname))
+  ) {
+    if (token?.user?.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
+      return NextResponse.redirect(
+        new URL('/recruiter/onboarding/create-organization', request.url),
+      );
+    }
+
+    if (token?.user?.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+      return NextResponse.redirect(
+        new URL('/candidate/onboarding/personalisation', request.url),
+      );
+    }
+  }
 
   if (
     !token &&

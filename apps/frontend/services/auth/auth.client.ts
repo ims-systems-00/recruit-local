@@ -124,7 +124,7 @@ export function useLogout() {
 
 export function useSignup() {
   const router = useRouter();
-
+  const queryClient = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<SignupFormValues>({
@@ -145,6 +145,7 @@ export function useSignup() {
 
         toast.success(res.data.message);
         form.reset();
+        await queryClient.invalidateQueries({ queryKey: ['user'] });
         router.push('/accounts/verify-email');
       } catch {
         toast.success('Account created successfully');
