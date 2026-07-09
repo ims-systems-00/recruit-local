@@ -29,7 +29,9 @@ export default function ValuesStepFiveSection({
       progressValue={100}
       title="What motivates you professionally and what gives your work meaning and fulfilment?"
       onSuccessNext={() => {
-        router.push(`/system-preparation`);
+        setTimeout(() => {
+          router.push(`/system-preparation`);
+        }, 1000);
       }}
       onSuccessBack={() => {
         router.push(

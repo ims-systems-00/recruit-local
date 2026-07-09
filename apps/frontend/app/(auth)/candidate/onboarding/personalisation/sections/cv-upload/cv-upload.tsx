@@ -130,6 +130,7 @@ export default function CvUploadSection({
         )}
         <div className=" w-full flex justify-end">
           <Button
+            disabled={isCreatingCv || !resumeStorage?.Key}
             onClick={handleSubmit(onSubmit)}
             className=" cursor-pointer text-base bg-bg-brand-solid-primary border-primary text-white rounded-lg h-10"
           >

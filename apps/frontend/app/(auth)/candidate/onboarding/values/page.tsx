@@ -2,7 +2,7 @@
 import React, { Suspense } from 'react';
 import InfoSection from './sections/info';
 import { useSearchParams } from 'next/navigation';
-import { ONBOARDING_STEP_ENUMS } from '@rl/types';
+import { ONBOARDING_STEP_ENUMS, VISIBILITY } from '@rl/types';
 import ValuesStepOneSection from './sections/values-step-one-section';
 import ValuesStepTwoSection from './sections/values-step-two-section';
 import ValuesStepThreeSection from './sections/values-step-three-section';
@@ -94,7 +94,7 @@ function ValuesPageContent() {
   if (step === ONBOARDING_STEP_ENUMS.NOTICE_BY_EMPLOYEE) {
     return (
       <NoticeByEmployeeSection
-        existingVisibility={jobProfile?.visibility || undefined}
+        existingVisibility={jobProfile?.visibility as VISIBILITY | undefined}
         jobProfileId={jobProfileId || ''}
       />
     );
@@ -104,7 +104,13 @@ function ValuesPageContent() {
 
 export default function ValuesPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center items-center bg-card"><p>Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center bg-card">
+          <p>Loading...</p>
+        </div>
+      }
+    >
       <ValuesPageContent />
     </Suspense>
   );

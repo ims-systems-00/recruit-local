@@ -60,7 +60,7 @@ export function useCreateTanent() {
       update({
         user: {
           ...session?.user,
-          tenantId: res.data?._id,
+          tenantId: res.data?.tenant?._id,
         },
       });
       form.reset();

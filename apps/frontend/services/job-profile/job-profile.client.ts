@@ -18,6 +18,7 @@ import type {
   JobProfile,
   JobProfileListResponse,
   JobProfileListFilters,
+  JobProfileData,
 } from './job-profile.type';
 import { useRouter } from 'next/navigation';
 import { JobListResponse } from '../jobs/job.type';
@@ -56,12 +57,12 @@ export function useJobProfiles(filters: JobProfileListFilters = {}) {
 }
 
 export function useJobProfile(id: string, isEnabled?: boolean) {
-  const query = useQuery<JobProfile, Error>({
+  const query = useQuery<JobProfileData, Error>({
     queryKey: jobProfileKeys.detail(id),
     queryFn: async () => {
       const response = await getJobProfileById(id);
       if (!response.success) throw new Error(response.message);
-      return response.data as JobProfile;
+      return response.data as JobProfileData;
     },
     enabled: !!id && isEnabled,
   });
@@ -85,7 +86,9 @@ export function useCreateJobProfile() {
     onSuccess: async (response) => {
       if (response.success) {
         queryClient.invalidateQueries({ queryKey: jobProfileKeys.all });
-        queryClient.invalidateQueries({ queryKey: ['user'] });
+        queryClient.invalidateQueries({
+          queryKey: ['user', session?.user?._id],
+        });
 
         await update({
           user: {

@@ -27,6 +27,8 @@ function PersonalisationPageContent() {
     jobProfileId || '',
   );
 
+  console.log('jobProfile', jobProfile);
+
   if (isJobProfileLoading || !session?.user?._id) {
     return (
       <div className=" flex justify-center items-center bg-card">
@@ -60,7 +62,9 @@ function PersonalisationPageContent() {
     return (
       <JobTitleSection
         jobProfileId={jobProfile?._id || ''}
-        existingJobTitles={jobProfile?.jobTitle || []}
+        existingJobTitles={
+          jobProfile?.jobTitle?.map((jobTitle) => jobTitle._id) || []
+        }
       />
     );
   }
@@ -68,7 +72,9 @@ function PersonalisationPageContent() {
     return (
       <IndustrySection
         jobProfileId={jobProfile?._id || ''}
-        existingIndustries={jobProfile?.industry || []}
+        existingIndustries={
+          jobProfile?.industry?.map((industry) => industry._id) || []
+        }
       />
     );
   }
@@ -84,7 +90,9 @@ function PersonalisationPageContent() {
     return (
       <WorkModeSection
         jobProfileId={jobProfile?._id || ''}
-        existingWorkModes={jobProfile?.workMode || []}
+        existingWorkModes={
+          jobProfile?.workMode?.map((workMode) => workMode._id) || []
+        }
       />
     );
   }

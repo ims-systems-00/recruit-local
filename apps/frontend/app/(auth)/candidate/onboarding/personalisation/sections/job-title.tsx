@@ -37,7 +37,15 @@ export default function JobTitleSection({
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { updateJobProfile, isPending: isUpdating } = useUpdateJobProfile();
+  const {
+    updateJobProfile,
+    isPending: isUpdating,
+    error,
+  } = useUpdateJobProfile();
+
+  console.log('existingJobTitles', existingJobTitles);
+
+  console.log('error', error);
 
   const {
     register,

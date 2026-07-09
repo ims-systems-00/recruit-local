@@ -89,10 +89,10 @@ export function useAuth() {
         return null;
       }
 
-      if (res.data?.user?.type === 'employer' && !res.data?.user?.tenantId) {
-        router.push('/onboarding/create-organization');
-        return null;
-      }
+      // if (res.data?.user?.type === 'employer' && !res.data?.user?.tenantId) {
+      //   router.push('/recruiter/onboarding/create-organization');
+      //   return null;
+      // }
       return res.data?.user;
     },
   });
