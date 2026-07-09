@@ -130,5 +130,8 @@ jobProfileSchema.plugin(mongoosePaginate);
 jobProfileSchema.plugin(aggregatePaginate);
 jobProfileSchema.plugin(userOwnedPlugin);
 
+// Backs the keyword `$in` lookup used by the job fan-out (job -> matching profiles).
+jobProfileSchema.index({ keywords: 1 });
+
 // Create and export the model
 export const JobProfile = model<IJobProfileDoc, IJobProfileModel>(modelNames.JOB_PROFILE, jobProfileSchema);

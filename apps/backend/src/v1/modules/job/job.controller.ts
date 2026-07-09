@@ -17,6 +17,8 @@ import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../.
 import { agenda } from "../../../agenda/config";
 import { JOB_NAME } from "../../../agenda/constants";
 import { salaryUpdateQueue } from "../../../queue/salaryUpdateQueue";
+import { enqueueProfileFeedRebuild } from "../../../queue/profileFeedRebuildQueue";
+import { readFeedIds } from "./feed.service";
 import { list as listApplications } from "../application/application.service";
 import pick from "lodash/pick";
 
@@ -96,20 +98,34 @@ export const list = async ({ req }: ControllerParams) => {
     searchFields: ["title", "description", "company", "location"],
   }).build();
 
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), jobRoleScopedSecurityQuery(ability)],
-  };
-
   const options = filter.getQueryOptions();
   let matchKeywords: string[] | undefined;
+  let feedIds: string[] = [];
 
   if (matched && req.session.jobProfileId) {
     matchKeywords = await getProfileKeywords(req.session.jobProfileId);
     if (matchKeywords.length) {
       // Ranking is the point of matched mode — sort best-match first.
       options.sort = "-matchScore -createdAt";
+
+      // Narrow to the precomputed feed so Mongo scores/sorts only the already
+      // matched candidates instead of the whole collection.
+      feedIds = await readFeedIds(req.session.jobProfileId);
+      // Cold/evicted feed → build it in the background; this request still
+      // matches over the full collection (correct, just not accelerated).
+      if (!feedIds.length) await enqueueProfileFeedRebuild(req.session.jobProfileId);
     }
   }
+
+  const finalQuery = {
+    $and: [
+      filter.getFilterQuery(),
+      jobRoleScopedSecurityQuery(ability),
+      // Stale/closed jobs in the feed fall out via the pipeline's soft-delete
+      // and security filters, so no per-mutation feed invalidation is needed.
+      ...(feedIds.length ? [{ _id: { $in: feedIds } }] : []),
+    ],
+  };
 
   const results = await jobService.list({
     query: finalQuery,
