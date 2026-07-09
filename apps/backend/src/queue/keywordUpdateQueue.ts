@@ -1,16 +1,25 @@
 import { Types } from "mongoose";
 import { ReusableQueue } from "./Queue";
 import { recomputeJobKeywords, recomputeProfileKeywords } from "../v1/modules/job/keyword.service";
+import { enqueueJobFanout } from "./jobFanoutQueue";
+import { enqueueProfileFeedRebuild } from "./profileFeedRebuildQueue";
 
 export interface KeywordUpdateJobData {
   type: "job" | "profile";
   id: string;
 }
 
+// Fan-out chains off keyword recompute so the freshly computed keywords are what
+// the fan-out matches against (avoids a race on the async recompute).
 const processKeywordUpdate = async ({ type, id }: KeywordUpdateJobData) => {
   if (!id || !Types.ObjectId.isValid(id)) return;
-  if (type === "job") return recomputeJobKeywords(id);
-  return recomputeProfileKeywords(id);
+  if (type === "job") {
+    await recomputeJobKeywords(id);
+    await enqueueJobFanout(id);
+    return;
+  }
+  await recomputeProfileKeywords(id);
+  await enqueueProfileFeedRebuild(id);
 };
 
 /**
