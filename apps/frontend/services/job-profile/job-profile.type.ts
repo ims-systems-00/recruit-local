@@ -32,6 +32,11 @@ export interface JobProfileData {
 
   createdAt: string;
   updatedAt: string;
+  deleteMarker: {
+    status: string;
+    deletedAt: string;
+    dateScheduled: string;
+  };
 }
 
 export interface JobTitle {
