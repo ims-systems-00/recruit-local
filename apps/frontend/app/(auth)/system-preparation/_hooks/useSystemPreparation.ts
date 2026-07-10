@@ -8,8 +8,9 @@ import { useJobProfile } from '@/services/job-profile/job-profile.client';
 
 import { ACCOUNT_TYPE_ENUMS, ONBOARDING_STEP_ENUMS, User } from '@rl/types';
 import { tenantKeys, useTenant } from '@/services/tenants/tenants.client';
-import { JobProfile } from '@/services/job-profile/job-profile.type';
+import { JobProfileData } from '@/services/job-profile/job-profile.type';
 import { TenantData } from '@/services/tenants/tenants.type';
+import { useSession } from 'next-auth/react';
 
 const NEXT_EMPLOYER_ONBOARDING_STEP: Record<string, string> = {
   [ONBOARDING_STEP_ENUMS.VALUES_STEP_1]: ONBOARDING_STEP_ENUMS.VALUES_STEP_2,
@@ -47,10 +48,13 @@ const getRedirectPath = ({
 }: {
   user: User;
   tenant?: TenantData | null;
-  jobProfile?: JobProfile | null;
+  jobProfile?: JobProfileData | null;
   redirect?: string | null;
   isEmailVerified: boolean;
 }) => {
+  console.log('user', user);
+  console.log('tenant', tenant);
+  console.log('jobProfile', jobProfile);
   const isEmployer = user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER;
   const isCandidate = user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE;
 
@@ -124,7 +128,9 @@ export const useSystemPreparation = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { user, isLoading: isUserLoading } = useUserInfo();
+  const { data: session } = useSession();
+
+  const user = session?.user;
 
   const isEmployer = user?.type === ACCOUNT_TYPE_ENUMS.EMPLOYER;
   const isCandidate = user?.type === ACCOUNT_TYPE_ENUMS.CANDIDATE;
@@ -144,8 +150,6 @@ export const useSystemPreparation = () => {
   const isEmailVerified = user?.emailVerificationStatus === 'verified';
 
   const isDataReady = useMemo(() => {
-    if (isUserLoading) return false;
-
     if (isEmployer) {
       return !isTenantLoading;
     }
@@ -155,13 +159,7 @@ export const useSystemPreparation = () => {
     }
 
     return true;
-  }, [
-    isUserLoading,
-    isTenantLoading,
-    isJobProfileLoading,
-    isEmployer,
-    isCandidate,
-  ]);
+  }, [isTenantLoading, isJobProfileLoading, isEmployer, isCandidate]);
 
   useEffect(() => {
     if (!user?._id || !isDataReady) return;
@@ -191,7 +189,6 @@ export const useSystemPreparation = () => {
 
   return {
     isPending,
-    isUserLoading,
     isEmailVerified,
     isLoading: !isDataReady,
   };

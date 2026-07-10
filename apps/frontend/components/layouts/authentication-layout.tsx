@@ -2,7 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import NavLogo from '@/public/images/rl_black_logo.svg';
 import Link from 'next/link';
-import { CircleQuestionMark, SunDim } from 'lucide-react';
+import LogoutButton from './logout-button';
 
 const navItems = [
   {
@@ -47,12 +47,10 @@ export default function AuthenticationLayout({
               />
             </Link>
             <div className="flex items-center gap-x-spacing-2xl">
-              <span className="h-9 w-9 flex items-center justify-center">
-                <SunDim className="size-5 text-fg-gray-secondary" />
-              </span>
-              <span className="h-9 w-9 flex items-center justify-center">
+              <LogoutButton />
+              {/* <span className="h-9 w-9 flex items-center justify-center">
                 <CircleQuestionMark className="size-5 text-fg-gray-secondary" />
-              </span>
+              </span> */}
             </div>
           </div>
         </div>

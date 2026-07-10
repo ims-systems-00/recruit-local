@@ -6,6 +6,77 @@ import {
   updateJobProfileSchema,
   jobProfileSchema,
 } from './job-profile.validation';
+import { ValueData } from '../value/value.type';
+
+export interface JobProfileData {
+  _id: string;
+  userId: string;
+
+  name: string;
+  email: string;
+  address: string;
+  status: string;
+  visibility: 'public' | 'private';
+  onboardingStep: string;
+  experienceLevel: string;
+
+  jobTitle: JobTitle[];
+  industry: Industry[];
+  workMode: WorkMode[];
+  values: ValueData[];
+  languages: Language[];
+
+  keywords: string[];
+
+  completion: Completion;
+
+  createdAt: string;
+  updatedAt: string;
+  deleteMarker: {
+    status: string;
+    deletedAt: string;
+    dateScheduled: string;
+  };
+}
+
+export interface JobTitle {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
+export interface Industry {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
+export interface WorkMode {
+  _id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+}
+
+export interface Language {
+  _id: string;
+  name: string;
+  level: string;
+}
+
+export interface Completion {
+  percentage: number;
+  sections: CompletionSection[];
+  missing: string[];
+  computedAt: string;
+}
+
+export interface CompletionSection {
+  key: string;
+  label: string;
+  weight: number;
+  complete: boolean;
+}
 
 // --- INFERRED TYPES FROM SCHEMAS ---
 export type JobProfileCreateInput = yup.InferType<

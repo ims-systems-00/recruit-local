@@ -20,6 +20,8 @@ function ValuesPageContent() {
   const { data: session } = useSession();
   const user = session?.user;
 
+  console.log('user', user);
+
   const { tenant, isLoading: isTenantLoading } = useTenant(user?.tenantId);
 
   if (isTenantLoading || !tenant) {
@@ -98,7 +100,13 @@ function ValuesPageContent() {
 
 export default function ValuesPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center items-center bg-card"><p>Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center bg-card">
+          <p>Loading...</p>
+        </div>
+      }
+    >
       <ValuesPageContent />
     </Suspense>
   );

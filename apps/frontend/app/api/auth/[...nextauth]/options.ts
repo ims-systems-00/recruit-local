@@ -55,7 +55,7 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: 'jwt' },
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.user = {
           _id: user._id,
@@ -72,6 +72,14 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
       }
+
+      if (trigger === 'update' && session?.user) {
+        token.user = {
+          ...token.user,
+          ...session.user,
+        };
+      }
+
       return token;
     },
 

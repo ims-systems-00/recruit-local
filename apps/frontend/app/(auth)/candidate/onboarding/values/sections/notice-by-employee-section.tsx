@@ -21,6 +21,7 @@ import {
   FieldTitle,
 } from '@/components/ui/field';
 import { Eye, EyeClosed } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 export default function NoticeByEmployeeSection({
   jobProfileId,
@@ -31,7 +32,7 @@ export default function NoticeByEmployeeSection({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-
+  const { data: session } = useSession();
   const { updateJobProfile, isPending: isUpdating } = useUpdateJobProfile();
 
   const {
@@ -64,7 +65,12 @@ export default function NoticeByEmployeeSection({
         queryClient.invalidateQueries({
           queryKey: jobProfileKeys.detail(jobProfileId),
         });
-        router.push(`/system-preparation`);
+        queryClient.invalidateQueries({
+          queryKey: ['user', session?.user?._id],
+        });
+        setTimeout(() => {
+          router.push(`/system-preparation`);
+        }, 1000);
       },
     });
   };

@@ -28,7 +28,7 @@ export function useRefreshSession() {
 }
 
 export function useUserInfo() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
 
   const router = useRouter();
 
@@ -44,6 +44,16 @@ export function useUserInfo() {
 
         throw new Error(res.message);
       }
+
+      await update({
+        user: {
+          ...session?.user,
+          tenantId: res.data?.user?.tenantId,
+          jobProfileId: res.data?.user?.jobProfileId,
+          emailVerificationStatus: res.data?.user?.emailVerificationStatus,
+          type: res.data?.user?.type,
+        },
+      });
 
       return res.data?.user;
     },
@@ -79,10 +89,10 @@ export function useAuth() {
         return null;
       }
 
-      if (res.data?.user?.type === 'employer' && !res.data?.user?.tenantId) {
-        router.push('/onboarding/create-organization');
-        return null;
-      }
+      // if (res.data?.user?.type === 'employer' && !res.data?.user?.tenantId) {
+      //   router.push('/recruiter/onboarding/create-organization');
+      //   return null;
+      // }
       return res.data?.user;
     },
   });
