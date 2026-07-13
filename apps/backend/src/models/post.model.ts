@@ -1,16 +1,20 @@
 import { Schema, model, Model, PaginateModel, AggregatePaginateModel, Types } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
+import { POST_TYPE_ENUMS, POST_STATUS_ENUMS } from "@rl/types";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 
-export interface IPostInput extends IUserOwnedInput {
+export interface IPostInput {
+  creator: Types.ObjectId;
   title: string;
-  content: string;
-  imageIds?: Types.ObjectId[];
-  tags: string[];
-  statusId: Types.ObjectId;
+  text: string;
+  banner?: Types.ObjectId;
+  images?: Types.ObjectId[];
+  keywords: string[];
+  type: POST_TYPE_ENUMS;
+  status: POST_STATUS_ENUMS;
+  schedule?: Date; // only articles are scheduled; enforced in service, not schema
 }
 
 export interface IPostDoc extends IPostInput, ISoftDeleteDoc {
@@ -19,37 +23,48 @@ export interface IPostDoc extends IPostInput, ISoftDeleteDoc {
 }
 
 interface IPostModel
-  extends Model<IPostDoc>,
-    ISoftDeleteModel<IPostDoc>,
-    PaginateModel<IPostDoc>,
-    AggregatePaginateModel<IPostDoc> {}
+  extends Model<IPostDoc>, ISoftDeleteModel<IPostDoc>, PaginateModel<IPostDoc>, AggregatePaginateModel<IPostDoc> {}
 
 const postSchema = new Schema<IPostDoc>(
   {
-    userId: {
+    creator: {
       type: Schema.Types.ObjectId,
-      ref: modelNames.USER,
+      ref: modelNames.TENANT,
       required: true,
     },
     title: {
       type: String,
       required: true,
     },
-    content: {
+    text: {
       type: String,
       required: true,
     },
-    imageIds: [
+    banner: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.FILE_MEDIA,
+    },
+    images: [
       {
         type: Schema.Types.ObjectId,
         ref: modelNames.FILE_MEDIA,
       },
     ],
-    tags: [{ type: String }],
-    statusId: {
-      type: Schema.Types.ObjectId,
-      ref: modelNames.STATUS,
+    keywords: [{ type: String }],
+    type: {
+      type: String,
+      enum: Object.values(POST_TYPE_ENUMS),
+      default: POST_TYPE_ENUMS.POST,
       required: true,
+    },
+    status: {
+      type: String,
+      enum: Object.values(POST_STATUS_ENUMS),
+      default: POST_STATUS_ENUMS.DRAFT,
+      required: true,
+    },
+    schedule: {
+      type: Date,
     },
   },
   {
@@ -58,7 +73,6 @@ const postSchema = new Schema<IPostDoc>(
 );
 
 postSchema.plugin(softDeletePlugin);
-postSchema.plugin(userOwnedPlugin);
 postSchema.plugin(mongoosePaginate);
 postSchema.plugin(aggregatePaginate);
 

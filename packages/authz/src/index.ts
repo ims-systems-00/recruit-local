@@ -8,6 +8,7 @@ export * from './industry.authz';
 export * from './experience-level.authz';
 export * from './work-mode.authz';
 export * from './job-profile.authz';
+export * from './post.authz';
 export * from './cv.authz';
 export * from './kyc.authz';
 export * from './application.authz';
