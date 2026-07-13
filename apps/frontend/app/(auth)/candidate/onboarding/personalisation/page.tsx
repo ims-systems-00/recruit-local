@@ -87,8 +87,8 @@ function PersonalisationPageContent() {
         jobProfileId={jobProfile?._id || ''}
         existingJobTitles={
           Number(jobProfile?.jobTitle?.length) > 0
-            ? (jobProfile?.jobTitle?.map((jobTitle) => jobTitle._id) ?? [])
-            : (dataFromCvUpload.jobTitle.map((jobTitle) => jobTitle._id) ?? [])
+            ? (jobProfile?.jobTitle ?? [])
+            : (dataFromCvUpload.jobTitle ?? [])
         }
       />
     );
@@ -99,8 +99,8 @@ function PersonalisationPageContent() {
         jobProfileId={jobProfile?._id || ''}
         existingIndustries={
           Number(jobProfile?.industry?.length) > 0
-            ? (jobProfile?.industry?.map((industry) => industry._id) ?? [])
-            : (dataFromCvUpload.industry.map((industry) => industry._id) ?? [])
+            ? (jobProfile?.industry ?? [])
+            : (dataFromCvUpload.industry ?? [])
         }
       />
     );
@@ -121,8 +121,8 @@ function PersonalisationPageContent() {
         jobProfileId={jobProfile?._id || ''}
         existingWorkModes={
           Number(jobProfile?.workMode?.length) > 0
-            ? (jobProfile?.workMode?.map((workMode) => workMode._id) ?? [])
-            : (dataFromCvUpload.workMode.map((workMode) => workMode._id) ?? [])
+            ? (jobProfile?.workMode ?? [])
+            : (dataFromCvUpload.workMode ?? [])
         }
       />
     );

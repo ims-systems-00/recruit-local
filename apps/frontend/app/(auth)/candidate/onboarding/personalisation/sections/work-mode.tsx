@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Search } from 'lucide-react';
 import { ONBOARDING_STEP_ENUMS } from '@rl/types';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import MultiCheckboxSkeleton from './multi-checkbox-skeleton';
 import { useQueryClient } from '@tanstack/react-query';
@@ -23,7 +23,10 @@ import {
   CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION,
   updateJobProfileSchema,
 } from '@/services/job-profile/job-profile.validation';
-import { JobProfileUpdateInput } from '@/services/job-profile/job-profile.type';
+import {
+  JobProfileUpdateInput,
+  WorkMode,
+} from '@/services/job-profile/job-profile.type';
 import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 import { MAX_WORK_MODES_STEP_SELECTION } from '@/services/work-mode/work-mode.validation';
 
@@ -35,7 +38,7 @@ export default function WorkModeSection({
   existingWorkModes,
 }: {
   jobProfileId: string;
-  existingWorkModes: string[];
+  existingWorkModes: WorkMode[];
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -53,11 +56,17 @@ export default function WorkModeSection({
       updateJobProfileSchema,
     ) as Resolver<JobProfileUpdateInput>,
     defaultValues: {
-      workMode: existingWorkModes,
+      workMode: existingWorkModes?.map((workMode) => workMode._id) ?? [],
     },
   });
 
   const selectedWorkModes = watch('workMode');
+
+  const [savedWorkModes, setSavedWorkModes] = useState<WorkMode[]>([]);
+
+  useEffect(() => {
+    setSavedWorkModes(existingWorkModes);
+  }, [existingWorkModes]);
 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -88,29 +97,39 @@ export default function WorkModeSection({
     selectedWorkModes?.length &&
     selectedWorkModes?.length >= MAX_WORK_MODES_STEP_SELECTION;
 
-  const handleToggle = (workModeId: string, checked: boolean) => {
+  const handleToggle = (workMode: WorkMode, checked: boolean) => {
     const current = selectedWorkModes || [];
 
     if (checked) {
       if (
         current.length >= MAX_WORK_MODES_STEP_SELECTION &&
-        !current.includes(workModeId)
+        !current.includes(workMode._id)
       ) {
         return;
       }
 
-      setValue('workMode', [...current, workModeId], {
+      setValue('workMode', [...current, workMode._id], {
         shouldDirty: true,
         shouldValidate: true,
+      });
+      setSavedWorkModes((prev) => {
+        if (prev.some((item) => item._id === workMode._id)) {
+          return prev;
+        }
+
+        return [...prev, workMode];
       });
     } else {
       setValue(
         'workMode',
-        current.filter((id) => id !== workModeId),
+        current.filter((id) => id !== workMode._id),
         {
           shouldDirty: true,
           shouldValidate: true,
         },
+      );
+      setSavedWorkModes((prev) =>
+        prev.filter((item) => item._id !== workMode._id),
       );
     }
   };
@@ -173,16 +192,23 @@ export default function WorkModeSection({
           </p>
         </div>
         <div className=" space-y-spacing-lg">
-          <div className=" flex items-center justify-between gap-spacing-lg">
-            <p className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary">
-              Select your top work modes (Maximum{' '}
-              {CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION})
-            </p>
-            <span className=" text-label-sm text-text-gray-quaternary">
-              {selectedWorkModes?.length ?? 0}/
-              {CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION} selected
-            </span>
-          </div>
+          {Boolean(savedWorkModes?.length) && !isInitialLoading && (
+            <div className=" flex items-center gap-spacing-2xl">
+              <span className=" whitespace-nowrap text-body-sm text-text-gray-secondary">
+                Selected:{' '}
+              </span>
+              <div className=" flex items-center gap-spacing-2xs flex-wrap">
+                {savedWorkModes?.map((item) => (
+                  <span
+                    key={item._id}
+                    className=" cursor-pointer whitespace-nowrap inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-body-xs text-others-gray-dark border border-border-gray-primary"
+                  >
+                    {item.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           <div
             onScroll={handleScroll}
             className=" max-h-[500px] overflow-y-auto space-y-spacing-lg"
@@ -211,7 +237,7 @@ export default function WorkModeSection({
                         checked={isSelected}
                         disabled={isDisabled || false}
                         onCheckedChange={(checked) =>
-                          handleToggle(item._id, checked === true)
+                          handleToggle(item as WorkMode, checked === true)
                         }
                       />
                       <Label
@@ -254,6 +280,7 @@ export default function WorkModeSection({
               )
             }
             variant="outline"
+            type="button"
             className="text-label-md font-label-md-strong! cursor-pointer border-border-gray-primary h-12 rounded-lg text-text-gray-secondary"
           >
             Back

@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Search } from 'lucide-react';
 import { ONBOARDING_STEP_ENUMS } from '@rl/types';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import MultiCheckboxSkeleton from './multi-checkbox-skeleton';
 import { useQueryClient } from '@tanstack/react-query';
@@ -24,7 +24,10 @@ import {
   CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION,
   updateJobProfileSchema,
 } from '@/services/job-profile/job-profile.validation';
-import { JobProfileUpdateInput } from '@/services/job-profile/job-profile.type';
+import {
+  Industry,
+  JobProfileUpdateInput,
+} from '@/services/job-profile/job-profile.type';
 import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 
 const PAGE_LIMIT = 10;
@@ -35,7 +38,7 @@ export default function IndustrySection({
   existingIndustries,
 }: {
   jobProfileId: string;
-  existingIndustries: string[];
+  existingIndustries: Industry[];
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -53,11 +56,17 @@ export default function IndustrySection({
       updateJobProfileSchema,
     ) as Resolver<JobProfileUpdateInput>,
     defaultValues: {
-      industry: existingIndustries,
+      industry: existingIndustries?.map((industry) => industry._id) ?? [],
     },
   });
 
   const selectedIndustries = watch('industry');
+
+  const [savedIndustries, setSavedIndustries] = useState<Industry[]>([]);
+
+  useEffect(() => {
+    setSavedIndustries(existingIndustries);
+  }, [existingIndustries]);
 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -88,25 +97,35 @@ export default function IndustrySection({
     selectedIndustries?.length &&
     selectedIndustries?.length >= MAX_INDUSTRIES_STEP_SELECTION;
 
-  const handleToggle = (industryId: string, checked: boolean) => {
+  const handleToggle = (industry: Industry, checked: boolean) => {
     const current = selectedIndustries || [];
 
     if (checked) {
       if (
         current.length >= MAX_INDUSTRIES_STEP_SELECTION &&
-        !current.includes(industryId)
+        !current.includes(industry._id)
       ) {
         return;
       }
 
-      setValue('industry', [...current, industryId], {
+      setValue('industry', [...current, industry._id], {
         shouldDirty: true,
         shouldValidate: true,
       });
+      setSavedIndustries((prev) => {
+        if (prev.some((item) => item._id === industry._id)) {
+          return prev;
+        }
+
+        return [...prev, industry];
+      });
     } else {
+      setSavedIndustries((prev) =>
+        prev.filter((item) => item._id !== industry._id),
+      );
       setValue(
         'industry',
-        current.filter((id) => id !== industryId),
+        current.filter((id) => id !== industry._id),
         {
           shouldDirty: true,
           shouldValidate: true,
@@ -183,16 +202,23 @@ export default function IndustrySection({
           </InputGroup>
         </div>
         <div className=" space-y-spacing-lg">
-          <div className=" flex items-center justify-between gap-spacing-lg">
-            <p className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary">
-              Select your top industries (Maximum{' '}
-              {CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION})
-            </p>
-            <span className=" text-label-sm text-text-gray-quaternary">
-              {selectedIndustries?.length ?? 0}/
-              {CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION} selected
-            </span>
-          </div>
+          {Boolean(savedIndustries?.length) && !isInitialLoading && (
+            <div className=" flex items-center gap-spacing-2xl">
+              <span className=" whitespace-nowrap text-body-sm text-text-gray-secondary">
+                Selected:{' '}
+              </span>
+              <div className=" flex items-center gap-spacing-2xs flex-wrap">
+                {savedIndustries?.map((item) => (
+                  <span
+                    key={item._id}
+                    className=" cursor-pointer whitespace-nowrap inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-body-xs text-others-gray-dark border border-border-gray-primary"
+                  >
+                    {item.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           <div
             onScroll={handleScroll}
             className=" max-h-[500px] overflow-y-auto space-y-spacing-lg"
@@ -221,7 +247,7 @@ export default function IndustrySection({
                         checked={isSelected}
                         disabled={isDisabled || false}
                         onCheckedChange={(checked) =>
-                          handleToggle(item._id, checked === true)
+                          handleToggle(item as Industry, checked === true)
                         }
                       />
                       <Label
@@ -264,6 +290,7 @@ export default function IndustrySection({
               )
             }
             variant="outline"
+            type="button"
             className="text-label-md font-label-md-strong! cursor-pointer border-border-gray-primary h-12 rounded-lg text-text-gray-secondary"
           >
             Back

@@ -200,6 +200,7 @@ export default function ExperienceLevelSection({
               )
             }
             variant="outline"
+            type="button"
             className="text-label-md font-label-md-strong! cursor-pointer border-border-gray-primary h-12 rounded-lg text-text-gray-secondary"
           >
             Back

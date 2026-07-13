@@ -103,6 +103,7 @@ export default function LocationSection({
           <div className=" flex justify-between items-center">
             <Button
               disabled={isPending}
+              type="button"
               onClick={() =>
                 router.push(
                   `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.WORK_MODE}`,

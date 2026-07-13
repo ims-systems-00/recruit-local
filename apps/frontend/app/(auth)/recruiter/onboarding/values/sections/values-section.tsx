@@ -17,7 +17,7 @@ import {
   useInfiniteValues,
   useValues,
 } from '@/services/value/value.client';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import ValuesSkeleton from './values-skeleton';
 import { useUpdateTenant, tenantKeys } from '@/services/tenants/tenants.client';
@@ -119,19 +119,37 @@ export default function ValuesSection({
 
   const values = data?.pages.flatMap((page) => page.values) ?? [];
 
+  const [savedValues, setSavedValues] = useState<ValueData[]>([]);
+
+  useEffect(() => {
+    setSavedValues(getStepValues(existingValues, types));
+  }, [existingValues]);
+
   const isMaxSelected = selectedValues.length >= MAX_VALUES_STEP_SELECTION;
 
-  const handleToggle = (valueId: string, checked: boolean) => {
+  const handleToggle = (value: ValueData, checked: boolean) => {
     if (checked && isMaxSelected) return;
 
     const updatedValues = checked
-      ? [...selectedValues, valueId]
-      : selectedValues.filter((id: string) => id !== valueId);
+      ? [...selectedValues, value._id]
+      : selectedValues.filter((id: string) => id !== value._id);
 
     setValue('values', updatedValues, {
       shouldDirty: true,
       shouldValidate: true,
     });
+
+    if (checked) {
+      setSavedValues((prev) => {
+        if (prev.some((item) => item._id === value._id)) {
+          return prev;
+        }
+
+        return [...prev, value];
+      });
+    } else {
+      setSavedValues((prev) => prev.filter((item) => item._id !== value._id));
+    }
   };
 
   const onSubmit = async (data: ValuesStepFormValues) => {
@@ -226,13 +244,20 @@ export default function ValuesSection({
           </div>
         </div>
         <div className=" space-y-spacing-lg">
-          <div className=" flex items-center justify-between gap-spacing-lg">
-            <p className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary">
-              Select your top mindsets (Maximum {MAX_VALUES_STEP_SELECTION})
-            </p>
-            <span className=" text-label-sm text-text-gray-quaternary">
-              {selectedValues.length}/{MAX_VALUES_STEP_SELECTION} selected
+          <div className=" flex items-center gap-spacing-2xl">
+            <span className=" whitespace-nowrap text-body-sm text-text-gray-secondary">
+              Selected:{' '}
             </span>
+            <div className=" flex items-center gap-spacing-2xs flex-wrap">
+              {savedValues?.map((item) => (
+                <span
+                  key={item._id}
+                  className=" cursor-pointer whitespace-nowrap inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-body-xs text-others-gray-dark border border-border-gray-primary"
+                >
+                  {item.label}
+                </span>
+              ))}
+            </div>
           </div>
           {errors.values?.message && (
             <p className=" text-label-sm text-text-error-primary">
@@ -267,7 +292,7 @@ export default function ValuesSection({
                         checked={isSelected}
                         disabled={isDisabled}
                         onCheckedChange={(checked) =>
-                          handleToggle(item._id, checked === true)
+                          handleToggle(item as ValueData, checked === true)
                         }
                       />
                       <Label
