@@ -67,7 +67,6 @@ export async function updateTenant(
   payload: Partial<TenantUpdateInput>,
 ): Promise<ApiResponse<TenantData>> {
   try {
-    console.log('payload', payload, 'id', id);
     await tenantsIdParamsSchema.validate({ id });
     const validatedData = await tenantUpdateSchema.validate(payload, {
       abortEarly: false,
@@ -78,8 +77,6 @@ export async function updateTenant(
       validatedData,
     );
 
-    console.log('res', res.data);
-
     const backendResponse = res.data;
 
     return {
@@ -88,7 +85,6 @@ export async function updateTenant(
       message: backendResponse.message,
     };
   } catch (error) {
-    console.log('error', error);
     return handleServerError(error, 'Failed to update tenant');
   }
 }

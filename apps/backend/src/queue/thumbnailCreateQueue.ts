@@ -222,14 +222,20 @@ const processThumbnailCreate = async (job: Job<ThumbnailCreateJobData>) => {
 
   const { Bucket, Key, Name } = fileMedia.storageInformation;
 
+  const ext = getFileExtension(Key || Name || "");
+
+  // Images are their own preview; skip thumbnail generation for them.
+  if (IMAGE_EXTENSIONS.has(ext)) {
+    logger.info(`[Thumbnail] Skipping image ${fileMediaId}`, { ext });
+    return;
+  }
+
   const tempInputPath = path.join(os.tmpdir(), `${fileMediaId}-${Date.now()}-${path.basename(Key || Name || "file")}`);
 
   try {
     await FileMedia.findByIdAndUpdate(fileMediaId, {
       $set: { thumbnailStatus: "processing" },
     });
-
-    const ext = getFileExtension(Key || Name || "");
 
     logger.info(`[Thumbnail] Preparing to download`, { fileMediaId, Bucket, Key, Name, ext });
 
@@ -259,10 +265,7 @@ const processThumbnailCreate = async (job: Job<ThumbnailCreateJobData>) => {
     let thumbnailBuffer: Buffer;
     let contentType = "image/png";
 
-    if (IMAGE_EXTENSIONS.has(ext)) {
-      thumbnailBuffer = await sharp(tempInputPath).resize(300, 300, { fit: "inside" }).jpeg({ quality: 80 }).toBuffer();
-      contentType = "image/jpeg";
-    } else if (PDF_EXTENSIONS.has(ext)) {
+    if (PDF_EXTENSIONS.has(ext)) {
       try {
         thumbnailBuffer = await renderPdfThumbnail(tempInputPath);
       } catch (pdfError) {
