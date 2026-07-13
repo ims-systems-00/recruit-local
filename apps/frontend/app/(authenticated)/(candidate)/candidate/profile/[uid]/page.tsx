@@ -1,6 +1,7 @@
 import React from 'react';
 import Profile from './sections/profile';
 import { getJobProfileById } from '@/services/job-profile/job-profile.server';
+import { JobProfile } from '@/services/job-profile/job-profile.type';
 type PageProps = {
   params: Promise<{ uid: string }>;
 };
@@ -15,5 +16,5 @@ export default async function ProfilePage({ params }: PageProps) {
   }
 
   const jobProfileData = response.data;
-  return <Profile jobProfileData={jobProfileData} />;
+  return <Profile jobProfileData={jobProfileData as unknown as JobProfile} />;
 }

@@ -49,7 +49,7 @@ export function useLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-
+  const { data: session } = useSession();
   const {
     register,
     handleSubmit,
@@ -63,7 +63,7 @@ export function useLogin() {
       loginWithCredentials(payload.email, payload.password),
 
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ['user', session?.user?._id] });
       toast.success('Logged in successfully');
       const redirect = searchParams.get('redirect');
       if (redirect) {
@@ -124,9 +124,9 @@ export function useLogout() {
 
 export function useSignup() {
   const router = useRouter();
-
+  const queryClient = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
-
+  const { data: session } = useSession();
   const form = useForm<SignupFormValues>({
     resolver: yupResolver(signupSchema),
   });
@@ -145,6 +145,9 @@ export function useSignup() {
 
         toast.success(res.data.message);
         form.reset();
+        await queryClient.invalidateQueries({
+          queryKey: ['user', session?.user?._id],
+        });
         router.push('/accounts/verify-email');
       } catch {
         toast.success('Account created successfully');

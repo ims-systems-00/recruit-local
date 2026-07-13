@@ -21,9 +21,13 @@ function PersonalisationPageContent() {
   const { data: session } = useSession();
   const jobProfileId = session?.user?.jobProfileId;
 
+  console.log('session', session);
+
   const { jobProfile, isLoading: isJobProfileLoading } = useJobProfile(
     jobProfileId || '',
   );
+
+  console.log('jobProfile', jobProfile);
 
   if (isJobProfileLoading || !session?.user?._id) {
     return (
@@ -52,28 +56,32 @@ function PersonalisationPageContent() {
   }
 
   if (step === ONBOARDING_STEP_ENUMS.CV_UPLOAD) {
-    return <CvUploadSection jobProfileId={jobProfileId || ''} />;
+    return <CvUploadSection jobProfileId={jobProfile?._id || ''} />;
   }
   if (step === ONBOARDING_STEP_ENUMS.JOB_TITLE) {
     return (
       <JobTitleSection
-        jobProfileId={jobProfileId || ''}
-        existingJobTitles={jobProfile?.jobTitle || []}
+        jobProfileId={jobProfile?._id || ''}
+        existingJobTitles={
+          jobProfile?.jobTitle?.map((jobTitle) => jobTitle._id) || []
+        }
       />
     );
   }
   if (step === ONBOARDING_STEP_ENUMS.INDUSTRY) {
     return (
       <IndustrySection
-        jobProfileId={jobProfileId || ''}
-        existingIndustries={jobProfile?.industry || []}
+        jobProfileId={jobProfile?._id || ''}
+        existingIndustries={
+          jobProfile?.industry?.map((industry) => industry._id) || []
+        }
       />
     );
   }
   if (step === ONBOARDING_STEP_ENUMS.EXPERIENCE_LEVEL) {
     return (
       <ExperienceLevelSection
-        jobProfileId={jobProfileId || ''}
+        jobProfileId={jobProfile?._id || ''}
         existingExperienceLevels={jobProfile?.experienceLevel || ''}
       />
     );
@@ -81,8 +89,10 @@ function PersonalisationPageContent() {
   if (step === ONBOARDING_STEP_ENUMS.WORK_MODE) {
     return (
       <WorkModeSection
-        jobProfileId={jobProfileId || ''}
-        existingWorkModes={jobProfile?.workMode || []}
+        jobProfileId={jobProfile?._id || ''}
+        existingWorkModes={
+          jobProfile?.workMode?.map((workMode) => workMode._id) || []
+        }
       />
     );
   }
@@ -90,7 +100,7 @@ function PersonalisationPageContent() {
   if (step === ONBOARDING_STEP_ENUMS.LOCATION) {
     return (
       <LocationSection
-        jobProfileId={jobProfileId || ''}
+        jobProfileId={jobProfile?._id || ''}
         existingLocation={jobProfile?.address || ''}
       />
     );

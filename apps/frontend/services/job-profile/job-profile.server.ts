@@ -16,6 +16,7 @@ import type {
   JobProfileCreateInput,
   JobProfileUpdateInput,
   JobProfileListFilters,
+  JobProfileData,
 } from './job-profile.type';
 import { JobListBackendResponse, JobListResponse } from '../jobs/job.type';
 
@@ -58,7 +59,7 @@ export async function getJobProfiles(
  */
 export async function getJobProfileById(
   id: string,
-): Promise<JobProfileApiResponse<JobProfile>> {
+): Promise<JobProfileApiResponse<JobProfileData>> {
   try {
     await idParamsSchema.validate({ id });
 

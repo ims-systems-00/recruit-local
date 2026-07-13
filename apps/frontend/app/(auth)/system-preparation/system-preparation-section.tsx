@@ -5,7 +5,7 @@ import LoaderSvg from '@/public/images/loader.svg';
 import { useSystemPreparation } from './_hooks/useSystemPreparation';
 
 export default function SystemPreparationSection() {
-  const { isUserLoading, isPending } = useSystemPreparation();
+  const { isPending } = useSystemPreparation();
 
   return (
     <div className=" flex justify-center items-center bg-card">
@@ -23,7 +23,7 @@ export default function SystemPreparationSection() {
           <div className="flex flex-col items-center justify-center gap-spacing-lg min-w-[350px] max-w-[444px]">
             <h3>Hang Tight</h3>
             <p className="text-center leading-6">
-              {isUserLoading || isPending
+              {isPending
                 ? 'The system is preparing your Profile please wait for while'
                 : 'Almost done!'}
             </p>
