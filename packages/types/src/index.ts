@@ -16,6 +16,7 @@ export * from './event-registration';
 export * from './favourite';
 export * from './skill-assessment';
 export * from './reaction';
+export * from './post';
 export * from './file-media';
 export * from './model-names';
 export * from './cv';
