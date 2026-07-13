@@ -147,3 +147,5 @@ export const candidateValuesStepSchema = yup.object({
 export type CandidateValuesStepFormValues = yup.InferType<
   typeof candidateValuesStepSchema
 >;
+
+export const CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION = 3;

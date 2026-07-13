@@ -19,6 +19,7 @@ import type {
   CvUpdateInput,
   CvListFilters,
   ExtractAndCreateCvInput,
+  CvExtractionData,
 } from './cv.type';
 
 const API_ENDPOINT = '/cvs';
@@ -208,7 +209,7 @@ export async function hardDeleteCv(id: string): Promise<CvApiResponse<null>> {
  */
 export async function extractAndCreateCv(
   payload: ExtractAndCreateCvInput,
-): Promise<CvApiResponse<Cv>> {
+): Promise<CvApiResponse<CvExtractionData>> {
   try {
     const validatedPayload = await extractAndCreateCvSchema.validate(payload, {
       abortEarly: false,

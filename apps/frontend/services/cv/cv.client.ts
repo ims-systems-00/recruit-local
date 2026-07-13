@@ -19,6 +19,7 @@ import type {
   CvListResponse,
   CvListFilters,
   ExtractAndCreateCvInput,
+  CvExtractionData,
 } from './cv.type';
 
 // --- QUERY KEYS ---
@@ -197,20 +198,20 @@ export function useExtractAndCreateCv() {
     onSuccessCallback,
   }: {
     payload: ExtractAndCreateCvInput;
-    onSuccessCallback?: (data: Cv) => void;
+    onSuccessCallback?: (data: CvExtractionData) => void;
   }) => {
     try {
       const response = await mutation.mutateAsync(payload);
 
       if (response.success) {
-        toast.success(response.message || 'CV created successfully');
+        toast.success(response.message || 'CV extraction successful');
         queryClient.invalidateQueries({ queryKey: cvKeys.all });
-        onSuccessCallback?.(response.data as Cv);
+        onSuccessCallback?.(response.data as CvExtractionData);
       } else {
         toast.error(response.message);
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create CV');
+      toast.error(error.message || 'Failed to extract CV');
     }
   };
 
