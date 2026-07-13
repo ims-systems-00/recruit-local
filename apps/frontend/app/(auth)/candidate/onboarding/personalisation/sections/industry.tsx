@@ -20,7 +20,10 @@ import { Resolver, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { MAX_INDUSTRIES_STEP_SELECTION } from '@/services/industry/industry.validation';
 import { useInfiniteIndustries } from '@/services/industry/industry.client';
-import { updateJobProfileSchema } from '@/services/job-profile/job-profile.validation';
+import {
+  CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION,
+  updateJobProfileSchema,
+} from '@/services/job-profile/job-profile.validation';
 import { JobProfileUpdateInput } from '@/services/job-profile/job-profile.type';
 import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 
@@ -165,9 +168,6 @@ export default function IndustrySection({
           <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-secondary">
             What industry would you like to work in?
           </h4>
-          <p className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary">
-            Select up to 3
-          </p>
           <InputGroup className="  h-12 rounded-lg shadow-xs border-border-gray-primary">
             <InputGroupInput
               type="text"
@@ -183,6 +183,16 @@ export default function IndustrySection({
           </InputGroup>
         </div>
         <div className=" space-y-spacing-lg">
+          <div className=" flex items-center justify-between gap-spacing-lg">
+            <p className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary">
+              Select your top industries (Maximum{' '}
+              {CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION})
+            </p>
+            <span className=" text-label-sm text-text-gray-quaternary">
+              {selectedIndustries?.length ?? 0}/
+              {CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION} selected
+            </span>
+          </div>
           <div
             onScroll={handleScroll}
             className=" max-h-[500px] overflow-y-auto space-y-spacing-lg"

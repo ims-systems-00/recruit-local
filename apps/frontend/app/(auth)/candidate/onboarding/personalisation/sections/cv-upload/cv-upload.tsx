@@ -5,7 +5,10 @@ import AttachmentForm, {
 } from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/attachment-form';
 import { Button } from '@/components/ui/button';
 import { useDeleteFileStorage } from '@/services/file-storage';
-import { Cv, ExtractAndCreateCvInput } from '@/services/cv/cv.type';
+import {
+  CvExtractionData,
+  ExtractAndCreateCvInput,
+} from '@/services/cv/cv.type';
 import { useExtractAndCreateCv } from '@/services/cv';
 import { useForm } from 'react-hook-form';
 import { createCvSchema } from '@/services/cv/cv.validation';
@@ -16,11 +19,23 @@ import { ONBOARDING_STEP_ENUMS } from '@rl/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { jobProfileKeys } from '@/services/job-profile';
+import {
+  Industry,
+  JobTitle,
+  WorkMode,
+} from '@/services/job-profile/job-profile.type';
 
 export default function CvUploadSection({
   jobProfileId,
+  setDataFromCvUpload,
 }: {
   jobProfileId: string;
+  setDataFromCvUpload: (data: {
+    jobTitle: JobTitle[];
+    industry: Industry[];
+    experienceLevel: string;
+    workMode: WorkMode[];
+  }) => void;
 }) {
   const { deleteFile, isLoading: isDeleting } = useDeleteFileStorage();
   const queryClient = useQueryClient();
@@ -51,9 +66,14 @@ export default function CvUploadSection({
     console.log(data);
     const payload = {
       payload: data,
-      onSuccessCallback: (data: Cv) => {
+      onSuccessCallback: (data: CvExtractionData) => {
         console.log(data, 'data');
-
+        setDataFromCvUpload({
+          jobTitle: data.jobTitles,
+          industry: data.industries,
+          experienceLevel: data.experienceLevels?.[0]?.name || '',
+          workMode: data.workModes,
+        });
         router.push(
           `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.JOB_TITLE}`,
         );

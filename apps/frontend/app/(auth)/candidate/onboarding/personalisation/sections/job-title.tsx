@@ -18,11 +18,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Resolver, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { updateJobProfileSchema } from '@/services/job-profile/job-profile.validation';
+import {
+  CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION,
+  updateJobProfileSchema,
+} from '@/services/job-profile/job-profile.validation';
 import { JobProfileUpdateInput } from '@/services/job-profile/job-profile.type';
 import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 import { MAX_JOB_TITLES_STEP_SELECTION } from '@/services/job-title/job-title.validation';
 import { useInfiniteJobTitles } from '@/services/job-title/job-title.client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -191,6 +195,16 @@ export default function JobTitleSection({
           </InputGroup>
         </div>
         <div className=" space-y-spacing-lg">
+          <div className=" flex items-center justify-between gap-spacing-lg">
+            <p className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary">
+              Select your top job titles (Maximum{' '}
+              {CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION})
+            </p>
+            <span className=" text-label-sm text-text-gray-quaternary">
+              {selectedJobTitles?.length ?? 0}/
+              {CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION} selected
+            </span>
+          </div>
           <div
             onScroll={handleScroll}
             className=" max-h-[500px] overflow-y-auto space-y-spacing-lg"

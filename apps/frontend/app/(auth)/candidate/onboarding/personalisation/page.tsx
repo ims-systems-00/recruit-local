@@ -1,5 +1,5 @@
 'use client';
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ONBOARDING_STEP_ENUMS } from '@rl/types';
 import CvUploadSection from './sections/cv-upload/cv-upload';
@@ -13,6 +13,11 @@ import IndustrySection from './sections/industry';
 import ExperienceLevelSection from './sections/experience-level';
 import WorkModeSection from './sections/work-mode';
 import LocationSection from './sections/location';
+import {
+  Industry,
+  JobTitle,
+  WorkMode,
+} from '@/services/job-profile/job-profile.type';
 
 function PersonalisationPageContent() {
   const searchParams = useSearchParams();
@@ -21,6 +26,18 @@ function PersonalisationPageContent() {
   const { data: session } = useSession();
   const jobProfileId = session?.user?.jobProfileId;
 
+  const [dataFromCvUpload, setDataFromCvUpload] = useState<{
+    jobTitle: JobTitle[];
+    industry: Industry[];
+    experienceLevel: string;
+    workMode: WorkMode[];
+  }>({
+    jobTitle: [],
+    industry: [],
+    experienceLevel: '',
+    workMode: [],
+  });
+
   console.log('session', session);
 
   const { jobProfile, isLoading: isJobProfileLoading } = useJobProfile(
@@ -28,6 +45,7 @@ function PersonalisationPageContent() {
   );
 
   console.log('jobProfile', jobProfile);
+  console.log('dataFromCvUpload', dataFromCvUpload);
 
   if (isJobProfileLoading || !session?.user?._id) {
     return (
@@ -56,14 +74,21 @@ function PersonalisationPageContent() {
   }
 
   if (step === ONBOARDING_STEP_ENUMS.CV_UPLOAD) {
-    return <CvUploadSection jobProfileId={jobProfile?._id || ''} />;
+    return (
+      <CvUploadSection
+        jobProfileId={jobProfile?._id || ''}
+        setDataFromCvUpload={setDataFromCvUpload}
+      />
+    );
   }
   if (step === ONBOARDING_STEP_ENUMS.JOB_TITLE) {
     return (
       <JobTitleSection
         jobProfileId={jobProfile?._id || ''}
         existingJobTitles={
-          jobProfile?.jobTitle?.map((jobTitle) => jobTitle._id) || []
+          Number(jobProfile?.jobTitle?.length) > 0
+            ? (jobProfile?.jobTitle?.map((jobTitle) => jobTitle._id) ?? [])
+            : (dataFromCvUpload.jobTitle.map((jobTitle) => jobTitle._id) ?? [])
         }
       />
     );
@@ -73,7 +98,9 @@ function PersonalisationPageContent() {
       <IndustrySection
         jobProfileId={jobProfile?._id || ''}
         existingIndustries={
-          jobProfile?.industry?.map((industry) => industry._id) || []
+          Number(jobProfile?.industry?.length) > 0
+            ? (jobProfile?.industry?.map((industry) => industry._id) ?? [])
+            : (dataFromCvUpload.industry.map((industry) => industry._id) ?? [])
         }
       />
     );
@@ -82,7 +109,9 @@ function PersonalisationPageContent() {
     return (
       <ExperienceLevelSection
         jobProfileId={jobProfile?._id || ''}
-        existingExperienceLevels={jobProfile?.experienceLevel || ''}
+        existingExperienceLevels={
+          jobProfile?.experienceLevel ?? dataFromCvUpload.experienceLevel ?? ''
+        }
       />
     );
   }
@@ -91,7 +120,9 @@ function PersonalisationPageContent() {
       <WorkModeSection
         jobProfileId={jobProfile?._id || ''}
         existingWorkModes={
-          jobProfile?.workMode?.map((workMode) => workMode._id) || []
+          Number(jobProfile?.workMode?.length) > 0
+            ? (jobProfile?.workMode?.map((workMode) => workMode._id) ?? [])
+            : (dataFromCvUpload.workMode.map((workMode) => workMode._id) ?? [])
         }
       />
     );
