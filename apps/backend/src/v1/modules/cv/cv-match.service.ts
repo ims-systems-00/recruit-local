@@ -13,43 +13,44 @@ const normalize = (str: string): string =>
     .replace(/\s+/g, " ");
 
 const wordOverlapScore = (a: string, b: string): number => {
-  const wordsA = normalize(a).split(" ").filter((w) => w.length > 2);
-  const wordsB = normalize(b).split(" ").filter((w) => w.length > 2);
+  const wordsA = normalize(a)
+    .split(" ")
+    .filter((w) => w.length > 2);
+  const wordsB = normalize(b)
+    .split(" ")
+    .filter((w) => w.length > 2);
   if (!wordsA.length || !wordsB.length) return 0;
   const setB = new Set(wordsB);
   const overlap = wordsA.filter((w) => setB.has(w)).length;
   return overlap / Math.max(wordsA.length, wordsB.length);
 };
 
-export const matchEntities = <T extends NamedEntity>(
-  aiValues: string[],
-  dbEntities: T[],
-  threshold = 0.3
-): T[] => {
+const matchScore = (a: string, b: string): number => {
+  const na = normalize(a);
+  const nb = normalize(b);
+  if (na === nb) return 1;
+  if (na.includes(nb) || nb.includes(na)) return 0.9;
+  return wordOverlapScore(na, nb);
+};
+
+export const matchEntities = <T extends NamedEntity>(aiValues: string[], dbEntities: T[], threshold = 0.3): T[] => {
   if (!aiValues?.length || !dbEntities?.length) return [];
 
-  const matched = new Map<string, T>();
+  // Keep the best score per entity, then rank so callers can take the top N.
+  const best = new Map<string, { entity: T; score: number }>();
 
   for (const aiValue of aiValues) {
-    const normAI = normalize(aiValue);
     for (const entity of dbEntities) {
-      const normDB = normalize(entity.name);
+      const score = matchScore(aiValue, entity.name);
+      if (score < threshold) continue;
+
       const key = String(entity._id);
-
-      if (matched.has(key)) continue;
-
-      if (normAI === normDB || normAI.includes(normDB) || normDB.includes(normAI)) {
-        matched.set(key, entity);
-        continue;
-      }
-
-      if (wordOverlapScore(normAI, normDB) >= threshold) {
-        matched.set(key, entity);
-      }
+      const prev = best.get(key);
+      if (!prev || score > prev.score) best.set(key, { entity, score });
     }
   }
 
-  return [...matched.values()];
+  return [...best.values()].sort((a, b) => b.score - a.score).map((m) => m.entity);
 };
 
 const ACTIVE_FILTER = { $match: { isActive: true, "deleteMarker.status": { $ne: true } } };
@@ -63,9 +64,9 @@ export const matchCvEntities = async (extractedData: Record<string, string[]>) =
   ]);
 
   return {
-    jobTitles: matchEntities(extractedData.jobTitles ?? [], jobTitles),
-    industries: matchEntities(extractedData.industries ?? [], industries),
-    workModes: matchEntities(extractedData.workModes ?? [], workModes),
-    experienceLevels: matchEntities(extractedData.experienceLevels ?? [], experienceLevels),
+    jobTitles: matchEntities(extractedData.jobTitles ?? [], jobTitles).slice(0, 3),
+    industries: matchEntities(extractedData.industries ?? [], industries).slice(0, 3),
+    workModes: matchEntities(extractedData.workModes ?? [], workModes).slice(0, 3),
+    experienceLevels: matchEntities(extractedData.experienceLevels ?? [], experienceLevels).slice(0, 1),
   };
 };
