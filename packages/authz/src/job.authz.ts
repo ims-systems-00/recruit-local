@@ -168,6 +168,7 @@ export class JobAbilityBuilder implements IAbilityBuilder {
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
       builder.can(AbilityAction.Create, JobAuthZEntity, EMPLOYER_CREATE_FIELDS);
+      builder.can(AbilityAction.Read, JobAuthZEntity, CANDIDATE_READ_FIELDS);
       builder.can(AbilityAction.Read, JobAuthZEntity, ALL_JOB_FIELDS, {
         tenantId: this.session.tenantId,
       });

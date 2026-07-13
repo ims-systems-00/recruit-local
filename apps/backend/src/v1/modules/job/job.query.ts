@@ -119,25 +119,24 @@ export const alreadyAlliped = (jobProfileId?: string): PipelineStage[] => {
 };
 
 export const alreadysaved = (tenantId?: string, jobProfileId?: string): PipelineStage[] => {
-  // jobProfileId is required to check if a job is already saved
-  if (!jobProfileId || !Types.ObjectId.isValid(jobProfileId)) {
+  // A favourite is owned by exactly one context: a jobProfile (candidate) or a tenant (employer).
+  // Match on whichever owner the current viewer is.
+  const ownerCondition =
+    jobProfileId && Types.ObjectId.isValid(jobProfileId)
+      ? { $eq: ["$jobProfileId", new Types.ObjectId(jobProfileId)] }
+      : tenantId && Types.ObjectId.isValid(tenantId)
+        ? { $eq: ["$tenantId", new Types.ObjectId(tenantId)] }
+        : null;
+
+  if (!ownerCondition) {
     return [{ $addFields: { alreadySaved: false } }];
   }
 
-  const jobProfileObjectId = new Types.ObjectId(jobProfileId);
-
-  // Build match conditions - jobProfileId is always required, tenantId is optional
   const matchConditions: any[] = [
-    { $eq: ["$jobProfileId", jobProfileObjectId] },
+    ownerCondition,
     { $eq: ["$itemType", modelNames.JOB] },
     { $eq: ["$itemId", "$$currentJobId"] },
   ];
-
-  // Add tenantId condition if provided and valid
-  if (tenantId && Types.ObjectId.isValid(tenantId)) {
-    const tenantObjectId = new Types.ObjectId(tenantId);
-    matchConditions.unshift({ $eq: ["$tenantId", tenantObjectId] });
-  }
 
   return [
     {
