@@ -23,10 +23,7 @@ export interface IPostDoc extends IPostInput, ISoftDeleteDoc {
 }
 
 interface IPostModel
-  extends Model<IPostDoc>,
-    ISoftDeleteModel<IPostDoc>,
-    PaginateModel<IPostDoc>,
-    AggregatePaginateModel<IPostDoc> {}
+  extends Model<IPostDoc>, ISoftDeleteModel<IPostDoc>, PaginateModel<IPostDoc>, AggregatePaginateModel<IPostDoc> {}
 
 const postSchema = new Schema<IPostDoc>(
   {
