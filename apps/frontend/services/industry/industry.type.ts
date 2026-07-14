@@ -3,7 +3,7 @@ import { Pagination } from '@/types/api';
 export type IndustryListFilters = {
   page?: number;
   limit?: number;
-  search?: string;
+  clientSearch?: string;
 };
 
 export type IndustryData = {

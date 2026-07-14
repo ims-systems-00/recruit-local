@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import RecruitProfileDefault from '@/public/images/recruit_profile_default.svg';
 import RecruitDefaultLogo from '@/public/images/recruit_default_logo.png';
 import { Button } from '@/components/ui/button';
@@ -94,7 +94,35 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
     control,
     formState: { errors },
     handleSubmit,
+    reset,
   } = methods;
+
+  useEffect(() => {
+    reset({
+      name: tenantDetails?.name || '',
+      email: tenantDetails?.email,
+      description: tenantDetails?.description,
+      phone: tenantDetails?.phone,
+      officeAddress: tenantDetails?.officeAddress,
+      type: tenantDetails?.type
+        ? (tenantDetails?.type as TENANT_TYPE)
+        : undefined,
+      size: tenantDetails?.size,
+      website: tenantDetails?.website,
+      linkedIn: tenantDetails?.linkedIn,
+      industry: tenantDetails?.industry,
+      missionStatement: tenantDetails?.missionStatement,
+      visionStatement: tenantDetails?.visionStatement,
+      coreProducts: tenantDetails?.coreProducts,
+      coreServices: tenantDetails?.coreServices,
+      profileImageStorage: tenantDetails?.profileImage?.storageInformation,
+      coverPhotoStorage: tenantDetails?.coverPhoto?.storageInformation,
+      isRecruitmentEnabled: tenantDetails?.isRecruitmentEnabled,
+    });
+  }, [
+    tenantDetails?.profileImage?.storageInformation,
+    tenantDetails?.coverPhoto?.storageInformation,
+  ]);
 
   const onSubmit = async (data: TenantUpdateInput) => {
     const payload = {
