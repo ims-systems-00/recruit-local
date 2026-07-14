@@ -11,7 +11,7 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You are not authorized to read values.");
   }
 
-  const filter = new MongoQuery(req.query, { searchFields: ["type", "value"] }).build();
+  const filter = new MongoQuery(req.query, { searchFields: ["type", "label"] }).build();
   const query = { ...filter.getFilterQuery(), isActive: true };
   const options = filter.getQueryOptions();
 
