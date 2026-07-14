@@ -4,7 +4,7 @@ import { VALUE_TYPE_ENUM } from '@rl/types';
 export type ValueListFilters = {
   page?: number;
   limit?: number;
-  search?: string;
+  clientSearch?: string;
   type?: { in: string[] };
 };
 

@@ -96,7 +96,7 @@ export default function ValuesSection({
       page,
       limit: PAGE_LIMIT,
       type: { in: types },
-      search: debouncedSearch || undefined,
+      clientSearch: debouncedSearch || undefined,
     }),
     [page, debouncedSearch],
   );
