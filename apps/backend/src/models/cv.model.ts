@@ -32,10 +32,7 @@ export interface ICVDoc extends CVInput, ISoftDeleteDoc, IBaseDoc {
 }
 
 interface ICVModel
-  extends Model<ICVDoc>,
-    ISoftDeleteModel<ICVDoc>,
-    PaginateModel<ICVDoc>,
-    AggregatePaginateModel<ICVDoc> {}
+  extends Model<ICVDoc>, ISoftDeleteModel<ICVDoc>, PaginateModel<ICVDoc>, AggregatePaginateModel<ICVDoc> {}
 
 const skillSchema = new Schema<ISkill>({
   name: { type: String, required: true },

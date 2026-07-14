@@ -6,7 +6,8 @@ import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/so
 import { modelNames } from "./constants";
 
 export interface IPostInput {
-  creator: Types.ObjectId;
+  tenantId?: Types.ObjectId; // at least one of tenantId / jobProfileId is required (enforced in pre-validate)
+  jobProfileId?: Types.ObjectId;
   title: string;
   text: string;
   banner?: Types.ObjectId;
@@ -27,10 +28,13 @@ interface IPostModel
 
 const postSchema = new Schema<IPostDoc>(
   {
-    creator: {
+    tenantId: {
       type: Schema.Types.ObjectId,
       ref: modelNames.TENANT,
-      required: true,
+    },
+    jobProfileId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.JOB_PROFILE,
     },
     title: {
       type: String,
@@ -71,6 +75,14 @@ const postSchema = new Schema<IPostDoc>(
     timestamps: true,
   }
 );
+
+// Either a tenant or a job profile must own the post — not neither.
+postSchema.pre("validate", function (next) {
+  if (!this.tenantId && !this.jobProfileId) {
+    this.invalidate("tenantId", "A post requires either a tenantId or a jobProfileId.");
+  }
+  next();
+});
 
 postSchema.plugin(softDeletePlugin);
 postSchema.plugin(mongoosePaginate);

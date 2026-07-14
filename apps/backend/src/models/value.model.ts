@@ -14,10 +14,7 @@ export interface IValueDoc extends ValueInput, ISoftDeleteDoc, IBaseDoc {
 }
 
 interface IValueModel
-  extends Model<IValueDoc>,
-    ISoftDeleteModel<IValueDoc>,
-    PaginateModel<IValueDoc>,
-    AggregatePaginateModel<IValueDoc> {}
+  extends Model<IValueDoc>, ISoftDeleteModel<IValueDoc>, PaginateModel<IValueDoc>, AggregatePaginateModel<IValueDoc> {}
 
 const valueSchema = new Schema<IValueDoc>(
   {
