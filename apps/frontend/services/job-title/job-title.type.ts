@@ -3,7 +3,7 @@ import { Pagination } from '@/types/api';
 export type JobTitleListFilters = {
   page?: number;
   limit?: number;
-  search?: string;
+  clientSearch?: string;
 };
 
 export type JobTitleData = {
