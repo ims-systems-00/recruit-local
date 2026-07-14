@@ -30,12 +30,6 @@ export const statusIdParamsSchema = yup.object({
   id: yup.string().required('ID is required'),
 });
 
-export const deleteMarkerSchema = yup.object({
-  status: yup.boolean().required(),
-  deletedAt: yup.string().nullable().optional(),
-  dateScheduled: yup.string().nullable().optional(),
-});
-
 export const statusSchema = yup.object({
   _id: yup.string().required('ID is required'),
   collectionName: yup.string().required('Collection Name is required'),
@@ -44,7 +38,6 @@ export const statusSchema = yup.object({
   weight: yup.number().integer().required(),
   default: yup.boolean().required(),
   backgroundColor: yup.string().required(),
-  deleteMarker: deleteMarkerSchema.optional(),
   createdAt: yup.string().optional(),
   updatedAt: yup.string().optional(),
   deletedAt: yup.string().nullable().optional(),
