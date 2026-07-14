@@ -77,7 +77,7 @@ export default function IndustrySection({
     () => ({
       page,
       limit: PAGE_LIMIT,
-      search: debouncedSearch || undefined,
+      clientSearch: debouncedSearch || undefined,
     }),
     [page, debouncedSearch],
   );

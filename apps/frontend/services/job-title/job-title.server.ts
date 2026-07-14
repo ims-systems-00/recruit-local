@@ -22,7 +22,7 @@ export async function getJobTitles(
         params: {
           page: params?.page || 1,
           limit: params?.limit || 10,
-          search: params?.search,
+          clientSearch: params?.clientSearch,
         },
         paramsSerializer: (params) =>
           qs.stringify(params, { arrayFormat: 'brackets' }),

@@ -82,7 +82,7 @@ export default function JobTitleSection({
     () => ({
       page,
       limit: PAGE_LIMIT,
-      search: debouncedSearch || undefined,
+      clientSearch: debouncedSearch || undefined,
     }),
     [page, debouncedSearch],
   );
