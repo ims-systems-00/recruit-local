@@ -20,7 +20,8 @@ import {
 // --- FIELD DEFINITIONS ---
 export const ALL_POST_FIELDS = [
   '_id',
-  'creator',
+  'tenantId',
+  'jobProfileId',
   'title',
   'text',
   'banner',
@@ -52,7 +53,7 @@ const PUBLIC_READ_FIELDS = omitFields([
   'imagesStorage.*',
 ]);
 
-// Fields an employer may set on create/update (`creator` is server-set).
+// Fields an employer may set on create/update (`tenantId`/`jobProfileId` are server-set).
 const EMPLOYER_MUTATION_FIELDS = [
   'title',
   'text',
@@ -69,21 +70,21 @@ const EMPLOYER_MUTATION_FIELDS = [
 // --- AUTHZ ENTITY ---
 export class PostAuthZEntity {
   public readonly _id: string | null;
-  public readonly creator: string | null;
+  public readonly tenantId: string | null;
   public readonly status: POST_STATUS_ENUMS;
   constructor({
     _id,
-    creator,
+    tenantId,
     status,
   }: {
     _id?: string | null;
-    creator?: string | null;
+    tenantId?: string | null;
     status?: POST_STATUS_ENUMS;
   }) {
     this._id = _id ? String(_id) : null;
     // Coerce the tenant ref to a string so it compares cleanly against the
     // session's `tenantId` in the per-document condition check.
-    this.creator = creator ? String(creator) : null;
+    this.tenantId = tenantId ? String(tenantId) : null;
     this.status = status ?? POST_STATUS_ENUMS.DRAFT;
   }
 }
@@ -114,12 +115,14 @@ export class PostAbilityBuilder implements IAbilityBuilder {
     // 2. EMPLOYER — owns the posts created under its tenant (drafts included).
     if (user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
       builder.can(AbilityAction.Create, PostAuthZEntity, EMPLOYER_MUTATION_FIELDS);
-      builder.can(AbilityAction.Read, PostAuthZEntity, ALL_POST_FIELDS, { creator: tenantId });
-      builder.can(AbilityAction.Update, PostAuthZEntity, EMPLOYER_MUTATION_FIELDS, { creator: tenantId });
-      builder.can(AbilityAction.SoftDelete, PostAuthZEntity, { creator: tenantId });
-      builder.can(AbilityAction.Restore, PostAuthZEntity, { creator: tenantId });
-      builder.can(AbilityAction.HardDelete, PostAuthZEntity, { creator: tenantId });
+      builder.can(AbilityAction.Read, PostAuthZEntity, ALL_POST_FIELDS, { tenantId });
+      builder.can(AbilityAction.Update, PostAuthZEntity, EMPLOYER_MUTATION_FIELDS, { tenantId });
+      builder.can(AbilityAction.SoftDelete, PostAuthZEntity, { tenantId });
+      builder.can(AbilityAction.Restore, PostAuthZEntity, { tenantId });
+      builder.can(AbilityAction.HardDelete, PostAuthZEntity, { tenantId });
     }
+
+    // TODO: CANDIDATE create — own posts scoped by { jobProfileId } (not yet enabled).
 
     // 3. EVERYONE — public read of LIVE posts only, editorial fields stripped.
     builder.can(AbilityAction.Read, PostAuthZEntity, PUBLIC_READ_FIELDS, {

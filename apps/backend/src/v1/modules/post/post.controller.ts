@@ -23,17 +23,17 @@ export const create = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You are not authorized to create a post.");
   }
 
-  // Posts are owned by the tenant the session user belongs to.
-  const creator = req.session?.tenantId;
-  if (!creator) {
-    throw new UnauthorizedException("A tenant context is required to create a post.");
+  // A post is owned by the session's tenant and/or job profile — at least one is required.
+  const { tenantId, jobProfileId } = req.session ?? {};
+  if (!tenantId && !jobProfileId) {
+    throw new UnauthorizedException("A tenant or job profile context is required to create a post.");
   }
 
   // Field-level check: reject body fields this role may not set.
   validateUpdatePayload(req.body, ability, AbilityAction.Create, new PostAuthZEntity(req.body));
 
   const post = await postService.create({
-    payload: { ...req.body, creator },
+    payload: { ...req.body, tenantId, jobProfileId },
   });
 
   return new ApiResponse({
