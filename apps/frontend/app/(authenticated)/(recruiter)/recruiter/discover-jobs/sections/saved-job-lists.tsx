@@ -19,8 +19,6 @@ export default function SavedJobLists() {
     itemType: 'jobs',
   });
 
-  console.log(favourites, 'favourites');
-
   return (
     <div>
       {isFavouriteLoading ? (
