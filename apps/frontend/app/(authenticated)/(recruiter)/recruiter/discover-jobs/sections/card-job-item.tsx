@@ -104,7 +104,7 @@ export default function CardJobItem({
               className={cn(
                 'cursor-pointer hover:bg-bg-gray-soft-primary w-9! p-spacing-0! bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!',
                 job?.alreadySaved &&
-                  'text-text-brand-primary! border-border-brand-primary!',
+                  'text-text-brand-primary! border-border-brand-primary! cursor-not-allowed',
               )}
             >
               {isPending ? <Loader2 className="animate-spin" /> : <Bookmark />}
