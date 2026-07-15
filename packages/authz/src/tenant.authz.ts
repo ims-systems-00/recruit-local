@@ -66,7 +66,50 @@ export const ALL_TENANT_FIELDS = [
 
 // `completion` is server-computed: readable by everyone, but never client-writable,
 // so it is added to the read list only (not to the manage/write grants below).
-export const ALL_TENANT_READ_FIELDS = [...ALL_TENANT_FIELDS, 'completion'];
+export const ALL_TENANT_READ_FIELDS = [
+  ...ALL_TENANT_FIELDS,
+  'completion',
+  'values',
+  'onboardingStep',
+];
+
+// Public read set — the fields ANY account type may read on ANY organisation
+// (candidates browsing orgs, employers viewing OTHER orgs). This is a trust
+// boundary: an explicit allow-list, so new fields default to private. Internal
+// lifecycle/onboarding flags (status, onboardingStep, isRecruitmentEnabled) and
+// write-only *Storage upload templates are intentionally excluded — employers &
+// admins still read those on their OWN org via the Manage grants below.
+export const TENANT_PUBLIC_READ_FIELDS = [
+  '_id',
+  'id',
+  'createdAt',
+  'updatedAt',
+  'name',
+  'description',
+  'industry',
+  'type',
+  'size',
+  'phone',
+  'email',
+  'logoSquareSrc',
+  'logoRectangleSrc',
+  'profileImageId',
+  'coverPhotoId',
+  'profileImage',
+  'profileImage.*',
+  'coverPhoto',
+  'coverPhoto.*',
+  'officeAddress',
+  'addressInMap',
+  'addressInMapLat',
+  'addressInMapLng',
+  'website',
+  'linkedIn',
+  'missionStatement',
+  'visionStatement',
+  'coreProducts',
+  'coreServices',
+];
 
 export class TenantAuthZEntity {
   public readonly _id: string | null;
@@ -92,8 +135,12 @@ export class TenantAbilityBuilder implements IAbilityBuilder {
   getAbility(): AnyAbility {
     const builder = this.abilityBuilder;
 
-    // Every account type can read all fields of organisations (e.g. to view an organisation's values).
-    builder.can(AbilityAction.Read, TenantAuthZEntity, ALL_TENANT_READ_FIELDS);
+    // Every account type can read the PUBLIC fields of any organisation.
+    builder.can(
+      AbilityAction.Read,
+      TenantAuthZEntity,
+      TENANT_PUBLIC_READ_FIELDS,
+    );
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       builder.can(AbilityAction.Manage, TenantAuthZEntity, ALL_TENANT_FIELDS);

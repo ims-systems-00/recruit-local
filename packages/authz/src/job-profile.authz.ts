@@ -55,12 +55,39 @@ export const ALL_JOB_PROFILE_FIELDS = [
   'createdAt',
   'updatedAt',
 ];
-// Helper to clean up array filtering
-const omitFields = (fieldsToOmit: string[]) =>
-  ALL_JOB_PROFILE_FIELDS.filter((field) => !fieldsToOmit.includes(field));
-
-// What an employer is allowed to see
-const EMPLOYER_READ_FIELDS = omitFields(['status', 'visibility']);
+// Public read set — the fields an employer may read on a PUBLIC + VERIFIED
+// candidate profile. Explicit allow-list (a trust boundary, so it fails closed:
+// new fields default to private). Gating fields (status, visibility), the
+// internal onboardingStep, the server-computed completion metric, and write-only
+// *Storage upload templates are intentionally excluded. The candidate still
+// reads all of these on their OWN profile via the Read grant below.
+const JOB_PROFILE_PUBLIC_READ_FIELDS = [
+  '_id',
+  'userId',
+  'name',
+  'jobTitle',
+  'industry',
+  'workMode',
+  'experienceLevel',
+  'address',
+  'email',
+  'contactNumber',
+  'summary',
+  'portfolioUrl',
+  'keywords',
+  'languages',
+  'skills',
+  'interests',
+  'values',
+  'profileImageId',
+  'coverPhotoId',
+  'profileImage',
+  'profileImage.*',
+  'coverPhoto',
+  'coverPhoto.*',
+  'createdAt',
+  'updatedAt',
+];
 
 const CANDIDATE_MUTATION_FIELDS = [
   'name',
@@ -170,7 +197,7 @@ export class JobProfileAbilityBuilder implements IAbilityBuilder {
       builder.can(
         AbilityAction.Read,
         JobProfileAuthZEntity,
-        EMPLOYER_READ_FIELDS,
+        JOB_PROFILE_PUBLIC_READ_FIELDS,
         {
           status: JOB_PROFILE_STATUS_ENUM.VERIFIED,
           visibility: VISIBILITY.PUBLIC,
