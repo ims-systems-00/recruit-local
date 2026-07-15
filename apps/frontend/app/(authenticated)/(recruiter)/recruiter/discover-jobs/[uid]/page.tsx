@@ -69,7 +69,7 @@ export default async function JobDetailsPage({ params }: PageProps) {
                 <span>Apply to this job</span>
               </Button>
             </Link> */}
-            <BookmarkButton job_id={uid} />
+            <BookmarkButton jobData={jobData} />
             <Button className="cursor-pointer w-9! p-spacing-0! bg-bg-gray-soft-primary hover:bg-bg-gray-soft-primary hover:border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
               <Share2 />
             </Button>

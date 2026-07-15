@@ -32,20 +32,20 @@ export async function getFavourites(
       },
     );
 
-    const backendResponse = await favouriteListResponseSchema.validate(
-      res.data,
-      {
-        stripUnknown: true,
-      },
-    );
+    // const backendResponse = await favouriteListResponseSchema.validate(
+    //   res.data,
+    //   {
+    //     stripUnknown: true,
+    //   },
+    // );
 
     return {
       success: true,
       data: {
-        docs: backendResponse.favourites || [],
-        pagination: backendResponse.pagination,
+        docs: res.data.favourites || [],
+        pagination: res.data.pagination,
       },
-      message: backendResponse.message,
+      message: res.data.message,
     };
   } catch (error) {
     return handleServerError(error, 'Failed to fetch favourites');
