@@ -1,0 +1,16 @@
+export enum ONBOARDING_STEP_ENUMS {
+  NOT_STARTED = 'not_started',
+  VALUES_STEP_1 = 'values_step_1',
+  VALUES_STEP_2 = 'values_step_2',
+  VALUES_STEP_3 = 'values_step_3',
+  VALUES_STEP_4 = 'values_step_4',
+  VALUES_STEP_5 = 'values_step_5',
+  CV_UPLOAD = 'cv_upload',
+  JOB_TITLE = 'job_title',
+  INDUSTRY = 'industry',
+  EXPERIENCE_LEVEL = 'experience_level',
+  WORK_MODE = 'work_mode',
+  LOCATION = 'location',
+  NOTICE_BY_EMPLOYEE = 'notice_by_employee',
+  COMPLETED = 'completed',
+}
