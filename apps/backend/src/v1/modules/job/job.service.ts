@@ -152,18 +152,35 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
     attachmentIds,
   });
 
-  // create the first status named new applicants - default one
-  await statusService.create({
-    payload: {
-      collectionName: modelNames.JOB,
-      collectionId: job._id as Types.ObjectId,
-      label: "New Applicants",
-      default: true,
-    },
-    // session,
+  job = await job.save({ session });
+
+  // seed the default kanban pipeline for this job (New Applicants is the entry/default column)
+  await statusService.createMany({
+    payloads: [
+      {
+        collectionName: modelNames.JOB,
+        collectionId: job._id as Types.ObjectId,
+        label: "New Applicants",
+        default: true,
+        weight: 0,
+      },
+      {
+        collectionName: modelNames.JOB,
+        collectionId: job._id as Types.ObjectId,
+        label: "Interview",
+        default: false,
+        weight: 1,
+      },
+      {
+        collectionName: modelNames.JOB,
+        collectionId: job._id as Types.ObjectId,
+        label: "Hire",
+        default: false,
+        weight: 2,
+      },
+    ],
   });
 
-  job = await job.save({ session });
   await enqueueJobKeywords(job.id);
   return job;
 };

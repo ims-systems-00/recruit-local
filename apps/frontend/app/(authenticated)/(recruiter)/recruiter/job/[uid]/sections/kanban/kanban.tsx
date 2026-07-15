@@ -52,7 +52,9 @@ function Kanban({
 
   useEffect(() => {
     setColumns(
-      statuses.map((status) => ({ id: status._id, title: status.label })),
+      [...statuses]
+        .sort((a, b) => a.weight - b.weight)
+        .map((status) => ({ id: status._id, title: status.label })),
     );
   }, [statuses]);
 
