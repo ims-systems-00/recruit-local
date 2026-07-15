@@ -66,6 +66,8 @@ export const list = async ({ req }: ControllerParams) => {
         .list({
           query: { _id: { $in: groupedIds[modelNames.JOB] } } as any,
           options: { limit: groupedIds[modelNames.JOB].length },
+          tenantId: req.session.tenantId,
+          jobProfileId: req.session.jobProfileId,
         })
         .then((res: any): any[] => {
           if (Array.isArray(res)) return res;
@@ -125,10 +127,22 @@ export const get = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You do not have permission to view this favourite.");
   }
 
+  const favObj = typeof favourite.toObject === "function" ? favourite.toObject() : favourite;
+  let merged: any = favObj;
+
+  if (favObj.itemType === modelNames.JOB) {
+    const job = await jobService.getOne({
+      query: { _id: favObj.itemId },
+      tenantId: req.session.tenantId,
+      jobProfileId: req.session.jobProfileId,
+    });
+    merged = { ...favObj, item: sanitizeFavouriteItem(job, favObj.itemType, req.session) };
+  }
+
   return new ApiResponse({
     message: "Favourite retrieved",
     statusCode: StatusCodes.OK,
-    data: getSanitizedFavouriteResponse(favourite, ability),
+    data: getSanitizedFavouriteResponse(merged, ability),
     fieldName: "favourite",
   });
 };
