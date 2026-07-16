@@ -33,10 +33,7 @@ export const addPostToFeed = async (feedKey: string, postId: string, score: numb
 };
 
 /** Replace a recipient's whole feed (used by the post-feed rebuild worker). */
-export const rebuildPostFeed = async (
-  feedKey: string,
-  scored: { postId: string; score: number }[]
-): Promise<void> => {
+export const rebuildPostFeed = async (feedKey: string, scored: { postId: string; score: number }[]): Promise<void> => {
   const top = topScored(scored);
   const pipeline = redisConnection.multi();
   pipeline.del(feedKey);
@@ -49,8 +46,7 @@ export const rebuildPostFeed = async (
 };
 
 /** Read a recipient's matched post ids, best match first. */
-export const readPostFeedIds = (feedKey: string): Promise<string[]> =>
-  redisConnection.zrevrange(feedKey, 0, -1);
+export const readPostFeedIds = (feedKey: string): Promise<string[]> => redisConnection.zrevrange(feedKey, 0, -1);
 
 // ponytail: runnable check for the one new bit — namespaced keys must never
 // collide, or a tenant would read a profile's feed. Overlap/topScored reuse the
@@ -59,7 +55,14 @@ const demo = () => {
   const id = "507f1f77bcf86cd799439011";
   assert(profilePostKey(id) !== tenantPostKey(id), "profile and tenant feed keys must not collide");
 
-  const top = topScored([{ postId: "a", score: 1 }, { postId: "b", score: 5 }, { postId: "c", score: 0 }], 1);
+  const top = topScored(
+    [
+      { postId: "a", score: 1 },
+      { postId: "b", score: 5 },
+      { postId: "c", score: 0 },
+    ],
+    1
+  );
   assert(top.length === 1 && top[0].postId === "b", "topScored must keep the highest-scored post, drop score 0");
 
   console.log("post feed self-check ok");

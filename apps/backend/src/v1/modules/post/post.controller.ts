@@ -6,6 +6,7 @@ import { AbilityAction } from "@rl/types";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { postRoleScopedSecurityQuery } from "./post.query";
 import { profilePostKey, tenantPostKey, readPostFeedIds } from "./feed.service";
+import { toPostResponse, toPostResponseList } from "./post.dto";
 import { enqueueProfilePostFeedRebuild, enqueueTenantPostFeedRebuild } from "../../../queue/postFeedRebuildQueue";
 import * as postService from "./post.service";
 
@@ -41,7 +42,7 @@ export const create = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Post created.",
     statusCode: StatusCodes.CREATED,
-    data: getSanitizedResponse(post, ability),
+    data: toPostResponse(getSanitizedResponse(post, ability)),
     fieldName: "post",
   });
 };
@@ -66,7 +67,7 @@ export const update = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Post updated.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedResponse(post, ability),
+    data: toPostResponse(getSanitizedResponse(post, ability)),
     fieldName: "post",
   });
 };
@@ -129,7 +130,7 @@ export const list = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Posts retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: toPostResponseList(data),
     fieldName: "posts",
     pagination,
   });
@@ -147,7 +148,7 @@ export const getOne = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Post retrieved.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedResponse(post, ability),
+    data: toPostResponse(getSanitizedResponse(post, ability)),
     fieldName: "post",
   });
 };
@@ -166,7 +167,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Post moved to trash.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedResponse(post, ability),
+    data: toPostResponse(getSanitizedResponse(post, ability)),
     fieldName: "post",
   });
 };
@@ -185,7 +186,7 @@ export const restore = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Post restored from trash.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedResponse(post, ability),
+    data: toPostResponse(getSanitizedResponse(post, ability)),
     fieldName: "post",
   });
 };
@@ -204,7 +205,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Post permanently deleted.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedResponse(post, ability),
+    data: toPostResponse(getSanitizedResponse(post, ability)),
     fieldName: "post",
   });
 };
