@@ -88,4 +88,8 @@ postSchema.plugin(softDeletePlugin);
 postSchema.plugin(mongoosePaginate);
 postSchema.plugin(aggregatePaginate);
 
+// Backs the keyword `$in` lookup used by the post fan-out (post -> matching
+// profiles/tenants) and the reverse feed rebuild (recipient -> matching posts).
+postSchema.index({ keywords: 1 });
+
 export const Post = model<IPostDoc, IPostModel>(modelNames.POST, postSchema);
