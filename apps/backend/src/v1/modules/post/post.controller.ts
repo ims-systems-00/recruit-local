@@ -5,6 +5,9 @@ import { PostAbilityBuilder, PostAuthZEntity, ALL_POST_FIELDS } from "@rl/authz"
 import { AbilityAction } from "@rl/types";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { postRoleScopedSecurityQuery } from "./post.query";
+import { profilePostKey, tenantPostKey, readPostFeedIds } from "./feed.service";
+import { toPostResponse, toPostResponseList } from "./post.dto";
+import { enqueueProfilePostFeedRebuild, enqueueTenantPostFeedRebuild } from "../../../queue/postFeedRebuildQueue";
 import * as postService from "./post.service";
 
 const caslFieldOptions = {
@@ -39,7 +42,7 @@ export const create = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Post created.",
     statusCode: StatusCodes.CREATED,
-    data: getSanitizedResponse(post, ability),
+    data: toPostResponse(getSanitizedResponse(post, ability)),
     fieldName: "post",
   });
 };
@@ -64,7 +67,7 @@ export const update = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Post updated.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedResponse(post, ability),
+    data: toPostResponse(getSanitizedResponse(post, ability)),
     fieldName: "post",
   });
 };
@@ -76,12 +79,40 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You are not authorized to read posts.");
   }
 
-  const filter = new MongoQuery(req.query, {
+  // `matched` opts a viewer into feed-based results; it is not a real filter
+  // field, so strip it before building the Mongo query.
+  const { matched, ...restQuery } = req.query;
+
+  const filter = new MongoQuery(restQuery, {
     searchFields: ["title", "text"],
   }).build();
 
+  // Narrow to the viewer's matched-posts feed. Seekers read the profile feed,
+  // employers the tenant feed. A cold/evicted feed is rebuilt in the background;
+  // this request still lists over the full collection (correct, just unranked).
+  // ponytail: no matchScore sort like jobs — feed narrows the set, default
+  // createdAt sort applies (matched posts, newest first). Add a $setIntersection
+  // score stage in post.service.list if ranked order is needed.
+  let feedIds: string[] = [];
+  if (matched) {
+    const { tenantId, jobProfileId } = req.session ?? {};
+    if (jobProfileId) {
+      feedIds = await readPostFeedIds(profilePostKey(jobProfileId));
+      if (!feedIds.length) await enqueueProfilePostFeedRebuild(jobProfileId);
+    } else if (tenantId) {
+      feedIds = await readPostFeedIds(tenantPostKey(tenantId));
+      if (!feedIds.length) await enqueueTenantPostFeedRebuild(tenantId);
+    }
+  }
+
   const finalQuery = {
-    $and: [filter.getFilterQuery(), postRoleScopedSecurityQuery(ability)],
+    $and: [
+      filter.getFilterQuery(),
+      postRoleScopedSecurityQuery(ability),
+      // Stale/draft posts in the feed fall out via the security + soft-delete
+      // filters, so no per-mutation feed invalidation is needed.
+      ...(feedIds.length ? [{ _id: { $in: feedIds } }] : []),
+    ],
   };
 
   const results = await postService.list({ query: finalQuery, options: filter.getQueryOptions() });
@@ -99,7 +130,7 @@ export const list = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Posts retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: toPostResponseList(data),
     fieldName: "posts",
     pagination,
   });
@@ -117,7 +148,7 @@ export const getOne = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Post retrieved.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedResponse(post, ability),
+    data: toPostResponse(getSanitizedResponse(post, ability)),
     fieldName: "post",
   });
 };
@@ -136,7 +167,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Post moved to trash.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedResponse(post, ability),
+    data: toPostResponse(getSanitizedResponse(post, ability)),
     fieldName: "post",
   });
 };
@@ -155,7 +186,7 @@ export const restore = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Post restored from trash.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedResponse(post, ability),
+    data: toPostResponse(getSanitizedResponse(post, ability)),
     fieldName: "post",
   });
 };
@@ -174,7 +205,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Post permanently deleted.",
     statusCode: StatusCodes.OK,
-    data: getSanitizedResponse(post, ability),
+    data: toPostResponse(getSanitizedResponse(post, ability)),
     fieldName: "post",
   });
 };

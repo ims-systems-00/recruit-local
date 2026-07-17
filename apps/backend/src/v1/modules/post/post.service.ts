@@ -5,6 +5,7 @@ import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { postProjectQuery } from "./post.query";
+import { enqueuePostKeywords } from "../../../queue/keywordUpdateQueue";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
@@ -110,7 +111,12 @@ export const create = async ({ payload }: IPostCreateParams) => {
   if (cleanPayload.type !== POST_TYPE_ENUMS.ARTICLE) delete cleanPayload.schedule;
 
   const post = new Post({ ...cleanPayload, _id: postId, banner, images });
-  return post.save();
+  const saved = await post.save();
+
+  // Rebuild match keywords + fan out off the request path (LIVE posts only).
+  await enqueuePostKeywords(saved._id);
+
+  return saved;
 };
 
 export const update = async ({ query, payload }: IPostUpdateParams) => {
@@ -146,6 +152,10 @@ export const update = async ({ query, payload }: IPostUpdateParams) => {
   );
 
   if (!updatedPost) throw new NotFoundException("Post not found.");
+
+  // Re-fan-out on update: a draft flipped to LIVE (or edited text) is picked up here.
+  await enqueuePostKeywords(updatedPost._id);
+
   return updatedPost;
 };
 

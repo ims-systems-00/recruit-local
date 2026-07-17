@@ -8,6 +8,7 @@ import { modelNames } from "../../../models/constants";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateFileMediaQuery } from "../../../common/query";
 import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
+import { enqueueTenantKeywords } from "../../../queue/keywordUpdateQueue";
 import * as FileMediaService from "../file-media/file-media.service";
 import { recomputeTenantCompletion } from "./tenant-completion.service";
 import { tenantProjectionQuery } from "./tenant.query";
@@ -167,6 +168,9 @@ export const create = async ({ payload, session }: ITenantCreateParams) => {
   const completion = await recomputeTenantCompletion(String(tenant._id));
   if (completion) tenant.completion = completion;
 
+  // Rebuild match keywords off the request path (tenants receive matched posts).
+  await enqueueTenantKeywords(tenant._id);
+
   return tenant;
 };
 
@@ -192,6 +196,9 @@ export const update = async ({ query, payload, session }: ITenantUpdateParams) =
   }
 
   await recomputeTenantCompletion(String(updatedTenant._id));
+
+  // Rebuild match keywords off the request path (retro-matches existing posts).
+  await enqueueTenantKeywords(updatedTenant._id);
 
   // Re-fetch through the read pipeline so the response includes the populated
   // values and profile/cover photos (findOneAndUpdate returns only raw ObjectId

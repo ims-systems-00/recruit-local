@@ -33,6 +33,7 @@ export interface TenantInput {
 
   coreProducts?: string;
   coreServices?: string;
+  keywords?: string[];
   values?: Types.ObjectId[];
   onboardingStep?: ONBOARDING_STEP_ENUMS;
   isRecruitmentEnabled?: boolean;
@@ -135,6 +136,7 @@ const tenantSchema = new Schema<ITenantDoc>(
     coreServices: {
       type: String,
     },
+    keywords: [{ type: String }],
     values: [{ type: Schema.Types.ObjectId, ref: modelNames.VALUE }],
     onboardingStep: {
       type: String,
@@ -164,6 +166,9 @@ const tenantSchema = new Schema<ITenantDoc>(
 tenantSchema.plugin(softDeletePlugin);
 tenantSchema.plugin(mongoosePaginate);
 tenantSchema.plugin(aggregatePaginate);
+
+// Backs the keyword `$in` lookup used by the post fan-out (post -> matching tenants).
+tenantSchema.index({ keywords: 1 });
 
 // Create and export the model
 const Tenant = model<ITenantDoc, ITenantModel>(modelNames.TENANT, tenantSchema);
