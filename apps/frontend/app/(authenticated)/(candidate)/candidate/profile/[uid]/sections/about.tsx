@@ -5,7 +5,7 @@ import React from 'react';
 import ProfileInfoCard from './profile-info-card';
 import MapByAddress from '@/components/map-by-address';
 import { INDUSTRY_ENUMS } from '@rl/types';
-import { JobProfile } from '@/services/job-profile/job-profile.type';
+import { JobProfileData } from '@/services/job-profile/job-profile.type';
 export const TENANT_INDUSTRY_LABEL_MAP: Record<INDUSTRY_ENUMS, string> = {
   [INDUSTRY_ENUMS.TECHNOLOGY]: 'Technology',
   [INDUSTRY_ENUMS.FINANCE]: 'Finance',
@@ -18,7 +18,7 @@ export const TENANT_INDUSTRY_LABEL_MAP: Record<INDUSTRY_ENUMS, string> = {
   [INDUSTRY_ENUMS.TRANSPORTATION]: 'Transportation',
   [INDUSTRY_ENUMS.ENERGY]: 'Energy',
 };
-export default function About({ profile }: { profile: JobProfile }) {
+export default function About({ profile }: { profile: JobProfileData }) {
   return (
     <div className=" space-y-spacing-4xl">
       <div className=" space-y-spacing-2xl">

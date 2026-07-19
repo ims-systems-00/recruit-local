@@ -10,8 +10,8 @@ import EditProfile from './edit-profile';
 import { Resolver, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
-  JobProfile,
   JobProfileUpdateInput,
+  JobProfileData,
 } from '@/services/job-profile/job-profile.type';
 import { updateJobProfileSchema } from '@/services/job-profile/job-profile.validation';
 import { useUpdateJobProfile } from '@/services/job-profile/job-profile.client';
@@ -24,16 +24,24 @@ import Applied from './applied/applied';
 import Saved from './saved/saved';
 import Documents from './documents/documents';
 import Values from './values/values';
+import { VISIBILITY } from '@rl/types';
 
 export default function Profile({
   jobProfileData,
 }: {
-  jobProfileData: JobProfile;
+  jobProfileData: JobProfileData;
 }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
 
   const [jobProfileDetails, setJobProfileDetails] = useState(jobProfileData);
+
+  console.log('jobProfileDetails', jobProfileDetails);
+
+  // const existingJobTitles = useMemo(
+  //   () => (jobProfileDetails?.jobTitle as unknown as JobTitle[]) ?? [],
+  //   [jobProfileDetails?.jobTitle],
+  // );
 
   const { updateJobProfile, isPending } = useUpdateJobProfile();
   const methods = useForm<JobProfileUpdateInput>({
@@ -42,7 +50,7 @@ export default function Profile({
     ) as Resolver<JobProfileUpdateInput>,
     defaultValues: {
       name: jobProfileDetails?.name || '',
-      jobTitle: jobProfileDetails?.jobTitle || [],
+      jobTitle: jobProfileDetails?.jobTitle?.map((jobTitle) => jobTitle._id),
       email: jobProfileDetails?.email || '',
       contactNumber: jobProfileDetails?.contactNumber || '',
       address: jobProfileDetails?.address || '',
@@ -52,6 +60,11 @@ export default function Profile({
       portfolioUrl: jobProfileDetails?.portfolioUrl || '',
       keywords: jobProfileDetails?.keywords || [],
       languages: jobProfileDetails?.languages || [],
+      visibility:
+        (jobProfileDetails?.visibility as VISIBILITY) || VISIBILITY.PUBLIC,
+      experienceLevel: jobProfileDetails?.experienceLevel || '',
+      industry: jobProfileDetails?.industry?.map((industry) => industry._id),
+      workMode: jobProfileDetails?.workMode?.map((workMode) => workMode._id),
     },
     mode: 'onSubmit',
   });
@@ -184,8 +197,11 @@ export default function Profile({
               {jobProfileDetails?.name || 'N/A'}
             </h4>
             <p className=" text-body-sm text-text-gray-tertiary">
-              {/* {jobProfileDetails?.jobTitle?.join('|') || 'N/A'} */}
-              Here i need job title as string
+              {jobProfileDetails?.jobTitle?.length
+                ? jobProfileDetails?.jobTitle
+                    ?.map((title) => title.name)
+                    .join(' | ')
+                : 'N/A'}
             </p>
             <div className=" flex items-center gap-spacing-xs">
               {/* {jobProfileDetails?.linkedin && (
@@ -243,7 +259,14 @@ export default function Profile({
       </header>
       <div className="px-spacing-4xl pb-spacing-4xl">
         {isEditMode ? (
-          <EditProfile register={register} control={control} errors={errors} />
+          <EditProfile
+            existingIndustries={jobProfileDetails?.industry ?? []}
+            existingWorkModes={jobProfileDetails?.workMode ?? []}
+            register={register}
+            control={control}
+            errors={errors}
+            existingJobTitles={jobProfileDetails?.jobTitle ?? []}
+          />
         ) : (
           <Tabs
             value={activeTab}

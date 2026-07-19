@@ -55,6 +55,7 @@ export async function getJobs(
         workplace: params?.workplace,
         salaryMode: params?.salaryMode,
         period: params?.period,
+        matched: params?.matched,
       },
       paramsSerializer: (params) =>
         qs.stringify(params, { arrayFormat: 'brackets' }),

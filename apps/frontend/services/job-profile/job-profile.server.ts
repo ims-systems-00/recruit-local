@@ -115,7 +115,7 @@ export async function createJobProfile(
 export async function updateJobProfile(
   id: string,
   payload: JobProfileUpdateInput,
-): Promise<JobProfileApiResponse<JobProfile>> {
+): Promise<JobProfileApiResponse<JobProfileData>> {
   try {
     await idParamsSchema.validate({ id });
     const validatedPayload = await updateJobProfileSchema.validate(payload, {

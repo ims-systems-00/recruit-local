@@ -19,6 +19,11 @@ export interface JobProfileData {
   visibility: 'public' | 'private';
   onboardingStep: string;
   experienceLevel: string;
+  contactNumber: string;
+  portfolioUrl: string;
+  summary: string;
+  skills: string;
+  interests: string;
 
   jobTitle: JobTitle[];
   industry: Industry[];
