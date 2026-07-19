@@ -31,7 +31,6 @@ import Trainings from './trainings/trainings';
 import TakenTests from './taken-tests/taken-tests';
 // import Documents from './document/documents';
 import Applied from './applied/applied';
-import Saved from './saved/saved';
 import Documents from './documents/documents';
 import Values from './values/values';
 import { VISIBILITY } from '@rl/types';
@@ -39,6 +38,7 @@ import FileUploader from '@/components/file-uploader';
 import { Camera, CircleQuestionMark, Info, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
+import Saves from './saved/saves';
 
 export default function Profile({
   jobProfileData,
@@ -172,7 +172,7 @@ export default function Profile({
     {
       value: 'saved',
       label: 'Saved',
-      component: <Saved />,
+      component: <Saves />,
       editable: false,
     },
   ];

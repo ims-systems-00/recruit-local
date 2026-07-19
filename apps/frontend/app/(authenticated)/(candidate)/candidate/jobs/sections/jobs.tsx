@@ -15,6 +15,7 @@ import JobLists from './job-lists';
 import { useDebounce } from '@/hooks/useDebounce';
 import FilterJobs from './filter-jobs';
 import AppliedJobs from './applied-jobs';
+import SavedJobLists from './saved-job-lists';
 
 export default function Jobs() {
   const { data: session } = useSession();
@@ -54,7 +55,7 @@ export default function Jobs() {
     {
       value: 'saved',
       label: 'Saved',
-      component: <JobLists filters={filters} onPageChange={setPage} />,
+      component: <SavedJobLists />,
     },
   ];
 
