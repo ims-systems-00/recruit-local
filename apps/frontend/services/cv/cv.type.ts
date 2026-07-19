@@ -24,7 +24,7 @@ export type CvListFilters = {
 };
 
 // --- FRONTEND RESPONSE TYPES ---
-export type CvListResponse = PaginatedResponse<Cv>;
+export type CvListResponse = PaginatedResponse<CvData>;
 export type CvApiResponse<T> = ApiResponse<T>;
 
 export interface Skill {
@@ -88,3 +88,29 @@ export type CvExtractionData = {
   workModes: WorkMode[];
   experienceLevels: ExperienceLevel[];
 };
+
+export interface CvData {
+  _id: string;
+  title: string;
+  imageId: string | null;
+  status: string;
+  resumeId: string;
+  userId: string;
+  jobProfileId: string;
+  experience: Experience[];
+  education: Education[];
+  skills: Skill[];
+  interests: Interest[];
+  createdAt: string;
+  updatedAt: string;
+  resume: {
+    _id: string;
+    storageInformation: {
+      Name: string;
+      Key: string;
+      Bucket: string;
+    };
+    visibility: string;
+    src: string | null;
+  };
+}

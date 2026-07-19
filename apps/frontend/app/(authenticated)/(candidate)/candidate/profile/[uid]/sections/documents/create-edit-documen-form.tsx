@@ -9,7 +9,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Button } from '@/components/ui/button';
 import { useParams } from 'next/navigation';
 import { CheckedState } from '@radix-ui/react-checkbox';
-import { Cv, CvCreateInput, CvUpdateInput } from '@/services/cv/cv.type';
+import { CvData, CvCreateInput, CvUpdateInput } from '@/services/cv/cv.type';
 import { createCvSchema, updateCvSchema } from '@/services/cv/cv.validation';
 import { useCreateCv, useUpdateCv } from '@/services/cv';
 import AttachmentForm, {
@@ -20,7 +20,7 @@ import { useDeleteFileStorage } from '@/services/file-storage';
 import * as yup from 'yup';
 
 type CreateEditDocumentFormProps = {
-  defaultValues?: Cv;
+  defaultValues?: CvData;
   setOpen: (open: boolean) => void;
   onClearSelectedCv: () => void;
 };
@@ -74,7 +74,7 @@ export default function CreateEditDocumentForm({
       await updateCv({
         id: defaultValues?._id || '',
         payload: cleanPayload,
-        onSuccessCallback: (data: Cv) => {
+        onSuccessCallback: () => {
           setOpen(false);
           onClearSelectedCv();
         },
@@ -86,7 +86,7 @@ export default function CreateEditDocumentForm({
           jobProfileId: uid as string,
           title: 'Untitled CV',
         },
-        onSuccessCallback: (data: Cv) => {
+        onSuccessCallback: () => {
           setOpen(false);
           onClearSelectedCv();
         },
