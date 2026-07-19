@@ -13,7 +13,7 @@ export default function ProfileInfoCard({
 }: InfoCardProps) {
   return (
     <div className="rounded-2xl border border-border-gray-secondary p-spacing-4xl flex gap-spacing-lg items-center">
-      <div className="w-12 h-12 rounded-md flex items-center justify-center border border-others-gray-light bg-others-gray-gray-zero">
+      <div className=" min-w-12 w-12 h-12 rounded-md flex items-center justify-center border border-others-gray-light bg-others-gray-gray-zero">
         {icon}
       </div>
 

@@ -1,6 +1,15 @@
 'use client';
 import { TenantData } from '@/services/tenants/tenants.type';
-import { Building, Mailbox, PhoneCall, ShieldCheck, Users } from 'lucide-react';
+import {
+  Building,
+  Building2,
+  GraduationCap,
+  Handshake,
+  Mailbox,
+  PhoneCall,
+  ShieldCheck,
+  Users,
+} from 'lucide-react';
 import React from 'react';
 import ProfileInfoCard from './profile-info-card';
 import MapByAddress from '@/components/map-by-address';
@@ -19,6 +28,13 @@ export const TENANT_INDUSTRY_LABEL_MAP: Record<INDUSTRY_ENUMS, string> = {
   [INDUSTRY_ENUMS.ENERGY]: 'Energy',
 };
 export default function About({ profile }: { profile: JobProfileData }) {
+  const workModes = profile.workMode
+    .map((workMode) => workMode.name)
+    .join(', ');
+  const industries = profile.industry
+    .map((industry) => industry.name)
+    .join(', ');
+
   return (
     <div className=" space-y-spacing-4xl">
       <div className=" space-y-spacing-2xl">
@@ -34,7 +50,7 @@ export default function About({ profile }: { profile: JobProfileData }) {
         <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
           Contact and Address
         </p>
-        <div className=" grid grid-cols-3 gap-spacing-2xl">
+        <div className=" grid grid-cols-2 gap-spacing-2xl">
           <ProfileInfoCard
             title="Contact Email"
             subtitle={profile.email}
@@ -45,11 +61,38 @@ export default function About({ profile }: { profile: JobProfileData }) {
             subtitle={profile.contactNumber}
             icon={<PhoneCall />}
           />
+          <div className=" col-span-2">
+            <ProfileInfoCard
+              title="Address"
+              subtitle={profile.address}
+              icon={<Building />}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className=" space-y-spacing-2xl">
+        <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
+          Career Preferences
+        </p>
+        <div className=" grid grid-cols-2 gap-spacing-2xl">
           <ProfileInfoCard
-            title="Address"
-            subtitle={profile.address}
-            icon={<Building />}
+            title="Experience Level"
+            subtitle={profile.experienceLevel}
+            icon={<GraduationCap />}
           />
+          <ProfileInfoCard
+            title="Preferred Work Mode"
+            subtitle={workModes}
+            icon={<Handshake />}
+          />
+          <div className=" col-span-2">
+            <ProfileInfoCard
+              title="Interested Industry"
+              subtitle={industries}
+              icon={<Building2 />}
+            />
+          </div>
         </div>
       </div>
       <div className=" grid grid-cols-2 gap-spacing-2xl">
