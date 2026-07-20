@@ -108,6 +108,7 @@ export const getOne = async ({ query = {}, allowedFields }: IJobProfileGetParams
     ...populateNamedRefQuery(JobTitle, "jobTitle"),
     ...populateNamedRefQuery(Industry, "industry"),
     ...populateNamedRefQuery(WorkMode, "workMode"),
+    ...populateSingleNamedRefQuery(ExperienceLevel, "experienceLevel"),
     ...populateFileMediaQuery("profileImageId", "profileImage"),
     ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
     ...jobProfileProjectQuery(allowedFields),
