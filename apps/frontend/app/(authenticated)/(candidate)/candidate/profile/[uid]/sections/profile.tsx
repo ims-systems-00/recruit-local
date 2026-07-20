@@ -79,7 +79,7 @@ export default function Profile({
       languages: jobProfileDetails?.languages || [],
       visibility:
         (jobProfileDetails?.visibility as VISIBILITY) || VISIBILITY.PUBLIC,
-      experienceLevel: jobProfileDetails?.experienceLevel || '',
+      experienceLevel: jobProfileDetails?.experienceLevel?._id || '',
       industry: jobProfileDetails?.industry?.map((industry) => industry._id),
       workMode: jobProfileDetails?.workMode?.map((workMode) => workMode._id),
       coverPhotoStorage:
@@ -215,7 +215,7 @@ export default function Profile({
       profileImageStorage: jobProfileDetails?.profileImage?.storageInformation,
       coverPhotoStorage: jobProfileDetails?.coverPhoto?.storageInformation,
       visibility: jobProfileDetails?.visibility as VISIBILITY,
-      experienceLevel: jobProfileDetails?.experienceLevel,
+      experienceLevel: jobProfileDetails?.experienceLevel?._id || '',
       industry: jobProfileDetails?.industry?.map((industry) => industry._id),
       workMode: jobProfileDetails?.workMode?.map((workMode) => workMode._id),
       jobTitle: jobProfileDetails?.jobTitle?.map((jobTitle) => jobTitle._id),
