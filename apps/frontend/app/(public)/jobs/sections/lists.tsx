@@ -33,6 +33,7 @@ import { usePublicJobs } from '@/services/jobs/jobs.client';
 import CardJobItem from './card-job-item';
 import PaginationComponent from './pagination-component';
 import JobItemSkelaton from './job-item-skelaton';
+import { useSearchParams } from 'next/navigation';
 
 export default function JobLists() {
   const workplaceAnchor = useComboboxAnchor();
@@ -42,20 +43,21 @@ export default function JobLists() {
 
   const [isFilterJobsOpen, setIsFilterJobsOpen] = useState(false);
 
+  const searchParams = useSearchParams();
+
+  const search = searchParams.get('search') || '';
+
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
   const [workplace, setWorkplace] = useState<string[]>([]);
   const [employmentType, setEmploymentType] = useState<string[]>([]);
   const [salaryMode, setSalaryMode] = useState<string[]>([]);
   const [period, setPeriod] = useState<string[]>([]);
 
-  const debouncedSearch = useDebounce(search, 500);
-
   const filters = useMemo(
     () => ({
       page,
       limit: 10,
-      search: debouncedSearch || undefined,
+      search: search || undefined,
 
       workplace: workplace.length ? { in: workplace } : undefined,
 
@@ -67,7 +69,7 @@ export default function JobLists() {
 
       period: period.length ? { in: period } : undefined,
     }),
-    [page, debouncedSearch, workplace, employmentType, salaryMode, period],
+    [page, search, workplace, employmentType, salaryMode, period],
   );
   const {
     jobs,
@@ -107,7 +109,7 @@ export default function JobLists() {
         </div>
         {isFilterJobsOpen && (
           <div className=" flex items-center gap-spacing-lg flex-wrap">
-            <InputGroup className=" min-w-[215px] max-w-[215px] h-10 rounded-lg shadow-xs border-border-gray-primary">
+            {/* <InputGroup className=" min-w-[215px] max-w-[215px] h-10 rounded-lg shadow-xs border-border-gray-primary">
               <InputGroupInput
                 type="text"
                 placeholder="Search..."
@@ -120,7 +122,7 @@ export default function JobLists() {
               <InputGroupAddon>
                 <Search className=" text-fg-gray-tertiary" />
               </InputGroupAddon>
-            </InputGroup>
+            </InputGroup> */}
             <div className=" min-w-[215px] max-w-[215px]">
               <Combobox
                 multiple
@@ -327,7 +329,6 @@ export default function JobLists() {
                 setEmploymentType([]);
                 setSalaryMode([]);
                 setPeriod([]);
-                setSearch('');
                 setPage(1);
                 onCloseFilterJobs();
               }}

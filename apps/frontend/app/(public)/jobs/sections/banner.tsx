@@ -1,12 +1,17 @@
+'use client';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { Search } from 'lucide-react';
-import React from 'react';
+import { Search, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Banner() {
+  const [search, setSearch] = useState('');
+  const router = useRouter();
+
   return (
     <section className="bg-bg-brand-solid-alt border-b border-border-gray-secondary">
       <div className="max-w-[1280px] mx-auto px-spacing-5xl py-spacing-9xl text-white flex flex-col gap-y-spacing-4xl">
@@ -25,15 +30,46 @@ export default function Banner() {
             <InputGroupInput
               type="text"
               placeholder="Search By Job Title..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  if (search.trim()) {
+                    router.push(`/jobs?search=${search.trim()}`);
+                  } else {
+                    router.push('/jobs');
+                  }
+                }
+              }}
               className=" text-label-md placeholder:text-text-gray-quaternary text-text-gray-secondary"
             />
             <InputGroupAddon>
               <Search className=" text-fg-gray-tertiary" />
             </InputGroupAddon>
+            {search && (
+              <InputGroupAddon align={'inline-end'}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch('');
+                    router.push('/jobs');
+                  }}
+                >
+                  <X className="size-5 text-fg-gray-tertiary cursor-pointer" />
+                </button>
+              </InputGroupAddon>
+            )}
           </InputGroup>
           <button
+            onClick={() => {
+              if (search.trim()) {
+                router.push(`/jobs?search=${search.trim()}`);
+              } else {
+                router.push('/jobs');
+              }
+            }}
             type="button"
-            className="text-label-md rounded-full font-label-md-strong! flex items-center h-12 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
+            className=" cursor-pointer text-label-md rounded-full font-label-md-strong! flex items-center h-12 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary"
           >
             Search
           </button>
