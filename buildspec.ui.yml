@@ -1,0 +1,33 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 22
+    commands:
+      - echo "Installing pnpm..."
+      - npm install -g pnpm
+      - echo "Installing dependencies..."
+      - pnpm install
+
+  pre_build:
+    commands:
+      - echo Preparing build...
+
+  build:
+    commands:
+      - echo "Building types..."
+      - pnpm --filter @rl/types build
+      - echo "Building authz..."
+      - pnpm --filter @rl/authz build
+      - echo "Building the React app..."
+      - pnpm --filter @rl/frontend build
+
+  post_build:
+    commands:
+      - echo Build completed successfully.
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: apps/frontend/dist
