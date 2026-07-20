@@ -18,6 +18,7 @@ export type JobListFilters = {
   workplace?: { in: string[] };
   salaryMode?: { in: string[] };
   period?: { in: string[] };
+  matched?: boolean;
 };
 
 export type StorageInformation = {

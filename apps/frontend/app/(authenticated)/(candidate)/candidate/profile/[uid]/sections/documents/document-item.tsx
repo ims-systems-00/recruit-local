@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Cv } from '@/services/cv/cv.type';
+import { CvData } from '@/services/cv/cv.type';
 import { useSoftDeleteCv } from '@/services/cv/cv.client';
 
 const formatDate = (date: Date) => {
@@ -39,7 +39,7 @@ export default function DocumentItem({
   cv,
   onEdit,
 }: {
-  cv: Cv;
+  cv: CvData;
   onEdit: () => void;
 }) {
   const [openDeleteAlertDialog, setOpenDeleteAlertDialog] = useState(false);
@@ -52,7 +52,7 @@ export default function DocumentItem({
           <div className=" flex gap-spacing-2xl">
             <div className=" space-y-spacing-3xs">
               <p className=" text-label-md font-label-md-strong! text-text-gray-primary">
-                {cv?.resumeStorage?.Name || 'N/A'}
+                {cv?.resume?.storageInformation?.Name || 'N/A'}
               </p>
               <p className="text-label-sm text-text-gray-tertiary">
                 Updated{' '}

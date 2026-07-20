@@ -14,18 +14,18 @@ import DocumentsSkeleton from './documents-skeleton';
 import PaginationComponent from '../pagination-component';
 import EmptyBox from '@/components/empty-box';
 import CreateEditDocumentForm from './create-edit-documen-form';
-import { Cv } from '@/services/cv/cv.type';
+import { CvData } from '@/services/cv/cv.type';
 import { useCvs } from '@/services/cv/cv.client';
 
 export default function Documents() {
   const [open, setOpen] = useState(false);
-  const [selectedCv, setSelectedCv] = useState<Cv | null>(null);
+  const [selectedCv, setSelectedCv] = useState<CvData | null>(null);
   const [page, setPage] = useState(1);
 
   const filters = useMemo(
     () => ({
       page,
-      limit: 10,
+      limit: 9,
     }),
     [page],
   );

@@ -17,7 +17,11 @@ export default function JobLists({
   filters: JobListFilters;
   onPageChange: (page: number) => void;
 }) {
-  const { jobs, isLoading: isJobLoading, pagination } = useJobs(filters);
+  const {
+    jobs,
+    isLoading: isJobLoading,
+    pagination,
+  } = useJobs({ ...filters, matched: true });
 
   return (
     <div>
@@ -29,7 +33,9 @@ export default function JobLists({
         </div>
       ) : Boolean(jobs?.length) ? (
         <div className=" grid grid-cols-2 gap-spacing-4xl">
-          {jobs?.map((item) => <CardJobItem key={item._id} job={item} />)}
+          {jobs?.map((item) => (
+            <CardJobItem key={item._id} job={item} />
+          ))}
         </div>
       ) : (
         <EmptyBox

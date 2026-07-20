@@ -7,6 +7,7 @@ import {
   jobProfileSchema,
 } from './job-profile.validation';
 import { ValueData } from '../value/value.type';
+import { AwsStorageType } from '../tenants/tenants.type';
 
 export interface JobProfileData {
   _id: string;
@@ -19,12 +20,31 @@ export interface JobProfileData {
   visibility: 'public' | 'private';
   onboardingStep: string;
   experienceLevel: string;
+  contactNumber: string;
+  portfolioUrl: string;
+  summary: string;
+  skills: string;
+  interests: string;
 
   jobTitle: JobTitle[];
   industry: Industry[];
   workMode: WorkMode[];
   values: ValueData[];
   languages: Language[];
+
+  coverPhoto: {
+    _id: string;
+    src: string;
+    visibility: string;
+    storageInformation: AwsStorageType;
+    thumbnail: AwsStorageType;
+  };
+  profileImage: {
+    _id: string;
+    src: string;
+    visibility: string;
+    storageInformation: AwsStorageType;
+  };
 
   keywords: string[];
 

@@ -59,8 +59,6 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
 
   const [showRecruitmentAlert, setShowRecruitmentAlert] = useState(false);
 
-  console.log('tenantDetails', tenantDetails);
-
   const { updateTenant, isPending } = useUpdateTenant();
 
   const methods = useForm<TenantUpdateInput>({
@@ -546,7 +544,6 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={isPending}
-              // onClick={() => softDeleteCv(cv._id)}
               onClick={async () => {
                 await updateTenant({
                   id: tenantDetails._id,
@@ -561,7 +558,7 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
               }}
               className=" cursor-pointer flex-1 h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-white bg-bg-brand-solid-primary"
             >
-              {isPending ? 'Deleting...' : 'Yes, Confirm'}
+              {isPending ? 'Saving...' : 'Yes, Confirm'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

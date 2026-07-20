@@ -3,7 +3,7 @@ import { Brain, Layers2, Star, Target, Users } from 'lucide-react';
 import React, { useCallback, useState, useEffect } from 'react';
 import { VALUE_TYPE_ENUM } from '@rl/types';
 import ValueItem from './value-item';
-import { JobProfile } from '@/services/job-profile/job-profile.type';
+import { JobProfileData } from '@/services/job-profile/job-profile.type';
 
 const VALUE_LIST = [
   {
@@ -52,7 +52,7 @@ const VALUE_LIST = [
   },
 ];
 
-export default function Values({ profile }: { profile: JobProfile }) {
+export default function Values({ profile }: { profile: JobProfileData }) {
   // const values = profile.values;
 
   const [values, setValues] = useState(profile.values ?? []);
