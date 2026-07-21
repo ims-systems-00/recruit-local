@@ -1,4 +1,6 @@
 'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import CompanyLogo from '@/public/images/job_default.png';
@@ -13,6 +15,8 @@ import { usePublicJobs } from '@/services/jobs/jobs.client';
 import CardJobItemSkelaton from './card-job-item-skelaton';
 
 export default function FindJobs() {
+  const router = useRouter();
+  const [search, setSearch] = useState('');
   const { jobs, isLoading, isError, error, refetch, isFetching } =
     usePublicJobs({
       limit: 3,
@@ -39,6 +43,13 @@ export default function FindJobs() {
                   type="text"
                   placeholder="Search By Job Title..."
                   className=" text-label-md placeholder:text-text-gray-quaternary text-text-gray-secondary"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && search.trim()) {
+                      router.push(`/jobs?search=${encodeURIComponent(search.trim())}`);
+                    }
+                  }}
                 />
                 <InputGroupAddon>
                   <Search className=" text-fg-gray-tertiary" />

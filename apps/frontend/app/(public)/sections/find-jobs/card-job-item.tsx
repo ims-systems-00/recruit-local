@@ -6,8 +6,13 @@ import { cn, formatDate } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { ACCOUNT_TYPE_ENUMS } from '@rl/types';
 
 export default function CardJobItem({ job }: { job: Partial<JobData> }) {
+  const { data: session } = useSession();
+  const isEmployer = session?.user?.type === ACCOUNT_TYPE_ENUMS.EMPLOYER;
+
   return (
     <div className="p-spacing-4xl  border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs flex justify-between sm:flex-row flex-col gap-spacing-4xl">
       <div className=" space-y-spacing-4xl">
@@ -59,12 +64,16 @@ export default function CardJobItem({ job }: { job: Partial<JobData> }) {
           </p>
         </div>
       </div>
-      <Link href={`/candidate/job/${job?._id}/apply`}>
-        <Button className=" min-w-fit cursor-pointer hover:bg-bg-gray-soft-primary bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
-          <Pointer />
-          <span>Apply Now</span>
-        </Button>
-      </Link>
+      {isEmployer ? (
+        <></>
+      ) : (
+        <Link href={`/candidate/job/${job?._id}/apply`}>
+          <Button className=" min-w-fit cursor-pointer hover:bg-bg-gray-soft-primary bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
+            <Pointer />
+            <span>Apply Now</span>
+          </Button>
+        </Link>
+      )}
     </div>
   );
 }

@@ -110,7 +110,9 @@ function PersonalisationPageContent() {
       <ExperienceLevelSection
         jobProfileId={jobProfile?._id || ''}
         existingExperienceLevels={
-          jobProfile?.experienceLevel ?? dataFromCvUpload.experienceLevel ?? ''
+          jobProfile?.experienceLevel?._id ||
+          dataFromCvUpload.experienceLevel ||
+          ''
         }
       />
     );

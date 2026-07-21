@@ -78,7 +78,7 @@ export default function About({ profile }: { profile: JobProfileData }) {
         <div className=" grid grid-cols-2 gap-spacing-2xl">
           <ProfileInfoCard
             title="Experience Level"
-            subtitle={profile.experienceLevel}
+            subtitle={profile.experienceLevel.name}
             icon={<GraduationCap />}
           />
           <ProfileInfoCard

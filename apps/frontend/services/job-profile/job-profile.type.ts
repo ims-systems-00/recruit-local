@@ -8,6 +8,7 @@ import {
 } from './job-profile.validation';
 import { ValueData } from '../value/value.type';
 import { AwsStorageType } from '../tenants/tenants.type';
+import { ExperienceLevelData } from '../experience-level/experience-level.type';
 
 export interface JobProfileData {
   _id: string;
@@ -19,7 +20,7 @@ export interface JobProfileData {
   status: string;
   visibility: 'public' | 'private';
   onboardingStep: string;
-  experienceLevel: string;
+  experienceLevel: ExperienceLevelData;
   contactNumber: string;
   portfolioUrl: string;
   summary: string;
