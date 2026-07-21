@@ -1,12 +1,7 @@
 'use client';
 import { ApplicationCreateInput } from '@/services/application/application.type';
-import {
-  buildApplicationSchema,
-  createApplicationSchema,
-} from '@/services/application/application.validation';
+import { buildApplicationSchema } from '@/services/application/application.validation';
 import { JobData } from '@/services/jobs/job.type';
-import { useParams } from 'next/navigation';
-import React from 'react';
 import { Controller, FormProvider, Resolver, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useCreateApplication } from '@/services/application/application.client';
@@ -18,21 +13,22 @@ import {
 } from '@/components/ui/input-group';
 import { cn, formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import AttachmentForm, {
-  UploadedFile,
-} from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/attachment-form';
-import AttachmentItem from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/attachment-item';
 import { useDeleteFileStorage } from '@/services/file-storage/file-storage.client';
 import AdditionalQueryField from './additional-query-field';
 import { QueryCard } from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/steps/additional-queries';
 import { QUERY_TYPE_ENUMS, REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
 import { useSession } from 'next-auth/react';
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
+import CvUploadModal from './cv-upload-modal';
+import AttachmentForm, { UploadedFile } from '@/components/attachment-form';
+import AttachmentItem from '@/components/attachment-item';
 
 export default function ApplicationsForm({ job }: { job: JobData }) {
-  const { uid } = useParams();
-
   const { data: session } = useSession();
   const user = session?.user;
+
+  const [openModalForCv, setOpenModalForCv] = useState(false);
 
   const { createApplication, isLoading: isCreatingApplication } =
     useCreateApplication();
@@ -79,20 +75,10 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
   const resumeStorage = watch('resumeStorage') || null;
 
   const handleRemoveAttachment = async (item: UploadedFile) => {
-    try {
-      const res = await deleteFile({
-        fileKey: item.Key,
-      });
-
-      if (res?.success) {
-        setValue('resumeStorage', null, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    }
+    setValue('resumeStorage', null, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
 
   return (
@@ -163,31 +149,33 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
                     )}
                   </div>
                 </div>
+
                 <div className="space-y-spacing-xs ">
+                  <CvUploadModal
+                    open={openModalForCv}
+                    onOpenChange={setOpenModalForCv}
+                    setValue={(name, value) =>
+                      setValue(name as keyof ApplicationCreateInput, value)
+                    }
+                  />
                   <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                     Resume/CV
                   </Label>
                   <div className=" space-y-spacing-sm ">
-                    <Controller
-                      name="resumeStorage"
-                      control={control}
-                      defaultValue={null}
-                      render={({ field }) => (
-                        <AttachmentForm
-                          onUploadFile={(files: UploadedFile[]) => {
-                            field.onChange(files[0] as UploadedFile);
-                          }}
-                          multiple={false}
-                          accept={{
-                            'application/pdf': ['.pdf'],
-                          }}
-                        />
-                      )}
-                    />
-                    {errors.resumeStorage && (
-                      <p className="text-label-xs text-text-error-primary">
-                        {errors.resumeStorage.message}
-                      </p>
+                    {!resumeStorage?.Key && (
+                      <div className=" w-full p-spacing-4xl rounded-2xl border border-dashed border-border-gray-secondary flex flex-col justify-center items-center gap-spacing-4xl transition-all duration-300">
+                        <p className=" text-label-md font-label-md-strong! text-text-gray-primary">
+                          No CV added Yet
+                        </p>
+                        <Button
+                          type="button"
+                          onClick={() => setOpenModalForCv(true)}
+                          className=" cursor-pointer bg-bg-brand-solid-primary h-9 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+                        >
+                          <Plus />
+                          Add Now
+                        </Button>
+                      </div>
                     )}
 
                     {resumeStorage?.Key && (
@@ -197,6 +185,11 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
                         item={resumeStorage as UploadedFile}
                         onDelete={handleRemoveAttachment}
                       />
+                    )}
+                    {errors.resumeStorage && (
+                      <p className="text-label-xs text-text-error-primary">
+                        {errors.resumeStorage.message}
+                      </p>
                     )}
                   </div>
                 </div>

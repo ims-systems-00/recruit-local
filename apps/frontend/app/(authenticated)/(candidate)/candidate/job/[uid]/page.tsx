@@ -63,13 +63,27 @@ export default async function JobDetailsPage({ params }: PageProps) {
             </p>
           </div>
           <div className=" flex items-center gap-spacing-lg">
-            <Link href={`/candidate/job/${uid}/apply`}>
-              <Button className=" cursor-pointer bg-bg-brand-solid-primary h-9 text-text-white! rounded-lg text-label-sm font-label-sm-strong!">
-                <Pointer />
-                <span>Apply to this job</span>
+            {jobData?.alreadyApplied ? (
+              <Button
+                disabled
+                className="border-border-brand-primary text-text-brand-primary! cursor-pointer hover:bg-bg-gray-soft-primary bg-bg-gray-soft-primary border  h-9  rounded-lg text-label-sm font-label-sm-strong!"
+              >
+                Applied
               </Button>
-            </Link>
-            <BookmarkButton job_id={uid} />
+            ) : (
+              <Link href={`/candidate/job/${uid}/apply`}>
+                <Button className=" cursor-pointer bg-bg-brand-solid-primary h-9 text-text-white! rounded-lg text-label-sm font-label-sm-strong!">
+                  <Pointer />
+                  <span>Apply to this job</span>
+                </Button>
+              </Link>
+            )}
+
+            <BookmarkButton
+              job_id={uid}
+              alreadySaved={Boolean(jobData?.alreadySaved)}
+            />
+
             <Button className="cursor-pointer w-9! p-spacing-0! bg-bg-gray-soft-primary hover:bg-bg-gray-soft-primary hover:border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
               <Share2 />
             </Button>

@@ -1,6 +1,11 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   getCvs,
@@ -21,11 +26,14 @@ import type {
   ExtractAndCreateCvInput,
   CvExtractionData,
 } from './cv.type';
+import { experienceLevelKeys } from '../experience-level/experience-level.client';
 
 // --- QUERY KEYS ---
 export const cvKeys = {
   all: ['cvs'] as const,
   lists: () => [...cvKeys.all, 'list'] as const,
+  infiniteLists: (filters: CvListFilters) =>
+    [...cvKeys.all, 'infiniteList', filters] as const,
   list: (filters: CvListFilters) => [...cvKeys.lists(), filters] as const,
   details: () => [...cvKeys.all, 'detail'] as const,
   detail: (id: string) => [...cvKeys.details(), id] as const,
@@ -220,4 +228,29 @@ export function useExtractAndCreateCv() {
     isPending: mutation.isPending,
     error: mutation.error,
   };
+}
+
+export function useInfiniteCvs(filters: CvListFilters = {}, isEnabled = true) {
+  return useInfiniteQuery({
+    queryKey: cvKeys.infiniteLists(filters),
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await getCvs({
+        ...filters,
+        page: pageParam,
+      });
+
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+
+      return response.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination?.hasNextPage
+        ? lastPage.pagination.page + 1
+        : undefined;
+    },
+    enabled: isEnabled,
+  });
 }
