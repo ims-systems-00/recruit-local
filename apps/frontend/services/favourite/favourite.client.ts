@@ -73,7 +73,7 @@ export function useFavourite(id: string) {
   };
 }
 
-export function useCreateFavourite() {
+export function useCreateFavourite(onSuccessCallback?: () => void) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -83,6 +83,7 @@ export function useCreateFavourite() {
         toast.success(response.message || 'Favourite added successfully');
         queryClient.invalidateQueries({ queryKey: favouriteKeys.all });
         queryClient.invalidateQueries({ queryKey: ['jobs'] });
+        onSuccessCallback?.();
       } else {
         toast.error(response.message);
       }
