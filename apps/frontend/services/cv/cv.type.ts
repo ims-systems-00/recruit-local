@@ -20,7 +20,7 @@ export type ExtractAndCreateCvInput = yup.InferType<
 export type CvListFilters = {
   page?: number;
   limit?: number;
-  search?: string;
+  clientSearch?: string;
 };
 
 // --- FRONTEND RESPONSE TYPES ---
