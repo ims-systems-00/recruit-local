@@ -10,4 +10,5 @@ export enum KYC_DOCUMENT_TYPE {
   PASSPORT = 'passport',
   DRIVER_LICENSE = 'driver_license',
   ID_CARD = 'id_card',
+  NATIONAL_INSURANCE_NUMBER = 'national_insurance_number',
 }

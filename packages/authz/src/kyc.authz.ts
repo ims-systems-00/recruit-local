@@ -40,6 +40,7 @@ export const ALL_KYC_FIELDS = [
   'documentFrontStorage.*',
   'documentBackStorage',
   'documentBackStorage.*',
+  'nationalInsuranceNumber',
   'rejectionReason',
 ];
 
@@ -52,6 +53,7 @@ const CANDIDATE_CREATE_FIELDS = [
   'documentFrontStorage.*',
   'documentBackStorage',
   'documentBackStorage.*',
+  'nationalInsuranceNumber',
 ];
 
 const CANDIDATE_UPDATE_FIELDS = [
@@ -63,6 +65,7 @@ const CANDIDATE_UPDATE_FIELDS = [
   'documentFrontStorage.*',
   'documentBackStorage',
   'documentBackStorage.*',
+  'nationalInsuranceNumber',
 ];
 
 export class KycAuthZEntity {

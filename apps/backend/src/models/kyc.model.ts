@@ -9,10 +9,11 @@ export interface IKycInput {
   userId: Types.ObjectId;
   firstName: string;
   lastName: string;
-  dateOfBirth: Date;
+  dateOfBirth?: Date;
   documentType: KYC_DOCUMENT_TYPE;
-  documentFrontId: Types.ObjectId;
+  documentFrontId?: Types.ObjectId;
   documentBackId?: Types.ObjectId;
+  nationalInsuranceNumber?: string;
 }
 
 export interface IKycDoc extends IKycInput, ISoftDeleteDoc, Document {
@@ -45,7 +46,6 @@ const kycSchema = new Schema<IKycDoc>(
     },
     dateOfBirth: {
       type: Date,
-      required: true,
     },
     status: {
       type: String,
@@ -60,11 +60,18 @@ const kycSchema = new Schema<IKycDoc>(
     documentFrontId: {
       type: Schema.Types.ObjectId,
       ref: modelNames.FILE_MEDIA,
-      required: true,
+      // ponytail: NIN types verify by number, not an uploaded document
+      required: function (this: IKycDoc) {
+        return this.documentType !== KYC_DOCUMENT_TYPE.NATIONAL_INSURANCE_NUMBER;
+      },
     },
     documentBackId: {
       type: Schema.Types.ObjectId,
       ref: modelNames.FILE_MEDIA,
+    },
+    nationalInsuranceNumber: {
+      type: String,
+      match: /^\d{9}$/,
     },
     rejectionReason: {
       type: String,

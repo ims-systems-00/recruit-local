@@ -9,15 +9,36 @@ const awsStorageSchema = Joi.object({
 }).label("AWS Storage");
 
 export const createBodySchema = Joi.object({
-  firstName: Joi.string().required().label("First Name"),
-  lastName: Joi.string().required().label("Last Name"),
-  dateOfBirth: Joi.date().required().label("Date of Birth"),
+  // firstName/lastName default from the user's profile when omitted (see kyc.service create)
+  firstName: Joi.string().optional().label("First Name"),
+  lastName: Joi.string().optional().label("Last Name"),
+  dateOfBirth: Joi.date().optional().label("Date of Birth"),
   documentType: Joi.string()
     .valid(...Object.values(KYC_DOCUMENT_TYPE))
     .required()
     .label("Document Type"),
-  documentFrontStorage: awsStorageSchema.required().label("Document Front File Data"),
-  documentBackStorage: awsStorageSchema.optional().label("Document Back File Data"),
+  nationalInsuranceNumber: Joi.string()
+    .pattern(/^\d{9}$/)
+    .when("documentType", {
+      is: KYC_DOCUMENT_TYPE.NATIONAL_INSURANCE_NUMBER,
+      then: Joi.required(),
+      otherwise: Joi.optional(),
+    })
+    .label("National Insurance Number"),
+  documentFrontStorage: awsStorageSchema
+    .when("documentType", {
+      is: KYC_DOCUMENT_TYPE.NATIONAL_INSURANCE_NUMBER,
+      then: Joi.forbidden(),
+      otherwise: Joi.required(),
+    })
+    .label("Document Front File Data"),
+  documentBackStorage: awsStorageSchema
+    .when("documentType", {
+      is: KYC_DOCUMENT_TYPE.NATIONAL_INSURANCE_NUMBER,
+      then: Joi.forbidden(),
+      otherwise: Joi.optional(),
+    })
+    .label("Document Back File Data"),
 });
 
 export const updateBodySchema = Joi.object({
@@ -28,8 +49,24 @@ export const updateBodySchema = Joi.object({
     .valid(...Object.values(KYC_DOCUMENT_TYPE))
     .optional()
     .label("Document Type"),
-  documentFrontStorage: awsStorageSchema.optional().label("Document Front File Data"),
-  documentBackStorage: awsStorageSchema.optional().allow(null).label("Document Back File Data"),
+  nationalInsuranceNumber: Joi.string()
+    .pattern(/^\d{9}$/)
+    .optional()
+    .label("National Insurance Number"),
+  documentFrontStorage: awsStorageSchema
+    .when("documentType", {
+      is: KYC_DOCUMENT_TYPE.NATIONAL_INSURANCE_NUMBER,
+      then: Joi.forbidden(),
+      otherwise: Joi.optional(),
+    })
+    .label("Document Front File Data"),
+  documentBackStorage: awsStorageSchema
+    .when("documentType", {
+      is: KYC_DOCUMENT_TYPE.NATIONAL_INSURANCE_NUMBER,
+      then: Joi.forbidden(),
+      otherwise: Joi.optional().allow(null),
+    })
+    .label("Document Back File Data"),
   status: Joi.string()
     .valid(...Object.values(KYC_STATUS))
     .optional()
