@@ -1,0 +1,120 @@
+import * as yup from 'yup';
+import type { Pagination, PaginatedResponse, ApiResponse } from '@/types/api';
+import { PROFICIENCY, VISIBILITY } from '@rl/types';
+import {
+  createJobProfileSchema,
+  updateJobProfileSchema,
+  jobProfileSchema,
+} from './job-profile.validation';
+import { ValueData } from '../value/value.type';
+import { AwsStorageType } from '../tenants/tenants.type';
+import { ExperienceLevelData } from '../experience-level/experience-level.type';
+
+export interface JobProfileData {
+  _id: string;
+  userId: string;
+
+  name: string;
+  email: string;
+  address: string;
+  status: string;
+  visibility: 'public' | 'private';
+  onboardingStep: string;
+  experienceLevel: ExperienceLevelData;
+  contactNumber: string;
+  portfolioUrl: string;
+  summary: string;
+  skills: string;
+  interests: string;
+
+  jobTitle: JobTitle[];
+  industry: Industry[];
+  workMode: WorkMode[];
+  values: ValueData[];
+  languages: Language[];
+
+  coverPhoto: {
+    _id: string;
+    src: string;
+    visibility: string;
+    storageInformation: AwsStorageType;
+    thumbnail: AwsStorageType;
+  };
+  profileImage: {
+    _id: string;
+    src: string;
+    visibility: string;
+    storageInformation: AwsStorageType;
+  };
+
+  keywords: string[];
+
+  completion: Completion;
+
+  createdAt: string;
+  updatedAt: string;
+  deleteMarker: {
+    status: string;
+    deletedAt: string;
+    dateScheduled: string;
+  };
+}
+
+export interface JobTitle {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
+export interface Industry {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
+export interface WorkMode {
+  _id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+}
+
+export interface Language {
+  _id: string;
+  name: string;
+  level: string;
+}
+
+export interface Completion {
+  percentage: number;
+  sections: CompletionSection[];
+  missing: string[];
+  computedAt: string;
+}
+
+export interface CompletionSection {
+  key: string;
+  label: string;
+  weight: number;
+  complete: boolean;
+}
+
+// --- INFERRED TYPES FROM SCHEMAS ---
+export type JobProfileCreateInput = yup.InferType<
+  typeof createJobProfileSchema
+>;
+export type JobProfileUpdateInput = yup.InferType<
+  typeof updateJobProfileSchema
+>;
+export type JobProfile = yup.InferType<typeof jobProfileSchema>;
+
+// --- QUERY FILTERS ---
+export type JobProfileListFilters = {
+  page?: number;
+  limit?: number;
+  search?: string;
+};
+
+// --- FRONTEND RESPONSE TYPES ---
+export type JobProfileListResponse = PaginatedResponse<JobProfile>;
+export type JobProfileApiResponse<T> = ApiResponse<T>;
