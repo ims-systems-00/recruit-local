@@ -1,0 +1,45 @@
+# Prod: only nginx is published. Set PUBLIC_URL to the public origin (TLS terminated
+# upstream, e.g. an ALB, forwarding to nginx:80).
+services:
+  redis:
+    image: redis:7-alpine
+    networks: [app]
+    restart: always
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    env_file: ./apps/backend/.env
+    depends_on: [redis]
+    networks: [app]
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_BASE_API_URL: ${PUBLIC_URL:-https://recruit-local.imssystems.tech}/api
+        NEXT_PUBLIC_API_VERSION: v1
+    env_file: ./apps/frontend/.env
+    environment:
+      INTERNAL_API_URL: http://backend:9027/api
+      NEXTAUTH_URL: ${PUBLIC_URL:-https://recruit-local.imssystems.tech}
+    depends_on: [backend]
+    networks: [app]
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    # Local-only: the VPS host nginx terminates TLS and proxies to 127.0.0.1:8080.
+    ports:
+      - '127.0.0.1:8080:80'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on: [frontend, backend]
+    networks: [app]
+    restart: always
+
+networks:
+  app:

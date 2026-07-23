@@ -39,7 +39,8 @@ export class Email {
     }
     const delay = this.scheduleDate ? this.scheduleDate.getTime() - now.getTime() : 0;
 
-    emailQueue.add(
+    emailQueue.addJob(
+      "send-email",
       {
         receiver: this.receiver,
         sender: this.sender,
@@ -47,9 +48,7 @@ export class Email {
         template: this.template,
         payload: this.payload,
       },
-      {
-        delay,
-      }
+      { delay }
     );
     return this;
   }

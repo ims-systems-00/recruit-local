@@ -13,6 +13,7 @@ import { jobFanoutQueue } from "../queue/jobFanoutQueue";
 import { profileFeedRebuildQueue } from "../queue/profileFeedRebuildQueue";
 import { postFanoutQueue } from "../queue/postFanoutQueue";
 import { postFeedRebuildQueue } from "../queue/postFeedRebuildQueue";
+import { emailQueue } from "../v1/modules/email/core/email.queue";
 
 export const initBullBoard = () => {
   const serverAdapter = new ExpressAdapter();
@@ -33,6 +34,7 @@ export const initBullBoard = () => {
       new BullMQAdapter(profileFeedRebuildQueue.queue),
       new BullMQAdapter(postFanoutQueue.queue),
       new BullMQAdapter(postFeedRebuildQueue.queue),
+      new BullMQAdapter(emailQueue.queue),
     ],
     serverAdapter: serverAdapter,
   });

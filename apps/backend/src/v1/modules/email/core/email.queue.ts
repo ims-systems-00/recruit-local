@@ -1,26 +1,11 @@
-import Bull, { Job, Queue } from "bull";
+import { Job } from "bullmq";
 import nodemailer from "nodemailer";
 import sgMail from "@sendgrid/mail";
 import ejs from "ejs";
 import path from "path";
 import { EmailConfiguration } from "./email.interface";
-import { logger } from "../../../../common/helper";
+import { ReusableQueue } from "../../../../queue/Queue";
 if (process.env.NODE_ENV === "production") sgMail.setApiKey(process.env.SEND_GRID_API_KEY);
-
-// Configure the Redis connection
-const emailQueue: Queue<EmailConfiguration> = new Bull("email-queue", {
-  redis: {
-    host: process.env.REDIS_HOST,
-    port: Number(process.env.REDIS_PORT), // Ensure port is a number
-  },
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: "exponential",
-      delay: 2000,
-    },
-  },
-});
 
 // Function to render the email template
 const renderTemplate = async (template: string, data: any): Promise<string> => {
@@ -30,7 +15,7 @@ const renderTemplate = async (template: string, data: any): Promise<string> => {
 };
 
 // Process the email queue
-emailQueue.process(async (job: Job<EmailConfiguration>) => {
+const processEmail = async (job: Job<EmailConfiguration>) => {
   const { template, receiver, sender, subject, payload } = job.data;
 
   // Render HTML based on an EJS template
@@ -77,15 +62,8 @@ emailQueue.process(async (job: Job<EmailConfiguration>) => {
         html,
       });
   }
-});
+};
 
-// Error handling
-emailQueue.on("failed", (job: Job<EmailConfiguration>, err: Error) => {
-  console.error(`Job failed: ${job.id}`, err);
-});
-
-emailQueue.on("completed", (job: Job<EmailConfiguration>) => {
-  console.log(`Job completed: ${job.id}`);
-});
+const emailQueue = new ReusableQueue<EmailConfiguration>("email-queue", processEmail);
 
 export { emailQueue };

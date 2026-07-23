@@ -3,7 +3,9 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import axios from 'axios';
 import { getServerSession } from 'next-auth/next';
-const baseURL = `${process.env.NEXT_PUBLIC_BASE_API_URL}/${process.env.NEXT_PUBLIC_API_VERSION}`;
+// ponytail: server-side calls prefer INTERNAL_API_URL (runtime, in-container hostname).
+// NEXT_PUBLIC_BASE_API_URL is baked at build for the browser and can't resolve inside the network.
+const baseURL = `${process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_BASE_API_URL}/${process.env.NEXT_PUBLIC_API_VERSION}`;
 
 export const axiosServer = axios.create({
   baseURL,

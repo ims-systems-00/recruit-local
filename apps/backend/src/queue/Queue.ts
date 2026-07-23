@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Queue, Worker, Job, QueueEvents, BackoffOptions } from "bullmq";
+import { Queue, Worker, Job, QueueEvents, BackoffOptions, JobsOptions } from "bullmq";
 import { redisConnection } from "../.config/ioredis";
 
 /**
@@ -79,7 +79,7 @@ export class ReusableQueue<T extends object> {
     });
   }
 
-  public async addJob(jobName: string, data: T): Promise<Job<T, any, string>> {
+  public async addJob(jobName: string, data: T, opts?: Partial<JobsOptions>): Promise<Job<T, any, string>> {
     const retryOptions: BackoffOptions = {
       type: "exponential",
       delay: 1000,
@@ -91,6 +91,7 @@ export class ReusableQueue<T extends object> {
       backoff: retryOptions,
       removeOnComplete: 100,
       removeOnFail: 1000,
+      ...opts,
     }) as Promise<Job<T, any, string>>;
   }
 }
