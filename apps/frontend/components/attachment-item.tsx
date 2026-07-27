@@ -10,10 +10,12 @@ export default function AttachmentItem({
   item,
   onDelete,
   isDeleting,
+  isViewing = false,
 }: {
   item: UploadedFile;
   onDelete: (item: UploadedFile) => void;
   isDeleting: boolean;
+  isViewing?: boolean;
 }) {
   return (
     <div className="w-full p-spacing-2xl rounded-2xl bg-bg-gray-soft-primary border border-border-gray-secondary flex justify-between gap-spacing-2xl">
@@ -44,14 +46,16 @@ export default function AttachmentItem({
                             </p> */}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={() => onDelete(item as UploadedFile)}
-        disabled={isDeleting}
-        className=" cursor-pointer"
-      >
-        <Trash2 size={16} className=" text-fg-gray-tertiary" />
-      </button>
+      {!isViewing && (
+        <button
+          type="button"
+          onClick={() => onDelete(item as UploadedFile)}
+          disabled={isDeleting}
+          className=" cursor-pointer"
+        >
+          <Trash2 size={16} className=" text-fg-gray-tertiary" />
+        </button>
+      )}
     </div>
   );
 }
