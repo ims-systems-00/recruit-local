@@ -1,0 +1,25 @@
+services:
+  mongodb:
+    image: mongo:7
+    command: ['--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '127.0.0.1:27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      # Self-initiates on first start; host must be localhost so the host machine can reach it.
+      test: >
+        mongosh --quiet --eval "try { rs.status().ok } catch {
+        rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}).ok }"
+      interval: 5s
+      start_period: 20s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '127.0.0.1:6379:6379'
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
