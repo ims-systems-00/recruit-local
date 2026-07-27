@@ -18,7 +18,9 @@
     "seed": "pnpm --filter @rl/backend seed",
     "migrate:dev": "pnpm --filter @rl/backend migrate:dev",
     "migrate-down:dev": "pnpm --filter @rl/backend migrate-down:dev",
-    "migrate": "pnpm --filter @rl/backend migrate"
+    "migrate": "pnpm --filter @rl/backend migrate",
+    "docker-compose:up": "docker compose -f docker-compose.dev.yml up -d",
+    "docker-compose:down": "docker compose -f docker-compose.dev.yml down"
   },
   "keywords": [],
   "author": "",
