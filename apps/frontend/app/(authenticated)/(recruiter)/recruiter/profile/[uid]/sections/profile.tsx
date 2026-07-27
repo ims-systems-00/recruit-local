@@ -10,6 +10,7 @@ import {
   Globe,
   Info,
   Linkedin,
+  ShieldCheck,
   X,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,10 +49,13 @@ import Jobs from '../../../jobs/sections/jobs';
 import { cn } from '@/lib/utils';
 import FileUploader from '@/components/file-uploader';
 import { Switch } from '@/components/ui/switch';
+import { useRouter } from 'next/navigation';
 
 export default function Profile({ tenantData }: { tenantData: TenantData }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
+
+  const router = useRouter();
 
   const [tenantDetails, setTenantDetails] = useState(tenantData);
 
@@ -398,13 +402,28 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
                   </Button>
                 </>
               ) : (
-                <Button
-                  onClick={handleEdit}
-                  variant="outline"
-                  className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
-                >
-                  Edit Profile
-                </Button>
+                <div className=" flex items-center gap-spacing-2xl">
+                  <Button
+                    onClick={() => {
+                      router.push(
+                        `/recruiter/profile/${tenantDetails._id}/verification`,
+                      );
+                    }}
+                    className=" flex items-center justify-center gap-spacing-2xs cursor-pointer bg-bg-brand-solid-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-white"
+                  >
+                    <span>
+                      <ShieldCheck className=" size-5" />
+                    </span>
+                    Apply for Verification
+                  </Button>
+                  <Button
+                    onClick={handleEdit}
+                    variant="outline"
+                    className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
+                  >
+                    Edit Profile
+                  </Button>
+                </div>
               )}
             </div>
             {!isEditMode && (
