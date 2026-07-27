@@ -1,17 +1,14 @@
 # Prod: only nginx is published. Set PUBLIC_URL to the public origin (TLS terminated
 # upstream, e.g. an ALB, forwarding to nginx:80).
 services:
-  redis:
-    image: redis:7-alpine
-    networks: [app]
-    restart: always
-
+  # Redis runs inside the backend container; set REDIS_URL/REDIS_HOST in .env to use an external one.
   backend:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
     env_file: ./apps/backend/.env
-    depends_on: [redis]
+    volumes:
+      - redis-data:/data
     networks: [app]
     restart: always
 
@@ -43,3 +40,6 @@ services:
 
 networks:
   app:
+
+volumes:
+  redis-data:

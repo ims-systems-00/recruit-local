@@ -6,3 +6,4 @@ mongodb-replica.yml
 .test-scripts/
 CLAUDE.md
 todo/
+TESTABLE-FEATURES.md
