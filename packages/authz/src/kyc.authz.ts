@@ -44,7 +44,7 @@ export const ALL_KYC_FIELDS = [
   'rejectionReason',
 ];
 
-const CANDIDATE_CREATE_FIELDS = [
+const OWNER_CREATE_FIELDS = [
   'firstName',
   'lastName',
   'dateOfBirth',
@@ -56,7 +56,7 @@ const CANDIDATE_CREATE_FIELDS = [
   'nationalInsuranceNumber',
 ];
 
-const CANDIDATE_UPDATE_FIELDS = [
+const OWNER_UPDATE_FIELDS = [
   'firstName',
   'lastName',
   'dateOfBirth',
@@ -107,33 +107,27 @@ export class KycAbilityBuilder implements IAbilityBuilder {
       return this.buildAbility();
     }
 
-    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+    if (
+      this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE ||
+      this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER
+    ) {
       const currentUserId = this.session.user._id;
 
       if (currentUserId) {
         builder.can(AbilityAction.Read, KycAuthZEntity, ALL_KYC_FIELDS, {
           userId: currentUserId,
         });
-        builder.can(
-          AbilityAction.Create,
-          KycAuthZEntity,
-          CANDIDATE_CREATE_FIELDS,
-        );
-        builder.can(
-          AbilityAction.Update,
-          KycAuthZEntity,
-          CANDIDATE_UPDATE_FIELDS,
-          {
-            userId: currentUserId,
-            status: {
-              $in: [
-                KYC_STATUS.PENDING,
-                KYC_STATUS.ACTION_REQUIRED,
-                KYC_STATUS.REJECTED,
-              ],
-            },
+        builder.can(AbilityAction.Create, KycAuthZEntity, OWNER_CREATE_FIELDS);
+        builder.can(AbilityAction.Update, KycAuthZEntity, OWNER_UPDATE_FIELDS, {
+          userId: currentUserId,
+          status: {
+            $in: [
+              KYC_STATUS.PENDING,
+              KYC_STATUS.ACTION_REQUIRED,
+              KYC_STATUS.REJECTED,
+            ],
           },
-        );
+        });
       }
     }
 

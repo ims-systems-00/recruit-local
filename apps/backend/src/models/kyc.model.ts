@@ -24,10 +24,7 @@ export interface IKycDoc extends IKycInput, ISoftDeleteDoc, Document {
 }
 
 interface IKycModel
-  extends Model<IKycDoc>,
-    ISoftDeleteModel<IKycDoc>,
-    PaginateModel<IKycDoc>,
-    AggregatePaginateModel<IKycDoc> {}
+  extends Model<IKycDoc>, ISoftDeleteModel<IKycDoc>, PaginateModel<IKycDoc>, AggregatePaginateModel<IKycDoc> {}
 
 const kycSchema = new Schema<IKycDoc>(
   {
