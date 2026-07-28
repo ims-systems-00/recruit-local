@@ -5,6 +5,7 @@ import { ImageIcon, TextInitial } from 'lucide-react';
 import Image from 'next/image';
 import PostForm from './post-form';
 import React, { useState } from 'react';
+import Link from 'next/link';
 
 export default function NewsFeedPost() {
   const [openCreateForm, setOpenCreateForm] = useState(false);
@@ -27,12 +28,15 @@ export default function NewsFeedPost() {
               Media
             </span>
           </div>
-          <div className=" flex gap-spacing-2xs items-center">
+          <Link
+            className=" flex gap-spacing-2xs items-center"
+            href="/recruiter/news-feed/article"
+          >
             <TextInitial className=" w-4 h-4 text-fg-gray-secondary" />
             <span className=" text-label-sm text-text-gray-quaternary">
               Article
             </span>
-          </div>
+          </Link>
         </div>
       </div>
       <Dialog open={openCreateForm} onOpenChange={setOpenCreateForm}>
