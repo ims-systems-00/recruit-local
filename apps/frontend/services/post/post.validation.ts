@@ -13,18 +13,30 @@ export const awsStorageSchema = yup
 // Yup schemas for validation
 export const postCreateSchema = yup.object({
   title: yup.string().required('Title is required'),
-  content: yup.string().required('Content is required'),
-  imagesStorage: yup.array().of(awsStorageSchema).optional(),
+  text: yup.string().required('Content is required'),
+  imagesStorage: yup
+    .array()
+    .of(awsStorageSchema)
+    .nullable()
+    .notRequired()
+    .default(undefined),
   tags: yup.array().of(yup.string().defined()).optional(),
-  statusId: yup.string().required('Status ID is required'),
+  statusId: yup.string().optional(),
+  bannerStorage: awsStorageSchema.nullable().notRequired().default(undefined),
 });
 
 export const postUpdateSchema = yup.object({
   title: yup.string().optional(),
-  content: yup.string().optional(),
-  imagesStorage: yup.array().of(awsStorageSchema).optional(),
+  text: yup.string().optional(),
+  imagesStorage: yup
+    .array()
+    .of(awsStorageSchema)
+    .nullable()
+    .notRequired()
+    .default(undefined),
   tags: yup.array().of(yup.string().defined()).optional(),
   statusId: yup.string().optional(),
+  bannerStorage: awsStorageSchema.nullable().notRequired().default(undefined),
 });
 
 export const postIdParamsSchema = yup.object({
@@ -41,7 +53,7 @@ export const postSchema = yup.object({
   _id: yup.string().required('ID is required'),
   userId: yup.string().required('User ID is required'),
   title: yup.string().required('Title is required'),
-  content: yup.string().required('Content is required'),
+  text: yup.string().required('Content is required'),
   imageIds: yup.array().of(yup.string().defined()).optional(),
   tags: yup.array().of(yup.string().defined()).optional(),
   statusId: yup.string().required('Status ID is required'),
