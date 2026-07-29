@@ -134,6 +134,58 @@ export const populateFileMediaQuery = (lookupField: string, asField: string): Pi
   ];
 };
 
+/**
+ * Array variant of `populateFileMediaQuery`: replaces a parent's array of
+ * ObjectIds (`lookupField`) with the referenced FileMedia documents under
+ * `asField`, each carrying the same public `src` URL. Order follows the parent
+ * array (a `$lookup` does not preserve it); refs that no longer resolve drop
+ * out, and a missing/empty array yields `[]`.
+ */
+export const populateFileMediaListQuery = (lookupField: string, asField: string): PipelineStage[] => {
+  const baseUrl = process.env.PUBLIC_MEDIA_BASE_URL || "";
+
+  return [
+    {
+      $lookup: {
+        from: modelNames.FILE_MEDIA,
+        let: { documentIds: { $ifNull: [`$${lookupField}`, []] } },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $in: ["$_id", "$$documentIds"] },
+            },
+          },
+          {
+            $addFields: {
+              src: {
+                $cond: {
+                  if: { $eq: ["$visibility", VISIBILITY_ENUM.PUBLIC] },
+                  then: { $concat: [baseUrl, "/", "$storageInformation.Key"] },
+                  else: null,
+                },
+              },
+              order: { $indexOfArray: ["$$documentIds", "$_id"] },
+            },
+          },
+          { $sort: { order: 1 } },
+          {
+            $project: {
+              order: 0,
+              deleteMarker: 0,
+              __v: 0,
+              collectionName: 0,
+              collectionDocument: 0,
+              createdAt: 0,
+              updatedAt: 0,
+            },
+          },
+        ],
+        as: asField,
+      },
+    },
+  ];
+};
+
 export const populateStatusQuery = (): PipelineStage[] => {
   return [
     {
