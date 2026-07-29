@@ -17,6 +17,7 @@ import { postCreateSchema } from '@/services/post/post.validation';
 import { useCreatePost } from '@/services/post';
 import { Loader2 } from 'lucide-react';
 import { useDeleteFileStorage } from '@/services/file-storage';
+import DraftEditor from '@/components/draft-editor/draft-editor';
 
 export default function ArticleForm() {
   const router = useRouter();
@@ -49,6 +50,9 @@ export default function ArticleForm() {
       imagesStorage: data.imagesStorage,
       text: data.text,
     });
+    setTimeout(() => {
+      router.push('/recruiter/news-feed');
+    }, 1000);
   };
 
   const bannerStorage = watch('bannerStorage') || null;
@@ -133,7 +137,7 @@ export default function ArticleForm() {
               Title
             </Label>
             <div className=" space-y-2">
-              <InputGroup className="h-12 rounded-lg shadow-xs border-border-gray-primary">
+              <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
                 <InputGroupInput
                   type="text"
                   placeholder="Enter your First Name"
@@ -149,14 +153,18 @@ export default function ArticleForm() {
             <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
               Description
             </Label>
+
             <div className=" space-y-spacing-sm ">
-              <InputGroup className="rounded-lg shadow-xs border-border-gray-primary">
-                <InputGroupTextarea
-                  placeholder="Write your article here..."
-                  {...register('text')}
-                  className="min-h-[136px] text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
-                />
-              </InputGroup>
+              <DraftEditor
+                value={watch('text')}
+                onChange={(_, json) =>
+                  setValue('text', json, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
+
               {errors.text && (
                 <p className="text-xs text-text-error-primary">
                   {errors.text.message}
