@@ -84,7 +84,11 @@ export default function Posts() {
               className=" rounded-2xl border border-border-gray-secondary flex flex-col items-center"
             >
               {post.type === POST_TYPE_ENUMS.ARTICLE ? (
-                <ArticleItem createdAt={post.createdAt} title={post.title} />
+                <ArticleItem
+                  createdAt={post.createdAt}
+                  title={post.title}
+                  banner={post.banner?.src}
+                />
               ) : (
                 <div className="p-spacing-4xl space-y-spacing-4xl w-full">
                   <div className=" flex justify-between gap-spacing-lg items-start w-full">

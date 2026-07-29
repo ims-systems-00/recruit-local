@@ -56,7 +56,7 @@ export default function ArticleItem({
           alt={title}
           width={1920}
           height={298}
-          className="rounded-xl"
+          className="rounded-xl max-h-[298px] w-full object-cover"
         />
         <h4 className=" text-heading-sm text-text-gray-primary"> {title}</h4>
       </div>
