@@ -4,7 +4,7 @@ import { Post, IPostInput } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { postProjectQuery } from "./post.query";
+import { postProjectQuery, populatePostMediaQuery } from "./post.query";
 import { enqueuePostKeywords } from "../../../queue/keywordUpdateQueue";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
@@ -47,6 +47,14 @@ const createPostMedia = (postId: Types.ObjectId, storage: AwsStorageTemplate) =>
     },
   });
 
+// Reads return `banner` / `images` populated with FileMedia documents; the media
+// bookkeeping below works off the raw ids, so unwrap a populated ref back to one.
+const toMediaId = (ref: unknown): Types.ObjectId | undefined => {
+  if (!ref) return undefined;
+  const populated = ref as { _id?: Types.ObjectId };
+  return (populated._id ?? ref) as Types.ObjectId;
+};
+
 // Hard-delete a FileMedia this write replaces (non-fatal on error).
 const safeDeleteMedia = async (id: Types.ObjectId) => {
   try {
@@ -58,7 +66,12 @@ const safeDeleteMedia = async (id: Types.ObjectId) => {
 
 export const list = ({ query = {}, options }: IListPostParams) => {
   return Post.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...postProjectQuery()],
+    [
+      ...matchQuery(sanitizeQueryIds(query)),
+      ...excludeDeletedQuery(),
+      ...populatePostMediaQuery(),
+      ...postProjectQuery(),
+    ],
     options
   );
 };
@@ -67,6 +80,7 @@ export const getOne = async ({ query = {} }: IPostGetParams) => {
   const posts = await Post.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
+    ...populatePostMediaQuery(),
     ...postProjectQuery(),
   ]);
   if (posts.length === 0) throw new NotFoundException("Post not found.");
@@ -75,7 +89,7 @@ export const getOne = async ({ query = {} }: IPostGetParams) => {
 
 export const listSoftDeleted = async ({ query = {}, options }: IListPostParams) => {
   return Post.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...postProjectQuery()],
+    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...populatePostMediaQuery(), ...postProjectQuery()],
     options
   );
 };
@@ -84,6 +98,7 @@ export const getOneSoftDeleted = async ({ query = {} }: IPostGetParams) => {
   const posts = await Post.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
+    ...populatePostMediaQuery(),
     ...postProjectQuery(),
   ]);
   if (posts.length === 0) throw new NotFoundException("Post not found in trash.");
@@ -116,7 +131,8 @@ export const create = async ({ payload }: IPostCreateParams) => {
   // Rebuild match keywords + fan out off the request path (LIVE posts only).
   await enqueuePostKeywords(saved._id);
 
-  return saved;
+  // Re-read so the response carries the populated banner/images, like every other read.
+  return getOne({ query: { _id: String(saved._id) } });
 };
 
 export const update = async ({ query, payload }: IPostUpdateParams) => {
@@ -132,13 +148,15 @@ export const update = async ({ query, payload }: IPostUpdateParams) => {
       const media = await createPostMedia(post._id, payload.bannerStorage);
       newBanner = media._id as Types.ObjectId;
     }
-    if (post.banner) await safeDeleteMedia(post.banner);
+    const oldBanner = toMediaId(post.banner);
+    if (oldBanner) await safeDeleteMedia(oldBanner);
     mediaSet.banner = newBanner;
   }
 
   // Replace the whole images set when new uploads are provided.
   if (payload.imagesStorage) {
-    if (post.images?.length) await Promise.all(post.images.map((id: Types.ObjectId) => safeDeleteMedia(id)));
+    const oldImages = (post.images ?? []).map(toMediaId).filter(Boolean) as Types.ObjectId[];
+    if (oldImages.length) await Promise.all(oldImages.map((id) => safeDeleteMedia(id)));
     const created = await Promise.all(payload.imagesStorage.map((storage) => createPostMedia(post._id, storage)));
     mediaSet.images = created.map((file) => file._id as Types.ObjectId);
   }
@@ -156,7 +174,8 @@ export const update = async ({ query, payload }: IPostUpdateParams) => {
   // Re-fan-out on update: a draft flipped to LIVE (or edited text) is picked up here.
   await enqueuePostKeywords(updatedPost._id);
 
-  return updatedPost;
+  // Re-read so the response carries the populated banner/images, like every other read.
+  return getOne({ query: { _id: String(updatedPost._id) } });
 };
 
 export const softDelete = async ({ query }: IPostGetParams) => {
@@ -171,12 +190,15 @@ export const hardDelete = async ({ query }: IPostGetParams) => {
   const post = await getOneSoftDeleted({ query: sanitizedQuery });
 
   // Delete all attached media (banner + images) from S3 concurrently.
-  const mediaIds = [post.banner, ...(post.images ?? [])].filter(Boolean) as Types.ObjectId[];
+  const mediaIds = [post.banner, ...(post.images ?? [])].map(toMediaId).filter(Boolean) as Types.ObjectId[];
   await Promise.all(mediaIds.map((id) => safeDeleteMedia(id)));
 
   const deletedPost = await Post.findOneAndDelete({ _id: post._id });
   if (!deletedPost) throw new NotFoundException("Post not found to delete.");
-  return deletedPost;
+
+  // Echo the pre-delete snapshot: it is the same document, but with the media
+  // populated so the response shape matches every other post endpoint.
+  return post;
 };
 
 export const restore = async ({ query }: IPostGetParams) => {

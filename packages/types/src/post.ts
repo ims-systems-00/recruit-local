@@ -1,3 +1,5 @@
+import { FileMediaRefDto } from './file-media';
+
 export enum POST_TYPE_ENUMS {
   POST = 'post',
   ARTICLE = 'article',
@@ -23,8 +25,8 @@ export interface PostResponseDto {
   jobProfileId?: string | null;
   title?: string;
   text?: string;
-  banner?: string | null;
-  images?: string[];
+  banner?: FileMediaRefDto | null; // populated FileMedia (`src` is the public URL)
+  images?: FileMediaRefDto[]; // populated FileMedia, in the order stored on the post
   keywords?: string[];
   type?: POST_TYPE_ENUMS;
   status?: POST_STATUS_ENUMS;
