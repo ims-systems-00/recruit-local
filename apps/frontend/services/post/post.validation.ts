@@ -14,6 +14,7 @@ export const awsStorageSchema = yup
 export const postCreateSchema = yup.object({
   title: yup.string().required('Title is required'),
   text: yup.string().required('Content is required'),
+  type: yup.string().required('Type is required'),
   imagesStorage: yup
     .array()
     .of(awsStorageSchema)
@@ -28,6 +29,7 @@ export const postCreateSchema = yup.object({
 export const postUpdateSchema = yup.object({
   title: yup.string().optional(),
   text: yup.string().optional(),
+  type: yup.string().optional(),
   imagesStorage: yup
     .array()
     .of(awsStorageSchema)
@@ -54,6 +56,7 @@ export const postSchema = yup.object({
   userId: yup.string().required('User ID is required'),
   title: yup.string().required('Title is required'),
   text: yup.string().required('Content is required'),
+  type: yup.string().required('Type is required'),
   imageIds: yup.array().of(yup.string().defined()).optional(),
   tags: yup.array().of(yup.string().defined()).optional(),
   statusId: yup.string().required('Status ID is required'),

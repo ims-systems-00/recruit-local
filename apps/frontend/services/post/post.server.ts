@@ -29,21 +29,21 @@ export async function getPosts(
       params: {
         page: params?.page || 1,
         limit: params?.limit || 10,
-        search: params?.search,
+        clientSearch: params?.clientSearch,
         statusId: params?.statusId,
       },
     });
-    const backendResponse = await postListResponseSchema.validate(res.data, {
-      stripUnknown: true,
-    });
+    // const backendResponse = await postListResponseSchema.validate(res.data, {
+    //   stripUnknown: true,
+    // });
 
     return {
       success: true,
       data: {
-        docs: backendResponse.posts || [],
-        pagination: backendResponse.pagination,
+        docs: res.data.posts || [],
+        pagination: res.data.pagination,
       },
-      message: backendResponse.message,
+      message: res.data.message,
     };
   } catch (error) {
     return handleServerError(error, 'Failed to fetch posts');
@@ -58,14 +58,14 @@ export async function getPostById(id: string): Promise<ApiResponse<PostData>> {
       `${API_ENDPOINT}/${id}`,
     );
 
-    const backendResponse = await postItemResponseSchema.validate(res.data, {
-      stripUnknown: true,
-    });
+    // const backendResponse = await postItemResponseSchema.validate(res.data, {
+    //   stripUnknown: true,
+    // });
 
     return {
       success: true,
-      data: backendResponse.post,
-      message: backendResponse.message,
+      data: res.data.post,
+      message: res.data.message,
     };
   } catch (error) {
     return handleServerError(error, 'Failed to fetch post');
@@ -88,7 +88,7 @@ export async function createPost(
 
     return {
       success: true,
-      data: backendResponse.post,
+      data: res.data.post,
       message: backendResponse.message,
     };
   } catch (error) {

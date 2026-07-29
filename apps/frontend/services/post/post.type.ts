@@ -14,7 +14,7 @@ export type PostIdParams = yup.InferType<typeof postIdParamsSchema>;
 export type PostListFilters = {
   page?: number;
   limit?: number;
-  search?: string;
+  clientSearch?: string;
   statusId?: string;
 };
 

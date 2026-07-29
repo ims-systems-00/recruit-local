@@ -18,6 +18,7 @@ import { useCreatePost } from '@/services/post';
 import { Loader2 } from 'lucide-react';
 import { useDeleteFileStorage } from '@/services/file-storage';
 import DraftEditor from '@/components/draft-editor/draft-editor';
+import { POST_TYPE_ENUMS } from '@rl/types';
 
 export default function ArticleForm() {
   const router = useRouter();
@@ -29,7 +30,8 @@ export default function ArticleForm() {
     defaultValues: {
       title: 'Untitled Article',
       text: '',
-      imagesStorage: undefined,
+      bannerStorage: undefined,
+      type: POST_TYPE_ENUMS.ARTICLE,
     },
     mode: 'onSubmit',
   });
@@ -49,6 +51,7 @@ export default function ArticleForm() {
       title: data.title,
       bannerStorage: data.bannerStorage,
       text: data.text,
+      type: POST_TYPE_ENUMS.ARTICLE,
     });
     setTimeout(() => {
       router.push('/recruiter/news-feed');
