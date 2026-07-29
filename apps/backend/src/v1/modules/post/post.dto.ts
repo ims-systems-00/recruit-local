@@ -1,8 +1,23 @@
-import { PostResponseDto } from "@rl/types";
+import { FileMediaRefDto, PostResponseDto } from "@rl/types";
 
 const toIso = (v: unknown): string => (v instanceof Date ? v.toISOString() : (v as string));
 
 const has = (obj: Record<string, unknown>, key: string): boolean => Object.prototype.hasOwnProperty.call(obj, key);
+
+/**
+ * Serializes a media ref. Reads come from an aggregation that populates
+ * `banner` / `images` into FileMedia documents; a raw model document still
+ * holds bare ObjectIds, which degrade to `{ _id }` so the shape stays stable.
+ */
+const toMedia = (v: unknown): FileMediaRefDto => {
+  const isPopulated =
+    typeof v === "object" && v !== null && typeof (v as { toHexString?: unknown }).toHexString !== "function";
+
+  if (!isPopulated) return { _id: String(v) };
+
+  const media = v as Record<string, unknown>;
+  return { ...media, _id: String(media._id) } as FileMediaRefDto;
+};
 
 /**
  * Serializes a (possibly partial) sanitized post into its public HTTP shape.
@@ -28,8 +43,8 @@ export const toPostResponse = (doc: unknown): PostResponseDto => {
   if (has(d, "id")) d.id = String(d.id);
   if (has(d, "tenantId")) d.tenantId = d.tenantId == null ? null : String(d.tenantId);
   if (has(d, "jobProfileId")) d.jobProfileId = d.jobProfileId == null ? null : String(d.jobProfileId);
-  if (has(d, "banner")) d.banner = d.banner == null ? null : String(d.banner);
-  if (has(d, "images") && Array.isArray(d.images)) d.images = d.images.map(String);
+  if (has(d, "banner")) d.banner = d.banner == null ? null : toMedia(d.banner);
+  if (has(d, "images") && Array.isArray(d.images)) d.images = d.images.map(toMedia);
   if (has(d, "schedule")) d.schedule = d.schedule == null ? null : toIso(d.schedule);
   if (has(d, "createdAt")) d.createdAt = toIso(d.createdAt);
   if (has(d, "updatedAt")) d.updatedAt = toIso(d.updatedAt);
