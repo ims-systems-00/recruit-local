@@ -86,6 +86,15 @@ export class ForbiddenException extends ApiError {
   }
 }
 
+export class ConflictException extends ApiError {
+  constructor(message = "Conflict.") {
+    super(message, {
+      httpStatusCode: StatusCodes.CONFLICT,
+      httpReasonPhrase: ReasonPhrases.CONFLICT,
+    });
+  }
+}
+
 export class TooManyRequestsException extends ApiError {
   constructor(message = "Too many requests.") {
     super(message, {

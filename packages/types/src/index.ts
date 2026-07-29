@@ -33,3 +33,4 @@ export * from './application';
 export * from './certification';
 export * from './tenant';
 export * from './completion';
+export * from './agent';
