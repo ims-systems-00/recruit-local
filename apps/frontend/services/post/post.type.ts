@@ -19,23 +19,33 @@ export type PostListFilters = {
 };
 
 // API Response types
-export type PostData = {
+
+export interface PostImage {
   _id: string;
-  userId: string;
+  storageInformation: PostStorageInformation;
+  visibility: string;
+  src: string;
+}
+
+export interface PostStorageInformation {
+  Name: string;
+  Key: string;
+  Bucket: string;
+}
+
+export interface PostData {
+  _id: string;
+  text: string;
+  type: string;
   title: string;
-  content: string;
-  imageIds?: string[];
-  tags?: string[];
-  statusId: string;
-  deleteMarker?: {
-    status: boolean;
-    deletedAt?: string | null;
-    dateScheduled?: string | null;
-  };
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
-};
+  images: PostImage[];
+  banner: PostImage;
+  status: string;
+  tenantId: string;
+  keywords: string[];
+  createdAt: string;
+  updatedAt: string;
+}
 
 export type PostListBackendResponse = {
   success: boolean;

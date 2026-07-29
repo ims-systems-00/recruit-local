@@ -47,7 +47,7 @@ export default function ArticleForm() {
   const onSubmit = async (data: PostCreateInput) => {
     await createPost({
       title: data.title,
-      imagesStorage: data.imagesStorage,
+      bannerStorage: data.bannerStorage,
       text: data.text,
     });
     setTimeout(() => {
