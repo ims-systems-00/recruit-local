@@ -120,6 +120,7 @@ export default function Posts() {
             >
               {post.type === POST_TYPE_ENUMS.ARTICLE ? (
                 <ArticleItem
+                  uid={post._id}
                   createdAt={post.createdAt}
                   title={post.title}
                   banner={post.banner?.src}

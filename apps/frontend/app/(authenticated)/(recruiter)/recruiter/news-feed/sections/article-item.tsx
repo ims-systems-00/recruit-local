@@ -4,12 +4,15 @@ import SavesDefault from '@/public/images/saves_default.png';
 import moment from 'moment';
 import { EllipsisVertical, Heart } from 'lucide-react';
 import RecruitProfileDefault from '@/public/images/recruit_profile_default.svg';
+import Link from 'next/link';
 
 export default function ArticleItem({
+  uid,
   createdAt,
   title,
   banner,
 }: {
+  uid: string;
   createdAt: string;
   title: string;
   banner?: string;
@@ -58,7 +61,13 @@ export default function ArticleItem({
           height={298}
           className="rounded-xl max-h-[298px] w-full object-cover"
         />
-        <h4 className=" text-heading-sm text-text-gray-primary"> {title}</h4>
+        <Link
+          href={`/recruiter/news-feed/article/${uid}`}
+          className=" text-heading-sm text-text-gray-primary"
+        >
+          {' '}
+          {title}
+        </Link>
       </div>
       <div className=" w-fit flex gap-spacing-2xs justify-center items-center rounded-full px-spacing-sm py-spacing-3xs bg-bg-gray-soft-secondary border border-border-gray-secondary text-label-sm font-label-sm-strong!  text-text-gray-secondary">
         <Heart className="w-4 h-4 text-text-brand-primary" />

@@ -46,7 +46,7 @@ export default function PostItem({
           <div className="space-y-spacing-2xs">
             <div className=" flex items-center gap-spacing-sm ">
               <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-                {title}
+                BootTech
               </p>
             </div>
 
