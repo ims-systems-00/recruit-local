@@ -8,12 +8,19 @@ import {
   UnauthorizedException,
   NotFoundException,
 } from "../../../common/helper";
-import { AgentAbilityBuilder, AgentConversationAuthZEntity, ALL_AGENT_CONVERSATION_FIELDS } from "@rl/authz";
+import {
+  AgentAbilityBuilder,
+  AgentConversationAuthZEntity,
+  AgentTraceAbilityBuilder,
+  AgentTraceAuthZEntity,
+  ALL_AGENT_CONVERSATION_FIELDS,
+} from "@rl/authz";
 import { AbilityAction, AGENT_MESSAGE_ROLE } from "@rl/types";
 import { sanitizeDocument, sanitizeDocuments } from "../../../common/helper/authz";
 import { agentConversationRoleScopedSecurityQuery } from "./agent.query";
 import * as conversationService from "./conversation.service";
 import * as agentService from "./agent.service";
+import * as traceService from "./trace.service";
 import { IAgentConversationDoc } from "../../../models/agent-conversation.model";
 
 const caslFieldOptions = {
@@ -186,6 +193,41 @@ export const getConversation = async ({ req }: ControllerParams) => {
       })),
     },
     fieldName: "conversation",
+  });
+};
+
+/**
+ * Aggregate view of how the agent is actually behaving: per-tool call counts,
+ * failure rates and latency percentiles, plus the run-level tool-vs-model time
+ * split.
+ *
+ * Only steps 1 and 2 of the usual authz sequence apply here. There is no query
+ * scoping because the rule is admin-only, and no field sanitization because the
+ * payload is aggregate rows rather than entity documents — `sanitizeDocument`
+ * has no entity to project. The action gate is the entire boundary, which is
+ * also why no prompt text is ever selected by the pipeline.
+ */
+export const getToolStats = async ({ req }: ControllerParams) => {
+  const ability = new AgentTraceAbilityBuilder(req.session).getAbility();
+
+  if (!ability.can(AbilityAction.Read, AgentTraceAuthZEntity)) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read agent traces.`);
+  }
+
+  // Joi validates the query string but does not coerce it, so the conversion
+  // happens here.
+  const { from, to } = req.query as { from?: string; to?: string };
+
+  const stats = await traceService.toolStats({
+    from: from ? new Date(from) : undefined,
+    to: to ? new Date(to) : undefined,
+  });
+
+  return new ApiResponse({
+    message: "Agent trace statistics retrieved.",
+    statusCode: StatusCodes.OK,
+    data: stats,
+    fieldName: "stats",
   });
 };
 

@@ -1,17 +1,27 @@
 import OpenAI from "openai";
-import { AGENT_MESSAGE_ROLE, AGENT_STOPPED_REASON, AgentStepDto, AgentUsageDto } from "@rl/types";
+import {
+  AGENT_LLM_CALL_PURPOSE,
+  AGENT_MESSAGE_ROLE,
+  AGENT_STOPPED_REASON,
+  AGENT_TRACE_STATUS,
+  AgentStepDto,
+  AgentUsageDto,
+} from "@rl/types";
 import { logger } from "../../../common/helper";
 import { validate } from "../../../common/helper/validate";
 import { llm, AGENT_MODEL } from "./llm/client";
 import { findTool, toolDefinitionsFor } from "./tools";
 import { buildSystemPrompt, MAX_STEPS, RUN_DEADLINE_MS } from "./agent.constants";
 import * as conversationService from "./conversation.service";
-import { IAgentRunParams, IAgentRunResult } from "./agent.interface";
+import { createTraceCollector } from "./trace.collector";
+import { IAgentRunParams, IAgentRunResult, IAgentTraceCollector } from "./agent.interface";
 
 type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 // The SDK's tool-call type is a union of function and "custom" calls. Only
 // function calls are ever requested here, so narrow once at the boundary.
 type ToolCall = OpenAI.Chat.Completions.ChatCompletionMessageFunctionToolCall;
+
+const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 /**
  * Turns a tool failure into something the model can read and react to.
@@ -19,8 +29,7 @@ type ToolCall = OpenAI.Chat.Completions.ChatCompletionMessageFunctionToolCall;
  * correct itself (bad id, wrong filter) if it is told what went wrong.
  */
 const errorPayload = (error: unknown): string => {
-  const message = error instanceof Error ? error.message : String(error);
-  return JSON.stringify({ ok: false, error: message });
+  return JSON.stringify({ ok: false, error: messageOf(error) });
 };
 
 const accumulateUsage = (total: AgentUsageDto, usage?: OpenAI.Completions.CompletionUsage): AgentUsageDto => {
@@ -30,6 +39,49 @@ const accumulateUsage = (total: AgentUsageDto, usage?: OpenAI.Completions.Comple
     completionTokens: (total.completionTokens ?? 0) + (usage.completion_tokens ?? 0),
     totalTokens: (total.totalTokens ?? 0) + (usage.total_tokens ?? 0),
   };
+};
+
+/**
+ * The single door to the model, so latency and per-call tokens are captured the
+ * same way wherever the loop calls out.
+ *
+ * Per-call usage is the point: `accumulateUsage` only ever keeps a running
+ * total, which cannot tell you whether the tenth step is the expensive one.
+ */
+const callLlm = async (
+  trace: IAgentTraceCollector,
+  purpose: AGENT_LLM_CALL_PURPOSE,
+  body: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming
+) => {
+  const startedAt = Date.now();
+
+  try {
+    const completion = await llm.chat.completions.create(body);
+
+    trace.recordLlmCall({
+      purpose,
+      llmModel: body.model,
+      ok: true,
+      durationMs: Date.now() - startedAt,
+      finishReason: completion.choices[0]?.finish_reason ?? null,
+      usage: {
+        promptTokens: completion.usage?.prompt_tokens,
+        completionTokens: completion.usage?.completion_tokens,
+        totalTokens: completion.usage?.total_tokens,
+      },
+    });
+
+    return completion;
+  } catch (error) {
+    trace.recordLlmCall({
+      purpose,
+      llmModel: body.model,
+      ok: false,
+      durationMs: Date.now() - startedAt,
+      error: messageOf(error),
+    });
+    throw error;
+  }
 };
 
 /**
@@ -103,7 +155,7 @@ const runToolCall = async ({
     logger.warn(`[agent] tool ${name} failed`, {
       conversationId: String(conversationId),
       input,
-      error: error instanceof Error ? error.message : String(error),
+      error: messageOf(error),
     });
     await persist(content, false);
 
@@ -112,7 +164,7 @@ const runToolCall = async ({
         tool: name,
         input,
         ok: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: messageOf(error),
         durationMs: Date.now() - startedAt,
       },
       content,
@@ -129,8 +181,31 @@ const runToolCall = async ({
  *
  * The caller is responsible for the ownership check, the fingerprint check, the
  * run lock, and persisting the user's own message.
+ *
+ * This wrapper exists for the `finally`: the loop below returns from three
+ * places and can also throw, so bracketing it is the only way to guarantee one
+ * trace per run. A run that blows up still records the spans it managed.
  */
-export const runAgent = async ({ conversation, instruction, session }: IAgentRunParams): Promise<IAgentRunResult> => {
+export const runAgent = async (params: IAgentRunParams): Promise<IAgentRunResult> => {
+  const trace = createTraceCollector(params);
+
+  try {
+    const result = await execute(params, trace);
+    trace.setOutcome({ status: AGENT_TRACE_STATUS.SUCCEEDED, stoppedReason: result.stoppedReason });
+    return result;
+  } catch (error) {
+    trace.setOutcome({ status: AGENT_TRACE_STATUS.FAILED, error: messageOf(error) });
+    // Rethrown unchanged — tracing observes the run, it does not handle it.
+    throw error;
+  } finally {
+    await trace.flush();
+  }
+};
+
+const execute = async (
+  { conversation, instruction, session }: IAgentRunParams,
+  trace: IAgentTraceCollector
+): Promise<IAgentRunResult> => {
   const deadline = Date.now() + RUN_DEADLINE_MS;
   const steps: AgentStepDto[] = [];
   let usage: AgentUsageDto = {};
@@ -149,10 +224,10 @@ export const runAgent = async ({ conversation, instruction, session }: IAgentRun
 
   for (let step = 0; step < MAX_STEPS; step++) {
     if (Date.now() > deadline) {
-      return finish(conversation, messages, steps, usage, AGENT_STOPPED_REASON.DEADLINE);
+      return finish(conversation, messages, steps, usage, AGENT_STOPPED_REASON.DEADLINE, trace);
     }
 
-    const completion = await llm.chat.completions.create({
+    const completion = await callLlm(trace, AGENT_LLM_CALL_PURPOSE.STEP, {
       model: AGENT_MODEL,
       messages,
       ...(tools.length > 0 ? { tools } : {}),
@@ -195,11 +270,19 @@ export const runAgent = async ({ conversation, instruction, session }: IAgentRun
         conversationId: conversation._id,
       });
       steps.push(stepResult);
+      // Fields picked rather than spread: `input` stays out of the trace, since
+      // it can carry user-typed PII and is already in the transcript.
+      trace.recordTool({
+        tool: stepResult.tool,
+        ok: stepResult.ok,
+        error: stepResult.error ?? null,
+        durationMs: stepResult.durationMs ?? 0,
+      });
       messages.push({ role: "tool", tool_call_id: toolCall.id, content });
     }
   }
 
-  return finish(conversation, messages, steps, usage, AGENT_STOPPED_REASON.MAX_STEPS);
+  return finish(conversation, messages, steps, usage, AGENT_STOPPED_REASON.MAX_STEPS, trace);
 };
 
 /**
@@ -212,12 +295,13 @@ const finish = async (
   messages: ChatMessage[],
   steps: AgentStepDto[],
   usage: AgentUsageDto,
-  stoppedReason: AGENT_STOPPED_REASON
+  stoppedReason: AGENT_STOPPED_REASON,
+  trace: IAgentTraceCollector
 ): Promise<IAgentRunResult> => {
   let answer = "";
 
   try {
-    const completion = await llm.chat.completions.create({
+    const completion = await callLlm(trace, AGENT_LLM_CALL_PURPOSE.SUMMARY, {
       model: AGENT_MODEL,
       messages: [
         ...messages,
@@ -231,6 +315,9 @@ const finish = async (
     usage = accumulateUsage(usage, completion.usage);
     answer = completion.choices[0]?.message?.content ?? "";
   } catch (error) {
+    // Swallowed on purpose — a failed summary should still return the canned
+    // answer rather than losing the whole run. The error itself is not lost:
+    // `callLlm` has already recorded it on the trace as a failed span.
     logger.error("[agent] failed to summarise an interrupted run", error);
     answer = "I ran out of time before I could finish that. Please try narrowing the request.";
   }
@@ -243,6 +330,7 @@ const finish = async (
   });
 
   logger.info("[agent] run stopped early", {
+    runId: String(trace.runId),
     conversationId: String(conversation._id),
     stoppedReason,
     steps: steps.length,
