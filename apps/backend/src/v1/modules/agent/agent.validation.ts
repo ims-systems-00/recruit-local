@@ -19,3 +19,13 @@ export const sendMessageBodySchema = Joi.object({
 export const idParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("ID"),
 });
+
+/**
+ * Both bounds optional — omitting them reports over all traces ever recorded.
+ * `unknown(true)` because the shared list/query params (page, limit, sort) ride
+ * along on the query string and are not this endpoint's business.
+ */
+export const traceStatsQuerySchema = Joi.object({
+  from: Joi.date().iso().optional().label("From"),
+  to: Joi.date().iso().min(Joi.ref("from")).optional().label("To"),
+}).unknown(true);

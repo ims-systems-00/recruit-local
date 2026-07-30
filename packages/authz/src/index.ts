@@ -20,3 +20,4 @@ export * from './user-interest-survey.authz';
 export * from './value.authz';
 export * from './salary.authz';
 export * from './agent.authz';
+export * from './agent-trace.authz';

@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import { connectDB } from "../.config/database";
 
-// import { userSeeder } from "./user.seeder";
+import { userSeeder } from "./user.seeder";
 // import { statusSeeder } from "./status.seeder";
 import { valueSeeder } from "./value.seeder";
 import { jobTitleSeeder } from "./job-title.seeder";
@@ -18,7 +18,7 @@ const runSeeders = async () => {
     logger.info(`Connected to ${process.env.NODE_ENV} database`);
 
     // Seeders to run
-    // await userSeeder();
+    await userSeeder();
     // await statusSeeder();
     await valueSeeder();
     await jobTitleSeeder();
