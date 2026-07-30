@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import RecruitDefaultLogo from '@/public/images/recruit_default_logo.png';
 
 import {
@@ -10,7 +10,7 @@ import {
 import { Search } from 'lucide-react';
 import Image from 'next/image';
 import NewsFeedPost from './news-feed-post';
-import { usePosts } from '@/services/post';
+import { useInfinitePosts, usePosts } from '@/services/post';
 import { useDebounce } from '@/hooks/useDebounce';
 import PostSkelaton from './post-skelaton';
 import PostActions from './post-actions';
@@ -18,10 +18,43 @@ import ArticleItem from './article-item';
 import { POST_TYPE_ENUMS } from '@rl/types';
 import PostItem from './post-item';
 
+const SCROLL_THRESHOLD = 80;
+
 export default function Posts() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 500);
-  const { posts, isLoading } = usePosts({ clientSearch: debouncedSearch });
+  const [page, setPage] = useState(1);
+
+  const {
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    data,
+  } = useInfinitePosts({ clientSearch: debouncedSearch, page });
+
+  console.log(data, 'data');
+
+  const posts = data?.pages.flatMap((page) => page.docs) ?? [];
+
+  const handleScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const target = event.currentTarget;
+
+      const distanceFromBottom =
+        target.scrollHeight - target.scrollTop - target.clientHeight;
+
+      if (
+        distanceFromBottom < SCROLL_THRESHOLD &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
 
   return (
     <div className=" p-spacing-4xl space-y-spacing-4xl">
@@ -47,7 +80,10 @@ export default function Posts() {
         </InputGroup>
       </div>
 
-      <div className="space-y-spacing-4xl max-h-[calc(100vh-166px)] overflow-y-auto">
+      <div
+        onScroll={handleScroll}
+        className="space-y-spacing-4xl max-h-[calc(100vh-166px)] overflow-y-auto"
+      >
         <div className=" p-spacing-2xl border border-border-gray-secondary rounded-2xl space-y-spacing-4xl">
           <div className=" space-y-spacing-xs">
             <p className=" text-label-md font-label-md-strong! text-text-gray-secondary">
@@ -100,6 +136,14 @@ export default function Posts() {
               <PostActions />
             </div>
           ))
+        )}
+
+        {isFetchingNextPage && (
+          <div className=" space-y-spacing-4xl">
+            {Array.from({ length: 2 }).map((_, index) => (
+              <PostSkelaton key={`loading-${index}`} />
+            ))}
+          </div>
         )}
       </div>
     </div>
