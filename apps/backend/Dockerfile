@@ -45,4 +45,3 @@ WORKDIR /usr/src/app/apps/backend
 EXPOSE 9027
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "dist/src/server.js"]
- 
