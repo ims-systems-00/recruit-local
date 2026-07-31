@@ -1,3 +1,26 @@
+# Docker reads only the .dockerignore at the build context root, and both compose
+# services build with `context: .` — so this file governs the backend and the
+# frontend image alike. Per-app .dockerignore files are never consulted.
 **/node_modules
 **/.next
 **/dist
+
+# Build/run artefacts that have no business in an image. .elasticbeanstalk/logs
+# alone was 367MB of the backend context.
+**/.elasticbeanstalk
+**/logs
+**/coverage
+**/*.tsbuildinfo
+**/.turbo
+**/.DS_Store
+**/.git
+
+# Secrets. These are gitignored, but Docker does not read .gitignore — without
+# this they land in an image layer as plaintext. The old frontend image shipped
+# apps/frontend/.env, NEXTAUTH_SECRET and all.
+**/.env
+**/.env.*
+!**/.env.*.example
+
+todo
+infra

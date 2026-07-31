@@ -1,8 +1,26 @@
 #Recruit Local monorepo
 
+## Docker build prerequisites
+
+Copy `.env.example` to `.env` at the repo root and fill it in before building. Compose
+reads it to supply the frontend's `NEXT_PUBLIC_*` build args; `docker compose build`
+fails with a named-variable error if the two Sanity values are missing.
+
+These are build-time only. Runtime config still comes from `apps/backend/.env` and
+`apps/frontend/.env` via `env_file`, and those files are deliberately excluded from the
+Docker build context — `next build` copies any `.env` it finds into the standalone
+output, which previously baked `NEXTAUTH_SECRET` into the frontend image and the Mongo
+connection string into the backend image.
+
 ## Local DOC/DOCX thumbnail testing (macOS)
 
-The backend thumbnail queue uses LibreOffice to generate thumbnails for office files.
+The backend thumbnail queue shells out to LibreOffice to render thumbnails for office
+files. **The Docker image does not bundle LibreOffice** — it added ~467MB and was
+dropped. In a container, DOC/DOCX uploads fall back to the generated placeholder card
+(see the `catch` around `renderOfficeThumbnail` in
+`apps/backend/src/queue/thumbnailCreateQueue.ts`); PDF and image thumbnails are
+unaffected. Real office thumbnails therefore only render where a `soffice` binary is on
+the host, which is what the steps below set up for local development.
 
 1. Install LibreOffice:
 
