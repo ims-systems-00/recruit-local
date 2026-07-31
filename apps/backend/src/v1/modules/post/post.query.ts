@@ -1,5 +1,10 @@
 import { PipelineStage } from "mongoose";
-import { projectQuery, populateFileMediaQuery, populateFileMediaListQuery } from "../../../common/query";
+import {
+  projectQuery,
+  populateFileMediaQuery,
+  populateFileMediaListQuery,
+  populateTenantSummaryQuery,
+} from "../../../common/query";
 import { omit } from "lodash";
 import { accessibleBy } from "@casl/mongoose";
 import { PostAbilityBuilder, PostAuthZEntity } from "@rl/authz";
@@ -23,9 +28,19 @@ export const populatePostMediaQuery = (): PipelineStage[] => [
   ...populateFileMediaListQuery("images", "images"),
 ];
 
+/**
+ * Adds the owning organisation as `tenant` (a compact, public tenant summary),
+ * leaving the raw `tenantId` ref in place. Posts owned by a job profile — and
+ * posts whose tenant was soft-deleted — get `tenant: null`. Must run before
+ * `postProjectQuery`.
+ */
+export const populatePostTenantQuery = (): PipelineStage[] => populateTenantSummaryQuery("tenantId", "tenant");
+
 export const postProjectQuery = (): PipelineStage[] => {
   const fieldsToExclude: (keyof IPostDoc | "__v")[] = ["__v"];
   const selectedFields = Object.keys(omit(Post.schema.paths, fieldsToExclude));
+  // The populated tenant is not a schema path, so keep it in the projection.
+  selectedFields.push("tenant");
 
   return projectQuery(selectedFields);
 };

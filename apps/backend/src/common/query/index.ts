@@ -186,6 +186,52 @@ export const populateFileMediaListQuery = (lookupField: string, asField: string)
   ];
 };
 
+/**
+ * Fields projected by `populateTenantSummaryQuery` — the identity/branding a
+ * client needs to render an owning organisation inline. Contact details and
+ * internal state (status, completion, onboarding, keywords, values) are left out
+ * on purpose; they belong to the tenant endpoint and its own CASL rules.
+ * Mirrors `TenantSummaryDto` in `@rl/types` — keep the two in sync.
+ */
+export const TENANT_SUMMARY_FIELDS = [
+  "name",
+  "description",
+  "industry",
+  "type",
+  "size",
+  "website",
+  "linkedIn",
+  "officeAddress",
+  "logoSquareSrc",
+  "logoRectangleSrc",
+  "profileImage",
+];
+
+/**
+ * Replaces a parent's tenant reference (`lookupField`) with the owning
+ * organisation's summary under `asField`, or `null` when the ref is unset or the
+ * tenant is soft-deleted. The tenant's `profileImage` is populated to a FileMedia
+ * document carrying the public `src` URL, exactly as the tenant endpoint returns
+ * it. `asField` is not a schema path, so the caller's projection stage must list
+ * it explicitly.
+ */
+export const populateTenantSummaryQuery = (lookupField = "tenantId", asField = "tenant"): PipelineStage[] => [
+  {
+    $lookup: {
+      from: modelNames.TENANT,
+      localField: lookupField,
+      foreignField: "_id",
+      as: asField,
+      pipeline: [
+        ...excludeDeletedQuery(),
+        ...populateFileMediaQuery("profileImageId", "profileImage"),
+        ...projectQuery(TENANT_SUMMARY_FIELDS),
+      ] as PipelineStage.Lookup["$lookup"]["pipeline"],
+    },
+  },
+  { $addFields: { [asField]: { $ifNull: [{ $arrayElemAt: [`$${asField}`, 0] }, null] } } },
+];
+
 export const populateStatusQuery = (): PipelineStage[] => {
   return [
     {
