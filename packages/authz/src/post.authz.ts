@@ -21,6 +21,8 @@ import {
 export const ALL_POST_FIELDS = [
   '_id',
   'tenantId',
+  // Populated owning tenant (read-only; server-populated, never accepted on writes).
+  'tenant',
   'jobProfileId',
   'title',
   'text',

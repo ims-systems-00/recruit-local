@@ -1,4 +1,4 @@
-import { FileMediaRefDto, PostResponseDto } from "@rl/types";
+import { FileMediaRefDto, PostResponseDto, TenantSummaryDto } from "@rl/types";
 
 const toIso = (v: unknown): string => (v instanceof Date ? v.toISOString() : (v as string));
 
@@ -17,6 +17,19 @@ const toMedia = (v: unknown): FileMediaRefDto => {
 
   const media = v as Record<string, unknown>;
   return { ...media, _id: String(media._id) } as FileMediaRefDto;
+};
+
+/**
+ * Serializes the populated owning tenant: ObjectIds to strings, and the nested
+ * `profileImage` through the same media serializer as the post's own media.
+ */
+const toTenantSummary = (v: unknown): TenantSummaryDto => {
+  const t = { ...(v as Record<string, unknown>) };
+
+  if (has(t, "_id")) t._id = String(t._id);
+  if (has(t, "profileImage")) t.profileImage = t.profileImage == null ? null : toMedia(t.profileImage);
+
+  return t as TenantSummaryDto;
 };
 
 /**
@@ -42,6 +55,7 @@ export const toPostResponse = (doc: unknown): PostResponseDto => {
   if (has(d, "_id")) d._id = String(d._id);
   if (has(d, "id")) d.id = String(d.id);
   if (has(d, "tenantId")) d.tenantId = d.tenantId == null ? null : String(d.tenantId);
+  if (has(d, "tenant")) d.tenant = d.tenant == null ? null : toTenantSummary(d.tenant);
   if (has(d, "jobProfileId")) d.jobProfileId = d.jobProfileId == null ? null : String(d.jobProfileId);
   if (has(d, "banner")) d.banner = d.banner == null ? null : toMedia(d.banner);
   if (has(d, "images") && Array.isArray(d.images)) d.images = d.images.map(toMedia);

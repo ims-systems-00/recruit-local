@@ -1,4 +1,5 @@
 import { FileMediaRefDto } from './file-media';
+import { TenantSummaryDto } from './tenant';
 
 export enum POST_TYPE_ENUMS {
   POST = 'post',
@@ -22,6 +23,7 @@ export interface PostResponseDto {
   _id?: string;
   id?: string;
   tenantId?: string | null;
+  tenant?: TenantSummaryDto | null; // populated owning organisation (null for job-profile-owned posts)
   jobProfileId?: string | null;
   title?: string;
   text?: string;
