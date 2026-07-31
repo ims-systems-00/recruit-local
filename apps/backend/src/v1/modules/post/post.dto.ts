@@ -1,4 +1,4 @@
-import { FileMediaRefDto, PostResponseDto, TenantSummaryDto } from "@rl/types";
+import { FileMediaRefDto, PostCreatorDto, PostResponseDto } from "@rl/types";
 
 const toIso = (v: unknown): string => (v instanceof Date ? v.toISOString() : (v as string));
 
@@ -20,16 +20,26 @@ const toMedia = (v: unknown): FileMediaRefDto => {
 };
 
 /**
- * Serializes the populated owning tenant: ObjectIds to strings, and the nested
- * `profileImage` through the same media serializer as the post's own media.
+ * Serializes the populated author (tenant or job profile). Both variants carry
+ * `_id` and a `profileImage`; the seeker variant also carries populated
+ * job-title documents. `type` is set by the aggregation and passes through.
  */
-const toTenantSummary = (v: unknown): TenantSummaryDto => {
-  const t = { ...(v as Record<string, unknown>) };
+const toCreator = (v: unknown): PostCreatorDto => {
+  const c = { ...(v as Record<string, unknown>) };
 
-  if (has(t, "_id")) t._id = String(t._id);
-  if (has(t, "profileImage")) t.profileImage = t.profileImage == null ? null : toMedia(t.profileImage);
+  if (has(c, "_id")) c._id = String(c._id);
+  if (has(c, "profileImage")) c.profileImage = c.profileImage == null ? null : toMedia(c.profileImage);
+  if (has(c, "jobTitle") && Array.isArray(c.jobTitle)) {
+    c.jobTitle = c.jobTitle.map((title) => {
+      const t = { ...(title as Record<string, unknown>) };
+      if (has(t, "_id")) t._id = String(t._id);
+      return t;
+    });
+  }
 
-  return t as TenantSummaryDto;
+  // `type` is always set by the aggregation, but it is untyped coming out of a
+  // plain document, so the discriminated union needs the widening cast.
+  return c as unknown as PostCreatorDto;
 };
 
 /**
@@ -55,7 +65,7 @@ export const toPostResponse = (doc: unknown): PostResponseDto => {
   if (has(d, "_id")) d._id = String(d._id);
   if (has(d, "id")) d.id = String(d.id);
   if (has(d, "tenantId")) d.tenantId = d.tenantId == null ? null : String(d.tenantId);
-  if (has(d, "tenant")) d.tenant = d.tenant == null ? null : toTenantSummary(d.tenant);
+  if (has(d, "creator")) d.creator = d.creator == null ? null : toCreator(d.creator);
   if (has(d, "jobProfileId")) d.jobProfileId = d.jobProfileId == null ? null : String(d.jobProfileId);
   if (has(d, "banner")) d.banner = d.banner == null ? null : toMedia(d.banner);
   if (has(d, "images") && Array.isArray(d.images)) d.images = d.images.map(toMedia);

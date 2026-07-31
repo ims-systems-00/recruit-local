@@ -21,9 +21,10 @@ import {
 export const ALL_POST_FIELDS = [
   '_id',
   'tenantId',
-  // Populated owning tenant (read-only; server-populated, never accepted on writes).
-  'tenant',
   'jobProfileId',
+  // Populated author, tenant or job profile (read-only; server-populated, never
+  // accepted on writes — it is absent from EMPLOYER_MUTATION_FIELDS).
+  'creator',
   'title',
   'text',
   'banner',
