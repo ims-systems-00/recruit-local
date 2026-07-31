@@ -70,7 +70,9 @@ export interface TenantSummaryDto {
   name?: string;
   description?: string;
   industry?: string;
-  type?: TENANT_TYPE;
+  // No `type` (TENANT_TYPE): it is low-value inline and the name is reserved for
+  // the discriminator when a summary is merged into a union like PostCreatorDto.
+  // Read the tenant endpoint for it.
   size?: number;
   website?: string;
   linkedIn?: string;

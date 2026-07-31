@@ -197,7 +197,6 @@ export const TENANT_SUMMARY_FIELDS = [
   "name",
   "description",
   "industry",
-  "type",
   "size",
   "website",
   "linkedIn",
@@ -226,6 +225,58 @@ export const populateTenantSummaryQuery = (lookupField = "tenantId", asField = "
         ...excludeDeletedQuery(),
         ...populateFileMediaQuery("profileImageId", "profileImage"),
         ...projectQuery(TENANT_SUMMARY_FIELDS),
+      ] as PipelineStage.Lookup["$lookup"]["pipeline"],
+    },
+  },
+  { $addFields: { [asField]: { $ifNull: [{ $arrayElemAt: [`$${asField}`, 0] }, null] } } },
+];
+
+/**
+ * Fields projected by `populateJobProfileSummaryQuery` — the seeker-side
+ * counterpart of TENANT_SUMMARY_FIELDS, and deliberately just as narrow:
+ * identity and avatar, no contact details and no matching internals (keywords,
+ * values, completion, visibility, status). Mirrors `JobProfileSummaryDto` in
+ * `@rl/types` — keep the two in sync.
+ */
+export const JOB_PROFILE_SUMMARY_FIELDS = ["name", "summary", "address", "jobTitle", "profileImage"];
+
+/**
+ * Job-profile counterpart of `populateTenantSummaryQuery`: replaces a parent's
+ * job-profile reference (`lookupField`) with the owning seeker's summary under
+ * `asField`, or `null` when the ref is unset or the profile is soft-deleted.
+ * `jobTitle` is populated to its catalog documents and `profileImage` to a
+ * FileMedia carrying the public `src`.
+ *
+ * Note: this does not consult the profile's `visibility`. It is meant for
+ * documents the seeker published themselves (a post), where the author is part
+ * of what was published. Don't reuse it to surface profiles that haven't been
+ * offered up that way.
+ */
+export const populateJobProfileSummaryQuery = (
+  lookupField = "jobProfileId",
+  asField = "jobProfile"
+): PipelineStage[] => [
+  {
+    $lookup: {
+      from: modelNames.JOB_PROFILE,
+      localField: lookupField,
+      foreignField: "_id",
+      as: asField,
+      pipeline: [
+        ...excludeDeletedQuery(),
+        // Name-only job titles: `populateNamedRefQuery` would pull the whole
+        // catalog document (description, isActive, timestamps) into every post.
+        {
+          $lookup: {
+            from: modelNames.JOB_TITLE,
+            localField: "jobTitle",
+            foreignField: "_id",
+            as: "jobTitle",
+            pipeline: [...excludeDeletedQuery(), ...projectQuery(["name"])],
+          },
+        },
+        ...populateFileMediaQuery("profileImageId", "profileImage"),
+        ...projectQuery(JOB_PROFILE_SUMMARY_FIELDS),
       ] as PipelineStage.Lookup["$lookup"]["pipeline"],
     },
   },

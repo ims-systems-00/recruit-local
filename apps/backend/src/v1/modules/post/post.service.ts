@@ -4,7 +4,7 @@ import { Post, IPostInput } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { postProjectQuery, populatePostMediaQuery, populatePostTenantQuery } from "./post.query";
+import { postProjectQuery, populatePostMediaQuery, populatePostCreatorQuery } from "./post.query";
 import { enqueuePostKeywords } from "../../../queue/keywordUpdateQueue";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
@@ -70,7 +70,7 @@ export const list = ({ query = {}, options }: IListPostParams) => {
       ...matchQuery(sanitizeQueryIds(query)),
       ...excludeDeletedQuery(),
       ...populatePostMediaQuery(),
-      ...populatePostTenantQuery(),
+      ...populatePostCreatorQuery(),
       ...postProjectQuery(),
     ],
     options
@@ -82,7 +82,7 @@ export const getOne = async ({ query = {} }: IPostGetParams) => {
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...populatePostMediaQuery(),
-    ...populatePostTenantQuery(),
+    ...populatePostCreatorQuery(),
     ...postProjectQuery(),
   ]);
   if (posts.length === 0) throw new NotFoundException("Post not found.");
@@ -95,7 +95,7 @@ export const listSoftDeleted = async ({ query = {}, options }: IListPostParams) 
       ...matchQuery(sanitizeQueryIds(query)),
       ...onlyDeletedQuery(),
       ...populatePostMediaQuery(),
-      ...populatePostTenantQuery(),
+      ...populatePostCreatorQuery(),
       ...postProjectQuery(),
     ],
     options
@@ -107,7 +107,7 @@ export const getOneSoftDeleted = async ({ query = {} }: IPostGetParams) => {
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...populatePostMediaQuery(),
-    ...populatePostTenantQuery(),
+    ...populatePostCreatorQuery(),
     ...postProjectQuery(),
   ]);
   if (posts.length === 0) throw new NotFoundException("Post not found in trash.");
