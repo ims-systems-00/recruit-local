@@ -13,17 +13,20 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { cn } from '@/lib/utils';
+import { Creator } from '@/services/post/post.type';
 
 export default function PostItem({
   title,
   createdAt,
   text,
   images,
+  creator,
 }: {
   title: string;
   createdAt: string;
   text: string;
   images?: PostImage[];
+  creator: Creator;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -38,7 +41,7 @@ export default function PostItem({
             <Image
               className="max-h-10 h-10 w-10 rounded-full"
               alt="AchievementsDefault"
-              src={SavesDefault}
+              src={creator.profileImage.src || SavesDefault}
               height={40}
               width={40}
             />
@@ -46,13 +49,13 @@ export default function PostItem({
           <div className="space-y-spacing-2xs">
             <div className=" flex items-center gap-spacing-sm ">
               <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-                BootTech
+                {creator.name}
               </p>
             </div>
 
             <div className=" flex items-center gap-spacing-sm text-text-gray-tertiary ">
-              <p className=" text-label-sm text-text-gray-tertiary">
-                IT Company
+              <p className=" text-label-sm text-text-gray-tertiary capitalize">
+                {creator.industry}
               </p>
               <div className=" inline-block w-1.5 h-1.5 rounded-full bg-fg-gray-tertiary"></div>
               <p className="text-label-sm text-text-gray-tertiary">

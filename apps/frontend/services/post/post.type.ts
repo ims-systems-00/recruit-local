@@ -45,6 +45,27 @@ export interface PostData {
   keywords: string[];
   createdAt: string;
   updatedAt: string;
+  creator: Creator;
+}
+
+interface ProfileImage {
+  _id: string;
+  storageInformation: PostStorageInformation;
+  visibility: 'public' | 'private';
+  src: string;
+}
+
+export interface Creator {
+  type: 'tenant';
+  _id: string;
+  name: string;
+  description: string;
+  industry: string;
+  officeAddress: string;
+  size: number;
+  linkedIn: string;
+  website: string;
+  profileImage: ProfileImage;
 }
 
 export type PostListBackendResponse = {

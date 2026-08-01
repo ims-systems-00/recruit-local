@@ -6,8 +6,9 @@ import Image from 'next/image';
 import PostForm from './post-form';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { TenantData } from '@/services/tenants/tenants.type';
 
-export default function NewsFeedPost() {
+export default function NewsFeedPost({ tenant }: { tenant: TenantData }) {
   const [openCreateForm, setOpenCreateForm] = useState(false);
   return (
     <>
@@ -47,13 +48,13 @@ export default function NewsFeedPost() {
                 <Image
                   className="max-h-12 max-w-12 w-12 h-12 rounded-full "
                   alt="Logo"
-                  src={RecruitDefaultLogo}
+                  src={tenant?.profileImage?.src || RecruitDefaultLogo}
                   width={48}
                   height={48}
                 />
               </div>
               <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-                Boot Tech
+                {tenant?.name}
               </p>
             </div>
           </DialogTitle>

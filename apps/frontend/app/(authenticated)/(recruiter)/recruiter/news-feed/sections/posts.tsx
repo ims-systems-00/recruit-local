@@ -17,10 +17,22 @@ import PostActions from './post-actions';
 import ArticleItem from './article-item';
 import { POST_TYPE_ENUMS } from '@rl/types';
 import PostItem from './post-item';
+import { useTenant } from '@/services/tenants/tenants.client';
+import { useSession } from 'next-auth/react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TenantData } from '@/services/tenants/tenants.type';
 
 const SCROLL_THRESHOLD = 80;
 
 export default function Posts() {
+  const { data: session } = useSession();
+
+  const user = session?.user;
+  const tenantId = user?.tenantId;
+  const { tenant, isLoading: isTenantLoading } = useTenant(
+    tenantId,
+    !!tenantId,
+  );
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 500);
   const [page, setPage] = useState(1);
@@ -33,8 +45,6 @@ export default function Posts() {
     isError,
     data,
   } = useInfinitePosts({ clientSearch: debouncedSearch, page });
-
-  console.log(data, 'data');
 
   const posts = data?.pages.flatMap((page) => page.docs) ?? [];
 
@@ -61,7 +71,12 @@ export default function Posts() {
       <div className=" flex justify-between items-center gap-spacing-2xl">
         <div className=" space-y-spacing-2xs">
           <h3 className=" text-body-lg font-body-lg-strong! text-text-gray-primary">
-            Good Morning, BootTech
+            Good Morning,{' '}
+            {isTenantLoading ? (
+              <Skeleton className="w-20 h-4 inline-flex" />
+            ) : (
+              tenant?.name
+            )}
           </h3>
           <p className=" capitalize text-label-sm text-text-gray-tertiary">
             Share updates, find talent, and stay informed with Recruit Local.
@@ -95,15 +110,19 @@ export default function Posts() {
           </div>
           <div className=" flex gap-spacing-lg">
             <div className=" min-w-12">
-              <Image
-                className="max-h-12 max-w-12 w-12 h-12 rounded-full "
-                alt="Logo"
-                src={RecruitDefaultLogo}
-                width={48}
-                height={48}
-              />
+              {isTenantLoading ? (
+                <Skeleton className="max-h-12 max-w-12 w-12 h-12 rounded-full" />
+              ) : (
+                <Image
+                  className="max-h-12 max-w-12 w-12 h-12 rounded-full "
+                  alt="Logo"
+                  src={tenant?.profileImage?.src || RecruitDefaultLogo}
+                  width={48}
+                  height={48}
+                />
+              )}
             </div>
-            <NewsFeedPost />
+            <NewsFeedPost tenant={tenant as TenantData} />
           </div>
         </div>
         {isLoading ? (
@@ -124,6 +143,7 @@ export default function Posts() {
                   createdAt={post.createdAt}
                   title={post.title}
                   banner={post.banner?.src}
+                  creator={post.creator}
                 />
               ) : (
                 <PostItem
@@ -131,6 +151,7 @@ export default function Posts() {
                   title={post.title}
                   text={post.text}
                   images={post.images}
+                  creator={post.creator}
                 />
               )}
 
