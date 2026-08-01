@@ -155,7 +155,7 @@ export default function Posts() {
                 />
               )}
 
-              <PostActions />
+              <PostActions postId={post._id} />
             </div>
           ))
         )}
