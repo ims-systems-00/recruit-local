@@ -4,7 +4,7 @@ import { Post, IPostInput } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { postProjectQuery, populatePostMediaQuery } from "./post.query";
+import { postProjectQuery, populatePostMediaQuery, populatePostCreatorQuery } from "./post.query";
 import { enqueuePostKeywords } from "../../../queue/keywordUpdateQueue";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
@@ -70,6 +70,7 @@ export const list = ({ query = {}, options }: IListPostParams) => {
       ...matchQuery(sanitizeQueryIds(query)),
       ...excludeDeletedQuery(),
       ...populatePostMediaQuery(),
+      ...populatePostCreatorQuery(),
       ...postProjectQuery(),
     ],
     options
@@ -81,6 +82,7 @@ export const getOne = async ({ query = {} }: IPostGetParams) => {
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...populatePostMediaQuery(),
+    ...populatePostCreatorQuery(),
     ...postProjectQuery(),
   ]);
   if (posts.length === 0) throw new NotFoundException("Post not found.");
@@ -89,7 +91,13 @@ export const getOne = async ({ query = {} }: IPostGetParams) => {
 
 export const listSoftDeleted = async ({ query = {}, options }: IListPostParams) => {
   return Post.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...populatePostMediaQuery(), ...postProjectQuery()],
+    [
+      ...matchQuery(sanitizeQueryIds(query)),
+      ...onlyDeletedQuery(),
+      ...populatePostMediaQuery(),
+      ...populatePostCreatorQuery(),
+      ...postProjectQuery(),
+    ],
     options
   );
 };
@@ -99,6 +107,7 @@ export const getOneSoftDeleted = async ({ query = {} }: IPostGetParams) => {
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...populatePostMediaQuery(),
+    ...populatePostCreatorQuery(),
     ...postProjectQuery(),
   ]);
   if (posts.length === 0) throw new NotFoundException("Post not found in trash.");

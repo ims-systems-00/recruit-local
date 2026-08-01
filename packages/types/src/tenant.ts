@@ -53,3 +53,31 @@ export interface TenantResponseDto {
   createdAt?: string; // ISO
   updatedAt?: string; // ISO
 }
+
+/**
+ * Compact, public shape of the tenant (organisation) that owns another document
+ * — embedded on that document's reads so a client can render the author without
+ * a second request.
+ *
+ * Deliberately narrower than TenantResponseDto: identity and branding only.
+ * Contact details (email, phone) and internal state (status, completion,
+ * onboarding, keywords, values) stay behind the tenant endpoint, which applies
+ * its own CASL rules. Kept in sync with TENANT_SUMMARY_FIELDS in the backend's
+ * common/query.
+ */
+export interface TenantSummaryDto {
+  _id?: string;
+  name?: string;
+  description?: string;
+  industry?: string;
+  // No `type` (TENANT_TYPE): it is low-value inline and the name is reserved for
+  // the discriminator when a summary is merged into a union like PostCreatorDto.
+  // Read the tenant endpoint for it.
+  size?: number;
+  website?: string;
+  linkedIn?: string;
+  officeAddress?: string;
+  logoSquareSrc?: string;
+  logoRectangleSrc?: string;
+  profileImage?: FileMediaRefDto | null; // populated FileMedia (`src` is the public URL)
+}

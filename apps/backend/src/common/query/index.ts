@@ -186,6 +186,103 @@ export const populateFileMediaListQuery = (lookupField: string, asField: string)
   ];
 };
 
+/**
+ * Fields projected by `populateTenantSummaryQuery` — the identity/branding a
+ * client needs to render an owning organisation inline. Contact details and
+ * internal state (status, completion, onboarding, keywords, values) are left out
+ * on purpose; they belong to the tenant endpoint and its own CASL rules.
+ * Mirrors `TenantSummaryDto` in `@rl/types` — keep the two in sync.
+ */
+export const TENANT_SUMMARY_FIELDS = [
+  "name",
+  "description",
+  "industry",
+  "size",
+  "website",
+  "linkedIn",
+  "officeAddress",
+  "logoSquareSrc",
+  "logoRectangleSrc",
+  "profileImage",
+];
+
+/**
+ * Replaces a parent's tenant reference (`lookupField`) with the owning
+ * organisation's summary under `asField`, or `null` when the ref is unset or the
+ * tenant is soft-deleted. The tenant's `profileImage` is populated to a FileMedia
+ * document carrying the public `src` URL, exactly as the tenant endpoint returns
+ * it. `asField` is not a schema path, so the caller's projection stage must list
+ * it explicitly.
+ */
+export const populateTenantSummaryQuery = (lookupField = "tenantId", asField = "tenant"): PipelineStage[] => [
+  {
+    $lookup: {
+      from: modelNames.TENANT,
+      localField: lookupField,
+      foreignField: "_id",
+      as: asField,
+      pipeline: [
+        ...excludeDeletedQuery(),
+        ...populateFileMediaQuery("profileImageId", "profileImage"),
+        ...projectQuery(TENANT_SUMMARY_FIELDS),
+      ] as PipelineStage.Lookup["$lookup"]["pipeline"],
+    },
+  },
+  { $addFields: { [asField]: { $ifNull: [{ $arrayElemAt: [`$${asField}`, 0] }, null] } } },
+];
+
+/**
+ * Fields projected by `populateJobProfileSummaryQuery` — the seeker-side
+ * counterpart of TENANT_SUMMARY_FIELDS, and deliberately just as narrow:
+ * identity and avatar, no contact details and no matching internals (keywords,
+ * values, completion, visibility, status). Mirrors `JobProfileSummaryDto` in
+ * `@rl/types` — keep the two in sync.
+ */
+export const JOB_PROFILE_SUMMARY_FIELDS = ["name", "summary", "address", "jobTitle", "profileImage"];
+
+/**
+ * Job-profile counterpart of `populateTenantSummaryQuery`: replaces a parent's
+ * job-profile reference (`lookupField`) with the owning seeker's summary under
+ * `asField`, or `null` when the ref is unset or the profile is soft-deleted.
+ * `jobTitle` is populated to its catalog documents and `profileImage` to a
+ * FileMedia carrying the public `src`.
+ *
+ * Note: this does not consult the profile's `visibility`. It is meant for
+ * documents the seeker published themselves (a post), where the author is part
+ * of what was published. Don't reuse it to surface profiles that haven't been
+ * offered up that way.
+ */
+export const populateJobProfileSummaryQuery = (
+  lookupField = "jobProfileId",
+  asField = "jobProfile"
+): PipelineStage[] => [
+  {
+    $lookup: {
+      from: modelNames.JOB_PROFILE,
+      localField: lookupField,
+      foreignField: "_id",
+      as: asField,
+      pipeline: [
+        ...excludeDeletedQuery(),
+        // Name-only job titles: `populateNamedRefQuery` would pull the whole
+        // catalog document (description, isActive, timestamps) into every post.
+        {
+          $lookup: {
+            from: modelNames.JOB_TITLE,
+            localField: "jobTitle",
+            foreignField: "_id",
+            as: "jobTitle",
+            pipeline: [...excludeDeletedQuery(), ...projectQuery(["name"])],
+          },
+        },
+        ...populateFileMediaQuery("profileImageId", "profileImage"),
+        ...projectQuery(JOB_PROFILE_SUMMARY_FIELDS),
+      ] as PipelineStage.Lookup["$lookup"]["pipeline"],
+    },
+  },
+  { $addFields: { [asField]: { $ifNull: [{ $arrayElemAt: [`$${asField}`, 0] }, null] } } },
+];
+
 export const populateStatusQuery = (): PipelineStage[] => {
   return [
     {
