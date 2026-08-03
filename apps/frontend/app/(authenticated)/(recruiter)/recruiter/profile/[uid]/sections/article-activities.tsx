@@ -103,7 +103,7 @@ export default function ArticleActivities({
           />
         ))}
         {isFetchingNextPage &&
-          Array.from({ length: 2 }).map((_, index) => (
+          Array.from({ length: 3 }).map((_, index) => (
             <ArticleItemSkeleton key={`loading-${index}`} />
           ))}
       </div>
@@ -113,12 +113,10 @@ export default function ArticleActivities({
 
 const ArticleLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div>
-      <div className=" space-y-spacing-2xl">
-        <h4 className=" text-text-gray-quaternary text-label-xl font-label-xl-strong!">
-          Articles
-        </h4>
-      </div>
+    <div className=" space-y-spacing-2xl">
+      <h4 className=" text-text-gray-quaternary text-label-xl font-label-xl-strong!">
+        Articles
+      </h4>
       {children}
     </div>
   );

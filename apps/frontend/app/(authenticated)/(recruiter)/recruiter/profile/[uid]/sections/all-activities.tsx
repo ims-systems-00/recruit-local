@@ -6,7 +6,7 @@ export default function AllActivities() {
   return (
     <div className=" space-y-spacing-4xl">
       <ArticleActivities carousel={true} />
-      <PostActivities />
+      <PostActivities carousel={true} />
     </div>
   );
 }
