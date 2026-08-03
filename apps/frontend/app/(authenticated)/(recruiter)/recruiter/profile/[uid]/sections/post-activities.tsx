@@ -78,13 +78,7 @@ export default function PostActivities({ carousel }: { carousel?: boolean }) {
                 key={post._id}
                 className=" md:basis-1/2 lg:basis-1/3"
               >
-                <PostItem
-                  description={post.text}
-                  creator={post.creator.name}
-                  creatorImage={post.creator.profileImage?.src || ''}
-                  creatorIndustry={post.creator.industry}
-                  postedAt={post.createdAt}
-                />
+                <PostItem post={post} />
               </CarouselItem>
             ))}
           </CarouselContent>
@@ -102,14 +96,7 @@ export default function PostActivities({ carousel }: { carousel?: boolean }) {
         onScroll={handleScroll}
       >
         {posts.map((post) => (
-          <PostItem
-            key={post._id}
-            description={post.text}
-            creator={post.creator.name}
-            creatorImage={post.creator.profileImage?.src || ''}
-            creatorIndustry={post.creator.industry}
-            postedAt={post.createdAt}
-          />
+          <PostItem key={post._id} post={post} />
         ))}
         {isFetchingNextPage &&
           Array.from({ length: 3 }).map((_, index) => (

@@ -43,53 +43,55 @@ export default function ArticleItem({
   return (
     <>
       <div className=" rounded-2xl border border-border-gray-secondary flex flex-col items-center">
-        <div className="p-spacing-4xl space-y-spacing-4xl w-full">
-          <div className=" flex justify-between gap-spacing-lg items-start w-full">
-            <p className=" text-label-md font-label-md-strong! text-text-gray-primary">
-              {title}
-            </p>
+        <div className="p-spacing-4xl flex flex-col justify-between h-full gap-y-spacing-4xl w-full">
+          <div className="space-y-spacing-4xl">
+            <div className=" flex justify-between gap-spacing-lg items-start w-full">
+              <p className=" text-label-md font-label-md-strong! text-text-gray-primary">
+                {title}
+              </p>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <span className=" min-w-5 inline-block cursor-pointer">
-                  <EllipsisVertical className=" size-5 text-fg-gray-secondary" />
-                </span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32 bg-white">
-                <DropdownMenuItem
-                  onClick={() =>
-                    router.push(`/recruiter/news-feed/article/${id}`)
-                  }
-                  className="cursor-pointer"
-                >
-                  View
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() =>
-                    router.push(`/recruiter/news-feed/article/${id}/edit`)
-                  }
-                >
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive cursor-pointer"
-                  onClick={() => setOpenDeleteAlertDialog(true)}
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <span className=" min-w-5 inline-block cursor-pointer">
+                    <EllipsisVertical className=" size-5 text-fg-gray-secondary" />
+                  </span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-32 bg-white">
+                  <DropdownMenuItem
+                    onClick={() =>
+                      router.push(`/recruiter/news-feed/article/${id}`)
+                    }
+                    className="cursor-pointer"
+                  >
+                    View
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() =>
+                      router.push(`/recruiter/news-feed/article/${id}/edit`)
+                    }
+                  >
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                    onClick={() => setOpenDeleteAlertDialog(true)}
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
-          <div>
-            <Image
-              src={image || RecruitProfileDefault}
-              alt="Article Banner"
-              width={1000}
-              height={120}
-              className="rounded-xl max-h-[120px] h-[120px] w-full object-cover"
-            />
+            <div>
+              <Image
+                src={image || RecruitProfileDefault}
+                alt="Article Banner"
+                width={1000}
+                height={120}
+                className="rounded-xl max-h-[120px] h-[120px] w-full object-cover"
+              />
+            </div>
           </div>
           <div className=" flex gap-spacing-sm items-center justify-between w-full">
             <span className=" text-label-sm text-text-gray-tertiary flex items-center gap-spacing-xs">
