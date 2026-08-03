@@ -1,3 +1,5 @@
+'use client';
+
 import {
   ArrowUpRight,
   BriefcaseBusiness,
@@ -11,17 +13,35 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
+import { motion } from 'framer-motion';
 import JobSeekerImage from '@/public/images/job-seekers.png';
+import {
+  fadeLeft,
+  fadeRight,
+  fadeUp,
+  staggerContainer,
+  staggerFast,
+  viewportOnce,
+} from '../section-motion';
 
 export default function UserFeature() {
   return (
     <section className=" py-spacing-10xl max-w-[1280px] mx-auto px-spacing-5xl space-y-spacing-9xl">
       <div className=" grid grid-cols-1 lg:grid-cols-2 gap-spacing-9xl">
-        <div className=" space-y-spacing-4xl">
-          <p className=" text-label-sm font-label-sm-strong! text-text-brand-secondary uppercase">
+        <motion.div
+          className=" space-y-spacing-4xl"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
+          <motion.p
+            variants={fadeLeft}
+            className=" text-label-sm font-label-sm-strong! text-text-brand-secondary uppercase"
+          >
             JOB SEEKERS
-          </p>
-          <div className=" space-y-spacing-2xl">
+          </motion.p>
+          <motion.div variants={fadeUp} className=" space-y-spacing-2xl">
             <p className=" text-heading-md md:text-heading-lg font-heading-lg-strong! text-text-gray-secondary">
               Find local jobs that match your skills, values and ambitions
             </p>
@@ -40,8 +60,11 @@ export default function UserFeature() {
                 <ArrowUpRight />
               </Link>
             </div>
-          </div>
-          <div className=" space-y-spacing-2xl">
+          </motion.div>
+          <motion.div
+            className=" space-y-spacing-2xl"
+            variants={staggerFast}
+          >
             <ListItem
               icon={
                 <SquaresIntersect className="text-fg-brand-primary size-6" />
@@ -66,9 +89,14 @@ export default function UserFeature() {
               icon={<Building2 className="text-fg-brand-primary size-6" />}
               title="Culture-fit employers."
             />
-          </div>
-        </div>
-        <div>
+          </motion.div>
+        </motion.div>
+        <motion.div
+          variants={fadeRight}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
           <Image
             src={JobSeekerImage}
             alt="Job Seeker Image"
@@ -76,10 +104,16 @@ export default function UserFeature() {
             height={516}
             className=" h-full w-full max-h-[516px] object-cover rounded-2xl"
           />
-        </div>
+        </motion.div>
       </div>
       <div className=" grid grid-cols-1 lg:grid-cols-2 gap-spacing-9xl">
-        <div className="order-2 lg:order-1">
+        <motion.div
+          className="order-2 lg:order-1"
+          variants={fadeLeft}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
           <Image
             src={JobSeekerImage}
             alt="Job Seeker Image"
@@ -87,12 +121,21 @@ export default function UserFeature() {
             height={516}
             className=" h-full w-full max-h-[516px] object-cover rounded-2xl"
           />
-        </div>
-        <div className="order-1 lg:order-2 space-y-spacing-4xl">
-          <p className=" text-label-sm font-label-sm-strong! text-text-brand-secondary uppercase">
+        </motion.div>
+        <motion.div
+          className="order-1 lg:order-2 space-y-spacing-4xl"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
+          <motion.p
+            variants={fadeRight}
+            className=" text-label-sm font-label-sm-strong! text-text-brand-secondary uppercase"
+          >
             RECRUITERS
-          </p>
-          <div className=" space-y-spacing-2xl">
+          </motion.p>
+          <motion.div variants={fadeUp} className=" space-y-spacing-2xl">
             <p className=" text-heading-md md:text-heading-lg font-heading-lg-strong! text-text-gray-secondary">
               Hire locally. Hire smarter. Hire people who fit not just on paper.
             </p>
@@ -111,8 +154,8 @@ export default function UserFeature() {
                 <ArrowUpRight />
               </Link>
             </div>
-          </div>
-          <div className=" space-y-spacing-2xl">
+          </motion.div>
+          <motion.div className=" space-y-spacing-2xl" variants={staggerFast}>
             <ListItem
               icon={
                 <SquaresIntersect className="text-fg-brand-primary size-6" />
@@ -135,8 +178,8 @@ export default function UserFeature() {
               icon={<HeartHandshake className="text-fg-brand-primary size-6" />}
               title="Stronger local Team"
             />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );
@@ -150,9 +193,12 @@ const ListItem = ({
   title: string;
 }) => {
   return (
-    <div className=" flex items-center gap-spacing-md">
+    <motion.div
+      variants={fadeLeft}
+      className=" flex items-center gap-spacing-md"
+    >
       {icon}
       <p className=" text-label-xl text-text-gray-primary">{title}</p>
-    </div>
+    </motion.div>
   );
 };

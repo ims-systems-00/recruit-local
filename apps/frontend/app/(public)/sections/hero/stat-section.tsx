@@ -1,17 +1,33 @@
 'use client';
 
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 
 import Avatar1 from '@/public/images/stats1.png';
 import Avatar2 from '@/public/images/stats2.png';
 import Avatar3 from '@/public/images/stats3.png';
 import Avatar4 from '@/public/images/stats4.png';
+import {
+  fadeUp,
+  scaleIn,
+  staggerContainer,
+  viewportOnce,
+} from '../section-motion';
 
 export default function StatSection() {
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 min-h-[400px] lg:max-h-[400px] gap-spacing-3xl">
-        <div className="flex items-center flex-col gap-spacing-4xl p-spacing-5xl h-full bg-bg-gray-solid-secondary rounded-2xl ">
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 min-h-[400px] lg:max-h-[400px] gap-spacing-3xl"
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={viewportOnce}
+      >
+        <motion.div
+          variants={scaleIn}
+          className="flex items-center flex-col gap-spacing-4xl p-spacing-5xl h-full bg-bg-gray-solid-secondary rounded-2xl "
+        >
           <div className="pb-spacing-4xl px-spacing-4xl">
             <div className=" min-w-40 min-h-40 max-w-40 max-h-40  flex justify-center items-center">
               <div className=" min-w-30 min-h-30 w-30 h-30 rounded-full border border-dashed border-border-gray-secondary relative">
@@ -51,9 +67,12 @@ export default function StatSection() {
             </p>
             <p className="text-body-sm">Successful Local Hires</p>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="flex flex-col gap-spacing-3xl h-full">
+        <motion.div
+          variants={fadeUp}
+          className="flex flex-col gap-spacing-3xl h-full"
+        >
           <div className="rounded-2xl p-spacing-4xl flex-1 space-y-spacing-3xl bg-bg-brand-solid-primary">
             <p className="text-label-xs font-label-xs-strong! uppercase">
               Unique Assessments
@@ -82,9 +101,12 @@ export default function StatSection() {
               <p className="text-body-sm text-white">Job Seekers </p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="relative rounded-2xl overflow-hidden bg-white h-full min-h-[400px]">
+        <motion.div
+          variants={scaleIn}
+          className="relative rounded-2xl overflow-hidden bg-white h-full min-h-[400px]"
+        >
           <Image
             src={Avatar3}
             alt="avatar"
@@ -99,9 +121,12 @@ export default function StatSection() {
             </p>
             <p className="text-body-sm text-white">Employers</p>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="flex flex-col gap-spacing-3xl h-full">
+        <motion.div
+          variants={fadeUp}
+          className="flex flex-col gap-spacing-3xl h-full"
+        >
           <div className="relative rounded-2xl overflow-hidden flex-1 min-h-[190px]">
             <Image
               src={Avatar4}
@@ -129,8 +154,8 @@ export default function StatSection() {
               Streamlining Sales Hiring to Boost Your Growth
             </p>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
