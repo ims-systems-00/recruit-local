@@ -4,9 +4,10 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { ReactionType } from "@rl/types";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 
-export interface IReactionInput extends IUserOwnedInput {
+export interface IReactionInput {
+  tenantId?: Types.ObjectId;
+  jobProfileId?: Types.ObjectId;
   collectionName: typeof modelNames;
   collectionId: Types.ObjectId;
   type: ReactionType;
@@ -18,17 +19,21 @@ export interface IReactionDoc extends IReactionInput, ISoftDeleteDoc {
 }
 
 interface IReactionModel
-  extends Model<IReactionDoc>,
+  extends
+    Model<IReactionDoc>,
     ISoftDeleteModel<IReactionDoc>,
     PaginateModel<IReactionDoc>,
     AggregatePaginateModel<IReactionDoc> {}
 
 const reactionSchema = new Schema<IReactionDoc>(
   {
-    userId: {
+    tenantId: {
       type: Schema.Types.ObjectId,
-      ref: modelNames.USER,
-      required: true,
+      ref: modelNames.TENANT,
+    },
+    jobProfileId: {
+      type: Schema.Types.ObjectId,
+      ref: modelNames.JOB_PROFILE,
     },
     collectionName: {
       type: String,
@@ -48,9 +53,16 @@ const reactionSchema = new Schema<IReactionDoc>(
   { timestamps: true }
 );
 
+// Either a tenant or a job profile must own the reaction — not neither.
+reactionSchema.pre("validate", function (next) {
+  if (!this.tenantId && !this.jobProfileId) {
+    this.invalidate("tenantId", "A reaction requires either a tenantId or a jobProfileId.");
+  }
+  next();
+});
+
 reactionSchema.plugin(softDeletePlugin);
 reactionSchema.plugin(mongoosePaginate);
 reactionSchema.plugin(aggregatePaginate);
-reactionSchema.plugin(userOwnedPlugin);
 
 export const Reaction = model<IReactionDoc, IReactionModel>(modelNames.REACTION, reactionSchema);

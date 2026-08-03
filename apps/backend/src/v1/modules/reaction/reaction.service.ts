@@ -71,22 +71,27 @@ export const update = async ({
 };
 
 export const softRemove = async (query: IReactionQueryParams) => {
-  const reaction = await Reaction.findOneAndUpdate(sanitizeQueryIds(query), { deletedAt: new Date() }, { new: true });
-  if (!reaction) throw new NotFoundException("Reaction not found.");
-  const result = await getOneSoftDeleted({ query });
-  return result;
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const { deleted } = await Reaction.softDelete(sanitizedQuery);
+  if (!deleted) throw new NotFoundException("Reaction not found to delete.");
+  return getOneSoftDeleted({ query: sanitizedQuery });
 };
 
 export const restore = async (query: IReactionQueryParams) => {
-  const reaction = await Reaction.findOneAndUpdate(sanitizeQueryIds(query), { deletedAt: null }, { new: true });
-  if (!reaction) throw new NotFoundException("Reaction not found in trash.");
-  const result = await getOne({ query });
-  return result;
+  const sanitizedQuery = sanitizeQueryIds(query);
+  const { restored } = await Reaction.restore(sanitizedQuery);
+  if (!restored) throw new NotFoundException("Reaction not found in trash.");
+  return getOne({ query: sanitizedQuery });
 };
 
 export const hardRemove = async (query: IReactionQueryParams) => {
-  const reaction = await Reaction.findOneAndDelete(sanitizeQueryIds(query));
-  if (!reaction) throw new NotFoundException("Reaction not found.");
-  const result = await getOneSoftDeleted({ query });
-  return result;
+  const sanitizedQuery = sanitizeQueryIds(query);
+  // Echo the pre-delete snapshot: the document is gone once findOneAndDelete
+  // returns, so read it while it is still in the trash.
+  const reaction = await getOneSoftDeleted({ query: sanitizedQuery });
+
+  const deletedReaction = await Reaction.findOneAndDelete({ _id: reaction._id });
+  if (!deletedReaction) throw new NotFoundException("Reaction not found to delete.");
+
+  return reaction;
 };
