@@ -7,7 +7,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import ArticleItem from './article-item';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useInfinitePosts } from '@/services/post';
 import ArticleItemSkeleton from './article-item-skeleton';
 import { POST_TYPE_ENUMS } from '@rl/types';
@@ -33,6 +33,12 @@ export default function ArticleActivities({
   } = useInfinitePosts({ page, type: POST_TYPE_ENUMS.ARTICLE });
 
   const posts = data?.pages.flatMap((page) => page.docs) ?? [];
+
+  useEffect(() => {
+    if (carousel) {
+      setPage(1);
+    }
+  }, [carousel]);
 
   const handleScroll = useCallback(
     (event: React.UIEvent<HTMLDivElement>) => {

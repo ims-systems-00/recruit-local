@@ -1,6 +1,6 @@
 import { EllipsisVertical, Heart } from 'lucide-react';
 import Image from 'next/image';
-import React from 'react';
+import React, { useEffect } from 'react';
 import SavesDefault from '@/public/images/saves_default.png';
 import moment from 'moment';
 import {
@@ -31,6 +31,12 @@ export default function PostActivities({ carousel }: { carousel?: boolean }) {
   } = useInfinitePosts({ page, type: POST_TYPE_ENUMS.POST });
 
   const posts = data?.pages.flatMap((page) => page.docs) ?? [];
+
+  useEffect(() => {
+    if (carousel) {
+      setPage(1);
+    }
+  }, [carousel]);
 
   const handleScroll = useCallback(
     (event: React.UIEvent<HTMLDivElement>) => {
