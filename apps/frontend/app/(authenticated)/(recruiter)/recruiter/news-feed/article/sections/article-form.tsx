@@ -18,7 +18,7 @@ import { useCreatePost } from '@/services/post';
 import { Loader2 } from 'lucide-react';
 import { useDeleteFileStorage } from '@/services/file-storage';
 import DraftEditor from '@/components/draft-editor/draft-editor';
-import { POST_TYPE_ENUMS } from '@rl/types';
+import { POST_STATUS_ENUMS, POST_TYPE_ENUMS } from '@rl/types';
 
 export default function ArticleForm() {
   const router = useRouter();
@@ -46,12 +46,13 @@ export default function ArticleForm() {
     getValues,
   } = methods;
 
-  const onSubmit = async (data: PostCreateInput) => {
+  const onSubmit = async (data: PostCreateInput, status: POST_STATUS_ENUMS) => {
     await createPost({
       title: data.title,
       bannerStorage: data.bannerStorage,
       text: data.text,
       type: POST_TYPE_ENUMS.ARTICLE,
+      status: status,
     });
     setTimeout(() => {
       router.push('/recruiter/news-feed');
@@ -97,7 +98,24 @@ export default function ArticleForm() {
           </Button>
           <Button
             disabled={isCreatingPost}
-            onClick={handleSubmit(onSubmit)}
+            variant="outline"
+            onClick={handleSubmit((data) =>
+              onSubmit(data, POST_STATUS_ENUMS.DRAFT),
+            )}
+            className=" bg-bg-gray-soft-secondary cursor-pointer h-10 text-text-gray-secondary! border border-border-gray-primary rounded-lg text-label-sm font-label-sm-strong!"
+          >
+            {isCreatingPost && <Loader2 className=" w-4 h-4 animate-spin" />}
+            {isCreatingPost ? (
+              <span>Posting...</span>
+            ) : (
+              <span>Save as draft</span>
+            )}
+          </Button>
+          <Button
+            disabled={isCreatingPost}
+            onClick={handleSubmit((data) =>
+              onSubmit(data, POST_STATUS_ENUMS.LIVE),
+            )}
             className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
           >
             {isCreatingPost && <Loader2 className=" w-4 h-4 animate-spin" />}

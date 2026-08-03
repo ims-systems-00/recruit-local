@@ -10,14 +10,17 @@ import {
 import { Label } from '@/components/ui/label';
 import { PostData, PostUpdateInput } from '@/services/post/post.type';
 import { useRouter } from 'next/navigation';
-import { Resolver, useForm } from 'react-hook-form';
+import { Controller, Resolver, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { postUpdateSchema } from '@/services/post/post.validation';
 import { useUpdatePost } from '@/services/post';
 import { Loader2 } from 'lucide-react';
 import { useDeleteFileStorage } from '@/services/file-storage';
 import DraftEditor from '@/components/draft-editor/draft-editor';
-import { POST_TYPE_ENUMS } from '@rl/types';
+import { POST_STATUS_ENUMS, POST_TYPE_ENUMS } from '@rl/types';
+import { Select, SelectItem, SelectValue } from '@/components/ui/select';
+import { SelectContent, SelectTrigger } from '@/components/ui/select';
+import { SelectGroup } from '@radix-ui/react-select';
 
 export default function EditArticleForm({ article }: { article: PostData }) {
   const router = useRouter();
@@ -35,6 +38,7 @@ export default function EditArticleForm({ article }: { article: PostData }) {
       text: article.text,
       bannerStorage: article.banner?.storageInformation || undefined,
       type: POST_TYPE_ENUMS.ARTICLE,
+      status: article.status,
     },
     mode: 'onSubmit',
   });
@@ -57,6 +61,7 @@ export default function EditArticleForm({ article }: { article: PostData }) {
         text: data.text,
         bannerStorage: data.bannerStorage,
         type: POST_TYPE_ENUMS.ARTICLE,
+        status: data.status,
       },
     });
   };
@@ -156,6 +161,39 @@ export default function EditArticleForm({ article }: { article: PostData }) {
               </InputGroup>
               {errors.title && (
                 <p className="text-sm text-red-500">{errors.title.message}</p>
+              )}
+            </div>
+          </div>
+          <div className="space-y-spacing-xs">
+            <Label className="text-label-sm font-label-sm-strong!">
+              Status
+            </Label>
+
+            <div className=" space-y-2">
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary">
+                      <SelectValue placeholder="Choose your status" />
+                    </SelectTrigger>
+
+                    <SelectContent className=" bg-white">
+                      <SelectGroup>
+                        <SelectItem value={POST_STATUS_ENUMS.DRAFT}>
+                          Draft
+                        </SelectItem>
+                        <SelectItem value={POST_STATUS_ENUMS.LIVE}>
+                          Live
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.status && (
+                <p className="text-sm text-red-500">{errors.status.message}</p>
               )}
             </div>
           </div>

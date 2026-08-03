@@ -10,7 +10,7 @@ import { postCreateSchema } from '@/services/post';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useDeleteFileStorage } from '@/services/file-storage';
 import PostAttachmentItem from './post-attachment-item';
-import { POST_TYPE_ENUMS } from '@rl/types';
+import { POST_STATUS_ENUMS, POST_TYPE_ENUMS } from '@rl/types';
 
 export default function PostForm({
   setOpenCreateForm,
@@ -50,6 +50,7 @@ export default function PostForm({
       imagesStorage: data.imagesStorage,
       text: data.text,
       type: POST_TYPE_ENUMS.POST,
+      status: POST_STATUS_ENUMS.LIVE,
     });
     setOpenCreateForm(false);
   };
