@@ -1,5 +1,9 @@
 # Prod: only nginx is published. Set PUBLIC_URL to the public origin (TLS terminated
 # upstream, e.g. an ALB, forwarding to nginx:80).
+#
+# ${...} below is interpolated from apps/frontend/.env, which Compose only reads as the
+# project env file when it is named explicitly. Use the pnpm scripts, or pass the flag:
+#   docker compose --env-file apps/frontend/.env up -d --build
 services:
   # Redis runs inside the backend container; set REDIS_URL/REDIS_HOST in .env to use an external one.
   backend:
@@ -20,6 +24,10 @@ services:
       args:
         NEXT_PUBLIC_BASE_API_URL: ${PUBLIC_URL:-https://recruit-local.imssystems.tech}/api
         NEXT_PUBLIC_API_VERSION: v1
+        NEXT_PUBLIC_SANITY_PROJECT_ID: ${NEXT_PUBLIC_SANITY_PROJECT_ID:?set it in apps/frontend/.env}
+        NEXT_PUBLIC_SANITY_DATASET: ${NEXT_PUBLIC_SANITY_DATASET:?set it in apps/frontend/.env}
+        NEXT_PUBLIC_APP_BRAND: ${NEXT_PUBLIC_APP_BRAND:-}
+        NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
     env_file: ./apps/frontend/.env
     environment:
       INTERNAL_API_URL: http://backend:9027/api
