@@ -1,5 +1,9 @@
 # Prod: only nginx is published. Set PUBLIC_URL to the public origin (TLS terminated
 # upstream, e.g. an ALB, forwarding to nginx:80).
+#
+# ${...} below resolves from the root .env, which is a symlink to apps/frontend/.env
+# (Compose interpolates only from the project env file). Recreate it after cloning:
+#   ln -s apps/frontend/.env .env
 services:
   # Redis runs inside the backend container; set REDIS_URL/REDIS_HOST in .env to use an external one.
   backend:
@@ -17,14 +21,11 @@ services:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
-      # NEXT_PUBLIC_* are inlined into the client bundle at build time. They come from
-      # the root .env (see .env.example), NOT apps/frontend/.env — that file holds
-      # NEXTAUTH_SECRET, and Next's standalone output would copy it into the image.
       args:
         NEXT_PUBLIC_BASE_API_URL: ${PUBLIC_URL:-https://recruit-local.imssystems.tech}/api
         NEXT_PUBLIC_API_VERSION: v1
-        NEXT_PUBLIC_SANITY_PROJECT_ID: ${NEXT_PUBLIC_SANITY_PROJECT_ID:?set it in the root .env}
-        NEXT_PUBLIC_SANITY_DATASET: ${NEXT_PUBLIC_SANITY_DATASET:?set it in the root .env}
+        NEXT_PUBLIC_SANITY_PROJECT_ID: ${NEXT_PUBLIC_SANITY_PROJECT_ID:?set it in apps/frontend/.env}
+        NEXT_PUBLIC_SANITY_DATASET: ${NEXT_PUBLIC_SANITY_DATASET:?set it in apps/frontend/.env}
         NEXT_PUBLIC_APP_BRAND: ${NEXT_PUBLIC_APP_BRAND:-}
         NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
     env_file: ./apps/frontend/.env

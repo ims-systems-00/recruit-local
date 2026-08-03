@@ -2,15 +2,41 @@
 
 ## Docker build prerequisites
 
-Copy `.env.example` to `.env` at the repo root and fill it in before building. Compose
-reads it to supply the frontend's `NEXT_PUBLIC_*` build args; `docker compose build`
-fails with a named-variable error if the two Sanity values are missing.
+Two real env files, each in the app it configures:
 
-These are build-time only. Runtime config still comes from `apps/backend/.env` and
-`apps/frontend/.env` via `env_file`, and those files are deliberately excluded from the
-Docker build context — `next build` copies any `.env` it finds into the standalone
-output, which previously baked `NEXTAUTH_SECRET` into the frontend image and the Mongo
-connection string into the backend image.
+| File | Used for |
+| --- | --- |
+| `apps/backend/.env` | Backend runtime (`env_file`) |
+| `apps/frontend/.env` | Frontend runtime (`env_file`) **and** the frontend's `NEXT_PUBLIC_*` build args |
+
+Plus a root `.env` **symlink**, which every checkout and deploy must recreate:
+
+```sh
+ln -s apps/frontend/.env .env
+```
+
+Compose interpolates `${...}` only from the project env file — it cannot read a service's
+`env_file:` for that, because interpolation happens before the YAML is parsed. The symlink
+makes `apps/frontend/.env` serve as that project env file, so plain
+`docker compose -f docker-compose.yml build | up -d | down` works with no extra flags.
+Without it, compose aborts on the guarded Sanity variables rather than building with empty
+values. `.env` is gitignored, so `git clone` will not bring the symlink with it, and
+neither will a deploy that copies files without preserving symlinks.
+
+`apps/frontend/.env` holds both public and secret keys. Only the
+`NEXT_PUBLIC_*` keys named in the `args:` block cross into the build, and those are
+inlined into the client bundle and public by definition. The file itself never enters the
+build context (`.dockerignore` excludes `**/.env`) because `next build` copies any `.env`
+it finds into the standalone output, which previously baked `NEXTAUTH_SECRET` into the
+frontend image and the Mongo connection string into the backend image.
+
+Two gotchas:
+
+- **`NEXT_PUBLIC_*` changes need a rebuild.** They are compiled into the bundle, so
+  `up -d` alone reuses the old image. Re-run `pnpm docker-compose:prod:build`.
+- **`NEXT_PUBLIC_BASE_API_URL` in that file is the dev value** (`localhost:9027`), used by
+  `pnpm frontend:dev`. The container build ignores it and derives the URL from
+  `PUBLIC_URL` instead. Set `PUBLIC_URL` to the public origin when deploying.
 
 ## Local DOC/DOCX thumbnail testing (macOS)
 
