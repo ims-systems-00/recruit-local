@@ -4,10 +4,31 @@ import { PostData } from '@/services/post';
 import Image from 'next/image';
 import React from 'react';
 import moment from 'moment';
-import { Bookmark, Heart } from 'lucide-react';
+import { Bookmark, Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ReactionType } from '@rl/types';
+import { useCreateFavourite } from '@/services/favourite';
+import { useCreateReaction } from '@/services/reaction/reaction.client';
 
 export default function ArticleDetails({ item }: { item: PostData }) {
+  const { createReaction, isPending: isCreatingReaction } = useCreateReaction();
+  const { createFavourite, isPending: isCreatingFavourite } =
+    useCreateFavourite();
+
+  const onAddFavourite = async () => {
+    await createFavourite({
+      itemId: item._id,
+      itemType: 'posts',
+    });
+  };
+
+  const handleCreateReaction = async () => {
+    await createReaction({
+      collectionName: 'posts',
+      collectionId: item._id,
+      type: ReactionType.LOVE,
+    });
+  };
   return (
     <div className=" p-spacing-4xl space-y-spacing-4xl">
       <div className=" space-y-spacing-2xl">
@@ -46,13 +67,29 @@ export default function ArticleDetails({ item }: { item: PostData }) {
             <Button
               variant="outline"
               size="sm"
-              className=" border-0! shadow-none!"
+              className=" border-0! shadow-none! cursor-pointer"
+              onClick={handleCreateReaction}
+              disabled={isCreatingReaction}
             >
-              <Heart className="size-4" />
+              {isCreatingReaction ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Heart className="size-4" />
+              )}
               100
             </Button>
-            <Button variant="outline" size="sm" className=" h-10 w-10 min-w-10">
-              <Bookmark className="size-4" />
+            <Button
+              variant="outline"
+              size="sm"
+              className=" h-10 w-10 min-w-10 cursor-pointer"
+              onClick={onAddFavourite}
+              disabled={isCreatingFavourite}
+            >
+              {isCreatingFavourite ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Bookmark className="size-4" />
+              )}
             </Button>
           </div>
         </div>

@@ -84,6 +84,7 @@ export default function ArticleActivities({
                   title={post.title}
                   image={post.banner?.src || ''}
                   postedAt={post.createdAt}
+                  id={post._id}
                 />
               </CarouselItem>
             ))}
@@ -103,6 +104,7 @@ export default function ArticleActivities({
         {posts.map((post) => (
           <ArticleItem
             key={post._id}
+            id={post._id}
             title={post.title}
             image={post.banner?.src || ''}
             postedAt={post.createdAt}

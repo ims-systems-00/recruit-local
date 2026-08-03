@@ -106,7 +106,9 @@ export function useCreatePost() {
 }
 
 // Hook to update an existing post
-export function useUpdatePost() {
+export function useUpdatePost(
+  onSuccessCallback?: (response: PostData) => void,
+) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -116,6 +118,9 @@ export function useUpdatePost() {
       if (response.success) {
         toast.success(response.message || 'Post updated successfully');
         queryClient.invalidateQueries({ queryKey: postKeys.all });
+        if (onSuccessCallback) {
+          onSuccessCallback(response.data);
+        }
       } else {
         toast.error(response.message);
       }
