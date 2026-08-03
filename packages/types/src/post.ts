@@ -1,6 +1,7 @@
 import { FileMediaRefDto } from './file-media';
 import { TenantSummaryDto } from './tenant';
 import { JobProfileSummaryDto } from './job-profile';
+import { ReactionType } from './reaction';
 
 export enum POST_TYPE_ENUMS {
   POST = 'post',
@@ -53,6 +54,15 @@ export interface PostResponseDto {
   type?: POST_TYPE_ENUMS;
   status?: POST_STATUS_ENUMS;
   schedule?: string | null; // ISO
+  /**
+   * The viewer's own reaction on this post, or `null` when they have not
+   * reacted. Carries the reaction type rather than a bare boolean so a client
+   * can render the right emoji without a second request; it still truthy-checks
+   * like a flag. Always `null` for a caller with no tenant/job-profile context.
+   */
+  alreadyReacted?: ReactionType | null;
+  /** Whether the viewer has favourited (saved) this post. */
+  alreadySaved?: boolean;
   createdAt?: string; // ISO
   updatedAt?: string; // ISO
 }

@@ -71,6 +71,11 @@ favouriteSchema.index(
   }
 );
 
+// Backs the favourited-item lookups (the `alreadySaved` $lookup on a post read).
+// The unique index above leads with `tenantId`, so it can't serve a candidate's
+// query, which matches on `jobProfileId` + item instead.
+favouriteSchema.index({ itemType: 1, itemId: 1 });
+
 favouriteSchema.plugin(softDeletePlugin);
 favouriteSchema.plugin(mongoosePaginate);
 favouriteSchema.plugin(aggregatePaginate);

@@ -4,7 +4,13 @@ import { Post, IPostInput } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { postProjectQuery, populatePostMediaQuery, populatePostCreatorQuery } from "./post.query";
+import {
+  postProjectQuery,
+  populatePostMediaQuery,
+  populatePostCreatorQuery,
+  alreadyReactedQuery,
+  alreadySavedQuery,
+} from "./post.query";
 import { enqueuePostKeywords } from "../../../queue/keywordUpdateQueue";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
@@ -19,8 +25,19 @@ interface IPostStorage {
   imagesStorage?: AwsStorageTemplate[];
 }
 
+/**
+ * Who is reading. Drives the per-viewer `alreadyReacted` / `alreadySaved`
+ * signals; omitting both is valid and yields the "not reacted, not saved"
+ * defaults without any extra lookup (the internal re-reads after a write do
+ * exactly that).
+ */
+interface IPostViewerContext {
+  tenantId?: string;
+  jobProfileId?: string;
+}
+
 // --- Standardized Parameter Interfaces ---
-type IListPostParams = IListParams<IPostInput>;
+type IListPostParams = IListParams<IPostInput> & IPostViewerContext;
 type IPostQueryParams = ListQueryParams<IPostInput>;
 
 export interface IPostUpdateParams {
@@ -28,7 +45,7 @@ export interface IPostUpdateParams {
   payload: Partial<IPostInput> & IPostStorage;
 }
 
-export interface IPostGetParams {
+export interface IPostGetParams extends IPostViewerContext {
   query: IPostQueryParams;
 }
 
@@ -64,7 +81,7 @@ const safeDeleteMedia = async (id: Types.ObjectId) => {
   }
 };
 
-export const list = ({ query = {}, options }: IListPostParams) => {
+export const list = ({ query = {}, options, tenantId, jobProfileId }: IListPostParams) => {
   return Post.aggregatePaginate(
     [
       ...matchQuery(sanitizeQueryIds(query)),
@@ -72,18 +89,23 @@ export const list = ({ query = {}, options }: IListPostParams) => {
       ...populatePostMediaQuery(),
       ...populatePostCreatorQuery(),
       ...postProjectQuery(),
+      // After the projection: neither field is a schema path, so it would drop them.
+      ...alreadyReactedQuery(tenantId, jobProfileId),
+      ...alreadySavedQuery(tenantId, jobProfileId),
     ],
     options
   );
 };
 
-export const getOne = async ({ query = {} }: IPostGetParams) => {
+export const getOne = async ({ query = {}, tenantId, jobProfileId }: IPostGetParams) => {
   const posts = await Post.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...populatePostMediaQuery(),
     ...populatePostCreatorQuery(),
     ...postProjectQuery(),
+    ...alreadyReactedQuery(tenantId, jobProfileId),
+    ...alreadySavedQuery(tenantId, jobProfileId),
   ]);
   if (posts.length === 0) throw new NotFoundException("Post not found.");
   return posts[0];

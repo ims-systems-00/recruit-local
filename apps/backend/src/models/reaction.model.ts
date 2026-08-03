@@ -65,4 +65,9 @@ reactionSchema.plugin(softDeletePlugin);
 reactionSchema.plugin(mongoosePaginate);
 reactionSchema.plugin(aggregatePaginate);
 
+// Backs the reacted-to-document lookups: the `alreadyReacted` $lookup on a post
+// read, and any "reactions on this document" listing. Without it each post in a
+// feed page drives a collection scan.
+reactionSchema.index({ collectionName: 1, collectionId: 1 });
+
 export const Reaction = model<IReactionDoc, IReactionModel>(modelNames.REACTION, reactionSchema);
