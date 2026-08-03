@@ -9,19 +9,19 @@ Two real env files, each in the app it configures:
 | `apps/backend/.env` | Backend runtime (`env_file`) |
 | `apps/frontend/.env` | Frontend runtime (`env_file`) **and** the frontend's `NEXT_PUBLIC_*` build args |
 
-Plus a root `.env` **symlink**, which every checkout and deploy must recreate:
+There is no root `.env`. `apps/frontend/.env` is the only source for the build args, and
+Compose is pointed at it with `--env-file`:
 
 ```sh
-ln -s apps/frontend/.env .env
+docker compose --env-file apps/frontend/.env -f docker-compose.yml up -d --build
 ```
 
-Compose interpolates `${...}` only from the project env file — it cannot read a service's
-`env_file:` for that, because interpolation happens before the YAML is parsed. The symlink
-makes `apps/frontend/.env` serve as that project env file, so plain
-`docker compose -f docker-compose.yml build | up -d | down` works with no extra flags.
-Without it, compose aborts on the guarded Sanity variables rather than building with empty
-values. `.env` is gitignored, so `git clone` will not bring the symlink with it, and
-neither will a deploy that copies files without preserving symlinks.
+The `pnpm docker-compose:prod:*` scripts already pass that flag, so prefer them. Compose
+interpolates `${...}` only from the project env file — it cannot read a service's
+`env_file:` for that, because interpolation happens before the YAML is parsed. Omit the
+flag and Compose aborts on the guarded Sanity variables rather than building with empty
+values. Run it from the repo root; `--env-file` is resolved relative to the current
+directory.
 
 `apps/frontend/.env` holds both public and secret keys. Only the
 `NEXT_PUBLIC_*` keys named in the `args:` block cross into the build, and those are

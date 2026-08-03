@@ -1,9 +1,9 @@
 # Prod: only nginx is published. Set PUBLIC_URL to the public origin (TLS terminated
 # upstream, e.g. an ALB, forwarding to nginx:80).
 #
-# ${...} below resolves from the root .env, which is a symlink to apps/frontend/.env
-# (Compose interpolates only from the project env file). Recreate it after cloning:
-#   ln -s apps/frontend/.env .env
+# ${...} below is interpolated from apps/frontend/.env, which Compose only reads as the
+# project env file when it is named explicitly. Use the pnpm scripts, or pass the flag:
+#   docker compose --env-file apps/frontend/.env up -d --build
 services:
   # Redis runs inside the backend container; set REDIS_URL/REDIS_HOST in .env to use an external one.
   backend:
