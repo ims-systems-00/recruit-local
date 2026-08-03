@@ -28,7 +28,12 @@ const toCreator = (v: unknown): PostCreatorDto => {
   const c = { ...(v as Record<string, unknown>) };
 
   if (has(c, "_id")) c._id = String(c._id);
-  if (has(c, "profileImage")) c.profileImage = c.profileImage == null ? null : toMedia(c.profileImage);
+  // Always emitted, unlike the other summary fields: an author without an avatar
+  // has no `profileImageId`, so the lookup yields an empty array and the `$unwind`
+  // (preserveNullAndEmptyArrays) drops the path entirely — `$project` cannot then
+  // reinstate it. Normalize the absence to an explicit null so `creator` carries
+  // the key on every post and clients need not distinguish missing from unset.
+  c.profileImage = c.profileImage == null ? null : toMedia(c.profileImage);
   if (has(c, "jobTitle") && Array.isArray(c.jobTitle)) {
     c.jobTitle = c.jobTitle.map((title) => {
       const t = { ...(title as Record<string, unknown>) };
