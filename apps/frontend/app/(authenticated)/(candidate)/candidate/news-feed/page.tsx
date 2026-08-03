@@ -5,7 +5,7 @@ import {
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
 import React from 'react';
-import NewsFeed from './sections/news-feed';
+import Posts from './sections/posts';
 
 export default function NewsFeedPage() {
   return (
@@ -22,7 +22,7 @@ export default function NewsFeedPage() {
         </Breadcrumb>
       </div>
 
-      <NewsFeed />
+      <Posts />
     </div>
   );
 }
