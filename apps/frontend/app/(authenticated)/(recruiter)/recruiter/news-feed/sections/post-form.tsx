@@ -92,9 +92,6 @@ export default function PostForm({
 
     setPreviewImages((prev) => [...prev, ...files]);
   };
-  console.log('previewImages', previewImages);
-
-  console.log('errors', errors);
 
   return (
     <div className="space-y-spacing-4xl">
