@@ -115,7 +115,13 @@ export const list = async ({ req }: ControllerParams) => {
     ],
   };
 
-  const results = await postService.list({ query: finalQuery, options: filter.getQueryOptions() });
+  // Session context drives the per-viewer `alreadyReacted` / `alreadySaved` flags.
+  const results = await postService.list({
+    query: finalQuery,
+    options: filter.getQueryOptions(),
+    tenantId: req.session?.tenantId,
+    jobProfileId: req.session?.jobProfileId,
+  });
 
   const sanitizedDocs = sanitizeDocuments<PostAuthZEntity>(
     results.docs,
@@ -139,7 +145,12 @@ export const list = async ({ req }: ControllerParams) => {
 export const getOne = async ({ req }: ControllerParams) => {
   const ability = new PostAbilityBuilder(req.session).getAbility();
 
-  const post = await postService.getOne({ query: { _id: req.params.id } });
+  // Session context drives the per-viewer `alreadyReacted` / `alreadySaved` flags.
+  const post = await postService.getOne({
+    query: { _id: req.params.id },
+    tenantId: req.session?.tenantId,
+    jobProfileId: req.session?.jobProfileId,
+  });
 
   if (!post || !ability.can(AbilityAction.Read, new PostAuthZEntity(post))) {
     throw new UnauthorizedException("You do not have permission to view this post.");

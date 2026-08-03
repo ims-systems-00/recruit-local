@@ -33,6 +33,11 @@ export const ALL_POST_FIELDS = [
   'type',
   'status',
   'schedule',
+  // Per-viewer read-only signals derived by the read aggregation (the viewer's
+  // own reaction, and whether they favourited the post). Server-populated, never
+  // accepted on writes — absent from EMPLOYER_MUTATION_FIELDS.
+  'alreadyReacted',
+  'alreadySaved',
   // Transient upload templates accepted on writes (resolved to FileMedia refs).
   'bannerStorage',
   'bannerStorage.*',

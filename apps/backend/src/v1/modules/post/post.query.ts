@@ -1,4 +1,4 @@
-import { PipelineStage } from "mongoose";
+import { PipelineStage, Types } from "mongoose";
 import {
   projectQuery,
   populateFileMediaQuery,
@@ -11,6 +11,7 @@ import { accessibleBy } from "@casl/mongoose";
 import { PostAbilityBuilder, PostAuthZEntity } from "@rl/authz";
 import { AbilityAction, POST_CREATOR_TYPE } from "@rl/types";
 import { Post, IPostDoc } from "../../../models";
+import { modelNames } from "../../../models/constants";
 
 // Mongo filter that scopes a list to the posts the caller may read (own tenant's
 // posts for employers, LIVE posts for everyone else).
@@ -66,6 +67,108 @@ export const populatePostCreatorQuery = (): PipelineStage[] => [
     },
   },
 ];
+
+/**
+ * Aggregation expression matching the documents owned by the current viewer, or
+ * `null` when the caller has no identity to own anything (an unauthenticated
+ * reader, or a platform admin, which reacts/saves as nobody).
+ *
+ * Reactions and favourites are both owned by exactly one context — a job profile
+ * (seeker) or a tenant (employer) — so the profile ref wins where a session
+ * somehow carries both, matching `alreadysaved` in the job module.
+ */
+const viewerOwnerCondition = (tenantId?: string, jobProfileId?: string): Record<string, unknown> | null => {
+  if (jobProfileId && Types.ObjectId.isValid(jobProfileId)) {
+    return { $eq: ["$jobProfileId", new Types.ObjectId(jobProfileId)] };
+  }
+  if (tenantId && Types.ObjectId.isValid(tenantId)) {
+    return { $eq: ["$tenantId", new Types.ObjectId(tenantId)] };
+  }
+  return null;
+};
+
+/**
+ * Adds `alreadyReacted`: the viewer's own reaction type on each post, or `null`
+ * when they have not reacted. Reactions are soft-deleted, so a removed one is
+ * excluded; nothing enforces one reaction per reactor per post, so the most
+ * recently touched one wins. Must run after `postProjectQuery`, which would
+ * otherwise drop the field (it is not a schema path).
+ */
+export const alreadyReactedQuery = (tenantId?: string, jobProfileId?: string): PipelineStage[] => {
+  const ownerCondition = viewerOwnerCondition(tenantId, jobProfileId);
+  if (!ownerCondition) return [{ $addFields: { alreadyReacted: null } }];
+
+  return [
+    {
+      $lookup: {
+        from: modelNames.REACTION,
+        let: { currentPostId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  ownerCondition,
+                  { $eq: ["$collectionName", modelNames.POST] },
+                  { $eq: ["$collectionId", "$$currentPostId"] },
+                  { $ne: ["$deleteMarker.status", true] },
+                ],
+              },
+            },
+          },
+          { $sort: { updatedAt: -1 } },
+          { $limit: 1 },
+          { $project: { type: 1 } },
+        ] as PipelineStage.Lookup["$lookup"]["pipeline"],
+        as: "alreadyReactedLookup",
+      },
+    },
+    {
+      $addFields: {
+        alreadyReacted: { $ifNull: [{ $arrayElemAt: ["$alreadyReactedLookup.type", 0] }, null] },
+      },
+    },
+    { $project: { alreadyReactedLookup: 0 } },
+  ];
+};
+
+/**
+ * Adds `alreadySaved`: whether the viewer has favourited this post. Favourites
+ * are soft-deleted, so an un-saved post reads `false`. Must run after
+ * `postProjectQuery` for the same reason as `alreadyReactedQuery`.
+ */
+export const alreadySavedQuery = (tenantId?: string, jobProfileId?: string): PipelineStage[] => {
+  const ownerCondition = viewerOwnerCondition(tenantId, jobProfileId);
+  if (!ownerCondition) return [{ $addFields: { alreadySaved: false } }];
+
+  return [
+    {
+      $lookup: {
+        from: modelNames.FAVOURITE,
+        let: { currentPostId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  ownerCondition,
+                  { $eq: ["$itemType", modelNames.POST] },
+                  { $eq: ["$itemId", "$$currentPostId"] },
+                  { $ne: ["$deleteMarker.status", true] },
+                ],
+              },
+            },
+          },
+          { $limit: 1 },
+          { $project: { _id: 1 } },
+        ] as PipelineStage.Lookup["$lookup"]["pipeline"],
+        as: "alreadySavedLookup",
+      },
+    },
+    { $addFields: { alreadySaved: { $gt: [{ $size: "$alreadySavedLookup" }, 0] } } },
+    { $project: { alreadySavedLookup: 0 } },
+  ];
+};
 
 export const postProjectQuery = (): PipelineStage[] => {
   const fieldsToExclude: (keyof IPostDoc | "__v")[] = ["__v"];
