@@ -1,16 +1,14 @@
 'use client';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import RecruitDefaultLogo from '@/public/images/recruit_default_logo.png';
 import { ImageIcon, TextInitial } from 'lucide-react';
 import Image from 'next/image';
+import PostForm from './post-form';
 import React, { useState } from 'react';
-import RecruitDefaultLogo from '@/public/images/recruit_default_logo.png';
+import Link from 'next/link';
+import { TenantData } from '@/services/tenants/tenants.type';
 
-export default function NewsFeedPost() {
+export default function NewsFeedPost({ tenant }: { tenant: TenantData }) {
   const [openCreateForm, setOpenCreateForm] = useState(false);
   return (
     <>
@@ -22,18 +20,24 @@ export default function NewsFeedPost() {
           <span>Write a post for in Newsfeed</span>
         </div>
         <div className=" flex items-center gap-spacing-lg">
-          <div className=" flex gap-spacing-2xs items-center">
+          <div
+            onClick={() => setOpenCreateForm(true)}
+            className=" cursor-pointer flex gap-spacing-2xs items-center"
+          >
             <ImageIcon className=" w-4 h-4 text-fg-gray-secondary" />
             <span className=" text-label-sm text-text-gray-quaternary">
               Media
             </span>
           </div>
-          <div className=" flex gap-spacing-2xs items-center">
+          <Link
+            className=" flex gap-spacing-2xs items-center"
+            href="/recruiter/news-feed/article"
+          >
             <TextInitial className=" w-4 h-4 text-fg-gray-secondary" />
             <span className=" text-label-sm text-text-gray-quaternary">
               Article
             </span>
-          </div>
+          </Link>
         </div>
       </div>
       <Dialog open={openCreateForm} onOpenChange={setOpenCreateForm}>
@@ -44,16 +48,17 @@ export default function NewsFeedPost() {
                 <Image
                   className="max-h-12 max-w-12 w-12 h-12 rounded-full "
                   alt="Logo"
-                  src={RecruitDefaultLogo}
+                  src={tenant?.profileImage?.src || RecruitDefaultLogo}
                   width={48}
                   height={48}
                 />
               </div>
               <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-                Boot Tech
+                {tenant?.name}
               </p>
             </div>
           </DialogTitle>
+          <PostForm setOpenCreateForm={setOpenCreateForm} />
         </DialogContent>
       </Dialog>
     </>

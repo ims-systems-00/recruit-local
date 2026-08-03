@@ -1,5 +1,10 @@
 'use client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   getPosts,
@@ -203,4 +208,32 @@ export function useRestorePost() {
     isPending: mutation.isPending,
     error: mutation.error,
   };
+}
+
+export function useInfinitePosts(
+  filters: PostListFilters = {},
+  isEnabled = true,
+) {
+  return useInfiniteQuery({
+    queryKey: postKeys.list(filters),
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await getPosts({
+        ...filters,
+        page: pageParam,
+      });
+
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+
+      return response.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination?.hasNextPage
+        ? lastPage.pagination.page + 1
+        : undefined;
+    },
+    enabled: isEnabled,
+  });
 }

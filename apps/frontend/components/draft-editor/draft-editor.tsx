@@ -143,6 +143,14 @@ const LinkComponent = (props: DraftDecoratorComponentProps) => {
 // HELPERS
 // ============================================================
 
+function normalizeValue(value: DraftEditorProps['value']): string | null {
+  if (value == null || value === '') return null;
+
+  if (typeof value === 'string') return value;
+
+  return JSON.stringify(value);
+}
+
 function createEditorState(
   value: DraftEditorProps['value'],
   decorator: CompositeDecorator,
@@ -207,13 +215,20 @@ export default function DraftEditor({
     createEditorState(value, decorator),
   );
 
+  // Tracks the last value we applied (from props or our own onChange)
+  // so parent echoes don't recreate EditorState and reset the cursor.
+  const lastValueRef = useRef<string | null>(normalizeValue(value));
+
   // ==========================================================
   // EXTERNAL VALUE SYNC
   // ==========================================================
 
   useEffect(() => {
-    if (!value) return;
+    const incoming = normalizeValue(value);
 
+    if (incoming === lastValueRef.current) return;
+
+    lastValueRef.current = incoming;
     setEditorState(createEditorState(value, decorator));
   }, [value, decorator]);
 
@@ -228,6 +243,8 @@ export default function DraftEditor({
       const raw = convertToRaw(state.getCurrentContent());
 
       const json = JSON.stringify(raw);
+
+      lastValueRef.current = json;
 
       onChange?.(raw, json, state);
     },
@@ -322,38 +339,16 @@ export default function DraftEditor({
   // ==========================================================
 
   return (
-    <div className={`space-y-4 rounded-lg border bg-white p-4 ${className}`}>
-      {/* =================================================== */}
-      {/* EDITOR */}
-      {/* =================================================== */}
-
-      <div
-        onClick={focusEditor}
-        className={`cursor-text overflow-y-auto rounded-md border p-4 ${editorClassName}`}
-        style={{
-          minHeight,
-          maxHeight,
-        }}
-      >
-        <Editor
-          ref={editorRef}
-          editorState={editorState}
-          onChange={handleChange}
-          handleKeyCommand={handleKeyCommand}
-          customStyleMap={styleMap}
-          blockStyleFn={blockStyleFn}
-          placeholder={placeholder}
-          readOnly={readOnly}
-        />
-      </div>
-
+    <div
+      className={`rounded-2xl border border-border-gray-secondary bg-bg-gray-soft-primary ${className}`}
+    >
       {/* =================================================== */}
       {/* TOOLBAR */}
       {/* =================================================== */}
 
       {showToolbar && !readOnly && (
         <div
-          className={`flex flex-wrap items-center gap-3 rounded-md border p-2 ${toolbarClassName}`}
+          className={`flex flex-wrap items-center gap-3 border-b border-border-gray-secondary py-spacing-md px-spacing-3xl ${toolbarClassName}`}
         >
           {/* BOLD */}
           <button type="button" onClick={() => toggleInline('BOLD')}>
@@ -453,6 +448,29 @@ export default function DraftEditor({
           </button>
         </div>
       )}
+      {/* =================================================== */}
+      {/* EDITOR */}
+      {/* =================================================== */}
+
+      <div
+        onClick={focusEditor}
+        className={`cursor-text overflow-y-auto py-spacing-2xl px-spacing-3xl ${editorClassName}`}
+        style={{
+          minHeight,
+          maxHeight,
+        }}
+      >
+        <Editor
+          ref={editorRef}
+          editorState={editorState}
+          onChange={handleChange}
+          handleKeyCommand={handleKeyCommand}
+          customStyleMap={styleMap}
+          blockStyleFn={blockStyleFn}
+          placeholder={placeholder}
+          readOnly={readOnly}
+        />
+      </div>
     </div>
   );
 }

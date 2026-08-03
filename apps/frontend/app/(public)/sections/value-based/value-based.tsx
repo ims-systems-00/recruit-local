@@ -1,15 +1,34 @@
+'use client';
+
 import { HeartHandshake, MapPin, Target } from 'lucide-react';
 import React from 'react';
+import { motion } from 'framer-motion';
+import {
+  fadeDown,
+  fadeUp,
+  scaleIn,
+  staggerContainer,
+  viewportOnce,
+} from '../section-motion';
 
 export default function ValueBased() {
   return (
     <section className="bg-bg-brand-solid-alt">
       <div className="max-w-[1280px] mx-auto px-spacing-5xl py-spacing-10xl text-white flex flex-col gap-y-spacing-8xl">
-        <div className=" flex flex-col items-center justify-center text-center gap-y-spacing-4xl">
-          <p className=" text-label-sm font-label-sm-strong! text-text-brand-secondary uppercase">
+        <motion.div
+          className=" flex flex-col items-center justify-center text-center gap-y-spacing-4xl"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
+          <motion.p
+            variants={fadeDown}
+            className=" text-label-sm font-label-sm-strong! text-text-brand-secondary uppercase"
+          >
             VALUE BASED ASSESSMENT
-          </p>
-          <div className=" space-y-spacing-2xl">
+          </motion.p>
+          <motion.div variants={fadeUp} className=" space-y-spacing-2xl">
             <p className=" text-heading-md md:text-heading-xl font-heading-xl-strong! max-w-[768px]">
               Not Just matching skills Matching Values
             </p>
@@ -17,9 +36,15 @@ export default function ValueBased() {
               Stronger teams, better retention, inclusive hiring and better
               long‑term outcomes.
             </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-4xl">
+          </motion.div>
+        </motion.div>
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-4xl"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
           <ValueCard
             icon={<Target className="w-6 h-6 text-white" />}
             title="Skills and experience"
@@ -35,7 +60,7 @@ export default function ValueBased() {
             title="Values and Culture"
             description="Preferences for workplace behaviors that lead to better long-term happiness."
           />
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -51,7 +76,11 @@ const ValueCard = ({
   description: string;
 }) => {
   return (
-    <div className="bg-bg-gray-solid-secondary rounded-4xl p-spacing-5xl border border-alpha-white-20 space-y-spacing-3xl">
+    <motion.div
+      variants={scaleIn}
+      whileHover={{ y: -8, transition: { duration: 0.25 } }}
+      className="bg-bg-gray-solid-secondary rounded-4xl p-spacing-5xl border border-alpha-white-20 space-y-spacing-3xl"
+    >
       <div className=" w-12 h-12 bg-bg-brand-solid-primary rounded-full flex items-center justify-center">
         {icon}
       </div>
@@ -59,6 +88,6 @@ const ValueCard = ({
         <p className="text-body-lg font-body-lg-strong!">{title}</p>
         <p className="text-body-md text-text-gray-quinary">{description}</p>
       </div>
-    </div>
+    </motion.div>
   );
 };

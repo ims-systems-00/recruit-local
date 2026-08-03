@@ -1,16 +1,35 @@
+'use client';
+
 import { BadgeCheck, Brain, Scale, Target } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
+import { motion } from 'framer-motion';
+import {
+  fadeDown,
+  fadeUp,
+  scaleIn,
+  staggerContainer,
+  viewportOnce,
+} from '../section-motion';
 
 export default function AiIntegrations() {
   return (
     <section>
       <div className="max-w-[1280px] mx-auto px-spacing-5xl py-spacing-10xl flex flex-col gap-y-spacing-8xl">
-        <div className=" flex flex-col items-center justify-center text-center gap-y-spacing-4xl">
-          <p className=" text-label-sm font-label-sm-strong! text-text-brand-secondary uppercase">
+        <motion.div
+          className=" flex flex-col items-center justify-center text-center gap-y-spacing-4xl"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
+          <motion.p
+            variants={fadeDown}
+            className=" text-label-sm font-label-sm-strong! text-text-brand-secondary uppercase"
+          >
             AI INTEGRATIONS
-          </p>
-          <div className=" space-y-spacing-2xl">
+          </motion.p>
+          <motion.div variants={fadeUp} className=" space-y-spacing-2xl">
             <p className=" text-heading-md md:text-heading-xl font-heading-xl-strong! max-w-[768px] text-text-gray-primary">
               Powered by Alice AI
             </p>
@@ -18,9 +37,15 @@ export default function AiIntegrations() {
               Ethical. Transparent. Designed to support people — not replace
               them.
             </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-spacing-4xl">
+          </motion.div>
+        </motion.div>
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-spacing-4xl"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
           <CardItem
             icon={<Target className="w-6 h-6 text-others-brand-dark" />}
             title="Skills + Values matching"
@@ -41,13 +66,21 @@ export default function AiIntegrations() {
             title="Continuous Learning"
             description="Alice improves with every successful hire your team makes."
           />
-        </div>
-        <Link
-          href="/login"
-          className="text-label-md rounded-full font-label-md-strong! flex items-center h-12 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary text-text-white w-fit mx-auto"
+        </motion.div>
+        <motion.div
+          variants={scaleIn}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+          className="mx-auto w-fit"
         >
-          {`Let’s Get Start`}
-        </Link>
+          <Link
+            href="/login"
+            className="text-label-md rounded-full font-label-md-strong! flex items-center h-12 justify-center gap-spacing-xs py-spacing-xl px-spacing-3xl bg-bg-brand-solid-primary text-text-white w-fit mx-auto"
+          >
+            {`Let’s Get Start`}
+          </Link>
+        </motion.div>
       </div>
     </section>
   );
@@ -63,7 +96,11 @@ const CardItem = ({
   description: string;
 }) => {
   return (
-    <div className="bg-bg-gray-soft-primary rounded-2xl p-spacing-4xl border border-border-gray-secondary space-y-spacing-3xl">
+    <motion.div
+      variants={fadeUp}
+      whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.25 } }}
+      className="bg-bg-gray-soft-primary rounded-2xl p-spacing-4xl border border-border-gray-secondary space-y-spacing-3xl"
+    >
       <div className=" w-12 h-12 bg-others-brand-brand-zero rounded-full flex items-center justify-center border border-others-brand-light">
         {icon}
       </div>
@@ -73,6 +110,6 @@ const CardItem = ({
         </p>
         <p className="text-body-md text-text-gray-secondary">{description}</p>
       </div>
-    </div>
+    </motion.div>
   );
 };
