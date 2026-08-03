@@ -31,6 +31,7 @@ export async function getPosts(
         limit: params?.limit || 10,
         clientSearch: params?.clientSearch,
         statusId: params?.statusId,
+        type: params?.type,
       },
     });
     // const backendResponse = await postListResponseSchema.validate(res.data, {
