@@ -186,7 +186,7 @@ export default function Jobs({
     () => ({
       page,
       limit: 10,
-      search: debouncedSearch || undefined,
+      clientSearch: debouncedSearch || undefined,
       status: status === 'All' || !status ? undefined : status,
     }),
     [page, debouncedSearch, status],

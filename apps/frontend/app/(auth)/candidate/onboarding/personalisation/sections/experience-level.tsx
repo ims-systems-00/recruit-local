@@ -80,7 +80,7 @@ export default function ExperienceLevelSection({
 
   const onSubmit = async (data: JobProfileUpdateInput) => {
     const payload = {
-      experienceLevel: data.experienceLevel,
+      experienceLevel: data.experienceLevel || undefined,
       onboardingStep: ONBOARDING_STEP_ENUMS.EXPERIENCE_LEVEL,
     };
 

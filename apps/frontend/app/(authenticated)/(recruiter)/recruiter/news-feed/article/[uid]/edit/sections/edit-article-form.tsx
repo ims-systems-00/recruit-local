@@ -8,30 +8,37 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
-import { PostCreateInput } from '@/services/post/post.type';
+import { PostData, PostUpdateInput } from '@/services/post/post.type';
 import { useRouter } from 'next/navigation';
-import React from 'react';
-import { Resolver, useForm } from 'react-hook-form';
+import { Controller, Resolver, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { postCreateSchema } from '@/services/post/post.validation';
-import { useCreatePost } from '@/services/post';
+import { postUpdateSchema } from '@/services/post/post.validation';
+import { useUpdatePost } from '@/services/post';
 import { Loader2 } from 'lucide-react';
 import { useDeleteFileStorage } from '@/services/file-storage';
 import DraftEditor from '@/components/draft-editor/draft-editor';
 import { POST_STATUS_ENUMS, POST_TYPE_ENUMS } from '@rl/types';
+import { Select, SelectItem, SelectValue } from '@/components/ui/select';
+import { SelectContent, SelectTrigger } from '@/components/ui/select';
+import { SelectGroup } from '@radix-ui/react-select';
 
-export default function ArticleForm() {
+export default function EditArticleForm({ article }: { article: PostData }) {
   const router = useRouter();
   const { deleteFile, isLoading: isDeleting } = useDeleteFileStorage();
 
-  const { createPost, isPending: isCreatingPost } = useCreatePost();
-  const methods = useForm<PostCreateInput>({
-    resolver: yupResolver(postCreateSchema) as Resolver<PostCreateInput>,
+  const { updatePost, isPending: isUpdatingPost } = useUpdatePost(
+    (response) => {
+      router.push(`/recruiter/news-feed/article/${article._id}`);
+    },
+  );
+  const methods = useForm<PostUpdateInput>({
+    resolver: yupResolver(postUpdateSchema) as Resolver<PostUpdateInput>,
     defaultValues: {
-      title: 'Untitled Article',
-      text: '',
-      bannerStorage: undefined,
+      title: article.title,
+      text: article.text,
+      bannerStorage: article.banner?.storageInformation || undefined,
       type: POST_TYPE_ENUMS.ARTICLE,
+      status: article.status,
     },
     mode: 'onSubmit',
   });
@@ -46,17 +53,17 @@ export default function ArticleForm() {
     getValues,
   } = methods;
 
-  const onSubmit = async (data: PostCreateInput, status: POST_STATUS_ENUMS) => {
-    await createPost({
-      title: data.title,
-      bannerStorage: data.bannerStorage,
-      text: data.text,
-      type: POST_TYPE_ENUMS.ARTICLE,
-      status: status,
+  const onSubmit = async (data: PostUpdateInput) => {
+    await updatePost({
+      id: article._id,
+      payload: {
+        title: data.title,
+        text: data.text,
+        bannerStorage: data.bannerStorage,
+        type: POST_TYPE_ENUMS.ARTICLE,
+        status: data.status,
+      },
     });
-    setTimeout(() => {
-      router.push('/recruiter/news-feed');
-    }, 1000);
   };
 
   const bannerStorage = watch('bannerStorage') || null;
@@ -83,12 +90,12 @@ export default function ArticleForm() {
       <div className=" flex justify-between items-center gap-spacing-2xl">
         <div className=" space-y-spacing-2xs">
           <h3 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
-            Write an article
+            Edit Article
           </h3>
         </div>
         <div className=" flex items-center gap-spacing-2xl">
           <Button
-            disabled={isCreatingPost}
+            disabled={isUpdatingPost}
             onClick={() => router.back()}
             variant="outline"
             type="button"
@@ -97,29 +104,16 @@ export default function ArticleForm() {
             Cancel
           </Button>
           <Button
-            disabled={isCreatingPost}
-            variant="outline"
-            onClick={handleSubmit((data) =>
-              onSubmit(data, POST_STATUS_ENUMS.DRAFT),
-            )}
-            className=" bg-bg-gray-soft-secondary cursor-pointer h-10 text-text-gray-secondary! border border-border-gray-primary rounded-lg text-label-sm font-label-sm-strong!"
-          >
-            {isCreatingPost && <Loader2 className=" w-4 h-4 animate-spin" />}
-            {isCreatingPost ? (
-              <span>Posting...</span>
-            ) : (
-              <span>Save as draft</span>
-            )}
-          </Button>
-          <Button
-            disabled={isCreatingPost}
-            onClick={handleSubmit((data) =>
-              onSubmit(data, POST_STATUS_ENUMS.LIVE),
-            )}
+            disabled={isUpdatingPost}
+            onClick={handleSubmit(onSubmit)}
             className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
           >
-            {isCreatingPost && <Loader2 className=" w-4 h-4 animate-spin" />}
-            {isCreatingPost ? <span>Posting...</span> : <span>Post now</span>}
+            {isUpdatingPost && <Loader2 className=" w-4 h-4 animate-spin" />}
+            {isUpdatingPost ? (
+              <span>Updating...</span>
+            ) : (
+              <span>Update now</span>
+            )}
           </Button>
         </div>
       </div>
@@ -167,6 +161,39 @@ export default function ArticleForm() {
               </InputGroup>
               {errors.title && (
                 <p className="text-sm text-red-500">{errors.title.message}</p>
+              )}
+            </div>
+          </div>
+          <div className="space-y-spacing-xs">
+            <Label className="text-label-sm font-label-sm-strong!">
+              Status
+            </Label>
+
+            <div className=" space-y-2">
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="h-10! w-full rounded-lg shadow-xs border-border-gray-primary">
+                      <SelectValue placeholder="Choose your status" />
+                    </SelectTrigger>
+
+                    <SelectContent className=" bg-white">
+                      <SelectGroup>
+                        <SelectItem value={POST_STATUS_ENUMS.DRAFT}>
+                          Draft
+                        </SelectItem>
+                        <SelectItem value={POST_STATUS_ENUMS.LIVE}>
+                          Live
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.status && (
+                <p className="text-sm text-red-500">{errors.status.message}</p>
               )}
             </div>
           </div>

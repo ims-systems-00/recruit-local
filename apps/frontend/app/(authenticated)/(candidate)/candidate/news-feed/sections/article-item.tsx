@@ -65,7 +65,7 @@ export default function ArticleItem({
           className="rounded-xl max-h-[298px] w-full object-cover"
         />
         <Link
-          href={`/recruiter/news-feed/article/${uid}`}
+          href={`/candidate/news-feed/article/${uid}`}
           className=" text-heading-sm text-text-gray-primary"
         >
           {' '}

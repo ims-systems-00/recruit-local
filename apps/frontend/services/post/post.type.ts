@@ -16,6 +16,7 @@ export type PostListFilters = {
   limit?: number;
   clientSearch?: string;
   statusId?: string;
+  type?: string;
 };
 
 // API Response types

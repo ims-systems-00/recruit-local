@@ -53,7 +53,7 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
     () => ({
       page,
       limit: 10,
-      search: debouncedSearch || undefined,
+      clientSearch: debouncedSearch || undefined,
 
       workplace: workplace.length ? { in: workplace } : undefined,
 

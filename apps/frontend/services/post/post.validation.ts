@@ -23,6 +23,7 @@ export const postCreateSchema = yup.object({
     .default(undefined),
   tags: yup.array().of(yup.string().defined()).optional(),
   statusId: yup.string().optional(),
+  status: yup.string().optional(),
   bannerStorage: awsStorageSchema.nullable().notRequired().default(undefined),
 });
 
@@ -38,6 +39,7 @@ export const postUpdateSchema = yup.object({
     .default(undefined),
   tags: yup.array().of(yup.string().defined()).optional(),
   statusId: yup.string().optional(),
+  status: yup.string().optional(),
   bannerStorage: awsStorageSchema.nullable().notRequired().default(undefined),
 });
 
