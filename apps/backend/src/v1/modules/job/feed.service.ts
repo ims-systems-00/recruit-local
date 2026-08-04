@@ -1,10 +1,10 @@
 import assert from "assert";
-import { redisConnection } from "../../../.config/ioredis";
+import { redisConnection, REDIS_KEY_PREFIX } from "../../../.config/ioredis";
 
 /**
  * Per-profile "matched jobs" feed, maintained by the fan-out workers.
  *
- * Stored as a Redis ZSET `jobfeed:{profileId}` — member = jobId, score = keyword
+ * Stored as a Redis ZSET `rl:jobfeed:{profileId}` — member = jobId, score = keyword
  * overlap count. It is a *candidate index*, not the source of truth: the jobs
  * list constrains its normal aggregation with `_id $in <feed>`, so security,
  * soft-delete and status filters still run in Mongo and any stale/closed jobs in
@@ -13,7 +13,7 @@ import { redisConnection } from "../../../.config/ioredis";
 
 // ponytail: cap each feed to the top matches; deep pagination isn't feed-served.
 const FEED_CAP = 300;
-const feedKey = (profileId: string) => `jobfeed:${profileId}`;
+const feedKey = (profileId: string) => `${REDIS_KEY_PREFIX}:jobfeed:${profileId}`;
 
 /** Keyword overlap count between a doc's keywords and a prebuilt set. */
 export const keywordOverlap = (keywords: string[] | undefined, against: Set<string>): number =>

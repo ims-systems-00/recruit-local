@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Queue, Worker, Job, QueueEvents, BackoffOptions, JobsOptions } from "bullmq";
-import { redisConnection } from "../.config/ioredis";
+import { redisConnection, REDIS_KEY_PREFIX } from "../.config/ioredis";
 
 /**
  * Defines the data structure for a job that lands in the DLQ.
@@ -15,9 +15,12 @@ interface DeadLetterJobData {
 
 const dlqName = "dead-letter-queue";
 
-// This part was already working for you
+// Redis is shared with other projects, so every queue namespaces its keys under
+// `rl:` rather than BullMQ's default `bull:`. Must be identical on the Queue,
+// Worker and QueueEvents of a given queue or they address different key spaces.
 export const deadLetterQueue = new Queue<DeadLetterJobData>(dlqName, {
   connection: redisConnection.options,
+  prefix: REDIS_KEY_PREFIX,
 });
 
 /**
@@ -35,15 +38,18 @@ export class ReusableQueue<T extends object> {
 
     this.queue = new Queue<T>(queueName, {
       connection: redisConnection.options,
+      prefix: REDIS_KEY_PREFIX,
     });
 
     this.worker = new Worker<T>(queueName, processor, {
       connection: redisConnection.options,
       concurrency: 5,
+      prefix: REDIS_KEY_PREFIX,
     });
 
     this.queueEvents = new QueueEvents(queueName, {
       connection: redisConnection.options,
+      prefix: REDIS_KEY_PREFIX,
     });
 
     this.setupCompletedJobListener();
