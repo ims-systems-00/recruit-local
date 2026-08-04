@@ -12,6 +12,17 @@ import { logger } from "../common/helper/logger";
 const INTERNAL_HOST = "127.0.0.1";
 const DEFAULT_PORT = 6379;
 
+/**
+ * Namespace for every key this app writes. The Redis server is shared with other
+ * projects, so nothing may sit on a bare key name.
+ *
+ * Applied two ways: as BullMQ's `prefix` option (keys become `rl:<queue>:*`
+ * instead of the default `bull:<queue>:*`) and by hand in the feed key builders.
+ * It deliberately is *not* set as ioredis' `keyPrefix` — BullMQ does not support
+ * that option, and this connection is shared with the queues.
+ */
+export const REDIS_KEY_PREFIX = "rl";
+
 function buildRedisOptions(): RedisOptions {
   // maxRetriesPerRequest must be null for BullMQ workers — keep it on every branch.
   const base: RedisOptions = { maxRetriesPerRequest: null };

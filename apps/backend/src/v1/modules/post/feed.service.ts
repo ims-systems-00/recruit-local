@@ -1,5 +1,5 @@
 import assert from "assert";
-import { redisConnection } from "../../../.config/ioredis";
+import { redisConnection, REDIS_KEY_PREFIX } from "../../../.config/ioredis";
 import { keywordOverlap, topScored } from "../job/feed.service";
 
 /**
@@ -7,7 +7,7 @@ import { keywordOverlap, topScored } from "../job/feed.service";
  *
  * Stored as a Redis ZSET — member = postId, score = keyword overlap count. Posts
  * fan out to two audiences, so keys are namespaced to keep a jobProfile id from
- * colliding with a tenant id: `postfeed:profile:{id}` and `postfeed:tenant:{id}`.
+ * colliding with a tenant id: `rl:postfeed:profile:{id}` and `rl:postfeed:tenant:{id}`.
  *
  * Like the jobs feed, it is a *candidate index*, not the source of truth: the
  * posts list constrains its aggregation with `_id $in <feed>`, so security,
@@ -18,8 +18,8 @@ import { keywordOverlap, topScored } from "../job/feed.service";
 // ponytail: cap each feed to the top matches; deep pagination isn't feed-served.
 const FEED_CAP = 300;
 
-export const profilePostKey = (jobProfileId: string) => `postfeed:profile:${jobProfileId}`;
-export const tenantPostKey = (tenantId: string) => `postfeed:tenant:${tenantId}`;
+export const profilePostKey = (jobProfileId: string) => `${REDIS_KEY_PREFIX}:postfeed:profile:${jobProfileId}`;
+export const tenantPostKey = (tenantId: string) => `${REDIS_KEY_PREFIX}:postfeed:tenant:${tenantId}`;
 
 // Re-export the pure scoring helpers so callers use one implementation.
 export { keywordOverlap };
