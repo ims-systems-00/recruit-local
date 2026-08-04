@@ -11,7 +11,7 @@ import {
 export type JobListFilters = {
   page?: number;
   limit?: number;
-  search?: string;
+  clientSearch?: string;
   status?: string;
 
   employmentType?: { in: string[] };

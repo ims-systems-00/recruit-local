@@ -31,7 +31,7 @@ export default function FindJobs() {
     limit: 3,
   });
   return (
-    <section className="pt-spacing-10xl max-w-[1280px] mx-auto px-spacing-5xl">
+    <section className="pt-spacing-10xl max-w-7xl mx-auto px-spacing-5xl">
       <div className=" flex flex-col lg:flex-row gap-spacing-8xl">
         <motion.div
           className=" flex-1"

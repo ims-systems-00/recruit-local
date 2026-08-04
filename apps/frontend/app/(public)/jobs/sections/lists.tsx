@@ -57,7 +57,7 @@ export default function JobLists() {
     () => ({
       page,
       limit: 10,
-      search: search || undefined,
+      clientSearch: search || undefined,
 
       workplace: workplace.length ? { in: workplace } : undefined,
 

@@ -49,7 +49,7 @@ export async function getJobs(
       params: {
         page: params?.page || 1,
         limit: params?.limit || 10,
-        search: params?.search,
+        clientSearch: params?.clientSearch,
         status: params?.status,
         employmentType: params?.employmentType,
         workplace: params?.workplace,
@@ -131,7 +131,7 @@ export async function getPublicJobs(
         params: {
           page: params?.page || 1,
           limit: params?.limit || 10,
-          search: params?.search,
+          clientSearch: params?.clientSearch,
           status: params?.status,
           employmentType: params?.employmentType,
           workplace: params?.workplace,

@@ -32,7 +32,7 @@ export default function Jobs() {
     () => ({
       page,
       limit: 10,
-      search: debouncedSearch || undefined,
+      clientSearch: debouncedSearch || undefined,
     }),
     [page, debouncedSearch],
   );
