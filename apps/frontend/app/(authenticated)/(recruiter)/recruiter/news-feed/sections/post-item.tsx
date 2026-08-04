@@ -41,7 +41,7 @@ export default function PostItem({
             <Image
               className="max-h-10 h-10 w-10 rounded-full"
               alt="AchievementsDefault"
-              src={creator.profileImage.src || SavesDefault}
+              src={creator?.profileImage?.src || SavesDefault}
               height={40}
               width={40}
             />
