@@ -22,27 +22,14 @@ COPY packages ./packages
 
 RUN pnpm install --frozen-lockfile
 
-# Every NEXT_PUBLIC_* value is inlined into the client bundle at build time, so it has
-# to be present here rather than at runtime. They arrive as build args instead of via
-# apps/frontend/.env: that file also holds NEXTAUTH_SECRET, and Next's standalone output
-# copies .env verbatim into the bundle, which would bake the secret into the image.
-ARG NEXT_PUBLIC_BASE_API_URL=http://localhost/api
-ARG NEXT_PUBLIC_API_VERSION=v1
-ARG NEXT_PUBLIC_SANITY_PROJECT_ID
-ARG NEXT_PUBLIC_SANITY_DATASET
-ARG NEXT_PUBLIC_APP_BRAND
-ARG NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-ENV NEXT_PUBLIC_BASE_API_URL=$NEXT_PUBLIC_BASE_API_URL
-ENV NEXT_PUBLIC_API_VERSION=$NEXT_PUBLIC_API_VERSION
-ENV NEXT_PUBLIC_SANITY_PROJECT_ID=$NEXT_PUBLIC_SANITY_PROJECT_ID
-ENV NEXT_PUBLIC_SANITY_DATASET=$NEXT_PUBLIC_SANITY_DATASET
-ENV NEXT_PUBLIC_APP_BRAND=$NEXT_PUBLIC_APP_BRAND
-ENV NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=$NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-
-# Build workspace deps then the Next.js app
+# NEXT_PUBLIC_* are inlined at `next build` from apps/frontend/.env (allowed through
+# .dockerignore). Strip .env afterward so NEXTAUTH_SECRET is not copied into the
+# standalone runtime image — secrets arrive via compose env_file at container start.
 RUN pnpm run --filter @rl/types build \
     && pnpm run --filter @rl/authz build \
-    && pnpm run --filter @rl/frontend build
+    && pnpm run --filter @rl/frontend build \
+    && rm -f apps/frontend/.env \
+    && find apps/frontend/.next/standalone -name '.env*' -delete
 
 ########################  runner  ########################
 FROM base AS runner
