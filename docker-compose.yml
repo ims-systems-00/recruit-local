@@ -31,9 +31,10 @@ services:
 
   rl_nginx:
     image: nginx:alpine
-    # Local-only: the VPS host nginx terminates TLS and proxies to 127.0.0.1:8247.
+    # Host ims-nginx (container) proxies via 172.17.0.1:8247 — must not bind
+    # 127.0.0.1 only, or upstream gets connection refused from the bridge.
     ports:
-      - '127.0.0.1:8247:80'
+      - '8247:80'
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
