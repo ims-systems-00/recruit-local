@@ -8,7 +8,7 @@ CLAUDE.md
 todo/
 TESTABLE-FEATURES.md
 
-# Root .env holds build-time values for docker-compose interpolation.
+# Local env files (never commit). Compose does not need a root .env.
 .env
 .env.*
 !.env.example

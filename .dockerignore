@@ -15,12 +15,13 @@
 **/.DS_Store
 **/.git
 
-# Secrets. These are gitignored, but Docker does not read .gitignore — without
-# this they land in an image layer as plaintext. The old frontend image shipped
-# apps/frontend/.env, NEXTAUTH_SECRET and all.
+# Secrets stay out of images by default. Frontend .env is an exception: Next
+# inlines NEXT_PUBLIC_* at build time, and the Dockerfile deletes the file (and
+# any copy under standalone/) before the runtime stage. Backend .env stays out.
 **/.env
 **/.env.*
 !**/.env.*.example
+!apps/frontend/.env
 
 todo
 infra

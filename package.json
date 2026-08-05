@@ -21,9 +21,9 @@
     "migrate": "pnpm --filter @rl/backend migrate",
     "docker-compose:dev:up": "docker compose -f docker-compose.dev.yml up -d",
     "docker-compose:dev:down": "docker compose -f docker-compose.dev.yml down",
-    "docker-compose:prod:build": "docker compose --env-file apps/frontend/.env -f docker-compose.yml build",
-    "docker-compose:prod:up": "docker compose --env-file apps/frontend/.env -f docker-compose.yml up -d",
-    "docker-compose:prod:down": "docker compose --env-file apps/frontend/.env -f docker-compose.yml down"
+    "docker-compose:prod:build": "docker compose -f docker-compose.yml build",
+    "docker-compose:prod:up": "docker compose -f docker-compose.yml up -d",
+    "docker-compose:prod:down": "docker compose -f docker-compose.yml down"
   },
   "keywords": [],
   "author": "",

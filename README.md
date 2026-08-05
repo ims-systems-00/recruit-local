@@ -7,36 +7,25 @@ Two real env files, each in the app it configures:
 | File | Used for |
 | --- | --- |
 | `apps/backend/.env` | Backend runtime (`env_file`) |
-| `apps/frontend/.env` | Frontend runtime (`env_file`) **and** the frontend's `NEXT_PUBLIC_*` build args |
+| `apps/frontend/.env` | Frontend runtime (`env_file`) and `NEXT_PUBLIC_*` at image build |
 
-There is no root `.env`. `apps/frontend/.env` is the only source for the build args, and
-Compose is pointed at it with `--env-file`:
+No compose `build.args` and no root `.env`. The frontend Dockerfile copies
+`apps/frontend/.env` into the builder so `next build` can inline `NEXT_PUBLIC_*`, then
+deletes it (and any `.env` under standalone) so secrets are not left in the runtime
+image. Backend `.env` stays dockerignored. Runtime secrets still come from `env_file`.
 
 ```sh
-docker compose --env-file apps/frontend/.env -f docker-compose.yml up -d --build
+docker compose up -d --build
 ```
-
-The `pnpm docker-compose:prod:*` scripts already pass that flag, so prefer them. Compose
-interpolates `${...}` only from the project env file — it cannot read a service's
-`env_file:` for that, because interpolation happens before the YAML is parsed. Omit the
-flag and Compose aborts on the guarded Sanity variables rather than building with empty
-values. Run it from the repo root; `--env-file` is resolved relative to the current
-directory.
-
-`apps/frontend/.env` holds both public and secret keys. Only the
-`NEXT_PUBLIC_*` keys named in the `args:` block cross into the build, and those are
-inlined into the client bundle and public by definition. The file itself never enters the
-build context (`.dockerignore` excludes `**/.env`) because `next build` copies any `.env`
-it finds into the standalone output, which previously baked `NEXTAUTH_SECRET` into the
-frontend image and the Mongo connection string into the backend image.
 
 Two gotchas:
 
 - **`NEXT_PUBLIC_*` changes need a rebuild.** They are compiled into the bundle, so
   `up -d` alone reuses the old image. Re-run `pnpm docker-compose:prod:build`.
-- **`NEXT_PUBLIC_BASE_API_URL` in that file is the dev value** (`localhost:9027`), used by
-  `pnpm frontend:dev`. The container build ignores it and derives the URL from
-  `PUBLIC_URL` instead. Set `PUBLIC_URL` to the public origin when deploying.
+- **Docker vs local URLs.** Values come only from `apps/frontend/.env` /
+  `apps/backend/.env`. For Docker/prod set `NEXT_PUBLIC_BASE_API_URL`, `NEXTAUTH_URL`,
+  and `INTERNAL_API_URL` to the public / in-network hosts; for `pnpm frontend:dev`
+  point `NEXT_PUBLIC_BASE_API_URL` at `http://localhost:9027/api`.
 
 ## Local DOC/DOCX thumbnail testing (macOS)
 

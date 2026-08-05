@@ -1,50 +1,44 @@
-# Prod: only nginx is published. Set PUBLIC_URL to the public origin (TLS terminated
-# upstream, e.g. an ALB, forwarding to nginx:80).
+# Prod: only nginx is published. Set PUBLIC_URL / NEXTAUTH_URL / INTERNAL_API_URL
+# (and NEXT_PUBLIC_*) in apps/frontend/.env — Compose does not invent values here.
 #
-# ${...} below is interpolated from apps/frontend/.env, which Compose only reads as the
-# project env file when it is named explicitly. Use the pnpm scripts, or pass the flag:
-#   docker compose --env-file apps/frontend/.env up -d --build
+# NEXT_PUBLIC_* are read from apps/frontend/.env during the image build (copied into
+# the builder). Runtime secrets come from env_file and never need compose args.
 services:
   # Redis runs inside the backend container; set REDIS_URL/REDIS_HOST in .env to use an external one.
-  backend:
+  rl_backend:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    env_file: ./apps/backend/.env
+    env_file:
+      - ./apps/backend/.env
     volumes:
       - redis-data:/data
     networks:
       - ims-dev-infra
     restart: always
 
-  frontend:
+  rl_frontend:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
-      args:
-        NEXT_PUBLIC_BASE_API_URL: ${PUBLIC_URL:-https://recruit-local.imssystems.tech}/api
-        NEXT_PUBLIC_API_VERSION: v1
-        NEXT_PUBLIC_SANITY_PROJECT_ID: ${NEXT_PUBLIC_SANITY_PROJECT_ID:?set it in apps/frontend/.env}
-        NEXT_PUBLIC_SANITY_DATASET: ${NEXT_PUBLIC_SANITY_DATASET:?set it in apps/frontend/.env}
-        NEXT_PUBLIC_APP_BRAND: ${NEXT_PUBLIC_APP_BRAND:-}
-        NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
-    env_file: ./apps/frontend/.env
-    environment:
-      INTERNAL_API_URL: http://backend:9027/api
-      NEXTAUTH_URL: ${PUBLIC_URL:-https://recruit-local.imssystems.tech}
-    depends_on: [backend]
+    env_file:
+      - ./apps/frontend/.env
+    depends_on:
+      - rl_backend
     networks:
       - ims-dev-infra
     restart: always
 
-  nginx:
+  rl_nginx:
     image: nginx:alpine
     # Local-only: the VPS host nginx terminates TLS and proxies to 127.0.0.1:8080.
     ports:
       - '127.0.0.1:8081:80'
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on: [frontend, backend]
+    depends_on:
+      - rl_frontend
+      - rl_backend
     networks:
       - ims-dev-infra
     restart: always
