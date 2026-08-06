@@ -24,7 +24,7 @@ export default async function VerificationPage({
           <BreadcrumbList>
             <BreadcrumbItem>
               <Link
-                href={`/candidate/profile/${uid}`}
+                href={`/recruiter/profile/${uid}`}
                 className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary"
               >
                 Profile
