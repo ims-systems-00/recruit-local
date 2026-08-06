@@ -3,6 +3,7 @@ import { ONBOARDING_STEP_ENUMS } from './onboarding';
 import { Completion } from './completion';
 import { ValueResponseDto } from './value';
 import { FileMediaRefDto } from './file-media';
+import { KYC_STATUS } from './kyc';
 
 /** AWS storage descriptor attached to a tenant logo. */
 export interface TenantStorageDto {
@@ -50,6 +51,7 @@ export interface TenantResponseDto {
   onboardingStep?: ONBOARDING_STEP_ENUMS;
   isRecruitmentEnabled?: boolean;
   completion?: Completion; // expanded breakdown (percentage + sections + missing)
+  kycStatus?: KYC_STATUS | null; // primary admin's KYC status; null if the org has no admin yet
   createdAt?: string; // ISO
   updatedAt?: string; // ISO
 }

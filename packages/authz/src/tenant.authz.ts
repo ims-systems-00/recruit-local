@@ -64,12 +64,13 @@ export const ALL_TENANT_FIELDS = [
   'isRecruitmentEnabled',
 ];
 
-// `completion` is server-computed: readable on your OWN organisation, but never
-// client-writable, so it is added to the read list only (not to the manage/write
-// grants below). Used by the Read grants in `getAbility`, alongside — not instead
-// of — the Manage grants, so `permittedFieldsOf` unions it in on reads while
-// `validateUpdatePayload` still checks writes against `ALL_TENANT_FIELDS`.
-export const ALL_TENANT_READ_FIELDS = [...ALL_TENANT_FIELDS, 'completion'];
+// `completion` and `kycStatus` are server-computed: readable on your OWN
+// organisation, but never client-writable, so they are added to the read list
+// only (not to the manage/write grants below). Used by the Read grants in
+// `getAbility`, alongside — not instead of — the Manage grants, so
+// `permittedFieldsOf` unions them in on reads while `validateUpdatePayload`
+// still checks writes against `ALL_TENANT_FIELDS`.
+export const ALL_TENANT_READ_FIELDS = [...ALL_TENANT_FIELDS, 'completion', 'kycStatus'];
 
 // Public read set — the fields ANY account type may read on ANY organisation
 // (candidates browsing orgs, employers viewing OTHER orgs). This is a trust

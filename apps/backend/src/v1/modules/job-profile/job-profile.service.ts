@@ -11,7 +11,7 @@ import {
   populateFileMediaQuery,
 } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { jobProfileProjectQuery } from "./job-profile.query";
+import { jobProfileProjectQuery, populateJobProfileKycStatusQuery } from "./job-profile.query";
 import { recomputeProfileCompletion } from "./profile-completion.service";
 import { populateValuesQuery } from "../value/value.query";
 import * as FileMediaService from "../file-media/file-media.service";
@@ -111,6 +111,7 @@ export const getOne = async ({ query = {}, allowedFields }: IJobProfileGetParams
     ...populateSingleNamedRefQuery(ExperienceLevel, "experienceLevel"),
     ...populateFileMediaQuery("profileImageId", "profileImage"),
     ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
+    ...populateJobProfileKycStatusQuery(),
     ...jobProfileProjectQuery(allowedFields),
   ]);
   if (jobProfiles.length === 0) throw new NotFoundException("Job Profile not found.");
