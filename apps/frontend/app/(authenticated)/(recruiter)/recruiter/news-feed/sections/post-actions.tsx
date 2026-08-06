@@ -3,8 +3,19 @@ import React from 'react';
 import { useCreateReaction } from '@/services/reaction/reaction.client';
 import { ReactionType } from '@rl/types';
 import { useCreateFavourite } from '@/services/favourite';
+import { cn } from '@/lib/utils';
 
-export default function PostActions({ postId }: { postId: string }) {
+export default function PostActions({
+  postId,
+  alreadySaved,
+  alreadyReacted,
+}: {
+  postId: string;
+  alreadySaved: boolean;
+  alreadyReacted: string | null;
+}) {
+  console.log('alreadyReacted', alreadyReacted);
+
   const { createReaction, isPending: isCreatingReaction } = useCreateReaction();
   const { createFavourite, isPending: isCreatingFavourite } =
     useCreateFavourite();
@@ -29,13 +40,21 @@ export default function PostActions({ postId }: { postId: string }) {
         <div className=" grid grid-cols-3 gap-spacing-2xl">
           <button
             onClick={handleCreateReaction}
-            disabled={isCreatingReaction}
+            disabled={
+              isCreatingReaction || alreadyReacted === ReactionType.LOVE
+            }
             className=" cursor-pointer w-full flex items-center justify-center gap-spacing-2xs"
           >
             {isCreatingReaction ? (
               <Loader2 className="w-5 h-5 text-text-brand-primary animate-spin" />
             ) : (
-              <Heart className="w-5 h-5 text-text-brand-primary" />
+              <Heart
+                className={cn(
+                  'w-5 h-5 text-text-brand-primary',
+                  alreadyReacted === ReactionType.LOVE &&
+                    'fill-text-brand-primary',
+                )}
+              />
             )}
             <p className="text-label-sm font-label-sm-strong! text-text-brand-primary">
               Like
@@ -50,16 +69,21 @@ export default function PostActions({ postId }: { postId: string }) {
           <div className=" w-full flex items-center justify-center gap-spacing-2xs">
             <button
               onClick={onAddFavourite}
-              disabled={isCreatingFavourite}
+              disabled={isCreatingFavourite || alreadySaved}
               className=" cursor-pointer w-full flex items-center justify-center gap-spacing-2xs"
             >
               {isCreatingFavourite ? (
                 <Loader2 className="w-5 h-5 text-fg-gray-secondary animate-spin" />
               ) : (
-                <Bookmark className="w-5 h-5 text-fg-gray-secondary" />
+                <Bookmark
+                  className={cn(
+                    'w-5 h-5 text-fg-gray-secondary',
+                    alreadySaved && 'fill-text-gray-secondary',
+                  )}
+                />
               )}
               <p className="text-label-sm font-label-sm-strong! text-text-gray-tertiary">
-                Save
+                {alreadySaved ? 'Saved' : 'Save'}
               </p>
             </button>
           </div>

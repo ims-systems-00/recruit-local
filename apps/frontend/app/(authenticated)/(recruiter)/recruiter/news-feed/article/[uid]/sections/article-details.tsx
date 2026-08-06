@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ReactionType } from '@rl/types';
 import { useCreateFavourite } from '@/services/favourite';
 import { useCreateReaction } from '@/services/reaction/reaction.client';
+import { cn } from '@/lib/utils';
 
 export default function ArticleDetails({ item }: { item: PostData }) {
   const { createReaction, isPending: isCreatingReaction } = useCreateReaction();
@@ -69,12 +70,20 @@ export default function ArticleDetails({ item }: { item: PostData }) {
               size="sm"
               className=" border-0! shadow-none! cursor-pointer"
               onClick={handleCreateReaction}
-              disabled={isCreatingReaction}
+              disabled={
+                isCreatingReaction || item.alreadyReacted === ReactionType.LOVE
+              }
             >
               {isCreatingReaction ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
-                <Heart className="size-4" />
+                <Heart
+                  className={cn(
+                    'size-4',
+                    item.alreadyReacted === ReactionType.LOVE &&
+                      'fill-text-gray-secondary',
+                  )}
+                />
               )}
               100
             </Button>
@@ -83,12 +92,17 @@ export default function ArticleDetails({ item }: { item: PostData }) {
               size="sm"
               className=" h-10 w-10 min-w-10 cursor-pointer"
               onClick={onAddFavourite}
-              disabled={isCreatingFavourite}
+              disabled={isCreatingFavourite || item.alreadySaved}
             >
               {isCreatingFavourite ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
-                <Bookmark className="size-4" />
+                <Bookmark
+                  className={cn(
+                    'size-4',
+                    item.alreadySaved && 'fill-text-gray-secondary',
+                  )}
+                />
               )}
             </Button>
           </div>

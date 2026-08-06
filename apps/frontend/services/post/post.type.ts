@@ -47,6 +47,8 @@ export interface PostData {
   createdAt: string;
   updatedAt: string;
   creator: Creator;
+  alreadySaved?: boolean;
+  alreadyReacted?: string | null;
 }
 
 interface ProfileImage {

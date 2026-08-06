@@ -155,7 +155,11 @@ export default function Posts() {
                 />
               )}
 
-              <PostActions postId={post._id} />
+              <PostActions
+                postId={post._id}
+                alreadySaved={post.alreadySaved ?? false}
+                alreadyReacted={post.alreadyReacted ?? null}
+              />
             </div>
           ))
         )}

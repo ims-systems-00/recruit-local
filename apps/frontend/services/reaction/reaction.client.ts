@@ -86,6 +86,7 @@ export function useCreateReaction() {
       if (response.success) {
         toast.success(response.message || 'Reaction added successfully');
         queryClient.invalidateQueries({ queryKey: reactionKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
       } else {
         toast.error(response.message);
       }
