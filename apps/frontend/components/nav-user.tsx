@@ -6,6 +6,7 @@ import {
   ChevronsUpDown,
   CreditCard,
   LogOut,
+  ShieldCheck,
   Sparkles,
 } from 'lucide-react';
 
@@ -96,6 +97,25 @@ export function NavUser() {
               >
                 <BadgeCheck />
                 Profile
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                className=" cursor-pointer"
+                onClick={() => {
+                  user?.type === ACCOUNT_TYPE_ENUMS.CANDIDATE &&
+                    router.push(
+                      `/candidate/profile/${user?.jobProfileId}/verification`,
+                    );
+                  user?.type === ACCOUNT_TYPE_ENUMS.EMPLOYER &&
+                    router.push(
+                      `/recruiter/profile/${user?.tenantId}/verification`,
+                    );
+                }}
+              >
+                <ShieldCheck />
+                Verification center
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
