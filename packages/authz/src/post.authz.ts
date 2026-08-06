@@ -38,6 +38,9 @@ export const ALL_POST_FIELDS = [
   // accepted on writes — absent from EMPLOYER_MUTATION_FIELDS.
   'alreadyReacted',
   'alreadySaved',
+  // Total reaction count across all reactors, viewer-independent. Server-populated,
+  // never accepted on writes — absent from EMPLOYER_MUTATION_FIELDS.
+  'reactionCount',
   // Transient upload templates accepted on writes (resolved to FileMedia refs).
   'bannerStorage',
   'bannerStorage.*',
