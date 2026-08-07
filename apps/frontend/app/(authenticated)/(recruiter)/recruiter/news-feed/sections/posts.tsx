@@ -157,6 +157,7 @@ export default function Posts() {
 
               <PostActions
                 postId={post._id}
+                postType={post.type}
                 alreadySaved={post.alreadySaved ?? false}
                 alreadyReacted={post.alreadyReacted ?? null}
               />
