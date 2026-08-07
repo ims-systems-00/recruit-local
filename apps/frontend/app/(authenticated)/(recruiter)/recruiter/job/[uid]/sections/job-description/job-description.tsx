@@ -26,6 +26,7 @@ import RelatedAttachmentDefault from '@/public/images/related_attachment_default
 import MapByAddress from '@/components/map-by-address';
 import PreviewQueryCard from '../../edit/steps/preview-query-card';
 import { QueryCard } from '../../edit/steps/additional-queries';
+import DraftViewer from '@/components/draft-editor/draft-viewer';
 
 const documentLabels: Record<REQUIRED_DOCUMENTS_ENUMS, string> = {
   [REQUIRED_DOCUMENTS_ENUMS.RESUME]: 'CV',
@@ -151,17 +152,13 @@ export default function JobDescription({ job }: { job: JobData }) {
           <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
             About the Role
           </p>
-          <p className=" text-body-md text-text-gray-secondary">
-            {job?.description || 'N/A'}
-          </p>
+          <DraftViewer content={job?.description} />
         </div>
         <div className="space-y-spacing-2xl">
           <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
             Key Responsibilities
           </p>
-          <p className=" text-body-md text-text-gray-secondary">
-            {job?.responsibility || 'N/A'}
-          </p>
+          <DraftViewer content={job?.responsibility} />
         </div>
 
         <div className="rounded-2xl border border-border-gray-secondary p-spacing-4xl flex gap-spacing-lg items-center">
