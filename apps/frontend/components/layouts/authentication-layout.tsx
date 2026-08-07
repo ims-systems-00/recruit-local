@@ -56,7 +56,7 @@ export default function AuthenticationLayout({
         </div>
         <div>{children}</div>
       </div>
-      <div className=" py-spacing-7xl flex justify-center items-center gap-spacing-4xl opacity-40">
+      <div className=" py-spacing-7xl flex  flex-wrap justify-center items-center gap-spacing-4xl opacity-40">
         <span className="text-body-sm text-text-gray-quaternary">
           © 2026 Recruit Local
         </span>
