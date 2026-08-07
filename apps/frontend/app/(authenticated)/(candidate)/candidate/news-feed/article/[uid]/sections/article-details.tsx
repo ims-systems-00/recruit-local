@@ -2,18 +2,40 @@
 import DraftViewer from '@/components/draft-editor/draft-viewer';
 import { PostData } from '@/services/post';
 import Image from 'next/image';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import moment from 'moment';
 import { Bookmark, Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ReactionType } from '@rl/types';
 import { useCreateFavourite } from '@/services/favourite';
 import { useCreateReaction } from '@/services/reaction/reaction.client';
+import { cn } from '@/lib/utils';
 
 export default function ArticleDetails({ item }: { item: PostData }) {
-  const { createReaction, isPending: isCreatingReaction } = useCreateReaction();
+  const [isAlreadyReacted, setIsAlreadyReacted] = useState(
+    item?.alreadyReacted,
+  );
+  const [isAlreadyFavourited, setIsAlreadyFavourited] = useState(
+    item?.alreadySaved,
+  );
+  const [reactionCount, setReactionCount] = useState(item?.reactionCount);
+
+  const { createReaction, isPending: isCreatingReaction } = useCreateReaction(
+    (data) => {
+      setIsAlreadyReacted(ReactionType.LOVE);
+      setReactionCount((prev) => prev + 1);
+    },
+  );
   const { createFavourite, isPending: isCreatingFavourite } =
-    useCreateFavourite();
+    useCreateFavourite(() => {
+      setIsAlreadyFavourited(true);
+    });
+
+  useEffect(() => {
+    setIsAlreadyReacted(item?.alreadyReacted);
+    setIsAlreadyFavourited(item?.alreadySaved);
+    setReactionCount(item?.reactionCount);
+  }, [item]);
 
   const onAddFavourite = async () => {
     await createFavourite({
@@ -69,26 +91,39 @@ export default function ArticleDetails({ item }: { item: PostData }) {
               size="sm"
               className=" border-0! shadow-none! cursor-pointer"
               onClick={handleCreateReaction}
-              disabled={isCreatingReaction}
+              disabled={
+                isCreatingReaction || isAlreadyReacted === ReactionType.LOVE
+              }
             >
               {isCreatingReaction ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
-                <Heart className="size-4" />
+                <Heart
+                  className={cn(
+                    'size-4',
+                    isAlreadyReacted === ReactionType.LOVE &&
+                      'fill-text-gray-secondary',
+                  )}
+                />
               )}
-              100
+              {reactionCount}
             </Button>
             <Button
               variant="outline"
               size="sm"
               className=" h-10 w-10 min-w-10 cursor-pointer"
               onClick={onAddFavourite}
-              disabled={isCreatingFavourite}
+              disabled={isCreatingFavourite || isAlreadyFavourited}
             >
               {isCreatingFavourite ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
-                <Bookmark className="size-4" />
+                <Bookmark
+                  className={cn(
+                    'size-4',
+                    isAlreadyFavourited && 'fill-text-gray-secondary',
+                  )}
+                />
               )}
             </Button>
           </div>

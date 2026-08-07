@@ -16,6 +16,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import FilterJobs from './filter-jobs';
 import AppliedJobs from './applied-jobs';
 import SavedJobLists from './saved-job-lists';
+import { JOBS_STATUS_ENUMS } from '@rl/types';
 
 export default function Jobs() {
   const { data: session } = useSession();
@@ -33,6 +34,7 @@ export default function Jobs() {
       page,
       limit: 10,
       clientSearch: debouncedSearch || undefined,
+      status: JOBS_STATUS_ENUMS.OPEN,
     }),
     [page, debouncedSearch],
   );

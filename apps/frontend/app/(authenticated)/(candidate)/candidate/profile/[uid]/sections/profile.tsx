@@ -402,19 +402,21 @@ export default function Profile({
                 </>
               ) : (
                 <div className=" flex items-center gap-spacing-2xl">
-                  <Button
-                    onClick={() => {
-                      router.push(
-                        `/candidate/profile/${jobProfileDetails._id}/verification`,
-                      );
-                    }}
-                    className=" flex items-center justify-center gap-spacing-2xs cursor-pointer bg-bg-brand-solid-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-white"
-                  >
-                    <span>
-                      <ShieldCheck className=" size-5" />
-                    </span>
-                    Apply for Verification
-                  </Button>
+                  {!jobProfileDetails?.kycStatus && (
+                    <Button
+                      onClick={() => {
+                        router.push(
+                          `/candidate/profile/${jobProfileDetails._id}/verification`,
+                        );
+                      }}
+                      className=" flex items-center justify-center gap-spacing-2xs cursor-pointer bg-bg-brand-solid-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-white"
+                    >
+                      <span>
+                        <ShieldCheck className=" size-5" />
+                      </span>
+                      Apply for Verification
+                    </Button>
+                  )}
                   <Button
                     onClick={handleEdit}
                     variant="outline"

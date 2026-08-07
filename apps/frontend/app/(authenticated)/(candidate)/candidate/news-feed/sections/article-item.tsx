@@ -13,12 +13,14 @@ export default function ArticleItem({
   title,
   banner,
   creator,
+  reactionCount,
 }: {
   uid: string;
   createdAt: string;
   title: string;
   creator: Creator;
   banner?: string;
+  reactionCount: number;
 }) {
   return (
     <div className="p-spacing-4xl space-y-spacing-4xl w-full">
@@ -74,7 +76,7 @@ export default function ArticleItem({
       </div>
       <div className=" w-fit flex gap-spacing-2xs justify-center items-center rounded-full px-spacing-sm py-spacing-3xs bg-bg-gray-soft-secondary border border-border-gray-secondary text-label-sm font-label-sm-strong!  text-text-gray-secondary">
         <Heart className="w-4 h-4 text-text-brand-primary" />
-        <span>100</span>
+        <span>{reactionCount}</span>
       </div>
     </div>
   );

@@ -40,6 +40,7 @@ import { useUpdateJob } from '@/services/jobs/jobs.client';
 import AttachmentForm, { UploadedFile } from './attachment-form';
 import { useDeleteFileStorage } from '@/services/file-storage';
 import AttachmentItem from './attachment-item';
+import DraftEditor from '@/components/draft-editor/draft-editor';
 const REQUIRED_DOCUMENTS_OPTIONS = [
   {
     id: REQUIRED_DOCUMENTS_ENUMS.RESUME,
@@ -176,13 +177,22 @@ export default function JobDescriptionForm({
                   About the Role
                 </Label>
                 <div className=" space-y-spacing-sm ">
-                  <InputGroup className="rounded-lg shadow-xs border-border-gray-primary">
+                  {/* <InputGroup className="rounded-lg shadow-xs border-border-gray-primary">
                     <InputGroupTextarea
                       placeholder="Write your message here..."
                       {...register('description')}
                       className="min-h-[136px] text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                     />
-                  </InputGroup>
+                  </InputGroup> */}
+                  <DraftEditor
+                    value={watch('description')}
+                    onChange={(_, json) =>
+                      setValue('description', json, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  />
                   {errors.description && (
                     <p className="text-xs text-text-error-primary">
                       {errors.description.message}
@@ -195,13 +205,22 @@ export default function JobDescriptionForm({
                   Key Responsibility
                 </Label>
                 <div className=" space-y-spacing-sm ">
-                  <InputGroup className="rounded-lg shadow-xs border-border-gray-primary">
+                  {/* <InputGroup className="rounded-lg shadow-xs border-border-gray-primary">
                     <InputGroupTextarea
                       placeholder="Write your message here..."
                       {...register('responsibility')}
                       className="min-h-[136px] text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                     />
-                  </InputGroup>
+                  </InputGroup> */}
+                  <DraftEditor
+                    value={watch('responsibility')}
+                    onChange={(_, json) =>
+                      setValue('responsibility', json, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  />
                   {errors.responsibility && (
                     <p className="text-xs text-text-error-primary">
                       {errors.responsibility.message}

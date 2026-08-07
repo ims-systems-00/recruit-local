@@ -23,6 +23,8 @@ export type TenantData = {
   phone?: string;
   email?: string;
 
+  kycStatus?: string;
+
   logoSquareSrc?: string;
   logoSquareStorage?: AwsStorageType;
 

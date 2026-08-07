@@ -82,6 +82,7 @@ export function useCreateFavourite(onSuccessCallback?: () => void) {
       if (response.success) {
         toast.success(response.message || 'Favourite added successfully');
         queryClient.invalidateQueries({ queryKey: favouriteKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
         queryClient.invalidateQueries({ queryKey: ['jobs'] });
         onSuccessCallback?.();
       } else {

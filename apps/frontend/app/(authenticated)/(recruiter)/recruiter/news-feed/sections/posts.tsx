@@ -144,9 +144,11 @@ export default function Posts() {
                   title={post.title}
                   banner={post.banner?.src}
                   creator={post.creator}
+                  reactionCount={post.reactionCount}
                 />
               ) : (
                 <PostItem
+                  reactionCount={post.reactionCount}
                   createdAt={post.createdAt}
                   title={post.title}
                   text={post.text}
@@ -155,7 +157,13 @@ export default function Posts() {
                 />
               )}
 
-              <PostActions postId={post._id} />
+              <PostActions
+                postId={post._id}
+                postType={post.type}
+                alreadySaved={post.alreadySaved ?? false}
+                alreadyReacted={post.alreadyReacted ?? null}
+                reactionCount={post.reactionCount}
+              />
             </div>
           ))
         )}

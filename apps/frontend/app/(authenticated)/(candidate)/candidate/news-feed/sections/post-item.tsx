@@ -21,12 +21,14 @@ export default function PostItem({
   text,
   images,
   creator,
+  reactionCount,
 }: {
   title: string;
   createdAt: string;
   text: string;
   images?: PostImage[];
   creator: Creator;
+  reactionCount: number;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -155,8 +157,8 @@ export default function PostItem({
         )}
       </div>
       <div className=" w-fit flex gap-spacing-2xs justify-center items-center rounded-full px-spacing-sm py-spacing-3xs bg-bg-gray-soft-secondary border border-border-gray-secondary text-label-sm font-label-sm-strong!  text-text-gray-secondary">
-        <Heart className="w-4 h-4 text-text-brand-primary" />
-        <span>100</span>
+        <Heart className={cn('w-4 h-4 text-text-brand-primary')} />
+        <span>{reactionCount}</span>
       </div>
     </div>
   );

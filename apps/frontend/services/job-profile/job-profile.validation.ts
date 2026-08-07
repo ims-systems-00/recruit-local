@@ -88,7 +88,7 @@ export const createJobProfileSchema = yup.object({
 });
 
 export const updateJobProfileSchema = yup.object({
-  name: yup.string().optional(),
+  name: yup.string().max(50, 'Name cannot exceed 50 characters').optional(),
   address: yup.string().optional(),
   email: yup.string().email().optional(),
   contactNumber: yup.string().optional(),

@@ -148,14 +148,12 @@ export default function MenuBar() {
                     className=" cursor-pointer"
                   >
                     Profile
-                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => logout()}
                     className=" cursor-pointer"
                   >
                     Log out
-                    <DropdownMenuShortcut>⌘L</DropdownMenuShortcut>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
