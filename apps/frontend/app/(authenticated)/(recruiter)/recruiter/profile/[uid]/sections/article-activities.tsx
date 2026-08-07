@@ -85,6 +85,8 @@ export default function ArticleActivities({
                   image={post.banner?.src || ''}
                   postedAt={post.createdAt}
                   id={post._id}
+                  likes={post.reactionCount}
+                  alreadyReacted={post.alreadyReacted}
                 />
               </CarouselItem>
             ))}
@@ -108,6 +110,8 @@ export default function ArticleActivities({
             title={post.title}
             image={post.banner?.src || ''}
             postedAt={post.createdAt}
+            likes={post.reactionCount}
+            alreadyReacted={post.alreadyReacted}
           />
         ))}
         {isFetchingNextPage &&

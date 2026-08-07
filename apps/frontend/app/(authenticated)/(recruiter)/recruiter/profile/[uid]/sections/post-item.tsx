@@ -1,5 +1,5 @@
 'use client';
-import { EllipsisVertical, Heart, Loader2 } from 'lucide-react';
+import { EllipsisVertical, Heart } from 'lucide-react';
 import Image from 'next/image';
 import React, { useState } from 'react';
 import SavesDefault from '@/public/images/saves_default.png';
@@ -25,9 +25,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { DialogTitle } from '@radix-ui/react-dialog';
-import { Button } from '@/components/ui/button';
 import EditPostForm from './edit-post-form';
 import { PostData } from '@/services/post/post.type';
+import { cn } from '@/lib/utils';
+import { ReactionType } from '@rl/types';
 
 export default function PostItem({ post }: { post: PostData }) {
   const [openDeleteAlertDialog, setOpenDeleteAlertDialog] = useState(false);
@@ -96,8 +97,14 @@ export default function PostItem({ post }: { post: PostData }) {
           </div>
           <div className=" flex gap-spacing-sm items-center justify-between w-full">
             <div className=" w-fit flex gap-spacing-2xs justify-center items-center rounded-full px-spacing-sm py-spacing-3xs bg-bg-gray-soft-secondary border border-border-gray-secondary text-label-sm font-label-sm-strong!  text-text-gray-secondary">
-              <Heart className="w-4 h-4 text-text-brand-primary" />
-              <span>100</span>
+              <Heart
+                className={cn(
+                  'w-4 h-4 text-text-brand-primary',
+                  post?.alreadyReacted === ReactionType.LOVE &&
+                    'fill-text-brand-primary',
+                )}
+              />
+              <span>{post?.reactionCount}</span>
             </div>
             <span className=" cursor-pointer text-label-sm font-label-sm-strong! text-text-gray-secondary">
               View Post

@@ -77,7 +77,9 @@ export function useReaction(id: string) {
 }
 
 // Hook to create a new reaction
-export function useCreateReaction() {
+export function useCreateReaction(
+  onSuccessCallback?: (data: ReactionData) => void,
+) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -87,6 +89,7 @@ export function useCreateReaction() {
         toast.success(response.message || 'Reaction added successfully');
         queryClient.invalidateQueries({ queryKey: reactionKeys.all });
         queryClient.invalidateQueries({ queryKey: ['posts'] });
+        onSuccessCallback?.(response.data);
       } else {
         toast.error(response.message);
       }

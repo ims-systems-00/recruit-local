@@ -49,6 +49,7 @@ export interface PostData {
   creator: Creator;
   alreadySaved?: boolean;
   alreadyReacted?: string | null;
+  reactionCount: number;
 }
 
 interface ProfileImage {

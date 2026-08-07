@@ -39,11 +39,13 @@ export default function PostActions({
   postType,
   alreadySaved,
   alreadyReacted,
+  reactionCount,
 }: {
   postId: string;
   postType: string;
   alreadySaved: boolean;
   alreadyReacted: string | null;
+  reactionCount: number;
 }) {
   const { createReaction, isPending: isCreatingReaction } = useCreateReaction();
   const { createFavourite, isPending: isCreatingFavourite } =
@@ -65,9 +67,7 @@ export default function PostActions({
 
   const handleShareFacebook = () => {
     const url = encodeURIComponent(getShareUrl());
-    openShareWindow(
-      `https://www.facebook.com/sharer/sharer.php?u=${url}`,
-    );
+    openShareWindow(`https://www.facebook.com/sharer/sharer.php?u=${url}`);
   };
 
   const handleShareWhatsApp = () => {
@@ -122,7 +122,7 @@ export default function PostActions({
               />
             )}
             <p className="text-label-sm font-label-sm-strong! text-text-brand-primary">
-              Like
+              {reactionCount}
             </p>
           </button>
           <DropdownMenu>

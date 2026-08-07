@@ -22,20 +22,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
+import { ReactionType } from '@rl/types';
 
 interface ArticleItemProps {
   title: string;
   image?: string;
   postedAt?: string;
-  likes?: number;
+  likes: number;
   id: string;
+  alreadyReacted?: string | null;
 }
 export default function ArticleItem({
   title,
   image,
   postedAt,
-  likes,
+  likes = 0,
   id,
+  alreadyReacted,
 }: ArticleItemProps) {
   const router = useRouter();
   const [openDeleteAlertDialog, setOpenDeleteAlertDialog] = useState(false);
@@ -101,8 +105,14 @@ export default function ArticleItem({
               {moment(postedAt).format('DD MMM, YYYY')}
             </span>
             <div className=" w-fit flex gap-spacing-2xs justify-center items-center rounded-full px-spacing-sm py-spacing-3xs bg-bg-gray-soft-secondary border border-border-gray-secondary text-label-sm font-label-sm-strong!  text-text-gray-secondary">
-              <Heart className="w-4 h-4 text-text-brand-primary" />
-              <span>100</span>
+              <Heart
+                className={cn(
+                  'w-4 h-4 text-text-brand-primary',
+                  alreadyReacted === ReactionType.LOVE &&
+                    'fill-text-brand-primary',
+                )}
+              />
+              <span>{likes}</span>
             </div>
           </div>
         </div>
