@@ -70,6 +70,21 @@ export const jobInformationSchema = yup.object({
   weekends: yup
     .array()
     .of(yup.string().oneOf(Object.values(WORKING_DAYS_ENUMS)))
+    .test('weekends-limit', function (weekends) {
+      const { workingDays } = this.parent;
+
+      if (!workingDays || !weekends) return true;
+
+      const maxWeekends = 7 - workingDays;
+
+      if (weekends.length > maxWeekends) {
+        return this.createError({
+          message: `You can select only ${maxWeekends} weekend day${maxWeekends > 1 ? 's' : ''}.`,
+        });
+      }
+
+      return true;
+    })
     .optional(),
 
   aboutUs: yup.string().optional(),
