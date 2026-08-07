@@ -111,6 +111,7 @@ export default function Posts() {
             >
               {post.type === POST_TYPE_ENUMS.ARTICLE ? (
                 <ArticleItem
+                  reactionCount={post.reactionCount}
                   uid={post._id}
                   createdAt={post.createdAt}
                   title={post.title}
@@ -119,6 +120,7 @@ export default function Posts() {
                 />
               ) : (
                 <PostItem
+                  reactionCount={post.reactionCount}
                   createdAt={post.createdAt}
                   title={post.title}
                   text={post.text}
@@ -127,7 +129,13 @@ export default function Posts() {
                 />
               )}
 
-              <PostActions postId={post._id} />
+              <PostActions
+                postId={post._id}
+                postType={post.type}
+                alreadySaved={post.alreadySaved ?? false}
+                alreadyReacted={post.alreadyReacted ?? null}
+                reactionCount={post.reactionCount}
+              />
             </div>
           ))
         )}
