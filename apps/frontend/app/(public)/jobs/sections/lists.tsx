@@ -34,6 +34,7 @@ import CardJobItem from './card-job-item';
 import PaginationComponent from './pagination-component';
 import JobItemSkelaton from './job-item-skelaton';
 import { useSearchParams } from 'next/navigation';
+import { JOBS_STATUS_ENUMS } from '@rl/types';
 
 export default function JobLists() {
   const workplaceAnchor = useComboboxAnchor();
@@ -68,6 +69,8 @@ export default function JobLists() {
       salaryMode: salaryMode.length ? { in: salaryMode } : undefined,
 
       period: period.length ? { in: period } : undefined,
+
+      status: JOBS_STATUS_ENUMS.OPEN,
     }),
     [page, search, workplace, employmentType, salaryMode, period],
   );

@@ -26,6 +26,7 @@ export interface JobProfileData {
   summary: string;
   skills: string;
   interests: string;
+  kycStatus?: string;
 
   jobTitle: JobTitle[];
   industry: Industry[];
