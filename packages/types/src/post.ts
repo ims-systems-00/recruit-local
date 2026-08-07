@@ -63,6 +63,8 @@ export interface PostResponseDto {
   alreadyReacted?: ReactionType | null;
   /** Whether the viewer has favourited (saved) this post. */
   alreadySaved?: boolean;
+  /** Total number of reactions on this post, across every reactor and type. */
+  reactionCount?: number;
   createdAt?: string; // ISO
   updatedAt?: string; // ISO
 }

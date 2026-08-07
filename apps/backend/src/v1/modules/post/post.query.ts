@@ -170,6 +170,43 @@ export const alreadySavedQuery = (tenantId?: string, jobProfileId?: string): Pip
   ];
 };
 
+/**
+ * Adds `reactionCount`: the total number of (non-deleted) reactions on the
+ * post, across every reactor and reaction type. Unlike `alreadyReactedQuery`
+ * this is viewer-independent — same value for every caller. Must run after
+ * `postProjectQuery`, which would otherwise drop the field (it is not a schema
+ * path).
+ */
+export const reactionCountQuery = (): PipelineStage[] => [
+  {
+    $lookup: {
+      from: modelNames.REACTION,
+      let: { currentPostId: "$_id" },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                { $eq: ["$collectionName", modelNames.POST] },
+                { $eq: ["$collectionId", "$$currentPostId"] },
+                { $ne: ["$deleteMarker.status", true] },
+              ],
+            },
+          },
+        },
+        { $count: "count" },
+      ] as PipelineStage.Lookup["$lookup"]["pipeline"],
+      as: "reactionCountLookup",
+    },
+  },
+  {
+    $addFields: {
+      reactionCount: { $ifNull: [{ $arrayElemAt: ["$reactionCountLookup.count", 0] }, 0] },
+    },
+  },
+  { $project: { reactionCountLookup: 0 } },
+];
+
 export const postProjectQuery = (): PipelineStage[] => {
   const fieldsToExclude: (keyof IPostDoc | "__v")[] = ["__v"];
   const selectedFields = Object.keys(omit(Post.schema.paths, fieldsToExclude));

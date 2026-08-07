@@ -41,6 +41,9 @@ export const ALL_JOB_PROFILE_FIELDS = [
   'visibility',
   'status',
   'completion',
+  // Server-computed from the owning User's account-level KYC status — readable,
+  // never client-writable (absent from CANDIDATE_MUTATION_FIELDS below).
+  'kycStatus',
   // Profile & cover photos (FileMedia refs).
   'profileImageId',
   'coverPhotoId',

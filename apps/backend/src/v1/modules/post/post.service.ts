@@ -10,6 +10,7 @@ import {
   populatePostCreatorQuery,
   alreadyReactedQuery,
   alreadySavedQuery,
+  reactionCountQuery,
 } from "./post.query";
 import { enqueuePostKeywords } from "../../../queue/keywordUpdateQueue";
 import * as FileMediaService from "../file-media/file-media.service";
@@ -89,9 +90,10 @@ export const list = ({ query = {}, options, tenantId, jobProfileId }: IListPostP
       ...populatePostMediaQuery(),
       ...populatePostCreatorQuery(),
       ...postProjectQuery(),
-      // After the projection: neither field is a schema path, so it would drop them.
+      // After the projection: none of these are schema paths, so it would drop them.
       ...alreadyReactedQuery(tenantId, jobProfileId),
       ...alreadySavedQuery(tenantId, jobProfileId),
+      ...reactionCountQuery(),
     ],
     options
   );
@@ -106,6 +108,7 @@ export const getOne = async ({ query = {}, tenantId, jobProfileId }: IPostGetPar
     ...postProjectQuery(),
     ...alreadyReactedQuery(tenantId, jobProfileId),
     ...alreadySavedQuery(tenantId, jobProfileId),
+    ...reactionCountQuery(),
   ]);
   if (posts.length === 0) throw new NotFoundException("Post not found.");
   return posts[0];

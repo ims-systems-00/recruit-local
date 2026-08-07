@@ -11,7 +11,7 @@ import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
 import { enqueueTenantKeywords } from "../../../queue/keywordUpdateQueue";
 import * as FileMediaService from "../file-media/file-media.service";
 import { recomputeTenantCompletion } from "./tenant-completion.service";
-import { tenantProjectionQuery } from "./tenant.query";
+import { tenantProjectionQuery, populateTenantKycStatusQuery } from "./tenant.query";
 import { populateValuesQuery } from "../value/value.query";
 import {
   IListTenantParams,
@@ -114,6 +114,7 @@ export const getOne = async ({ query = {}, session }: ITenantGetParams): Promise
     ...populateValuesQuery(),
     ...populateFileMediaQuery("profileImageId", "profileImage"),
     ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
+    ...populateTenantKycStatusQuery(),
     ...tenantProjectionQuery(),
   ]);
 
