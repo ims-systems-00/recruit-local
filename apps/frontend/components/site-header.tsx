@@ -1,35 +1,78 @@
 'use client';
-import React from 'react';
 import { useSidebar } from './ui/sidebar';
+import { Menu } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuGroup,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/services/user/user.client';
+import { ACCOUNT_TYPE_ENUMS } from '@rl/types';
+import { useLogout } from '@/services/auth/auth.client';
 
 export default function SiteHeader() {
   const { toggleSidebar } = useSidebar();
+  const { user } = useAuth();
+  const router = useRouter();
+  const { logout } = useLogout();
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center border-b bg-background px-4 md:hidden">
+    <header className="sticky top-0 z-40 flex h-14 justify-between items-center border-b bg-background px-4 md:hidden">
       <span className=" cursor-pointer" onClick={toggleSidebar}>
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M6.875 3.75V16.25"
-            stroke="#364153"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M16.875 3.75H3.125C2.77982 3.75 2.5 4.02982 2.5 4.375V15.625C2.5 15.9702 2.77982 16.25 3.125 16.25H16.875C17.2202 16.25 17.5 15.9702 17.5 15.625V4.375C17.5 4.02982 17.2202 3.75 16.875 3.75Z"
-            stroke="#364153"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <Menu className="w-6 h-6" />
       </span>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Avatar className=" size-10 border border-border-gray-secondary cursor-pointer items-center justify-center">
+            <AvatarImage src={user.avatar} alt={user.name} />
+            <AvatarFallback>
+              {user.firstName?.charAt(0)} {user.lastName?.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-40 bg-bg-gray-soft-primary"
+          align="start"
+        >
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              onClick={() => {
+                user?.type === ACCOUNT_TYPE_ENUMS.CANDIDATE &&
+                  router.push(`/candidate/profile/${user?.jobProfileId}`);
+                user?.type === ACCOUNT_TYPE_ENUMS.EMPLOYER &&
+                  router.push(`/recruiter/profile/${user?.tenantId}`);
+              }}
+              className=" cursor-pointer"
+            >
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                user?.type === ACCOUNT_TYPE_ENUMS.CANDIDATE &&
+                  router.push(
+                    `/candidate/profile/${user?.jobProfileId}/verification`,
+                  );
+                user?.type === ACCOUNT_TYPE_ENUMS.EMPLOYER &&
+                  router.push(
+                    `/recruiter/profile/${user?.tenantId}/verification`,
+                  );
+              }}
+              className=" cursor-pointer"
+            >
+              Verification center
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => logout()}
+              className=" cursor-pointer"
+            >
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </header>
   );
 }

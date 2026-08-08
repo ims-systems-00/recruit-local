@@ -195,13 +195,13 @@ export default function EditValueDialog({
               </InputGroupAddon>
             </InputGroup>
 
-            <div className="flex items-center gap-spacing-2xl">
+            <div className="flex flex-wrap items-center gap-spacing-2xl">
               <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
                 Top 3 Most Important tags
               </span>
 
               {isTopThreeLoading ? (
-                <div className=" flex items-center gap-spacing-2xl">
+                <div className=" flex flex-wrap items-center gap-spacing-2xl">
                   {Array.from({ length: 3 }).map((_, index) => (
                     <Skeleton
                       key={`loading-${index}`}

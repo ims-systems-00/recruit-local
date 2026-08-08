@@ -517,9 +517,9 @@ export default function Profile({
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
-            className="w-full gap-spacing-4xl"
+            className="w-full gap-spacing-4xl "
           >
-            <TabsList className="w-full bg-bg-gray-soft-secondary h-11 justify-start">
+            <TabsList className="w-full bg-bg-gray-soft-secondary h-11 justify-start overflow-x-auto">
               {visibleTabs.map((tab) => (
                 <TabsTrigger
                   key={tab.value}

@@ -193,7 +193,7 @@ export default function WorkModeSection({
         </div>
         <div className=" space-y-spacing-lg">
           {Boolean(savedWorkModes?.length) && !isInitialLoading && (
-            <div className=" flex items-center gap-spacing-2xl">
+            <div className=" flex flex-wrap items-center gap-spacing-2xl">
               <span className=" whitespace-nowrap text-body-sm text-text-gray-secondary">
                 Selected:{' '}
               </span>
