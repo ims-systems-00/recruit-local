@@ -35,8 +35,6 @@ export default function ValueItem({
 }: ValueItemProps) {
   const [open, setOpen] = useState(false);
 
-  console.log('existingValues', existingValues);
-
   return (
     <>
       <div className="rounded-2xl border border-border-gray-secondary bg-bg-gray-soft-primary p-spacing-4xl shadow-xs space-y-spacing-4xl">
