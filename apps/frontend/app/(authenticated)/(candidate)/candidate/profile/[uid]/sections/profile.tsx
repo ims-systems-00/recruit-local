@@ -230,10 +230,10 @@ export default function Profile({
   return (
     <div>
       <header className=" p-spacing-4xl rounded-2xl">
-        <div className=" h-[244px] relative">
+        <div className=" h-40 sm:h-[244px] relative">
           <div>
             <Image
-              className="max-h-[244px] rounded-3xl w-full object-cover h-full"
+              className="max-h-40 sm:max-h-[244px] min-h-40 sm:min-h-[244px] rounded-3xl w-full object-cover h-full"
               alt="Recruit Profile Default"
               src={jobProfileDetails?.coverPhoto?.src || RecruitProfileDefault}
               height={244}
@@ -346,7 +346,7 @@ export default function Profile({
             </div>
           </div>
         </div>
-        <div className=" pt-30 sm:pl-44 sm:pt-0 flex sm:flex-row flex-col sm:justify-between sm:items-center gap-4 py-spacing-xl">
+        <div className=" pt-30 sm:pl-44 sm:pt-spacing-xl flex sm:flex-row flex-col sm:justify-between sm:items-center gap-4 pb-spacing-xl">
           <div className=" space-y-spacing-2xs">
             <h4 className=" text-heading-sm font-heading-sm-strong! text-text-gray-primary">
               {jobProfileDetails?.name || 'N/A'}

@@ -20,7 +20,7 @@ export default function SiteHeader() {
   const router = useRouter();
   const { logout } = useLogout();
   return (
-    <header className="sticky top-0 z-40 flex h-14 justify-between items-center border-b bg-background px-4 md:hidden">
+    <header className="sticky top-0 z-40 flex h-14 justify-between items-center border-b bg-bg-gray-soft-primary px-4 md:hidden">
       <span className=" cursor-pointer" onClick={toggleSidebar}>
         <Menu className="w-6 h-6" />
       </span>

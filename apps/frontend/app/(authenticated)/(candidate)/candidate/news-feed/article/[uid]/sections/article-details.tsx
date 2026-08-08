@@ -66,26 +66,26 @@ export default function ArticleDetails({ item }: { item: PostData }) {
           </div>
         )}
 
-        <div className=" flex items-center justify-between gap-spacing-2xl">
+        <div className=" flex flex-col sm:flex-row sm:justify-between sm:items-center gap-spacing-2xl">
           <div className="space-y-spacing-2xs">
             <div className=" flex items-center gap-spacing-sm ">
-              <p className=" text-heading-sm font-heading-sm-strong! text-text-gray-primary">
+              <p className=" text-heading-xs sm:text-heading-sm font-heading-xs sm:font-heading-sm-strong! text-text-gray-primary">
                 {item.title}
               </p>
             </div>
 
             <div className=" flex items-center gap-spacing-sm text-text-gray-tertiary ">
-              <p className="text-label-md text-text-gray-tertiary">
+              <p className="text-label-xs sm:text-label-md text-text-gray-tertiary">
                 {moment(item.createdAt).format('DD MMM YYYY h:mm a')}
               </p>
 
               <div className=" inline-block w-1.5 h-1.5 rounded-full bg-fg-gray-tertiary"></div>
-              <p className=" text-label-md text-text-gray-tertiary">
+              <p className=" text-label-xs sm:text-label-md text-text-gray-tertiary">
                 By {item.creator?.name}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-spacing-sm min-w-[150px] justify-end">
+          <div className="flex items-center gap-spacing-sm min-w-[150px] sm:justify-end">
             <Button
               variant="outline"
               size="sm"

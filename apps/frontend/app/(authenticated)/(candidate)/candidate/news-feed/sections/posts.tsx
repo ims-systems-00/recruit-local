@@ -66,7 +66,7 @@ export default function Posts() {
 
   return (
     <div className=" p-spacing-4xl space-y-spacing-4xl">
-      <div className=" flex justify-between items-center gap-spacing-2xl">
+      <div className=" flex flex-col sm:flex-row sm:justify-between sm:items-center gap-spacing-2xl">
         <div className=" space-y-spacing-2xs">
           <h3 className=" text-body-lg font-body-lg-strong! text-text-gray-primary">
             Good Morning,{' '}

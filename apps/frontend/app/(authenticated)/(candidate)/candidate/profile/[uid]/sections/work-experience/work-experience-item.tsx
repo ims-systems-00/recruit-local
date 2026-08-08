@@ -46,7 +46,7 @@ export default function WorkExperienceItem({
     <>
       <div className="bg-bg-gray-soft-primary rounded-2xl border border-border-gray-secondary shadow-xs p-spacing-4xl">
         <div className=" flex justify-between items-start gap-spacing-4xl">
-          <div className=" flex gap-spacing-2xl">
+          <div className=" flex flex-col sm:flex-row gap-spacing-2xs sm:gap-spacing-2xl">
             <div className=" min-w-12 max-w-12 ">
               <div className="max-h-12 max-w-12 w-12 bg-others-gray-gray-zero h-12 rounded-full flex items-center justify-center border border-others-gray-xlight">
                 <BriefcaseBusiness className="text-others-gray-default size-7" />
