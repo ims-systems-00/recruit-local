@@ -30,7 +30,7 @@ export default function About({ profile }: { profile: TenantData }) {
           <p className=" text-body-lg text-text-gray-tertiary">
             {profile?.description || 'N/A'}
           </p>
-          <div className=" grid grid-cols-3 gap-spacing-lg">
+          <div className=" grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-spacing-lg">
             <ProfileInfoCard
               title="Industry"
               subtitle={
@@ -58,7 +58,7 @@ export default function About({ profile }: { profile: TenantData }) {
           <p className=" text-label-lg font-label-lg-strong! text-text-gray-secondary">
             Contact and Address
           </p>
-          <div className=" grid grid-cols-2 gap-spacing-lg">
+          <div className=" grid md:grid-cols-2 gap-spacing-lg">
             <ProfileInfoCard
               title="Contact Email"
               subtitle={profile.email}

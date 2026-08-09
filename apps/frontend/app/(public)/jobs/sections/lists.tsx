@@ -346,13 +346,13 @@ export default function JobLists() {
       <div className=" py-spacing-4xl">
         <div>
           {isJobLoading || isFetching ? (
-            <div className=" grid grid-cols-2 gap-spacing-4xl">
+            <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
               {[1, 2, 3, 4].map((item) => (
                 <JobItemSkelaton key={item} />
               ))}
             </div>
           ) : Boolean(jobs?.length) ? (
-            <div className=" grid grid-cols-2 gap-spacing-4xl">
+            <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
               {jobs?.map((item) => (
                 <CardJobItem key={item._id} job={item} />
               ))}

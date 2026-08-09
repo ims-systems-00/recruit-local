@@ -159,8 +159,8 @@ export default function JobInformationForm({
             <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
               Basic Information
             </p>
-            <div className="grid grid-cols-2 gap-spacing-2xl">
-              <div className="space-y-spacing-xs col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
+              <div className="space-y-spacing-xs sm:col-span-2">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                   Job Title
                 </Label>
@@ -562,8 +562,8 @@ export default function JobInformationForm({
                 <Label htmlFor="autofill">Auto Fill From organization</Label>
               </div> */}
             </div>
-            <div className="grid grid-cols-2 gap-spacing-2xl">
-              <div className="space-y-spacing-xs col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
+              <div className="space-y-spacing-xs sm:col-span-2">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                   About Us
                 </Label>

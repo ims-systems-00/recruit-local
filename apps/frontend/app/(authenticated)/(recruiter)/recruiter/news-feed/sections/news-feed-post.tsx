@@ -17,7 +17,7 @@ export default function NewsFeedPost({ tenant }: { tenant: TenantData }) {
           onClick={() => setOpenCreateForm(true)}
           className="w-full border border-border-gray-primary shadow-xs flex items-center p-spacing-xl h-12 rounded-lg text-label-md text-text-gray-tertiary"
         >
-          <span>Write a post for in Newsfeed</span>
+          <span className=" truncate">Write a post for in Newsfeed</span>
         </div>
         <div className=" flex items-center gap-spacing-lg">
           <div

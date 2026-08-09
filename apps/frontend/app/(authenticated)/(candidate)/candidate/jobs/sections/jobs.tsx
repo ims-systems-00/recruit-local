@@ -107,7 +107,7 @@ export default function Jobs() {
       <div className=" py-spacing-4xl">
         <div className=" overflow-hidden">
           <Tabs defaultValue={tabs[0].value} className="w-full gap-spacing-4xl">
-            <div className=" flex justify-between items-center gap-spacing-4xl">
+            <div className=" flex flex-col sm:flex-row justify-between items-start sm:items-center gap-spacing-4xl">
               <TabsList className="bg-bg-gray-soft-secondary h-11 justify-start">
                 {tabs.map((tab) => (
                   <TabsTrigger

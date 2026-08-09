@@ -39,7 +39,7 @@ export default function Documents() {
   return (
     <>
       <div className="space-y-spacing-4xl">
-        <div className=" flex justify-between items-center gap-spacing-4xl py-spacing-xl">
+        <div className=" flex flex-col sm:flex-row justify-between items-start sm:items-center gap-spacing-4xl py-spacing-xl">
           <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
             Documents
           </h4>

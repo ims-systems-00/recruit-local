@@ -80,7 +80,7 @@ export default function ArticleForm() {
 
   return (
     <div className=" space-y-spacing-4xl">
-      <div className=" flex justify-between items-center gap-spacing-2xl">
+      <div className=" flex flex-col sm:flex-row justify-between items-start sm:items-center gap-spacing-2xl">
         <div className=" space-y-spacing-2xs">
           <h3 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
             Write an article

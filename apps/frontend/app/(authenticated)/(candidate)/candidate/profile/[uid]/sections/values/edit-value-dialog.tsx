@@ -176,7 +176,7 @@ export default function EditValueDialog({
   const isInitialLoading = isLoading;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[692px] bg-bg-gray-soft-primary shadow-xs gap-y-spacing-4xl">
+      <DialogContent className="sm:max-w-[692px] bg-bg-gray-soft-primary shadow-xs gap-y-spacing-4xl max-h-[90vh] overflow-y-auto">
         <DialogTitle asChild>
           <div className="space-y-spacing-lg">
             <h4 className="text-label-lg font-label-lg-strong! text-text-gray-secondary">

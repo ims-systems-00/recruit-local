@@ -25,7 +25,7 @@ export default function ArticleItem({
   return (
     <div className="p-spacing-4xl space-y-spacing-4xl w-full">
       <div className=" flex justify-between gap-spacing-lg items-start w-full">
-        <div className="flex items-center gap-spacing-lg">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-spacing-lg">
           <div>
             <Image
               className="max-h-10 h-10 w-10 rounded-full"

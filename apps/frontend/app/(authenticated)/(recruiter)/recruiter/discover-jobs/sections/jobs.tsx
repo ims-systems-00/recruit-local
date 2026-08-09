@@ -70,7 +70,7 @@ export default function Jobs() {
 
   return (
     <div className=" p-spacing-4xl">
-      <div className=" flex justify-between items-center gap-spacing-2xl">
+      <div className=" flex flex-col sm:flex-row justify-between items-start sm:items-center gap-spacing-2xl">
         <div className=" space-y-spacing-2xs">
           <h3 className=" text-body-xl font-body-xl-strong! text-text-gray-primary">
             Good Morning, {user?.firstName} {user?.lastName}
@@ -79,7 +79,7 @@ export default function Jobs() {
             Find and filter your dream jobs with Recruit Local.
           </p>
         </div>
-        <div className=" flex items-center gap-spacing-2xl">
+        <div className=" flex flex-col sm:flex-row items-start sm:items-center gap-spacing-2xl">
           <InputGroup className=" min-w-[320px] max-w-[320px] h-10 rounded-lg shadow-xs border-border-gray-primary">
             <InputGroupInput
               type="text"
@@ -107,7 +107,7 @@ export default function Jobs() {
       <div className=" py-spacing-4xl">
         <div className=" overflow-hidden">
           <Tabs defaultValue={tabs[0].value} className="w-full gap-spacing-4xl">
-            <div className=" flex justify-between items-center gap-spacing-4xl">
+            <div className=" flex flex-col sm:flex-row justify-between items-start sm:items-center gap-spacing-4xl">
               <TabsList className="bg-bg-gray-soft-secondary h-11 justify-start">
                 {tabs.map((tab) => (
                   <TabsTrigger

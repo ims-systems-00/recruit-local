@@ -25,7 +25,7 @@ export default function ServicesAndProducts({
             {profile?.visionStatement || 'N/A'}
           </p>
         </div>
-        <div className=" grid grid-cols-2 gap-spacing-2xl">
+        <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
           <div className=" space-y-spacing-2xl">
             <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
               Core Products

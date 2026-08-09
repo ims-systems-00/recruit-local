@@ -65,14 +65,14 @@ export default function CvUploadModal({
   return (
     <div>
       <Dialog open={open} onOpenChange={handleReset}>
-        <DialogContent className="sm:max-w-[692px] bg-bg-gray-soft-primary shadow-xs gap-y-spacing-4xl">
+        <DialogContent className="sm:max-w-[692px] bg-bg-gray-soft-primary shadow-xs gap-y-spacing-4xl max-h-[90vh] overflow-y-auto">
           <DialogTitle asChild>
             <h4 className="text-label-lg font-label-lg-strong! text-text-gray-primary">
               Add your CV
             </h4>
           </DialogTitle>
           {firstStep ? (
-            <div className=" grid grid-cols-2 gap-spacing-4xl">
+            <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
               <div
                 onClick={() => handleSelectOption('profile')}
                 className={cn(
@@ -134,7 +134,7 @@ export default function CvUploadModal({
           )}
 
           {firstStep ? (
-            <div className=" flex justify-end items-center gap-spacing-2xl">
+            <div className=" flex flex-col sm:flex-row justify-end items-start sm:items-center gap-spacing-2xl">
               <Button
                 onClick={() => handleReset()}
                 variant="outline"
@@ -150,7 +150,7 @@ export default function CvUploadModal({
               </Button>
             </div>
           ) : (
-            <div className=" flex justify-end items-center gap-spacing-2xl">
+            <div className=" flex flex-col sm:flex-row justify-end items-start sm:items-center gap-spacing-2xl">
               <Button
                 onClick={() => handlePrevious()}
                 variant="outline"
