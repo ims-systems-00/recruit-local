@@ -9,7 +9,7 @@ export default function RegistrationVerificationResend() {
   return (
     <div className=" flex justify-center items-center bg-card">
       <div className=" flex justify-center items-center">
-        <div className=" w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col items-center justify-center gap-y-spacing-4xl p-spacing-5xl">
+        <div className=" sm:w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col items-center justify-center gap-y-spacing-4xl p-spacing-5xl">
           <div className=" w-20 h-20 bg-others-brand-brand-zero border border-others-brand-light rounded-full flex items-center justify-center">
             <Mail className="size-10 text-others-brand-dark" />
           </div>

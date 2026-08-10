@@ -7,7 +7,7 @@ export default function InfoSection() {
   const router = useRouter();
   return (
     <div className=" flex justify-center items-center">
-      <div className=" w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col items-center justify-center gap-y-spacing-4xl p-spacing-5xl">
+      <div className=" sm:w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col items-center justify-center gap-y-spacing-4xl p-spacing-5xl">
         <div className=" w-12 h-12 text-heading-sm text-fg-brand-secondary rounded-full border-[3px] border-fg-brand-secondary flex items-center justify-center">
           2
         </div>
