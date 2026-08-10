@@ -237,10 +237,10 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
   return (
     <div>
       <header className=" p-spacing-4xl rounded-2xl">
-        <div className=" h-[244px] relative">
+        <div className=" h-40 sm:h-[244px] relative">
           <div>
             <Image
-              className="max-h-[244px] rounded-3xl w-full object-cover h-full"
+              className="max-h-40 sm:max-h-[244px] min-h-40 sm:min-h-[244px] rounded-3xl w-full object-cover h-full"
               alt="Recruit Profile Default"
               src={tenantDetails?.coverPhoto?.src || RecruitProfileDefault}
               height={244}
@@ -354,7 +354,7 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
             </div>
           </div>
         </div>
-        <div className=" pl-44 flex justify-between items-center gap-4 py-spacing-xl">
+        <div className=" pt-30 sm:pl-44 sm:pt-spacing-xl flex justify-between items-center gap-4 pb-spacing-xl">
           <div className=" space-y-spacing-sm">
             <h4 className=" text-heading-sm font-heading-sm-strong! text-text-gray-primary">
               {tenantDetails?.name}
@@ -402,7 +402,7 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
                   </Button>
                 </>
               ) : (
-                <div className=" flex items-center gap-spacing-2xl">
+                <div className=" flex flex-col sm:flex-row items-center gap-spacing-2xl">
                   {!tenantDetails?.kycStatus && (
                     <Button
                       onClick={() => {

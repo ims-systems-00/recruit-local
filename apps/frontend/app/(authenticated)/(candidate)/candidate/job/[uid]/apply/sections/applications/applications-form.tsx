@@ -217,7 +217,7 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
               <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
                 State Expectation
               </p>
-              <div className="grid grid-cols-2 gap-spacing-2xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
                 <div className="space-y-spacing-xs ">
                   <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                     Current Salary

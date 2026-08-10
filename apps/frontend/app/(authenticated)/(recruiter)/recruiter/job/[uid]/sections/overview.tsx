@@ -58,7 +58,7 @@ export default function Overview() {
           </span>
         </div>
       </div>
-      <div className=" grid grid-cols-2 gap-spacing-4xl">
+      <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
         <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs p-spacing-4xl space-y-spacing-sm">
           <div className=" flex items-center justify-between gap-spacing-3xl">
             <p className=" text-label-sm font-label-sm-strong! text-text-gray-tertiary">
@@ -105,7 +105,7 @@ export default function Overview() {
         </div>
       </div>
 
-      <div className=" grid grid-cols-2 gap-spacing-4xl">
+      <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
         <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs p-spacing-4xl space-y-spacing-4xl">
           <div className=" flex items-center justify-between gap-spacing-3xl">
             <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
@@ -134,7 +134,7 @@ export default function Overview() {
           </div>
         </div>
       </div>
-      <div className=" grid grid-cols-2 gap-spacing-4xl">
+      <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
         <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs p-spacing-4xl space-y-spacing-4xl">
           <div className=" flex items-start justify-between gap-spacing-3xl">
             <div>

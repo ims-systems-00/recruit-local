@@ -19,13 +19,13 @@ export default function Applied() {
   return (
     <div>
       {isJobLoading ? (
-        <div className=" grid grid-cols-2 gap-spacing-4xl">
+        <div className=" grid sm:grid-cols-2 gap-spacing-4xl">
           {[1, 2, 3, 4].map((item) => (
             <JobItemSkelaton key={item} />
           ))}
         </div>
       ) : Boolean(jobs?.length) ? (
-        <div className=" grid grid-cols-2 gap-spacing-4xl">
+        <div className=" grid sm:grid-cols-2 gap-spacing-4xl">
           {jobs?.map((item, index) => (
             <CardJobItem
               key={index}

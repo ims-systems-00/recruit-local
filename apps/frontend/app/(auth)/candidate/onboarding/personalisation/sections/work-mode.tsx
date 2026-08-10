@@ -176,7 +176,7 @@ export default function WorkModeSection({
 
   return (
     <div className=" flex justify-center items-center">
-      <div className=" w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
+      <div className=" sm:w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
         <div className=" flex items-center justify-between gap-spacing-lg">
           <Progress value={30} className="w-full h-2.5" />
           <span className=" text-label-xs font-label-xs-strong! text-text-gray-secondary">
@@ -193,7 +193,7 @@ export default function WorkModeSection({
         </div>
         <div className=" space-y-spacing-lg">
           {Boolean(savedWorkModes?.length) && !isInitialLoading && (
-            <div className=" flex items-center gap-spacing-2xl">
+            <div className=" flex flex-wrap items-center gap-spacing-2xl">
               <span className=" whitespace-nowrap text-body-sm text-text-gray-secondary">
                 Selected:{' '}
               </span>

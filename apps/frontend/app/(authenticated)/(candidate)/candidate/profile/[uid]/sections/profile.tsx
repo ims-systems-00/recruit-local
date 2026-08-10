@@ -230,10 +230,10 @@ export default function Profile({
   return (
     <div>
       <header className=" p-spacing-4xl rounded-2xl">
-        <div className=" h-[244px] relative">
+        <div className=" h-40 sm:h-[244px] relative">
           <div>
             <Image
-              className="max-h-[244px] rounded-3xl w-full object-cover h-full"
+              className="max-h-40 sm:max-h-[244px] min-h-40 sm:min-h-[244px] rounded-3xl w-full object-cover h-full"
               alt="Recruit Profile Default"
               src={jobProfileDetails?.coverPhoto?.src || RecruitProfileDefault}
               height={244}
@@ -346,7 +346,7 @@ export default function Profile({
             </div>
           </div>
         </div>
-        <div className=" pl-44 flex justify-between items-center gap-4 py-spacing-xl">
+        <div className=" pt-30 sm:pl-44 sm:pt-spacing-xl flex sm:flex-row flex-col sm:justify-between sm:items-center gap-4 pb-spacing-xl">
           <div className=" space-y-spacing-2xs">
             <h4 className=" text-heading-sm font-heading-sm-strong! text-text-gray-primary">
               {jobProfileDetails?.name || 'N/A'}
@@ -380,7 +380,7 @@ export default function Profile({
             </div>
           </div>
           <div className=" space-y-spacing-2xl">
-            <div className="flex gap-2 justify-end">
+            <div className="flex gap-2 sm:justify-end">
               {isEditMode ? (
                 <>
                   <Button
@@ -428,7 +428,7 @@ export default function Profile({
               )}
             </div>
             {!isEditMode && (
-              <div className="flex items-center gap-spacing-sm justify-end">
+              <div className="flex items-center gap-spacing-sm sm:justify-end">
                 <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
                   Open to work
                 </span>
@@ -517,9 +517,9 @@ export default function Profile({
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
-            className="w-full gap-spacing-4xl"
+            className="w-full gap-spacing-4xl "
           >
-            <TabsList className="w-full bg-bg-gray-soft-secondary h-11 justify-start">
+            <TabsList className="w-full bg-bg-gray-soft-secondary h-11 justify-start overflow-x-auto">
               {visibleTabs.map((tab) => (
                 <TabsTrigger
                   key={tab.value}

@@ -53,7 +53,7 @@ export default async function JobDetailsPage({ params }: PageProps) {
       </div>
 
       <div className=" p-spacing-4xl space-y-spacing-4xl">
-        <div className=" flex justify-between items-center gap-spacing-4xl">
+        <div className=" flex flex-col sm:flex-row justify-between items-start sm:items-center gap-spacing-4xl">
           <div className=" space-y-spacing-2xs">
             <h3 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
               {jobData?.title}

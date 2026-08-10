@@ -203,7 +203,7 @@ export default function JobDescription({ job }: { job: JobData }) {
             </div>
           </div>
         )}
-        <div className=" grid grid-cols-2 gap-spacing-2xl">
+        <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
           <InfoCard
             icon={<Mailbox size={20} />}
             title="Contact Email"

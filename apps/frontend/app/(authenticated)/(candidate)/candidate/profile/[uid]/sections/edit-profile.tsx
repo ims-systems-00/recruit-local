@@ -158,7 +158,7 @@ export default function EditProfile({
           About
         </h4>
 
-        <div className="grid grid-cols-2 gap-spacing-2xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
           <div className="space-y-spacing-xs">
             <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
               Applicant Name
@@ -307,7 +307,7 @@ export default function EditProfile({
             </div>
           </div>
 
-          <div className="space-y-spacing-xs col-span-2">
+          <div className="space-y-spacing-xs sm:col-span-2">
             <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
               Description of yourself
             </Label>
@@ -331,8 +331,8 @@ export default function EditProfile({
           Contact and Address
         </h4>
 
-        <div className="grid grid-cols-2 gap-spacing-2xl">
-          <div className="space-y-spacing-xs col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
+          <div className="space-y-spacing-xs sm:col-span-2">
             <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
               Address
             </Label>
@@ -408,8 +408,8 @@ export default function EditProfile({
           Career Preferences
         </h4>
 
-        <div className="grid grid-cols-2 gap-spacing-2xl">
-          <div className="space-y-spacing-xs col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
+          <div className="space-y-spacing-xs sm:col-span-2">
             <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
               Interested Industry
             </Label>
@@ -692,8 +692,8 @@ export default function EditProfile({
           Social & Professional Links
         </h4>
 
-        <div className="grid grid-cols-2 gap-spacing-2xl">
-          <div className="space-y-spacing-xs col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
+          <div className="space-y-spacing-xs sm:col-span-2">
             <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
               Portfolio URL
             </Label>
@@ -718,7 +718,7 @@ export default function EditProfile({
               )}
             </div>
           </div>
-          <div className="space-y-spacing-xs col-span-2">
+          <div className="space-y-spacing-xs sm:col-span-2">
             <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
               Skills
             </Label>
@@ -735,7 +735,7 @@ export default function EditProfile({
               )}
             </div>
           </div>
-          <div className="space-y-spacing-xs col-span-2">
+          <div className="space-y-spacing-xs sm:col-span-2">
             <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
               Interests
             </Label>

@@ -148,7 +148,7 @@ export default function PostItem({ post }: { post: PostData }) {
         </AlertDialogContent>
       </AlertDialog>
       <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
-        <DialogContent className="sm:max-w-[692px] bg-bg-gray-soft-primary shadow-xs gap-y-spacing-4xl">
+        <DialogContent className="sm:max-w-[692px] bg-bg-gray-soft-primary shadow-xs gap-y-spacing-4xl max-h-[90vh] overflow-y-auto">
           <DialogTitle asChild>
             <h4 className="text-label-lg font-label-lg-strong! text-text-gray-primary">
               Edit Post

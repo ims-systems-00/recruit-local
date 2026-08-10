@@ -30,13 +30,13 @@ export default function Saves() {
       </div>
       <div>
         {isFavouriteLoading ? (
-          <div className=" grid grid-cols-2 gap-spacing-4xl">
+          <div className=" grid sm:grid-cols-2 gap-spacing-4xl">
             {[1, 2, 3, 4].map((item) => (
               <JobItemSkelaton key={item} />
             ))}
           </div>
         ) : Boolean(favourites?.length) ? (
-          <div className=" grid grid-cols-2 gap-spacing-4xl">
+          <div className=" grid sm:grid-cols-2 gap-spacing-4xl">
             {favourites?.map((item) => (
               <CardJobItem
                 key={item._id}

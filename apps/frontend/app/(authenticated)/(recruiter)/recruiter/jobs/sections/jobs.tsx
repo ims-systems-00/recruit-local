@@ -223,7 +223,7 @@ export default function Jobs({
 
   return (
     <div>
-      <div className=" flex justify-between items-center gap-spacing-2xl">
+      <div className=" flex flex-col sm:flex-row justify-between items-start sm:items-center gap-spacing-2xl">
         <div className=" space-y-spacing-2xs">
           <h3 className=" text-body-xl font-body-xl-strong! text-text-gray-primary">
             {title}
@@ -232,7 +232,7 @@ export default function Jobs({
             {description}
           </p>
         </div>
-        <div className=" flex items-center gap-spacing-2xl">
+        <div className=" flex flex-col sm:flex-row items-start sm:items-center gap-spacing-2xl">
           <Button
             disabled={isLoading}
             onClick={onCreate}
@@ -275,7 +275,7 @@ export default function Jobs({
       <div className=" py-spacing-4xl">
         <div className=" overflow-hidden">
           <Tabs defaultValue={tabs[0].value} className="w-full gap-spacing-4xl">
-            <div className=" flex justify-between items-center gap-spacing-4xl">
+            <div className=" flex flex-col sm:flex-row justify-between items-start sm:items-center gap-spacing-4xl">
               <TabsList className="bg-bg-gray-soft-secondary h-11 justify-start">
                 {tabs.map((tab) => (
                   <TabsTrigger
@@ -322,7 +322,7 @@ export default function Jobs({
                   isListView ? (
                     <TableSkeleton columns={9} />
                   ) : (
-                    <div className=" grid grid-cols-2 gap-spacing-4xl">
+                    <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
                       {[1, 2, 3, 4].map((item) => (
                         <JobItemSkelaton key={item} />
                       ))}
@@ -332,7 +332,7 @@ export default function Jobs({
                   isListView ? (
                     <DataTable columns={userColumns} data={jobs} />
                   ) : (
-                    <div className=" grid grid-cols-2 gap-spacing-4xl">
+                    <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
                       {jobs?.map((item) => (
                         <CardJobItem key={item._id} job={item} />
                       ))}

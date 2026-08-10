@@ -171,8 +171,8 @@ export default function JobDescriptionForm({
             <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
               Job Description
             </p>
-            <div className="grid grid-cols-2 gap-spacing-2xl">
-              <div className="space-y-spacing-xs col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
+              <div className="space-y-spacing-xs sm:col-span-2">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                   About the Role
                 </Label>
@@ -200,7 +200,7 @@ export default function JobDescriptionForm({
                   )}
                 </div>
               </div>
-              <div className="space-y-spacing-xs col-span-2">
+              <div className="space-y-spacing-xs sm:col-span-2">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                   Key Responsibility
                 </Label>
@@ -228,7 +228,7 @@ export default function JobDescriptionForm({
                   )}
                 </div>
               </div>
-              <div className="space-y-spacing-xs col-span-2">
+              <div className="space-y-spacing-xs sm:col-span-2">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                   Related Attachment
                 </Label>
@@ -265,7 +265,7 @@ export default function JobDescriptionForm({
                   </div>
                 </div>
               </div>
-              <div className=" col-span-2 space-y-spacing-xl mb-spacing-sm">
+              <div className=" sm:col-span-2 space-y-spacing-xl mb-spacing-sm">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
                   Required Documents
                 </Label>

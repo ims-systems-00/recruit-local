@@ -68,7 +68,7 @@ export default function Posts() {
 
   return (
     <div className=" p-spacing-4xl space-y-spacing-4xl">
-      <div className=" flex justify-between items-center gap-spacing-2xl">
+      <div className=" flex flex-col sm:flex-row justify-between items-start sm:items-center gap-spacing-2xl">
         <div className=" space-y-spacing-2xs">
           <h3 className=" text-body-lg font-body-lg-strong! text-text-gray-primary">
             Good Morning,{' '}
@@ -108,7 +108,7 @@ export default function Posts() {
               Tell the community what’s happening today!
             </p>
           </div>
-          <div className=" flex gap-spacing-lg">
+          <div className=" flex flex-col sm:flex-row gap-spacing-lg">
             <div className=" min-w-12">
               {isTenantLoading ? (
                 <Skeleton className="max-h-12 max-w-12 w-12 h-12 rounded-full" />

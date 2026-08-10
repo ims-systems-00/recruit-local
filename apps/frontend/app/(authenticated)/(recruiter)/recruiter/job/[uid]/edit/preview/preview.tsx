@@ -94,7 +94,7 @@ export default function Preview({
   return (
     <>
       <div className=" space-y-spacing-4xl pb-10">
-        <div className=" flex justify-between items-center gap-spacing-4xl">
+        <div className=" flex flex-col sm:flex-row justify-between items-start sm:items-center gap-spacing-4xl">
           <div className=" space-y-spacing-2xs">
             <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
               {defaultValues.title}
@@ -273,7 +273,7 @@ export default function Preview({
             </div>
           </div>
         )}
-        <div className=" grid grid-cols-2 gap-spacing-2xl">
+        <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
           <InfoCard
             icon={<Mailbox size={20} />}
             title="Contact Email"

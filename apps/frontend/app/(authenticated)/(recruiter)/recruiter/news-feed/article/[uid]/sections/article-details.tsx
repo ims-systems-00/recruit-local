@@ -66,7 +66,7 @@ export default function ArticleDetails({ item }: { item: PostData }) {
           </div>
         )}
 
-        <div className=" flex items-center justify-between gap-spacing-2xl">
+        <div className=" flex flex-col sm:flex-row items-start sm:items-center justify-between gap-spacing-2xl">
           <div className="space-y-spacing-2xs">
             <div className=" flex items-center gap-spacing-sm ">
               <p className=" text-heading-sm font-heading-sm-strong! text-text-gray-primary">
@@ -74,12 +74,12 @@ export default function ArticleDetails({ item }: { item: PostData }) {
               </p>
             </div>
 
-            <div className=" flex items-center gap-spacing-sm text-text-gray-tertiary ">
+            <div className=" flex flex-col sm:flex-row items-start sm:items-center gap-spacing-sm text-text-gray-tertiary ">
               <p className="text-label-md text-text-gray-tertiary">
                 {moment(item.createdAt).format('DD MMM YYYY h:mm a')}
               </p>
 
-              <div className=" inline-block w-1.5 h-1.5 rounded-full bg-fg-gray-tertiary"></div>
+              <div className=" hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-fg-gray-tertiary"></div>
               <p className=" text-label-md text-text-gray-tertiary">
                 By {item.creator?.name}
               </p>

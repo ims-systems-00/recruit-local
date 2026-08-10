@@ -50,7 +50,7 @@ export default function About({ profile }: { profile: JobProfileData }) {
         <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
           Contact and Address
         </p>
-        <div className=" grid grid-cols-2 gap-spacing-2xl">
+        <div className=" grid sm:grid-cols-2 gap-spacing-2xl">
           <ProfileInfoCard
             title="Contact Email"
             subtitle={profile.email}
@@ -61,7 +61,7 @@ export default function About({ profile }: { profile: JobProfileData }) {
             subtitle={profile.contactNumber}
             icon={<PhoneCall />}
           />
-          <div className=" col-span-2">
+          <div className=" sm:col-span-2">
             <ProfileInfoCard
               title="Address"
               subtitle={profile.address}
@@ -75,7 +75,7 @@ export default function About({ profile }: { profile: JobProfileData }) {
         <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
           Career Preferences
         </p>
-        <div className=" grid grid-cols-2 gap-spacing-2xl">
+        <div className=" grid sm:grid-cols-2 gap-spacing-2xl">
           <ProfileInfoCard
             title="Experience Level"
             subtitle={profile.experienceLevel.name}
@@ -86,7 +86,7 @@ export default function About({ profile }: { profile: JobProfileData }) {
             subtitle={workModes}
             icon={<Handshake />}
           />
-          <div className=" col-span-2">
+          <div className=" sm:col-span-2">
             <ProfileInfoCard
               title="Interested Industry"
               subtitle={industries}
@@ -95,7 +95,7 @@ export default function About({ profile }: { profile: JobProfileData }) {
           </div>
         </div>
       </div>
-      <div className=" grid grid-cols-2 gap-spacing-2xl">
+      <div className=" grid sm:grid-cols-2 gap-spacing-2xl">
         <div className=" space-y-spacing-2xl">
           <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
             Skills

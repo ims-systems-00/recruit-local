@@ -45,7 +45,7 @@ const QUICK_TYPES: {
 
 export function InitialQuickAddBar({ onAdd }: InitialQuickAddBarProps) {
   return (
-    <div className=" grid grid-cols-2 gap-spacing-2xl">
+    <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
       {QUICK_TYPES.map(({ type, label, description, icon: Icon }) => (
         <div
           key={type}

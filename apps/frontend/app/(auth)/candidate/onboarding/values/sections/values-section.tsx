@@ -191,7 +191,7 @@ export default function ValuesSection({
 
   return (
     <div className=" flex justify-center items-center">
-      <div className=" w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
+      <div className=" sm:w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
         <div className=" flex items-center justify-between gap-spacing-lg">
           <Progress value={progressValue} className="w-full h-2.5" />
           <span className=" text-label-xs font-label-xs-strong! text-text-gray-secondary">
@@ -215,10 +215,10 @@ export default function ValuesSection({
               <Search className=" text-fg-gray-tertiary" />
             </InputGroupAddon>
           </InputGroup>
-          <div className=" flex items-center gap-spacing-2xl">
+          <div className=" flex flex-wrap items-center gap-spacing-2xl">
             <span>Top 3 Most Important tags </span>
             {isTopThreeLoading ? (
-              <div className=" flex items-center gap-spacing-2xl">
+              <div className=" flex flex-wrap items-center gap-spacing-2xl">
                 {Array.from({ length: 3 }).map((_, index) => (
                   <Skeleton
                     key={`loading-${index}`}
@@ -239,11 +239,11 @@ export default function ValuesSection({
           </div>
         </div>
         <div className=" space-y-spacing-lg">
-          <div className=" flex items-center gap-spacing-2xl">
+          <div className=" flex flex-wrap items-center gap-spacing-2xl">
             <span className=" whitespace-nowrap text-body-sm text-text-gray-secondary">
               Selected:{' '}
             </span>
-            <div className=" flex items-center gap-spacing-2xs flex-wrap">
+            <div className=" flex flex-wrap items-center gap-spacing-2xs">
               {savedValues?.map((item) => (
                 <span
                   key={item._id}

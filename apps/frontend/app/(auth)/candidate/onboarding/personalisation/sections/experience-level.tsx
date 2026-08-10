@@ -46,7 +46,7 @@ export default function ExperienceLevelSection({
       updateJobProfileSchema,
     ) as Resolver<JobProfileUpdateInput>,
     defaultValues: {
-      experienceLevel: existingExperienceLevels,
+      experienceLevel: existingExperienceLevels || undefined,
     },
   });
 
@@ -120,7 +120,7 @@ export default function ExperienceLevelSection({
 
   return (
     <div className=" flex justify-center items-center">
-      <div className=" w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
+      <div className=" sm:w-[692px] bg-bg-gray-soft-primary rounded-lg flex flex-col gap-y-spacing-4xl p-spacing-5xl">
         <div className=" flex items-center justify-between gap-spacing-lg">
           <Progress value={20} className="w-full h-2.5" />
           <span className=" text-label-xs font-label-xs-strong! text-text-gray-secondary">
