@@ -10,6 +10,7 @@ import { jobTitleSeeder } from "./job-title.seeder";
 import { industrySeeder } from "./industry.seeder";
 import { experienceLevelSeeder } from "./experience-level.seeder";
 import { workModeSeeder } from "./work-mode.seeder";
+import { promptSeeder } from "./prompt.seeder";
 import { logger } from "../common/helper/logger";
 
 const runSeeders = async () => {
@@ -25,6 +26,7 @@ const runSeeders = async () => {
     await industrySeeder();
     await experienceLevelSeeder();
     await workModeSeeder();
+    await promptSeeder();
     logger.info("Seeding completed");
   } catch (error) {
     logger.error("Error connecting to MongoDB", error);

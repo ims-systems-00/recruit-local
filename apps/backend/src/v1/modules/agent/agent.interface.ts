@@ -53,6 +53,8 @@ export interface IAgentTraceOutcome {
  */
 export interface IAgentTraceCollector {
   readonly runId: Types.ObjectId;
+  /** Which stored prompt version framed the run; `version` is null on fallback. */
+  recordPrompt(entry: { name: string; version: number | null }): void;
   recordTool(entry: Omit<AgentToolTraceDto, "seq">): void;
   recordLlmCall(entry: Omit<AgentLlmCallDto, "seq">): void;
   setOutcome(outcome: IAgentTraceOutcome): void;

@@ -1,7 +1,10 @@
 import OpenAI from "openai";
+import { PROMPT_NAME } from "@rl/types";
 import { FileManager } from "../../../common/helper/file-manager";
 import { s3Client } from "../../../.config/s3.config";
 import { logger } from "../../../common/helper";
+import { resolvePrompt } from "../prompt/prompt.resolver";
+import { CV_EXTRACTION_SCHEMA, DEFAULT_CV_EXTRACT_SYSTEM_PROMPT } from "./cv.constants";
 import pdfParse from "pdf-parse";
 
 const openai = new OpenAI({
@@ -20,56 +23,19 @@ async function extractTextFromBuffer(buffer: Buffer): Promise<string> {
   return data.text;
 }
 
-const CV_EXTRACTION_SCHEMA = {
-  name: "",
-  email: "",
-  phone: "",
-  address: "",
-  summary: "",
-  jobTitles: [],
-  industries: [],
-  workModes: [],
-  experienceLevels: [],
-  skills: [{ name: "", proficiencyLevel: "" }],
-  experience: [
-    {
-      jobTitle: "",
-      company: "",
-      location: "",
-      employmentType: "",
-      startDate: "",
-      endDate: "",
-      description: "",
-    },
-  ],
-  education: [
-    {
-      institution: "",
-      degree: "",
-      fieldOfStudy: "",
-      startDate: "",
-      endDate: "",
-      grade: "",
-    },
-  ],
-  interests: [{ name: "" }],
-};
-
-const SYSTEM_PROMPT = `You are a resume data parser. Fill the provided JSON schema using information found in the resume text. Return ONLY the filled JSON object.
-
-Field-specific rules:
-- jobTitles: List all job titles found in the experience section (e.g. "Software Engineer", "Frontend Developer").
-- industries: Infer the industry/sector from the companies and roles (e.g. "Information Technology", "Finance", "Healthcare"). Use broad industry names.
-- workModes: Look for any mention of remote, hybrid, or onsite/office work in the experience descriptions or anywhere in the resume. Return matching terms as-is (e.g. "Remote", "Hybrid", "Onsite"). Return empty array if no mention found.
-- experienceLevels: Calculate total years of professional experience from the experience section (treat "Present" as today). Then classify using these rules: 0–1 year → "Fresher"; 1–3 years → "Intermediate"; 3–7 years → "Expert"; 7+ years → "Lead". Return a single-element array with the matching level name.
-- Leave a field as an empty string or empty array if the data cannot be determined.`;
-
 async function fillSchemaWithAI(resumeText: string): Promise<object> {
+  // Resolved per call rather than at module load, so a prompt revision takes
+  // effect without a restart. Falls back to the constant if the registry cannot
+  // answer, so extraction never fails on a prompt lookup.
+  const systemPrompt = await resolvePrompt(PROMPT_NAME.CV_EXTRACT_SYSTEM, {
+    fallback: DEFAULT_CV_EXTRACT_SYSTEM_PROMPT,
+  });
+
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
     response_format: { type: "json_object" },
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt.content },
       {
         role: "user",
         content: `Resume:\n${resumeText}\n\nSchema to fill:\n${JSON.stringify(CV_EXTRACTION_SCHEMA)}`,

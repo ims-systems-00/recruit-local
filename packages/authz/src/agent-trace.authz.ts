@@ -32,6 +32,11 @@ export const ALL_AGENT_TRACE_FIELDS = [
   // --- Run Fields ---
   'prompt',
   'llmModel',
+  // Which stored prompt version framed this run — null when the code fallback
+  // was used. Together with `llmModel` this is what makes a bad answer
+  // reproducible.
+  'promptName',
+  'promptVersion',
   'status',
   'stoppedReason',
   'error',

@@ -6,6 +6,7 @@ import {
   AGENT_TRACE_STATUS,
   AgentStepDto,
   AgentUsageDto,
+  PROMPT_NAME,
 } from "@rl/types";
 import { logger } from "../../../common/helper";
 import { validate } from "../../../common/helper/validate";
@@ -212,8 +213,14 @@ const execute = async (
 
   const history = await conversationService.replayHistory(conversation._id as never);
 
+  // Recorded on the trace so a bad answer is traceable to the exact instructions
+  // that produced it. Only the base prompt's version is tracked: it carries the
+  // substantive rules, while the role block is a short framing paragraph.
+  const systemPrompt = await buildSystemPrompt(session);
+  trace.recordPrompt({ name: PROMPT_NAME.AGENT_SYSTEM_BASE, version: systemPrompt.version });
+
   const messages: ChatMessage[] = [
-    { role: "system", content: buildSystemPrompt(session) },
+    { role: "system", content: systemPrompt.content },
     ...history,
     // The instruction is a user message. It is never interpolated into the
     // system prompt, so it cannot rewrite the agent's framing.

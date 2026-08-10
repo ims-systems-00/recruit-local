@@ -21,3 +21,4 @@ export * from './value.authz';
 export * from './salary.authz';
 export * from './agent.authz';
 export * from './agent-trace.authz';
+export * from './prompt.authz';

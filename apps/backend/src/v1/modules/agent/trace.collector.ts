@@ -40,6 +40,11 @@ export const createTraceCollector = ({ conversation, instruction, session }: IAg
   let error: string | null = null;
   let flushed = false;
 
+  // Stays null when the run failed before the prompt was resolved, which is
+  // itself worth being able to see in the data.
+  let promptName: string | null = null;
+  let promptVersion: number | null = null;
+
   const sum = <T>(entries: T[], pick: (entry: T) => number | undefined) =>
     entries.reduce((total, entry) => total + (pick(entry) ?? 0), 0);
 
@@ -55,6 +60,11 @@ export const createTraceCollector = ({ conversation, instruction, session }: IAg
 
   return {
     runId,
+
+    recordPrompt(entry: { name: string; version: number | null }) {
+      promptName = entry.name;
+      promptVersion = entry.version;
+    },
 
     recordTool(entry: Omit<AgentToolTraceDto, "seq">) {
       toolTrace.push({ ...entry, seq: toolTrace.length });
@@ -91,6 +101,8 @@ export const createTraceCollector = ({ conversation, instruction, session }: IAg
           // The run's configured model, not one read back off a response, so it
           // is recorded even when every call failed.
           llmModel: AGENT_MODEL,
+          promptName,
+          promptVersion,
           status,
           stoppedReason,
           error,

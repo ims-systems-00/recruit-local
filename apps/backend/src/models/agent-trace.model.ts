@@ -48,6 +48,8 @@ export interface AgentTraceInput {
   jobProfileId?: Types.ObjectId | null;
   prompt: string;
   llmModel: string;
+  promptName?: string | null;
+  promptVersion?: number | null;
   status: AGENT_TRACE_STATUS;
   stoppedReason?: AGENT_STOPPED_REASON | null;
   error?: string | null;
@@ -109,6 +111,12 @@ const agentTraceSchema = new Schema<IAgentTraceDoc>(
     // The model as configured for *this* run, so a change of AGENT_MODEL can be
     // compared rather than silently mixed into the same averages.
     llmModel: { type: String, required: true },
+    // Which stored prompt version framed this run. `promptVersion` is null when
+    // the registry could not answer and the hardcoded fallback was used, which
+    // makes "the prompt store was down" visible in the data rather than
+    // indistinguishable from a normal run.
+    promptName: { type: String, default: null },
+    promptVersion: { type: Number, default: null },
     status: {
       type: String,
       enum: Object.values(AGENT_TRACE_STATUS),
