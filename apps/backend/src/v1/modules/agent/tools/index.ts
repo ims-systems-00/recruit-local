@@ -3,13 +3,15 @@ import { ISession } from "@rl/types";
 import { AgentTool } from "./tool.types";
 import { listJobsTool } from "./list-jobs.tool";
 import { getMyProfileTool } from "./get-my-profile.tool";
+import { listApplicationsTool } from "./list-applications.tool";
+import { getApplicationTool } from "./get-application.tool";
 
 export * from "./tool.types";
 
 /**
  * Every agent capability. Adding one is: implement AgentTool, add it here.
  */
-const registry: AgentTool[] = [listJobsTool, getMyProfileTool];
+const registry: AgentTool[] = [listJobsTool, getMyProfileTool, listApplicationsTool, getApplicationTool];
 
 export const toolsFor = (session: ISession): AgentTool[] =>
   registry.filter((tool) => (tool.isAvailable ? tool.isAvailable(session) : true));
