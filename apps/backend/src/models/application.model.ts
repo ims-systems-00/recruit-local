@@ -25,17 +25,21 @@ export interface ApplicationInput extends JobProfileInput, IBoardableInput, Tena
   portfolioUrl?: string;
   currentSalary?: number;
   expectedSalary?: number;
+  /**
+   * Composite match score out of `RANKING_SCALE`, written by the
+   * application-ranking queue. `rank` is seeded to the same number so a board
+   * opens best-match-first, but `rank` is the kanban ordering field and the
+   * board rewrites it on every move and rebalance — this is the copy that lasts.
+   */
+  matchScore?: number;
 }
 
 export interface IApplicationDoc
-  extends ApplicationInput,
-    ISoftDeleteDoc,
-    IBaseDoc,
-    ITenantDoc,
-    IAutomaticReferenceDoc {}
+  extends ApplicationInput, ISoftDeleteDoc, IBaseDoc, ITenantDoc, IAutomaticReferenceDoc {}
 
 interface IApplicationModel
-  extends Model<IApplicationDoc>,
+  extends
+    Model<IApplicationDoc>,
     ISoftDeleteModel<IApplicationDoc>,
     PaginateModel<IApplicationDoc>,
     AggregatePaginateModel<IApplicationDoc>,
@@ -82,6 +86,7 @@ const applicationSchema = new Schema<IApplicationDoc>(
     portfolioUrl: { type: String },
     currentSalary: { type: Number },
     expectedSalary: { type: Number },
+    matchScore: { type: Number, default: 0 },
   },
   {
     timestamps: true,
@@ -111,5 +116,7 @@ applicationSchema.index({ jobId: 1, status: 1 });
 applicationSchema.index({ createdAt: -1 });
 applicationSchema.index({ resumeId: 1 });
 applicationSchema.index({ reference: 1 });
+// Best-match-first over one job's applications, independent of board order.
+applicationSchema.index({ jobId: 1, matchScore: -1 });
 
 export const Application = model<IApplicationDoc, IApplicationModel>(modelNames.APPLICATION, applicationSchema);

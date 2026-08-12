@@ -4,6 +4,7 @@ import {
   ApiResponse,
   ControllerParams,
   formatListResponse,
+  logger,
   NotFoundException,
   UnauthorizedException,
 } from "../../../common/helper";
@@ -15,6 +16,7 @@ import { withTransaction } from "../../../common/helper/database-transaction";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { applicationRoleScopedSecurityQuery } from "./application.query";
 import { toApplicationResponse, toApplicationResponseList } from "./application.dto";
+import { enqueueApplicationRanking } from "../../../queue/applicationRankingQueue";
 
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_APPLICATION_FIELDS,
@@ -138,7 +140,9 @@ export const create = async ({ req }: ControllerParams) => {
   // Field-level check for creation payload
   validateUpdatePayload(req.body, ability, AbilityAction.Create, new ApplicationAuthZEntity(req.body));
 
-  return withTransaction(async (session) => {
+  let applicationId: unknown;
+
+  const response = await withTransaction(async (session) => {
     const application = await applicationService.create({
       payload: {
         ...req.body,
@@ -146,6 +150,8 @@ export const create = async ({ req }: ControllerParams) => {
       },
       session,
     });
+
+    applicationId = application._id;
 
     await jobService.incrementStats({
       query: { _id: application.jobId!.toString() } as any,
@@ -160,6 +166,16 @@ export const create = async ({ req }: ControllerParams) => {
       fieldName: "application",
     });
   });
+
+  // Enqueued only once the transaction has committed: the worker reads the
+  // application back by id, and inside the transaction it would find nothing.
+  // Never fails the request — the application is already saved, and an
+  // unscored one is merely unranked.
+  await enqueueApplicationRanking(applicationId).catch((err: unknown) =>
+    logger.error(`Failed to enqueue ranking for application ${String(applicationId)}: ${String(err)}`)
+  );
+
+  return response;
 };
 
 export const softRemove = async ({ req }: ControllerParams) => {
