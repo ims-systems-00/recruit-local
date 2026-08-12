@@ -1,7 +1,9 @@
 import { JobProfileInput } from "../../../../models/job-profile.model";
 import { TenantInput } from "../../../../models/tenant.model";
 import { IJobInput } from "../../../../models/job.model";
+import { ApplicationInput } from "../../../../models/application.model";
 import { MatchableValue, ValueMatchResult, matchValues } from "./matching/value";
+import { QuestionMatchResult, matchQuestionAnswers } from "./matching/valuebasedQuestion";
 
 /**
  * The ranking pipeline.
@@ -26,10 +28,17 @@ export type RankingJobProfile = WithPopulatedValues<JobProfileInput>;
 export type RankingTenant = WithPopulatedValues<TenantInput>;
 
 /**
+ * The parts of the application a matcher may read. Narrow on purpose — widen it
+ * as matchers claim fields, so the worker's `select` and this type stay in step.
+ */
+export type RankingApplication = Pick<ApplicationInput, "answers">;
+
+/**
  * Everything a matcher may look at, assembled once per application being
- * ranked. Matchers read only the parts they need — today just the two `values`
- * arrays — so the fetch that builds this should populate whatever the
- * registered matchers actually consume and no more.
+ * ranked. Matchers read only the parts they need — the two `values` arrays, the
+ * job's screening questions and the answers to them — so the fetch that builds
+ * this should populate whatever the registered matchers actually consume and no
+ * more.
  */
 export interface RankingContext {
   /** The applying candidate's profile. */
@@ -38,6 +47,8 @@ export interface RankingContext {
   job: IJobInput;
   /** The tenant that posted the job — the recruiter side of every comparison. */
   tenant: RankingTenant;
+  /** The application being scored — the candidate's own submission. */
+  application: RankingApplication;
 }
 
 /**
@@ -112,9 +123,29 @@ export interface RankingResult {
 export const valueMatcher: RankingMatcher = {
   key: "value",
   label: "Values",
-  weight: 1,
+  weight: 2,
   run: ({ jobProfile, tenant }) => {
     const result: ValueMatchResult = matchValues(jobProfile.values, tenant.values);
+    return { ratio: result.ratio, applicable: result.applicable, details: result };
+  },
+};
+
+/**
+ * How well the candidate answered the job's own screening questions, graded
+ * against the `expectedAnswer` the recruiter keyed on each one — see
+ * `matching/valuebasedQuestion.ts` for the scoring.
+ *
+ * Weighted below values deliberately. Values are the comparison the product is
+ * built on; screening answers sharpen the ranking within that, they do not
+ * replace it. Either signal renormalizes to the full score on its own when the
+ * other has nothing to work with.
+ */
+export const questionMatcher: RankingMatcher = {
+  key: "question",
+  label: "Screening Questions",
+  weight: 1,
+  run: ({ job, application }) => {
+    const result: QuestionMatchResult = matchQuestionAnswers(job.additionalQueries, application.answers);
     return { ratio: result.ratio, applicable: result.applicable, details: result };
   },
 };
@@ -123,7 +154,7 @@ export const valueMatcher: RankingMatcher = {
  * The matchers, in the order their signals are reported. Order is presentation
  * only — the composite score is weight-driven and order-independent.
  */
-export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher];
+export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, questionMatcher];
 
 /**
  * Stamped onto every stored ranking. Bump it whenever a change would make old
@@ -133,7 +164,7 @@ export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher];
  * version are stale by definition and can be found and re-ranked with a single
  * query; without it there is no way to tell a fresh score from a legacy one.
  */
-export const RANKING_PIPELINE_VERSION = 2;
+export const RANKING_PIPELINE_VERSION = 3;
 
 /**
  * Runs every matcher in the pipeline and folds the applicable ones into a

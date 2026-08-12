@@ -38,8 +38,9 @@ const findWithValues = async <T>(
  * Scores one application against the job it was submitted to.
  *
  * The pipeline itself is pure and synchronous; all this does is assemble the
- * context it needs — the candidate's profile, the job, and the tenant that
- * posted it, with both sides' values populated — and hand it over.
+ * context it needs — the candidate's profile, the job, the tenant that posted
+ * it with both sides' values populated, and the application's own screening
+ * answers — and hand it over.
  *
  * The score is stored in `matchScore`, and `rank` is seeded to the same number
  * so a recruiter's board comes up best-match-first. From then on the board owns
@@ -58,7 +59,7 @@ const processApplicationRanking = async ({
 }: ApplicationRankingData): Promise<RankingResult | { skipped: string }> => {
   if (!Types.ObjectId.isValid(applicationId)) return { skipped: "invalid application id" };
 
-  const application = await Application.findById(applicationId).select("jobId jobProfileId tenantId").lean();
+  const application = await Application.findById(applicationId).select("jobId jobProfileId tenantId answers").lean();
   if (!application) return { skipped: "application not found" };
 
   const { jobId, jobProfileId, tenantId } = application;
@@ -76,7 +77,7 @@ const processApplicationRanking = async ({
   if (!tenant) return { skipped: "tenant not found" };
   if (!job) return { skipped: "job not found" };
 
-  const context: RankingContext = { jobProfile, job, tenant };
+  const context: RankingContext = { jobProfile, job, tenant, application };
   const result = runRankingPipeline(context);
 
   await Application.updateOne({ _id: application._id }, { $set: { matchScore: result.score, rank: result.score } });

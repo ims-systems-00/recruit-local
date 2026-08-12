@@ -20,6 +20,11 @@ import {
 } from "@rl/types";
 
 export interface IAdditionalQuery {
+  /**
+   * Assigned by Mongoose — the subdocument schema below is `{ _id: true }`, and
+   * `Application.answers[].queryId` joins back to it.
+   */
+  _id?: Types.ObjectId;
   question: string;
   type: QUERY_TYPE_ENUMS;
   options?: string[];
