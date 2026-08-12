@@ -42,3 +42,7 @@ export * from "./work-mode.model";
 export * from "./user-interest-survey.model";
 export * from "./value.model";
 export * from "./salary.model";
+export * from "./agent-conversation.model";
+export * from "./agent-message.model";
+export * from "./agent-trace.model";
+export * from "./prompt.model";

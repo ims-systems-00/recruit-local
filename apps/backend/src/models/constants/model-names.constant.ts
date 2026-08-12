@@ -43,6 +43,10 @@ export const modelNames = {
   USER_INTEREST_SURVEY: "userinterestsurveys",
   VALUE: "values",
   SALARY: "salaries",
+  AGENT_CONVERSATION: "agentconversations",
+  AGENT_MESSAGE: "agentmessages",
+  AGENT_TRACE: "agenttraces",
+  PROMPT: "prompts",
 };
 
 export type ModelNames = (typeof modelNames)[keyof typeof modelNames];

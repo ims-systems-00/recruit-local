@@ -43,6 +43,8 @@ import experienceLevelRoutes from "../modules/experience-level/experience-level.
 import workModeRoutes from "../modules/work-mode/work-mode.route";
 import userInterestSurveyRoutes from "../modules/user-interest-survey/user-interest-survey.route";
 import salaryRoutes from "../modules/salary/salary.route";
+import agentRoutes from "../modules/agent/agent.route";
+import promptRoutes from "../modules/prompt/prompt.route";
 
 const router = express.Router();
 
@@ -88,6 +90,8 @@ const getApiRoutes = () => {
   router.use("/values", valueRoutes);
   router.use("/user-interest-surveys", userInterestSurveyRoutes);
   router.use("/salaries", salaryRoutes);
+  router.use("/agent", agentRoutes);
+  router.use("/prompts", promptRoutes);
 
   return router;
 };
