@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { permittedFieldsOf } from "@casl/ability/extra";
 import { AbilityAction } from "@rl/types";
 import { ApplicationAbilityBuilder, ApplicationAuthZEntity } from "@rl/authz";
 import { ForbiddenException } from "../../../../common/helper";
@@ -24,6 +25,7 @@ interface ListApplicationsInput {
   jobId?: string;
   stage?: string;
   limit?: number;
+  sortBy?: "recent" | "match";
 }
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -63,11 +65,20 @@ const statusIdsForStage = async (stage: string): Promise<string[]> => {
 export const listApplicationsTool: AgentTool<ListApplicationsInput> = {
   name: "list_applications",
   description:
-    "List job applications the current user is allowed to see, most recent first. " +
+    "List job applications the current user is allowed to see, most recent first by default. " +
     "Employers see applications submitted to their own organisation's jobs; candidates see only the applications they " +
     "submitted themselves. " +
     "Use this to answer questions about who has applied, how many applications there are, which stage of the hiring " +
     "pipeline they are in, or what a candidate has applied to and when. " +
+    "A result may carry `matchScore`, the platform's own ranking of how well that candidate fits the job, out of " +
+    "`matchScoreOutOf` — higher is a better fit. Answer any question about who ranks best, is the strongest candidate " +
+    "or is the top applicant from this score rather than from the pipeline stage: the stage is where a human moved " +
+    'someone, the score is what the platform computed. Pass sortBy "match" for those questions so the best ' +
+    "candidates are the ones returned. " +
+    "A `matchScore` of 0 may mean the application has not been scored yet rather than that the candidate is a poor " +
+    "fit — scoring runs in the background after someone applies, and is skipped entirely when the organisation has " +
+    "set no values — so say the score is not available instead of ranking a 0 last. An application with no " +
+    "`matchScore` at all has not been scored or is not visible to this user. " +
     "Each result is a summary — call get_application with an id from here to read a cover letter, the answers to a " +
     "job's screening questions, or the attached files. " +
     "Results are already restricted to what this user may access, so never assume an application is missing because of an error.",
@@ -94,6 +105,15 @@ export const listApplicationsTool: AgentTool<ListApplicationsInput> = {
         maximum: MAX_LIMIT,
         description: `Optional. Maximum number of applications to return (default ${DEFAULT_LIMIT}, max ${MAX_LIMIT}). The total number matching is always reported separately.`,
       },
+      sortBy: {
+        type: "string",
+        enum: ["recent", "match"],
+        description:
+          'Optional. "recent" (the default) returns the newest applications first. "match" returns the best-matching ' +
+          "candidates first, by `matchScore` — use it for any question about who ranks best, who the strongest or top " +
+          "candidates are, or who to look at first. Because only `limit` applications come back, this is the only way " +
+          "to be sure the best ones are among them.",
+      },
     },
     required: [],
     additionalProperties: false,
@@ -103,6 +123,7 @@ export const listApplicationsTool: AgentTool<ListApplicationsInput> = {
     jobId: Joi.string().hex().length(24).optional().label("Job id"),
     stage: Joi.string().trim().min(1).max(120).optional().label("Stage"),
     limit: Joi.number().integer().min(1).max(MAX_LIMIT).optional().label("Limit"),
+    sortBy: Joi.string().valid("recent", "match").optional().label("Sort by"),
   }),
 
   mutating: false,
@@ -134,12 +155,26 @@ export const listApplicationsTool: AgentTool<ListApplicationsInput> = {
       filter.statusId = { $in: statusIds };
     }
 
+    // Asked for by the same mechanism that strips the field from the response,
+    // so the two can never disagree. A candidate's read fields omit
+    // `matchScore`; ordering their applications by a score they are not shown
+    // would leak its relative values back to them, so they get recency instead.
+    const askedForMatch = input.sortBy === "match";
+    const canReadMatchScore = permittedFieldsOf(
+      ability,
+      AbilityAction.Read,
+      ApplicationAuthZEntity,
+      applicationFieldOptions
+    ).includes("matchScore");
+    const sortByMatch = askedForMatch && canReadMatchScore;
+
     const results = await applicationService.list({
       query: { $and: [filter, applicationSecurityQuery(ability)] },
       options: {
         page: 1,
         limit: Math.min(input.limit ?? DEFAULT_LIMIT, MAX_LIMIT),
-        sort: { createdAt: -1 },
+        // Recency breaks ties so the order is total, not just best-first.
+        sort: sortByMatch ? { matchScore: -1, createdAt: -1 } : { createdAt: -1 },
       },
     });
 
@@ -160,6 +195,11 @@ export const listApplicationsTool: AgentTool<ListApplicationsInput> = {
       totalMatching: results.totalDocs,
       returned: applications.length,
       applications: applications.map((application) => toApplicationSummary(application, jobs)),
+      // Stated rather than left silent: unexplained recency order would be read
+      // as a ranking, and the top row reported as the best candidate.
+      ...(askedForMatch && !canReadMatchScore
+        ? { note: "Match scores are not available to this account, so these are ordered most recent first instead." }
+        : {}),
     };
   },
 };

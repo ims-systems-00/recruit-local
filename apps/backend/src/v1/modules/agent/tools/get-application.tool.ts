@@ -34,6 +34,11 @@ export const getApplicationTool: AgentTool<GetApplicationInput> = {
     "screening questions, salary figures and the names of any attached files. " +
     "Take the id from list_applications first — this accepts only an application's `_id`, not a job title, a reference " +
     "code or a candidate's name. " +
+    "A result may carry `matchScore`, the platform's own ranking of how well this candidate fits the job, out of " +
+    "`matchScoreOutOf` — higher is a better fit, and it is a better answer to how good a candidate is than the " +
+    "pipeline stage, which only records where a human moved them. A score of 0 may mean the application has not been " +
+    "scored yet rather than that the candidate is a poor fit, so report it as unavailable rather than as a bad match. " +
+    'To compare candidates, use list_applications with sortBy "match" rather than opening them one by one. ' +
     "Employers can only open applications made to their own organisation's jobs, and candidates only their own; an " +
     "application outside that is reported as not found.",
 
