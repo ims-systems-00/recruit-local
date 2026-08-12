@@ -4,6 +4,7 @@ import { IJobInput } from "../../../../models/job.model";
 import { ApplicationInput } from "../../../../models/application.model";
 import { MatchableValue, ValueMatchResult, matchValues } from "./matching/value";
 import { QuestionMatchResult, matchQuestionAnswers } from "./matching/valuebasedQuestion";
+import { ExperienceMatchResult, MatchableExperienceLevel, matchExperience } from "./matching/experience";
 
 /**
  * The ranking pipeline.
@@ -24,7 +25,15 @@ import { QuestionMatchResult, matchQuestionAnswers } from "./matching/valuebased
  */
 type WithPopulatedValues<T> = Omit<T, "values"> & { values?: MatchableValue[] };
 
-export type RankingJobProfile = WithPopulatedValues<JobProfileInput>;
+/**
+ * The candidate's profile as the ranking fetch reads it: `values` populated into
+ * documents, and the single `experienceLevel` reference resolved into the level
+ * itself so its span of years is available to compare.
+ */
+export type RankingJobProfile = Omit<WithPopulatedValues<JobProfileInput>, "experienceLevel"> & {
+  experienceLevel?: MatchableExperienceLevel | null;
+};
+
 export type RankingTenant = WithPopulatedValues<TenantInput>;
 
 /**
@@ -151,10 +160,25 @@ export const questionMatcher: RankingMatcher = {
 };
 
 /**
+ * Whether the candidate's experience level answers the job's stated requirement
+ * in years — see `matching/experience.ts` for the scoring, which treats being
+ * under the requirement far more harshly than being over it.
+ */
+export const experienceMatcher: RankingMatcher = {
+  key: "experience",
+  label: "Experience",
+  weight: 1,
+  run: ({ job, jobProfile }) => {
+    const result: ExperienceMatchResult = matchExperience(job.yearOfExperience, jobProfile.experienceLevel);
+    return { ratio: result.ratio, applicable: result.applicable, details: result };
+  },
+};
+
+/**
  * The matchers, in the order their signals are reported. Order is presentation
  * only — the composite score is weight-driven and order-independent.
  */
-export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, questionMatcher];
+export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, questionMatcher, experienceMatcher];
 
 /**
  * Stamped onto every stored ranking. Bump it whenever a change would make old
@@ -164,7 +188,7 @@ export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, questionMatcher
  * version are stale by definition and can be found and re-ranked with a single
  * query; without it there is no way to tell a fresh score from a legacy one.
  */
-export const RANKING_PIPELINE_VERSION = 3;
+export const RANKING_PIPELINE_VERSION = 4;
 
 /**
  * Runs every matcher in the pipeline and folds the applicable ones into a

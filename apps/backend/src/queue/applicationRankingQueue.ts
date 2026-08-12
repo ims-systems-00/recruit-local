@@ -1,9 +1,10 @@
 import { Job as BullJob } from "bullmq";
-import { Types } from "mongoose";
+import { PipelineStage, Types } from "mongoose";
 import { ReusableQueue } from "./Queue";
 import { Application, Job, JobProfile, Tenant } from "../models";
 import { matchQuery, excludeDeletedQuery } from "../common/query";
 import { populateValuesQuery } from "../v1/modules/value/value.query";
+import { populateExperienceLevelQuery } from "../v1/modules/experience-level/experience-level.query";
 import {
   RankingContext,
   RankingJobProfile,
@@ -21,15 +22,20 @@ export interface ApplicationRankingData {
  * Loads a document by id with its `values` array populated into full value
  * documents, the same way the tenant and job-profile read paths do. Soft-deleted
  * values are excluded by `populateValuesQuery`, so a retired value cannot score.
+ *
+ * `extraStages` covers what only one side needs — the job profile also resolves
+ * its experience level, which the tenant has no equivalent of.
  */
 const findWithValues = async <T>(
   model: typeof JobProfile | typeof Tenant,
-  id: Types.ObjectId | string
+  id: Types.ObjectId | string,
+  extraStages: PipelineStage[] = []
 ): Promise<T | null> => {
   const [doc] = await model.aggregate<T>([
     ...matchQuery({ _id: new Types.ObjectId(String(id)) }),
     ...excludeDeletedQuery(),
     ...populateValuesQuery(),
+    ...extraStages,
   ]);
   return doc ?? null;
 };
@@ -68,7 +74,7 @@ const processApplicationRanking = async ({
     return { skipped: "application is missing jobId, jobProfileId or tenantId" };
 
   const [jobProfile, tenant, job] = await Promise.all([
-    findWithValues<RankingJobProfile>(JobProfile, jobProfileId),
+    findWithValues<RankingJobProfile>(JobProfile, jobProfileId, populateExperienceLevelQuery()),
     findWithValues<RankingTenant>(Tenant, String(tenantId)),
     Job.findById(jobId).lean<IJobInput>(),
   ]);
