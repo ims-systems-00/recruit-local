@@ -22,6 +22,10 @@ const experienceLevelSchema = new Schema<IExperienceLevelDoc>(
     name: { type: String, required: true, trim: true },
     description: { type: String },
     isActive: { type: Boolean, default: true },
+    // The years this level spans. `maxYears: null` is open-ended ("15+").
+    // Both null means the level cannot be compared to a job's yearOfExperience.
+    minYears: { type: Number, min: 0, default: null },
+    maxYears: { type: Number, min: 0, default: null },
   },
   { timestamps: true }
 );

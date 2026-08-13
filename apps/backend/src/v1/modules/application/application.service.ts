@@ -104,9 +104,11 @@ export const create = async ({ payload, session }: IApplicationCreateParams) => 
     throw new Error("An application already exists for the job.");
   }
 
-  // 2. Generate initial metrics
-  const merit = Math.floor(Math.random() * 10) + 1;
-  payload.rank = merit;
+  // 2. Start unranked. The application-ranking queue overwrites both of these
+  // with the real match score once the transaction commits; until then every
+  // new application sits at the bottom of the board rather than at a random spot.
+  payload.rank = 0;
+  payload.matchScore = 0;
 
   const applicationId = new Types.ObjectId();
   let resumeId = null;

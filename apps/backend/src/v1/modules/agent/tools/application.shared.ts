@@ -15,6 +15,7 @@ import * as jobService from "../../job/job.service";
 import { jobRoleScopedSecurityQuery } from "../../job/job.query";
 import { applicationRoleScopedSecurityQuery } from "../../application/application.query";
 import { toApplicationResponse } from "../../application/application.dto";
+import { RANKING_SCALE } from "../../application/ranking/pipeline";
 
 /**
  * Shared between list_applications and get_application: the scoping guard, the
@@ -115,6 +116,7 @@ const SUMMARY_FIELDS = [
   "portfolioUrl",
   "currentSalary",
   "expectedSalary",
+  "matchScore",
 ];
 
 /** Adds what only the detail view is worth spending tokens on. */
@@ -126,6 +128,15 @@ const toApplicant = (doc: Record<string, any>) =>
 
 /** The board column the application currently sits in, flattened to its label. */
 const toStage = (doc: Record<string, any>) => (doc.status?.label ? { status: doc.status.label } : {});
+
+/**
+ * The denominator the match score is out of. `matchScore` itself rides in
+ * `SUMMARY_FIELDS`; this puts the scale beside it so a bare 640 is readable, and
+ * only when the score survived sanitization — a candidate's read fields omit
+ * `matchScore`, and a lone `matchScoreOutOf` would imply a number they are not
+ * being shown.
+ */
+const toMatchScale = (doc: Record<string, any>) => (doc.matchScore != null ? { matchScoreOutOf: RANKING_SCALE } : {});
 
 /**
  * A populated FileMedia object is mostly S3 bookkeeping — bucket, key, delete
@@ -150,6 +161,7 @@ export const toApplicationSummary = (doc: unknown, jobs: Record<string, any>) =>
 
   return {
     ...present(application, SUMMARY_FIELDS),
+    ...toMatchScale(application),
     ...(job?.title ? { jobTitle: job.title } : {}),
     ...toStage(application),
     ...toApplicant(application),
@@ -177,6 +189,7 @@ export const toApplicationDetail = (doc: unknown, job: Record<string, any> | und
 
   return {
     ...present(application, DETAIL_FIELDS),
+    ...toMatchScale(application),
     ...(job?.title ? { jobTitle: job.title } : {}),
     ...toStage(application),
     ...toApplicant(application),

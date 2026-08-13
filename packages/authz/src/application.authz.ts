@@ -31,6 +31,9 @@ export const ALL_APPLICATION_FIELDS = [
   'statusId',
   'rank',
 
+  // --- Ranking (application-ranking queue) ---
+  'matchScore',
+
   // --- Job Profile Plugin (JobProfileInput) ---
   'jobProfileId',
 
@@ -74,7 +77,12 @@ const CANDIDATE_CREATE_FIELDS = [
   'expectedSalary',
 ];
 
-const CANDIDATE_READ_FIELDS = omitFields(['isDeleted', 'deletedAt', 'rank']);
+const CANDIDATE_READ_FIELDS = omitFields([
+  'isDeleted',
+  'deletedAt',
+  'rank',
+  'matchScore',
+]);
 
 const EMPLOYER_UPDATE_FIELDS = ['statusId'];
 
