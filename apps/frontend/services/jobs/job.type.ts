@@ -62,6 +62,8 @@ export interface JobData {
   workingDays: number;
   weekends: string[];
 
+  alreadySavedId?: string | null;
+
   workingHours: {
     startTime: string; // HH:mm
     endTime: string; // HH:mm
