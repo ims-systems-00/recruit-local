@@ -14,6 +14,7 @@ import {
   readJobsById,
   toApplicationSummary,
 } from "./application.shared";
+import { escapeRegex } from "./tool.shared";
 
 const MAX_LIMIT = 25;
 const DEFAULT_LIMIT = 10;
@@ -27,8 +28,6 @@ interface ListApplicationsInput {
   limit?: number;
   sortBy?: "recent" | "match";
 }
-
-const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * Resolves a pipeline stage name to the status ids that carry it.

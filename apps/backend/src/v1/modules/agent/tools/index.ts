@@ -2,16 +2,29 @@ import OpenAI from "openai";
 import { ISession } from "@rl/types";
 import { AgentTool } from "./tool.types";
 import { listJobsTool } from "./list-jobs.tool";
+import { getJobTool } from "./get-job.tool";
 import { getMyProfileTool } from "./get-my-profile.tool";
 import { listApplicationsTool } from "./list-applications.tool";
 import { getApplicationTool } from "./get-application.tool";
+import { recommendJobsTool } from "./recommend-jobs.tool";
+import { analyzeMyProfileTool } from "./analyze-my-profile.tool";
+import { analyzeJobFitTool } from "./analyze-job-fit.tool";
 
 export * from "./tool.types";
 
 /**
  * Every agent capability. Adding one is: implement AgentTool, add it here.
  */
-const registry: AgentTool[] = [listJobsTool, getMyProfileTool, listApplicationsTool, getApplicationTool];
+const registry: AgentTool[] = [
+  listJobsTool,
+  getJobTool,
+  getMyProfileTool,
+  listApplicationsTool,
+  getApplicationTool,
+  recommendJobsTool,
+  analyzeMyProfileTool,
+  analyzeJobFitTool,
+];
 
 export const toolsFor = (session: ISession): AgentTool[] =>
   registry.filter((tool) => (tool.isAvailable ? tool.isAvailable(session) : true));

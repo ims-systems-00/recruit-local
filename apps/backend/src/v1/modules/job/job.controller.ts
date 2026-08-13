@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
 } from "../../../common/helper";
 import * as jobService from "./job.service";
-import * as jobProfileService from "../job-profile/job-profile.service";
+import { getProfileKeywords } from "./keyword.service";
 import { JobAbilityBuilder, JobAuthZEntity, ALL_JOB_FIELDS } from "@rl/authz";
 import { AbilityAction, JOBS_STATUS_ENUMS } from "@rl/types";
 import { jobRoleScopedSecurityQuery } from "./job.query";
@@ -67,19 +67,6 @@ const caslFieldOptions = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getSanitizedJobResponse = (doc: any, ability: any) => {
   return sanitizeDocument<JobAuthZEntity>(doc, ability, AbilityAction.Read, JobAuthZEntity, caslFieldOptions);
-};
-
-/**
- * Loads a seeker's profile keywords for match ranking. Returns [] (plain list)
- * if the profile is missing so a stale session id never 404s the jobs list.
- */
-const getProfileKeywords = async (jobProfileId: string): Promise<string[]> => {
-  try {
-    const profile = await jobProfileService.getOne({ query: { _id: jobProfileId } });
-    return (profile?.keywords ?? []).map((k: string) => k.toLowerCase());
-  } catch {
-    return [];
-  }
 };
 
 export const list = async ({ req }: ControllerParams) => {
