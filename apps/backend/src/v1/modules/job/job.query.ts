@@ -129,13 +129,16 @@ export const alreadysaved = (tenantId?: string, jobProfileId?: string): Pipeline
         : null;
 
   if (!ownerCondition) {
-    return [{ $addFields: { alreadySaved: false } }];
+    return [{ $addFields: { alreadySaved: false, alreadySavedId: null } }];
   }
 
   const matchConditions: any[] = [
     ownerCondition,
     { $eq: ["$itemType", modelNames.JOB] },
     { $eq: ["$itemId", "$$currentJobId"] },
+    // Favourites are soft-deleted, so an unsaved job must stop matching — without
+    // this the flag stays `true` forever after `DELETE /favourites/:id/soft`.
+    { $ne: ["$deleteMarker.status", true] },
   ];
 
   return [
@@ -167,6 +170,12 @@ export const alreadysaved = (tenantId?: string, jobProfileId?: string): Pipeline
       $addFields: {
         alreadySaved: {
           $gt: [{ $size: "$alreadySavedLookup" }, 0],
+        },
+        // Id of that favourite, so a client can undo the save with
+        // `DELETE /favourites/:id/soft` without first looking it up. `null` when
+        // the job is not saved. Mirrors `alreadySavedQuery` in the post module.
+        alreadySavedId: {
+          $ifNull: [{ $arrayElemAt: ["$alreadySavedLookup._id", 0] }, null],
         },
       },
     },

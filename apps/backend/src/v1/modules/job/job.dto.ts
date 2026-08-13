@@ -33,6 +33,7 @@ export const toJobResponse = (doc: unknown): JobResponseDto => {
   if (has(d, "tenantId")) d.tenantId = d.tenantId == null ? null : String(d.tenantId);
   if (has(d, "formId")) d.formId = d.formId == null ? null : String(d.formId);
   if (has(d, "attachmentIds") && Array.isArray(d.attachmentIds)) d.attachmentIds = d.attachmentIds.map(String);
+  if (has(d, "alreadySavedId")) d.alreadySavedId = d.alreadySavedId == null ? null : String(d.alreadySavedId);
   if (has(d, "endDate")) d.endDate = d.endDate == null ? null : toIso(d.endDate);
   if (has(d, "createdAt")) d.createdAt = toIso(d.createdAt);
   if (has(d, "updatedAt")) d.updatedAt = toIso(d.updatedAt);
