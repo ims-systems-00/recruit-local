@@ -7,7 +7,10 @@ import { cn, formatDate } from '@/lib/utils';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useCreateFavourite } from '@/services/favourite/favourite.client';
+import {
+  useCreateFavourite,
+  useSoftDeleteFavourite,
+} from '@/services/favourite/favourite.client';
 
 export default function CardJobItem({
   job,
@@ -19,11 +22,17 @@ export default function CardJobItem({
   isShowFavouriteBtn?: boolean;
 }) {
   const { createFavourite, isPending } = useCreateFavourite();
-  const onAddFavourite = async () => {
-    await createFavourite({
-      itemId: job._id,
-      itemType: 'jobs',
-    });
+  const { softDeleteFavourite, isPending: isSoftDeletingFavourite } =
+    useSoftDeleteFavourite();
+  const onToggleFavourite = async () => {
+    if (job?.alreadySavedId) {
+      await softDeleteFavourite(job?.alreadySavedId);
+    } else {
+      await createFavourite({
+        itemId: job._id,
+        itemType: 'jobs',
+      });
+    }
   };
   return (
     <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs">
@@ -99,15 +108,19 @@ export default function CardJobItem({
           )} */}
           {isShowFavouriteBtn && (
             <Button
-              onClick={onAddFavourite}
-              disabled={isPending || job?.alreadySaved}
+              onClick={onToggleFavourite}
+              disabled={isPending || isSoftDeletingFavourite}
               className={cn(
                 'cursor-pointer hover:bg-bg-gray-soft-primary w-9! p-spacing-0! bg-bg-gray-soft-primary border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!',
                 job?.alreadySaved &&
-                  'text-text-brand-primary! border-border-brand-primary! cursor-not-allowed',
+                  'text-text-brand-primary! border-border-brand-primary!',
               )}
             >
-              {isPending ? <Loader2 className="animate-spin" /> : <Bookmark />}
+              {isPending || isSoftDeletingFavourite ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <Bookmark />
+              )}
             </Button>
           )}
         </div>

@@ -10,9 +10,15 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import { toast } from 'sonner';
-import { useCreateReaction } from '@/services/reaction/reaction.client';
+import {
+  useCreateReaction,
+  useSoftDeleteReaction,
+} from '@/services/reaction/reaction.client';
 import { POST_TYPE_ENUMS, ReactionType } from '@rl/types';
-import { useCreateFavourite } from '@/services/favourite';
+import {
+  useCreateFavourite,
+  useSoftDeleteFavourite,
+} from '@/services/favourite';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -36,6 +42,8 @@ function WhatsAppIcon({ className }: { className?: string }) {
 
 export default function PostActions({
   postId,
+  alreadySavedId,
+  alreadyReactedId,
   postType,
   alreadySaved,
   alreadyReacted,
@@ -43,6 +51,8 @@ export default function PostActions({
 }: {
   postId: string;
   postType: string;
+  alreadySavedId?: string | null;
+  alreadyReactedId?: string | null;
   alreadySaved: boolean;
   alreadyReacted: string | null;
   reactionCount: number;
@@ -50,6 +60,11 @@ export default function PostActions({
   const { createReaction, isPending: isCreatingReaction } = useCreateReaction();
   const { createFavourite, isPending: isCreatingFavourite } =
     useCreateFavourite();
+
+  const { softDeleteFavourite, isPending: isSoftDeletingFavourite } =
+    useSoftDeleteFavourite();
+  const { softDeleteReaction, isPending: isSoftDeletingReaction } =
+    useSoftDeleteReaction();
 
   const getShareUrl = () => {
     const origin = window.location.origin;
@@ -84,19 +99,27 @@ export default function PostActions({
     }
   };
 
-  const onAddFavourite = async () => {
-    await createFavourite({
-      itemId: postId,
-      itemType: 'posts',
-    });
+  const onToggleFavourite = async () => {
+    if (alreadySavedId) {
+      await softDeleteFavourite(alreadySavedId);
+    } else {
+      await createFavourite({
+        itemId: postId,
+        itemType: 'posts',
+      });
+    }
   };
 
-  const handleCreateReaction = async () => {
-    await createReaction({
-      collectionName: 'posts',
-      collectionId: postId,
-      type: ReactionType.LOVE,
-    });
+  const onToggleReaction = async () => {
+    if (alreadyReactedId) {
+      await softDeleteReaction(alreadyReactedId);
+    } else {
+      await createReaction({
+        collectionName: 'posts',
+        collectionId: postId,
+        type: ReactionType.LOVE,
+      });
+    }
   };
 
   return (
@@ -104,13 +127,11 @@ export default function PostActions({
       <div className="  py-spacing-2xl px-spacing-4xl ">
         <div className=" grid grid-cols-3 gap-spacing-2xl">
           <button
-            onClick={handleCreateReaction}
-            disabled={
-              isCreatingReaction || alreadyReacted === ReactionType.LOVE
-            }
+            onClick={onToggleReaction}
+            disabled={isCreatingReaction || isSoftDeletingReaction}
             className=" cursor-pointer w-full flex items-center justify-center gap-spacing-2xs"
           >
-            {isCreatingReaction ? (
+            {isCreatingReaction || isSoftDeletingReaction ? (
               <Loader2 className="w-5 h-5 text-text-brand-primary animate-spin" />
             ) : (
               <Heart
@@ -163,11 +184,11 @@ export default function PostActions({
           </DropdownMenu>
           <div className=" w-full flex items-center justify-center gap-spacing-2xs">
             <button
-              onClick={onAddFavourite}
-              disabled={isCreatingFavourite || alreadySaved}
+              onClick={onToggleFavourite}
+              disabled={isCreatingFavourite || isSoftDeletingFavourite}
               className=" cursor-pointer w-full flex items-center justify-center gap-spacing-2xs"
             >
-              {isCreatingFavourite ? (
+              {isCreatingFavourite || isSoftDeletingFavourite ? (
                 <Loader2 className="w-5 h-5 text-fg-gray-secondary animate-spin" />
               ) : (
                 <Bookmark

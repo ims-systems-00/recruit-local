@@ -73,7 +73,9 @@ export function useFavourite(id: string) {
   };
 }
 
-export function useCreateFavourite(onSuccessCallback?: () => void) {
+export function useCreateFavourite(
+  onSuccessCallback?: (data: FavouriteData) => void,
+) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -84,7 +86,7 @@ export function useCreateFavourite(onSuccessCallback?: () => void) {
         queryClient.invalidateQueries({ queryKey: favouriteKeys.all });
         queryClient.invalidateQueries({ queryKey: ['posts'] });
         queryClient.invalidateQueries({ queryKey: ['jobs'] });
-        onSuccessCallback?.();
+        onSuccessCallback?.(response.data);
       } else {
         toast.error(response.message);
       }
@@ -132,7 +134,9 @@ export function useUpdateFavourite() {
   };
 }
 
-export function useSoftDeleteFavourite() {
+export function useSoftDeleteFavourite(
+  onSuccessCallback?: (data: FavouriteData) => void,
+) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -141,7 +145,9 @@ export function useSoftDeleteFavourite() {
       if (response.success) {
         toast.success(response.message || 'Favourite removed successfully');
         queryClient.invalidateQueries({ queryKey: favouriteKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
         queryClient.invalidateQueries({ queryKey: ['jobs'] });
+        onSuccessCallback?.(response.data);
       } else {
         toast.error(response.message);
       }

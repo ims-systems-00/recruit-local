@@ -130,6 +130,8 @@ export default function Posts() {
               )}
 
               <PostActions
+                alreadySavedId={post.alreadySavedId}
+                alreadyReactedId={post.alreadyReactedId}
                 postId={post._id}
                 postType={post.type}
                 alreadySaved={post.alreadySaved ?? false}
