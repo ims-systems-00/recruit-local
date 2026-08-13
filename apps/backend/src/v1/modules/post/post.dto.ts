@@ -74,6 +74,8 @@ export const toPostResponse = (doc: unknown): PostResponseDto => {
   if (has(d, "jobProfileId")) d.jobProfileId = d.jobProfileId == null ? null : String(d.jobProfileId);
   if (has(d, "banner")) d.banner = d.banner == null ? null : toMedia(d.banner);
   if (has(d, "images") && Array.isArray(d.images)) d.images = d.images.map(toMedia);
+  if (has(d, "alreadyReactedId")) d.alreadyReactedId = d.alreadyReactedId == null ? null : String(d.alreadyReactedId);
+  if (has(d, "alreadySavedId")) d.alreadySavedId = d.alreadySavedId == null ? null : String(d.alreadySavedId);
   if (has(d, "schedule")) d.schedule = d.schedule == null ? null : toIso(d.schedule);
   if (has(d, "createdAt")) d.createdAt = toIso(d.createdAt);
   if (has(d, "updatedAt")) d.updatedAt = toIso(d.updatedAt);

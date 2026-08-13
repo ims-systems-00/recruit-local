@@ -61,8 +61,19 @@ export interface PostResponseDto {
    * like a flag. Always `null` for a caller with no tenant/job-profile context.
    */
   alreadyReacted?: ReactionType | null;
+  /**
+   * Id of the reaction `alreadyReacted` describes, so a client can undo it with
+   * `DELETE /reactions/:id/soft` without first looking it up. `null` whenever
+   * `alreadyReacted` is.
+   */
+  alreadyReactedId?: string | null;
   /** Whether the viewer has favourited (saved) this post. */
   alreadySaved?: boolean;
+  /**
+   * Id of that favourite, for undo via `DELETE /favourites/:id/soft`. `null`
+   * when `alreadySaved` is false.
+   */
+  alreadySavedId?: string | null;
   /** Total number of reactions on this post, across every reactor and type. */
   reactionCount?: number;
   createdAt?: string; // ISO

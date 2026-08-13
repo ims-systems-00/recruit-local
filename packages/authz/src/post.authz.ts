@@ -38,6 +38,11 @@ export const ALL_POST_FIELDS = [
   // accepted on writes — absent from EMPLOYER_MUTATION_FIELDS.
   'alreadyReacted',
   'alreadySaved',
+  // Ids of the two documents above, so a client can undo either without a lookup
+  // (`DELETE /reactions/:id/soft`, `DELETE /favourites/:id/soft`). Null when the
+  // viewer has not acted, or has no tenant/job-profile context to act as.
+  'alreadyReactedId',
+  'alreadySavedId',
   // Total reaction count across all reactors, viewer-independent. Server-populated,
   // never accepted on writes — absent from EMPLOYER_MUTATION_FIELDS.
   'reactionCount',
