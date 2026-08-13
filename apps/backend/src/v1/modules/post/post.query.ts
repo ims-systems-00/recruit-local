@@ -93,10 +93,15 @@ const viewerOwnerCondition = (tenantId?: string, jobProfileId?: string): Record<
  * excluded; nothing enforces one reaction per reactor per post, so the most
  * recently touched one wins. Must run after `postProjectQuery`, which would
  * otherwise drop the field (it is not a schema path).
+ *
+ * Also adds `alreadyReactedId`, the id of that same reaction document, so a
+ * client can undo it via `DELETE /reactions/:id/soft` without first looking the
+ * reaction up. Because duplicates are possible, it identifies the reaction the
+ * `$sort`/`$limit` below picked — not necessarily the viewer's only one.
  */
 export const alreadyReactedQuery = (tenantId?: string, jobProfileId?: string): PipelineStage[] => {
   const ownerCondition = viewerOwnerCondition(tenantId, jobProfileId);
-  if (!ownerCondition) return [{ $addFields: { alreadyReacted: null } }];
+  if (!ownerCondition) return [{ $addFields: { alreadyReacted: null, alreadyReactedId: null } }];
 
   return [
     {
@@ -126,6 +131,7 @@ export const alreadyReactedQuery = (tenantId?: string, jobProfileId?: string): P
     {
       $addFields: {
         alreadyReacted: { $ifNull: [{ $arrayElemAt: ["$alreadyReactedLookup.type", 0] }, null] },
+        alreadyReactedId: { $ifNull: [{ $arrayElemAt: ["$alreadyReactedLookup._id", 0] }, null] },
       },
     },
     { $project: { alreadyReactedLookup: 0 } },
@@ -136,10 +142,15 @@ export const alreadyReactedQuery = (tenantId?: string, jobProfileId?: string): P
  * Adds `alreadySaved`: whether the viewer has favourited this post. Favourites
  * are soft-deleted, so an un-saved post reads `false`. Must run after
  * `postProjectQuery` for the same reason as `alreadyReactedQuery`.
+ *
+ * Also adds `alreadySavedId`, the id of that favourite (`null` when unsaved), so
+ * a client can undo it via `DELETE /favourites/:id/soft` without looking it up.
+ * A partial unique index on the model keeps at most one live favourite per
+ * viewer per item, so this is unambiguous.
  */
 export const alreadySavedQuery = (tenantId?: string, jobProfileId?: string): PipelineStage[] => {
   const ownerCondition = viewerOwnerCondition(tenantId, jobProfileId);
-  if (!ownerCondition) return [{ $addFields: { alreadySaved: false } }];
+  if (!ownerCondition) return [{ $addFields: { alreadySaved: false, alreadySavedId: null } }];
 
   return [
     {
@@ -165,7 +176,12 @@ export const alreadySavedQuery = (tenantId?: string, jobProfileId?: string): Pip
         as: "alreadySavedLookup",
       },
     },
-    { $addFields: { alreadySaved: { $gt: [{ $size: "$alreadySavedLookup" }, 0] } } },
+    {
+      $addFields: {
+        alreadySaved: { $gt: [{ $size: "$alreadySavedLookup" }, 0] },
+        alreadySavedId: { $ifNull: [{ $arrayElemAt: ["$alreadySavedLookup._id", 0] }, null] },
+      },
+    },
     { $project: { alreadySavedLookup: 0 } },
   ];
 };

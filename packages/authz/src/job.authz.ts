@@ -42,6 +42,10 @@ export const ALL_JOB_FIELDS = [
   'attachments',
   'alreadyApplied',
   'alreadySaved',
+  // Id of the viewer's favourite, so a client can undo the save without a lookup
+  // (`DELETE /favourites/:id/soft`). Null when the job is not saved. Server-derived
+  // and read-only — absent from EMPLOYER_CREATE_FIELDS/EMPLOYER_UPDATE_FIELDS.
+  'alreadySavedId',
   'category',
   'vacancy',
   'location',

@@ -106,6 +106,13 @@ export interface JobResponseDto {
   boardBackground?: string;
   boardSortBy?: string;
   boardSortOrder?: 'asc' | 'desc';
+  /** Whether the viewer has favourited (saved) this job. */
+  alreadySaved?: boolean;
+  /**
+   * Id of that favourite, for undo via `DELETE /favourites/:id/soft`. `null`
+   * when `alreadySaved` is false. Mirrors `PostResponseDto`.
+   */
+  alreadySavedId?: string | null;
   createdAt?: string; // ISO
   updatedAt?: string; // ISO
 }
