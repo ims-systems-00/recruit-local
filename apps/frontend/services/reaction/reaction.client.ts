@@ -139,7 +139,9 @@ export function useUpdateReaction() {
 }
 
 // Hook to soft delete a reaction
-export function useSoftDeleteReaction() {
+export function useSoftDeleteReaction(
+  onSuccessCallback?: (data: ReactionData) => void,
+) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -148,6 +150,8 @@ export function useSoftDeleteReaction() {
       if (response.success) {
         toast.success(response.message || 'Reaction removed successfully');
         queryClient.invalidateQueries({ queryKey: reactionKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
+        onSuccessCallback?.(response.data);
       } else {
         toast.error(response.message);
       }

@@ -7,8 +7,14 @@ import moment from 'moment';
 import { Bookmark, Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ReactionType } from '@rl/types';
-import { useCreateFavourite } from '@/services/favourite';
-import { useCreateReaction } from '@/services/reaction/reaction.client';
+import {
+  useCreateFavourite,
+  useSoftDeleteFavourite,
+} from '@/services/favourite';
+import {
+  useCreateReaction,
+  useSoftDeleteReaction,
+} from '@/services/reaction/reaction.client';
 import { cn } from '@/lib/utils';
 
 export default function ArticleDetails({ item }: { item: PostData }) {
@@ -19,37 +25,65 @@ export default function ArticleDetails({ item }: { item: PostData }) {
     item?.alreadySaved,
   );
   const [reactionCount, setReactionCount] = useState(item?.reactionCount);
+  const [alreadyReactedId, setAlreadyReactedId] = useState(
+    item?.alreadyReactedId,
+  );
+  const [alreadySavedId, setAlreadySavedId] = useState(item?.alreadySavedId);
 
   const { createReaction, isPending: isCreatingReaction } = useCreateReaction(
     (data) => {
       setIsAlreadyReacted(ReactionType.LOVE);
       setReactionCount((prev) => prev + 1);
+      setAlreadyReactedId(data._id);
     },
   );
   const { createFavourite, isPending: isCreatingFavourite } =
-    useCreateFavourite(() => {
+    useCreateFavourite((data) => {
       setIsAlreadyFavourited(true);
+      setAlreadySavedId(data._id);
+    });
+
+  const { softDeleteFavourite, isPending: isSoftDeletingFavourite } =
+    useSoftDeleteFavourite((data) => {
+      setIsAlreadyFavourited(false);
+      setAlreadySavedId(null);
+    });
+  const { softDeleteReaction, isPending: isSoftDeletingReaction } =
+    useSoftDeleteReaction((data) => {
+      setIsAlreadyReacted(null);
+      setReactionCount((prev) => prev - 1);
+      setAlreadyReactedId(null);
     });
 
   useEffect(() => {
     setIsAlreadyReacted(item?.alreadyReacted);
     setIsAlreadyFavourited(item?.alreadySaved);
     setReactionCount(item?.reactionCount);
+    setAlreadyReactedId(item?.alreadyReactedId);
+    setAlreadySavedId(item?.alreadySavedId);
   }, [item]);
 
   const onAddFavourite = async () => {
-    await createFavourite({
-      itemId: item._id,
-      itemType: 'posts',
-    });
+    if (alreadySavedId) {
+      await softDeleteFavourite(alreadySavedId);
+    } else {
+      await createFavourite({
+        itemId: item._id,
+        itemType: 'posts',
+      });
+    }
   };
 
   const handleCreateReaction = async () => {
-    await createReaction({
-      collectionName: 'posts',
-      collectionId: item._id,
-      type: ReactionType.LOVE,
-    });
+    if (alreadyReactedId) {
+      await softDeleteReaction(alreadyReactedId);
+    } else {
+      await createReaction({
+        collectionName: 'posts',
+        collectionId: item._id,
+        type: ReactionType.LOVE,
+      });
+    }
   };
   return (
     <div className=" p-spacing-4xl space-y-spacing-4xl">
@@ -91,11 +125,9 @@ export default function ArticleDetails({ item }: { item: PostData }) {
               size="sm"
               className=" border-0! shadow-none! cursor-pointer"
               onClick={handleCreateReaction}
-              disabled={
-                isCreatingReaction || isAlreadyReacted === ReactionType.LOVE
-              }
+              disabled={isCreatingReaction || isSoftDeletingReaction}
             >
-              {isCreatingReaction ? (
+              {isCreatingReaction || isSoftDeletingReaction ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 <Heart
@@ -113,9 +145,9 @@ export default function ArticleDetails({ item }: { item: PostData }) {
               size="sm"
               className=" h-10 w-10 min-w-10 cursor-pointer"
               onClick={onAddFavourite}
-              disabled={isCreatingFavourite || isAlreadyFavourited}
+              disabled={isCreatingFavourite || isSoftDeletingFavourite}
             >
-              {isCreatingFavourite ? (
+              {isCreatingFavourite || isSoftDeletingFavourite ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 <Bookmark

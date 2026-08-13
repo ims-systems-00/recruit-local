@@ -50,6 +50,8 @@ export interface PostData {
   alreadySaved?: boolean;
   alreadyReacted?: string | null;
   reactionCount: number;
+  alreadySavedId?: string | null;
+  alreadyReactedId?: string | null;
 }
 
 interface ProfileImage {
