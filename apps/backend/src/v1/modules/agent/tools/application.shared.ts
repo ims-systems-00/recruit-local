@@ -1,62 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AnyAbility } from "@casl/ability";
-import { AbilityAction, ISession } from "@rl/types";
-import {
-  ApplicationAbilityBuilder,
-  ApplicationAuthZEntity,
-  ALL_APPLICATION_FIELDS,
-  JobAbilityBuilder,
-  JobAuthZEntity,
-  ALL_JOB_FIELDS,
-} from "@rl/authz";
+import { ApplicationAbilityBuilder, ApplicationAuthZEntity, ALL_APPLICATION_FIELDS } from "@rl/authz";
 import { ForbiddenException } from "../../../../common/helper";
-import { sanitizeDocuments } from "../../../../common/helper/authz";
-import * as jobService from "../../job/job.service";
-import { jobRoleScopedSecurityQuery } from "../../job/job.query";
 import { applicationRoleScopedSecurityQuery } from "../../application/application.query";
 import { toApplicationResponse } from "../../application/application.dto";
 import { RANKING_SCALE } from "../../application/ranking/pipeline";
+import { rulesCollapsed, present } from "./tool.shared";
 
 /**
- * Shared between list_applications and get_application: the scoping guard, the
- * job lookup both need to turn a `jobId` into a title, and the two response
- * shapes. Nothing here is a tool; the tools are the two files beside it.
+ * Shared between list_applications and get_application: the scoping guard and
+ * the two response shapes. Nothing here is a tool; the tools are the two files
+ * beside it.
+ *
+ * `readJobsById` — the lookup both need to turn a `jobId` into a title — moved
+ * to `tool.shared.ts` once the job tools started needing it too. It is still
+ * imported from here by the two tools, so their import lists did not change.
  */
+
+export { readJobsById } from "./tool.shared";
 
 export const applicationFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_APPLICATION_FIELDS,
 };
-
-const jobFieldOptions = {
-  fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_FIELDS,
-};
-
-const hasUndefinedValue = (value: unknown): boolean => {
-  if (value === undefined) return true;
-  if (Array.isArray(value)) return value.some(hasUndefinedValue);
-  if (value && typeof value === "object") return Object.values(value).some(hasUndefinedValue);
-  return false;
-};
-
-/**
- * True when a rule meant to be scoped to this caller silently is not.
- *
- * An employer's Read rule is conditioned on `session.tenantId` and a candidate's
- * on `session.jobProfileId`, either of which is `undefined` on an account that
- * has not finished setting itself up. CASL drops a condition whose value is
- * undefined instead of treating it as unmatchable, so `accessibleBy` returns
- * `{ $or: [{}] }` — every row on the platform rather than none.
- *
- * Detected on the rules rather than on the generated query because by then the
- * evidence is gone: a legitimately unconditioned platform-admin rule and a
- * collapsed employer rule produce the identical `{ $or: [{}] }`. The row check
- * in `ability.can` fails closed on the same rule, so only query scoping is at
- * risk — which is the half a read tool relies on.
- */
-const rulesCollapsed = (ability: AnyAbility, subjectType: unknown): boolean =>
-  ability
-    .rulesFor(AbilityAction.Read, subjectType as never)
-    .some((rule) => rule.conditions && hasUndefinedValue(rule.conditions));
 
 /**
  * The `$match` limiting a query to the applications this caller may read, plus
@@ -68,43 +32,6 @@ export const applicationSecurityQuery = (ability: ReturnType<ApplicationAbilityB
   }
 
   return applicationRoleScopedSecurityQuery(ability);
-};
-
-/**
- * The jobs behind a set of applications, keyed by id, read through the caller's
- * own job ability.
- *
- * An application stores only `jobId`, and nobody asks a question about
- * "68f3ab...". A job the caller may not read is simply absent from the map and
- * the application is reported without a title, rather than borrowing one the
- * caller was never allowed to fetch. That is not hypothetical for candidates,
- * whose Read rule covers open jobs only: a job closed after they applied to it
- * drops out here.
- */
-export const readJobsById = async (jobIds: string[], session: ISession): Promise<Record<string, any>> => {
-  const ids = [...new Set(jobIds.filter(Boolean))];
-  if (ids.length === 0) return {};
-
-  const ability = new JobAbilityBuilder(session).getAbility();
-  if (!ability.can(AbilityAction.Read, JobAuthZEntity) || rulesCollapsed(ability, JobAuthZEntity)) return {};
-
-  const results = await jobService.list({
-    query: { $and: [{ _id: { $in: ids } }, jobRoleScopedSecurityQuery(ability)] },
-    options: { page: 1, limit: ids.length, sort: { createdAt: -1 } },
-    tenantId: session.tenantId,
-    jobProfileId: session.jobProfileId,
-  });
-
-  const jobs = sanitizeDocuments<any>(results.docs, ability, AbilityAction.Read, JobAuthZEntity, jobFieldOptions);
-
-  return Object.fromEntries(jobs.filter((job) => job?._id != null).map((job) => [String(job._id), job]));
-};
-
-/** Keeps a field only when it survived sanitization and carries a value. */
-const present = (source: Record<string, any>, keys: string[]): Record<string, any> => {
-  const picked: Record<string, any> = {};
-  for (const key of keys) if (source?.[key] != null) picked[key] = source[key];
-  return picked;
 };
 
 const SUMMARY_FIELDS = [
