@@ -5,7 +5,7 @@ import { JobAbilityBuilder, JobAuthZEntity } from "@rl/authz";
 import { ForbiddenException, NotFoundException } from "../../../../common/helper";
 import { matchExperience } from "../../application/ranking/matching/experience";
 import { AgentTool, AgentToolContext } from "./tool.types";
-import { readJobById, readMyJobProfile } from "./tool.shared";
+import { readJobById, readMyJobProfile, present } from "./tool.shared";
 
 interface AnalyzeJobFitInput {
   jobId: string;
@@ -39,12 +39,6 @@ interface AnalyzeJobFitInput {
  * with one matcher there is no composite to compute, and a number named "fit"
  * that measured only experience would be reported as the whole answer.
  */
-const present = (source: Record<string, any>, keys: string[]): Record<string, any> => {
-  const picked: Record<string, any> = {};
-  for (const key of keys) if (source?.[key] != null) picked[key] = source[key];
-  return picked;
-};
-
 /**
  * The words a job names that the profile does not carry.
  *

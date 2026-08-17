@@ -6,6 +6,7 @@ import { IAgentSessionFingerprint } from "../../../models/agent-conversation.mod
 import { NotFoundException, ConflictException } from "../../../common/helper";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { HISTORY_LIMIT, REPLAYED_TOOL_RESULT_MAX_CHARS, RUN_DEADLINE_MS, TITLE_MAX_CHARS } from "./agent.constants";
+import { truncate } from "./context";
 import {
   ICreateConversationParams,
   IListAgentConversationParams,
@@ -132,8 +133,6 @@ export const listMessages = async (conversationId: Types.ObjectId, limit = HISTO
 export const listAllMessages = async (conversationId: Types.ObjectId) => {
   return AgentMessage.find({ conversationId }).sort({ createdAt: 1, _id: 1 }).lean();
 };
-
-const truncate = (value: string, max: number) => (value.length > max ? `${value.slice(0, max)}\n…[truncated]` : value);
 
 /**
  * Rebuilds prior turns as OpenAI chat messages.

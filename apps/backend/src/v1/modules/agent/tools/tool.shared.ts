@@ -32,6 +32,47 @@ import { RankingJobProfile } from "../../application/ranking/pipeline";
  */
 export const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+/**
+ * Narrows a sanitized document to the fields worth spending tokens on.
+ *
+ * Runs *after* `sanitizeDocuments`, never instead of it. This is a cost filter,
+ * not a security one: dropping a field here saves context, while the field the
+ * caller may not read was already removed by CASL upstream.
+ *
+ * Null and undefined values are skipped rather than serialized — `"salary": null`
+ * costs tokens to tell the model nothing.
+ */
+export const present = (source: Record<string, any>, keys: string[]): Record<string, any> => {
+  const picked: Record<string, any> = {};
+  for (const key of keys) if (source?.[key] != null) picked[key] = source[key];
+  return picked;
+};
+
+/**
+ * A job as a list row: what it is, where it is and what it pays — never its
+ * prose. `description`, `responsibility` and `aboutUs` are the three fields that
+ * make a job document large, and a list of 25 of them is the single biggest
+ * thing that can enter a run's context. `get_job` returns them for the one job
+ * the model actually needs them for.
+ */
+export const JOB_SUMMARY_FIELDS = [
+  "_id",
+  "reference",
+  "title",
+  "category",
+  "location",
+  "workplace",
+  "employmentType",
+  "salary",
+  "period",
+  "yearOfExperience",
+  "status",
+  "endDate",
+  "totalApplications",
+  "alreadyApplied",
+  "createdAt",
+];
+
 export const jobFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_FIELDS,
 };

@@ -12,7 +12,15 @@ import { logger } from "../../../common/helper";
 import { validate } from "../../../common/helper/validate";
 import { llm, AGENT_MODEL } from "./llm/client";
 import { findTool, toolDefinitionsFor } from "./tools";
-import { buildSystemPrompt, MAX_STEPS, RUN_DEADLINE_MS } from "./agent.constants";
+import {
+  buildSystemPrompt,
+  CONTEXT_BUDGET_TOKENS,
+  MAX_OUTPUT_TOKENS,
+  MAX_STEPS,
+  RUN_DEADLINE_MS,
+  TOOL_RESULT_MAX_CHARS,
+} from "./agent.constants";
+import { fitToBudget, truncate } from "./context";
 import * as conversationService from "./conversation.service";
 import { createTraceCollector } from "./trace.collector";
 import { IAgentRunParams, IAgentRunResult, IAgentTraceCollector } from "./agent.interface";
@@ -48,6 +56,13 @@ const accumulateUsage = (total: AgentUsageDto, usage?: OpenAI.Completions.Comple
  *
  * Per-call usage is the point: `accumulateUsage` only ever keeps a running
  * total, which cannot tell you whether the tenth step is the expensive one.
+ *
+ * Both token brakes live here rather than at the call sites, for the same reason
+ * tracing does. A cap that has to be remembered at each `create` is a cap that a
+ * future call site ships without: applying them at the one door makes "every
+ * request is bounded on both sides" true by construction instead of by review.
+ * `max_completion_tokens` rather than the deprecated `max_tokens` — note that a
+ * gateway behind `AGENT_LLM_BASE_URL` may only accept the older field.
  */
 const callLlm = async (
   trace: IAgentTraceCollector,
@@ -55,9 +70,26 @@ const callLlm = async (
   body: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming
 ) => {
   const startedAt = Date.now();
+  const fitted = fitToBudget(body.messages, CONTEXT_BUDGET_TOKENS);
+
+  if (fitted.trimmed > 0) {
+    // Not an error — the run continues on a shortened transcript. It does mean a
+    // tool is returning more than it needs to, which is worth fixing at source.
+    logger.warn("[agent] trimmed context to fit the budget", {
+      runId: String(trace.runId),
+      purpose,
+      trimmedMessages: fitted.trimmed,
+      estimatedTokens: fitted.estimatedTokens,
+      budgetTokens: CONTEXT_BUDGET_TOKENS,
+    });
+  }
 
   try {
-    const completion = await llm.chat.completions.create(body);
+    const completion = await llm.chat.completions.create({
+      max_completion_tokens: MAX_OUTPUT_TOKENS,
+      ...body,
+      messages: fitted.messages,
+    });
 
     trace.recordLlmCall({
       purpose,
@@ -285,7 +317,14 @@ const execute = async (
         error: stepResult.error ?? null,
         durationMs: stepResult.durationMs ?? 0,
       });
-      messages.push({ role: "tool", tool_call_id: toolCall.id, content });
+      // Truncated for the model only. `runToolCall` has already persisted the
+      // full result, so the stored transcript stays complete for debugging while
+      // the context stays bounded — do not collapse these two into one string.
+      messages.push({
+        role: "tool",
+        tool_call_id: toolCall.id,
+        content: truncate(content, TOOL_RESULT_MAX_CHARS),
+      });
     }
   }
 

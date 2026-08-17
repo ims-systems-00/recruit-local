@@ -13,6 +13,26 @@ export const HISTORY_LIMIT = parseInt(process.env.AGENT_HISTORY_LIMIT || "20", 1
 /** Tool results are the bulky part of a transcript; replay them truncated. */
 export const REPLAYED_TOOL_RESULT_MAX_CHARS = 4_000;
 
+/** Output cap per model call. Bounds cost and stops a runaway completion. */
+export const MAX_OUTPUT_TOKENS = parseInt(process.env.AGENT_MAX_TOKENS || "1500", 10);
+
+/**
+ * Per-tool-result cap inside a live run. Looser than
+ * `REPLAYED_TOOL_RESULT_MAX_CHARS`: a result the model is about to act on is
+ * worth more context than the same result recalled three turns later.
+ */
+export const TOOL_RESULT_MAX_CHARS = parseInt(process.env.AGENT_TOOL_RESULT_MAX_CHARS || "8000", 10);
+
+/**
+ * Input budget for one request. The backstop that makes a context-length error
+ * unreachable however the caps above are tuned.
+ *
+ * Env-driven rather than derived from `AGENT_MODEL`: `AGENT_LLM_BASE_URL` can
+ * point this at a gateway whose model has a far smaller window than gpt-4o's
+ * 128k, and there is no reliable way to ask an arbitrary gateway what it is.
+ */
+export const CONTEXT_BUDGET_TOKENS = parseInt(process.env.AGENT_CONTEXT_BUDGET_TOKENS || "60000", 10);
+
 /** Conversation titles are the first instruction, trimmed. */
 export const TITLE_MAX_CHARS = 60;
 

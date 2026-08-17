@@ -4,7 +4,7 @@ import { AbilityAction } from "@rl/types";
 import { JobAbilityBuilder, JobAuthZEntity } from "@rl/authz";
 import { ForbiddenException, NotFoundException } from "../../../../common/helper";
 import { AgentTool, AgentToolContext } from "./tool.types";
-import { readJobById } from "./tool.shared";
+import { readJobById, present } from "./tool.shared";
 
 interface GetJobInput {
   jobId: string;
@@ -38,12 +38,6 @@ const JOB_FIELDS = [
   "alreadyApplied",
   "createdAt",
 ];
-
-const present = (source: Record<string, any>, keys: string[]): Record<string, any> => {
-  const picked: Record<string, any> = {};
-  for (const key of keys) if (source?.[key] != null) picked[key] = source[key];
-  return picked;
-};
 
 /**
  * The screening questions, as the caller is allowed to see them.

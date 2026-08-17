@@ -11,7 +11,7 @@ import { getProfileKeywords } from "../../job/keyword.service";
 import { readFeedIds } from "../../job/feed.service";
 import { enqueueProfileFeedRebuild } from "../../../../queue/profileFeedRebuildQueue";
 import { AgentTool, AgentToolContext } from "./tool.types";
-import { jobFieldOptions, rulesCollapsed } from "./tool.shared";
+import { jobFieldOptions, rulesCollapsed, present, JOB_SUMMARY_FIELDS } from "./tool.shared";
 
 const MAX_LIMIT = 25;
 const DEFAULT_LIMIT = 10;
@@ -29,26 +29,8 @@ interface RecommendJobsInput {
   excludeApplied?: boolean;
 }
 
-const RESULT_FIELDS = [
-  "_id",
-  "title",
-  "category",
-  "location",
-  "workplace",
-  "employmentType",
-  "salary",
-  "period",
-  "yearOfExperience",
-  "endDate",
-  "totalApplications",
-  "alreadyApplied",
-];
-
-const present = (source: Record<string, any>, keys: string[]): Record<string, any> => {
-  const picked: Record<string, any> = {};
-  for (const key of keys) if (source?.[key] != null) picked[key] = source[key];
-  return picked;
-};
+/** The same row shape `list_jobs` returns, plus the match fields added below. */
+const RESULT_FIELDS = JOB_SUMMARY_FIELDS;
 
 /**
  * Recommends open jobs to the signed-in candidate, best match first.

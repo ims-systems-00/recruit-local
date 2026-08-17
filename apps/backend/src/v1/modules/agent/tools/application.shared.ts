@@ -4,7 +4,7 @@ import { ForbiddenException } from "../../../../common/helper";
 import { applicationRoleScopedSecurityQuery } from "../../application/application.query";
 import { toApplicationResponse } from "../../application/application.dto";
 import { RANKING_SCALE } from "../../application/ranking/pipeline";
-import { rulesCollapsed } from "./tool.shared";
+import { rulesCollapsed, present } from "./tool.shared";
 
 /**
  * Shared between list_applications and get_application: the scoping guard and
@@ -32,13 +32,6 @@ export const applicationSecurityQuery = (ability: ReturnType<ApplicationAbilityB
   }
 
   return applicationRoleScopedSecurityQuery(ability);
-};
-
-/** Keeps a field only when it survived sanitization and carries a value. */
-const present = (source: Record<string, any>, keys: string[]): Record<string, any> => {
-  const picked: Record<string, any> = {};
-  for (const key of keys) if (source?.[key] != null) picked[key] = source[key];
-  return picked;
 };
 
 const SUMMARY_FIELDS = [

@@ -6,7 +6,7 @@ import { sanitizeDocuments } from "../../../../common/helper/authz";
 import * as jobService from "../../job/job.service";
 import { jobRoleScopedSecurityQuery } from "../../job/job.query";
 import { AgentTool, AgentToolContext } from "./tool.types";
-import { escapeRegex } from "./tool.shared";
+import { escapeRegex, present, JOB_SUMMARY_FIELDS } from "./tool.shared";
 
 const MAX_LIMIT = 25;
 const DEFAULT_LIMIT = 10;
@@ -59,6 +59,8 @@ export const listJobsTool: AgentTool<ListJobsInput> = {
     "Use `search` to find a job the user named in words rather than by id — every other tool that takes a `jobId` " +
     "needs one from here first, so a question about a job called something is two calls: search for it, then act on " +
     "the id. " +
+    "Each result is a summary: title, location, salary, employment type and the like. It does not include the job's " +
+    "description, responsibilities or screening questions — call get_job with the id for those. " +
     "Results are already restricted to what this user may access, so never assume a job is missing because of an error.",
 
   parameters: {
@@ -123,14 +125,15 @@ export const listJobsTool: AgentTool<ListJobsInput> = {
       jobProfileId: ctx.session.jobProfileId,
     });
 
-    const jobs = sanitizeDocuments<JobAuthZEntity>(results.docs, ability, AbilityAction.Read, JobAuthZEntity, {
+    const jobs = sanitizeDocuments<Record<string, unknown>>(results.docs, ability, AbilityAction.Read, JobAuthZEntity, {
       fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_FIELDS,
     });
 
     return {
       totalMatching: results.totalDocs,
       returned: jobs.length,
-      jobs,
+      // Narrowed after sanitization, not instead of it — see `present`.
+      jobs: jobs.map((job) => present(job, JOB_SUMMARY_FIELDS)),
     };
   },
 };
