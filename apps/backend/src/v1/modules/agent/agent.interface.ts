@@ -7,6 +7,7 @@ import {
   AgentStepDto,
   AgentToolTraceDto,
   AgentUsageDto,
+  AgentViewDto,
 } from "@rl/types";
 import { IServiceListParams, IServiceGetParams } from "../../../common/interface/service.interface";
 import { AgentConversationInput, IAgentConversationDoc } from "../../../models/agent-conversation.model";
@@ -30,6 +31,7 @@ export interface IAgentRunResult {
   answer: string;
   stoppedReason: AGENT_STOPPED_REASON;
   steps: AgentStepDto[];
+  views: AgentViewDto[];
   usage?: AgentUsageDto;
 }
 

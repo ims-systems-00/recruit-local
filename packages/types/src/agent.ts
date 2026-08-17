@@ -20,9 +20,9 @@ export enum AGENT_STOPPED_REASON {
 }
 
 /**
- * One tool invocation inside a run. Deliberately carries no tool *output* —
- * results are large and contain candidate PII, so they stay in the persisted
- * transcript and the debug log rather than the HTTP response.
+ * One tool invocation inside a run. Deliberately carries no tool *output*: this
+ * is a measurement of the call, and the rows a client is meant to render travel
+ * in `AgentViewDto` instead, where they are whitelisted per tool.
  */
 export interface AgentStepDto {
   tool: string;
@@ -30,6 +30,46 @@ export interface AgentStepDto {
   ok: boolean;
   error?: string;
   durationMs?: number;
+}
+
+/**
+ * Which renderer a view is asking for. Not a tool name — `list_jobs` and
+ * `recommend_jobs` both produce `job_list`, because the client draws them the
+ * same way and should not have to know which tool the model happened to pick.
+ */
+export enum AGENT_VIEW_TYPE {
+  APPLICATION_LIST = 'application_list',
+  APPLICATION_DETAIL = 'application_detail',
+  JOB_LIST = 'job_list',
+}
+
+/**
+ * A tool result carried through to the client so the UI can render it as
+ * components instead of re-reading the model's prose.
+ *
+ * Why this is safe to send when `AgentStepDto` deliberately sends nothing: rows
+ * are already CASL-sanitized against the caller's own ability before they leave
+ * the tool, so a view discloses nothing that the same session could not fetch
+ * from the domain endpoint directly. Size is bounded by the tools' own
+ * `MAX_LIMIT` and again when the view is built.
+ *
+ * Why it is worth sending at all: the model retyping fetched values into prose
+ * is what lets it state things the data never said — a currency beside a bare
+ * `Number`, for instance. Rendering from the rows makes that class of error
+ * impossible rather than merely less likely.
+ *
+ * `items` is deliberately loose. The rows are the tool's own narrowed shapes,
+ * and a field the caller may not read is *absent* rather than null — so a
+ * stricter type here would promise keys that legitimately do not arrive.
+ */
+export interface AgentViewDto {
+  type: AGENT_VIEW_TYPE;
+  /** Heading for the block; omitted when the tool had nothing to name it with. */
+  title?: string;
+  /** The tool's own paging, so a client can say "showing 10 of 34". */
+  totalMatching?: number;
+  returned?: number;
+  items: Record<string, unknown>[];
 }
 
 export interface AgentUsageDto {
@@ -43,6 +83,12 @@ export interface AgentRunResultDto {
   answer: string;
   stoppedReason: AGENT_STOPPED_REASON;
   steps: AgentStepDto[];
+  /**
+   * Renderable results from this run's tool calls, in call order. Additive: a
+   * client that only reads `answer` is unaffected, and an empty array is the
+   * normal case for a question no listing tool served.
+   */
+  views: AgentViewDto[];
   usage?: AgentUsageDto;
 }
 

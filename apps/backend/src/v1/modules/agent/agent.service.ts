@@ -6,6 +6,7 @@ import {
   AGENT_TRACE_STATUS,
   AgentStepDto,
   AgentUsageDto,
+  AgentViewDto,
   PROMPT_NAME,
 } from "@rl/types";
 import { logger } from "../../../common/helper";
@@ -17,10 +18,12 @@ import {
   CONTEXT_BUDGET_TOKENS,
   MAX_OUTPUT_TOKENS,
   MAX_STEPS,
+  MAX_VIEWS_PER_RUN,
   RUN_DEADLINE_MS,
   TOOL_RESULT_MAX_CHARS,
 } from "./agent.constants";
 import { fitToBudget, truncate } from "./context";
+import { toView } from "./agent.views";
 import * as conversationService from "./conversation.service";
 import { createTraceCollector } from "./trace.collector";
 import { IAgentRunParams, IAgentRunResult, IAgentTraceCollector } from "./agent.interface";
@@ -121,6 +124,11 @@ const callLlm = async (
  * Runs one tool call: validate the model's arguments, execute under the
  * caller's session, persist the result. Always resolves — failures come back as
  * a serialized error for the model rather than as a throw.
+ *
+ * `result` is the same value `content` was serialized from, returned unstringified
+ * so the caller can build a view from it. Present on success only: there is
+ * nothing to render for a call that failed, and the model gets the error either
+ * way through `content`.
  */
 const runToolCall = async ({
   toolCall,
@@ -130,7 +138,7 @@ const runToolCall = async ({
   toolCall: ToolCall;
   session: IAgentRunParams["session"];
   conversationId: IAgentRunParams["conversation"]["_id"];
-}): Promise<{ step: AgentStepDto; content: string }> => {
+}): Promise<{ step: AgentStepDto; content: string; result?: unknown }> => {
   const startedAt = Date.now();
   const name = toolCall.function.name;
   let input: Record<string, unknown> | undefined;
@@ -182,6 +190,7 @@ const runToolCall = async ({
     return {
       step: { tool: name, input, ok: true, durationMs: Date.now() - startedAt },
       content,
+      result,
     };
   } catch (error) {
     const content = errorPayload(error);
@@ -241,6 +250,7 @@ const execute = async (
 ): Promise<IAgentRunResult> => {
   const deadline = Date.now() + RUN_DEADLINE_MS;
   const steps: AgentStepDto[] = [];
+  const views: AgentViewDto[] = [];
   let usage: AgentUsageDto = {};
 
   const history = await conversationService.replayHistory(conversation._id as never);
@@ -263,7 +273,7 @@ const execute = async (
 
   for (let step = 0; step < MAX_STEPS; step++) {
     if (Date.now() > deadline) {
-      return finish(conversation, messages, steps, usage, AGENT_STOPPED_REASON.DEADLINE, trace);
+      return finish(conversation, messages, steps, views, usage, AGENT_STOPPED_REASON.DEADLINE, trace);
     }
 
     const completion = await callLlm(trace, AGENT_LLM_CALL_PURPOSE.STEP, {
@@ -286,7 +296,7 @@ const execute = async (
         content: answer,
         usage,
       });
-      return { answer, stoppedReason: AGENT_STOPPED_REASON.COMPLETED, steps, usage };
+      return { answer, stoppedReason: AGENT_STOPPED_REASON.COMPLETED, steps, views: lastViews(views), usage };
     }
 
     messages.push({
@@ -303,12 +313,23 @@ const execute = async (
     });
 
     for (const toolCall of toolCalls) {
-      const { step: stepResult, content } = await runToolCall({
+      const {
+        step: stepResult,
+        content,
+        result,
+      } = await runToolCall({
         toolCall,
         session,
         conversationId: conversation._id,
       });
       steps.push(stepResult);
+
+      // Built from the tool's own return value, not from the answer the model
+      // writes about it later. Only whitelisted tools produce one; the rest
+      // return null and the turn stays prose-only.
+      const view = toView(stepResult.tool, result);
+      if (view) views.push(view);
+
       // Fields picked rather than spread: `input` stays out of the trace, since
       // it can carry user-typed PII and is already in the transcript.
       trace.recordTool({
@@ -328,18 +349,32 @@ const execute = async (
     }
   }
 
-  return finish(conversation, messages, steps, usage, AGENT_STOPPED_REASON.MAX_STEPS, trace);
+  return finish(conversation, messages, steps, views, usage, AGENT_STOPPED_REASON.MAX_STEPS, trace);
 };
+
+/**
+ * The tail of the run's views rather than the head.
+ *
+ * A model that calls the same listing tool twice is narrowing — the first call
+ * was the guess, the second used what the first taught it. Keeping the earlier
+ * result would show the user the discarded attempt.
+ */
+const lastViews = (views: AgentViewDto[]): AgentViewDto[] => views.slice(-MAX_VIEWS_PER_RUN);
 
 /**
  * Wraps up a run that hit a brake rather than finishing naturally. Asks the
  * model once, without tools, to summarise what it has so the user gets a real
  * answer instead of an empty string.
+ *
+ * Views are carried through here too: a run that ran out of steps still fetched
+ * real rows, and showing them is most of the value of an answer that had to
+ * apologise for being incomplete.
  */
 const finish = async (
   conversation: IAgentRunParams["conversation"],
   messages: ChatMessage[],
   steps: AgentStepDto[],
+  views: AgentViewDto[],
   usage: AgentUsageDto,
   stoppedReason: AGENT_STOPPED_REASON,
   trace: IAgentTraceCollector
@@ -382,5 +417,5 @@ const finish = async (
     steps: steps.length,
   });
 
-  return { answer, stoppedReason, steps, usage };
+  return { answer, stoppedReason, steps, views: lastViews(views), usage };
 };
