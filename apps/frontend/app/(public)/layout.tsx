@@ -1,4 +1,5 @@
 import PublicLayout from '@/components/layouts/public-layout';
+import AiChatLayout from '@/components/ai-chat/ai-chat-layout';
 
 export default function PublicLayoutRoute({
   children,
@@ -7,7 +8,10 @@ export default function PublicLayoutRoute({
 }>) {
   return (
     <PublicLayout>
-      <main>{children}</main>
+      <main>
+        {children}
+        <AiChatLayout />
+      </main>
     </PublicLayout>
   );
 }
