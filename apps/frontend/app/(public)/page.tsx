@@ -5,6 +5,7 @@ import ValueBased from './sections/value-based/value-based';
 import AiIntegrations from './sections/ai-integrations/ai-integrations';
 import KeyAspects from './sections/key-aspects/key-aspects';
 import RecruitmentTeam from './sections/recruitment-team/recruitment-team';
+import AiChatLayout from '../../components/ai-chat/ai-chat-layout';
 
 export default function Home() {
   return (
