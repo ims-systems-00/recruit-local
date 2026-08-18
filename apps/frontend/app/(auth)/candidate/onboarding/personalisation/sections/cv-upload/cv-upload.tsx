@@ -63,11 +63,15 @@ export default function CvUploadSection({
   } = methods;
 
   const onSubmit = async (data: ExtractAndCreateCvInput) => {
-    console.log(data);
+    if (!data?.resumeStorage?.Key) {
+      router.push(
+        `/candidate/onboarding/personalisation?step=${ONBOARDING_STEP_ENUMS.JOB_TITLE}`,
+      );
+      return;
+    }
     const payload = {
       payload: data,
       onSuccessCallback: (data: CvExtractionData) => {
-        console.log(data, 'data');
         setDataFromCvUpload({
           jobTitle: data.jobTitles,
           industry: data.industries,
@@ -101,8 +105,6 @@ export default function CvUploadSection({
       console.error(err);
     }
   };
-
-  console.log('errors', errors);
 
   return (
     <div className=" flex justify-center items-center">
@@ -150,7 +152,7 @@ export default function CvUploadSection({
         )}
         <div className=" w-full flex justify-end">
           <Button
-            disabled={isCreatingCv || !resumeStorage?.Key}
+            disabled={isCreatingCv}
             onClick={handleSubmit(onSubmit)}
             className=" cursor-pointer text-base bg-bg-brand-solid-primary border-primary text-white rounded-lg h-10"
           >

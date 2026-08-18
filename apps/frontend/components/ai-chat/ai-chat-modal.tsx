@@ -1,18 +1,15 @@
+'use client';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import {
   Bot,
   Check,
-  ChevronDown,
   Copy,
-  FileText,
-  Mic,
-  Paperclip,
   Pencil,
   RefreshCw,
   Search,
   Send,
-  Share2,
-  Sparkles,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -256,12 +253,64 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
                       !isUser && 'rounded-bl-none bg-bg-gray-soft-secondary',
                     )}
                   >
-                    <p className="m-0 text-label-sm text-text-gray-primary">
+                    {/* <p className="m-0 text-label-sm text-text-gray-primary">
                       {message.text}
-                    </p>
-                    <time className="block mt-spacing-sm text-right text-label-xs font-label-xs-strong! text-text-gray-quaternary">
-                      {message.time}
-                    </time>
+                    </p> */}
+                    <div className="text-label-sm text-text-gray-primary">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          p: ({ children }) => (
+                            <p className="mb-2 last:mb-0">{children}</p>
+                          ),
+
+                          strong: ({ children }) => (
+                            <strong className="font-semibold">
+                              {children}
+                            </strong>
+                          ),
+
+                          ul: ({ children }) => (
+                            <ul className="my-2 ml-5 list-disc space-y-1">
+                              {children}
+                            </ul>
+                          ),
+
+                          ol: ({ children }) => (
+                            <ol className="my-2 ml-5 list-decimal space-y-1">
+                              {children}
+                            </ol>
+                          ),
+
+                          li: ({ children }) => (
+                            <li className="pl-1">{children}</li>
+                          ),
+
+                          a: ({ href, children }) => (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 underline hover:text-blue-800"
+                            >
+                              {children}
+                            </a>
+                          ),
+
+                          code: ({ children }) => (
+                            <code className="rounded bg-gray-100 px-1 py-0.5 text-xs">
+                              {children}
+                            </code>
+                          ),
+                        }}
+                      >
+                        {message.text}
+                      </ReactMarkdown>
+
+                      <time className="block mt-spacing-sm text-right text-label-xs font-label-xs-strong! text-text-gray-quaternary">
+                        {message.time}
+                      </time>
+                    </div>
                   </div>
                   <div className="flex justify-end gap-3 pt-1.5 px-1 text-fg-gray-secondary">
                     {/* <button
