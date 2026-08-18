@@ -14,7 +14,7 @@ import * as applicationService from "./application.service";
 import * as jobService from "../job/job.service";
 import { withTransaction } from "../../../common/helper/database-transaction";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
-import { applicationRoleScopedSecurityQuery } from "./application.query";
+import { applicationRoleScopedSecurityQuery, withStableSort } from "./application.query";
 import { toApplicationResponse, toApplicationResponseList } from "./application.dto";
 import { enqueueApplicationRanking } from "../../../queue/applicationRankingQueue";
 
@@ -56,7 +56,7 @@ export const list = async ({ req }: ControllerParams) => {
 
   const results = await applicationService.list({
     query: finalQuery,
-    options: filter.getQueryOptions(),
+    options: withStableSort(filter.getQueryOptions()),
   });
 
   const sanitizedDocs = sanitizeDocuments<ApplicationAuthZEntity>(

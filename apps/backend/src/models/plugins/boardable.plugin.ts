@@ -52,12 +52,17 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>, opti
 
   schema.index({ statusId: 1, rank: -1 });
 
+  // `createdAt` is the tiebreak, matching what `moveToPosition` already sorts by
+  // below. Ranks tie routinely — a board seeds every card's rank from its match
+  // score, and equally-matched applicants seed to the same number — and a sort
+  // that leaves them unordered lets a paginated read repeat one row on two pages
+  // and drop another entirely. Oldest first, so the earliest applicant leads.
   schema.static("findAllByParent", function (parentId: Schema.Types.ObjectId) {
-    return this.find({ [options.foreignKey]: parentId } as Record<string, unknown>).sort({ rank: -1 });
+    return this.find({ [options.foreignKey]: parentId } as Record<string, unknown>).sort({ rank: -1, createdAt: 1 });
   });
 
   schema.static("findAllByColumn", function (statusId: Schema.Types.ObjectId) {
-    return this.find({ statusId }).sort({ rank: -1 });
+    return this.find({ statusId }).sort({ rank: -1, createdAt: 1 });
   });
 
   // schema.static("rebalanceColumn", async function (statusId: Types.ObjectId, session: ClientSession) {

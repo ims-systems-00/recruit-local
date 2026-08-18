@@ -56,6 +56,7 @@ export interface ApplicationResponseDto {
   statusId?: string | null;
   rank?: number;
   matchScore?: number;
+  rankingVersion?: number;
   coverLetter?: string;
   resumeId?: string | null;
   caseStudyId?: string[];

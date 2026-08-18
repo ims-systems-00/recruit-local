@@ -5,6 +5,7 @@ import { ApplicationInput } from "../../../../models/application.model";
 import { MatchableValue, ValueMatchResult, matchValues } from "./matching/value";
 import { QuestionMatchResult, matchQuestionAnswers } from "./matching/valuebasedQuestion";
 import { ExperienceMatchResult, MatchableExperienceLevel, matchExperience } from "./matching/experience";
+import { MatchableSkill, SkillMatchResult, matchSkills } from "./matching/skill";
 
 /**
  * The ranking pipeline.
@@ -29,9 +30,14 @@ type WithPopulatedValues<T> = Omit<T, "values"> & { values?: MatchableValue[] };
  * The candidate's profile as the ranking fetch reads it: `values` populated into
  * documents, and the single `experienceLevel` reference resolved into the level
  * itself so its span of years is available to compare.
+ *
+ * `skillRecords` is the candidate's `Skill` collection, looked up by
+ * `populateSkillsQuery`. It cannot be called `skills` — `JobProfileInput.skills`
+ * is already a free-text string, and the lookup would overwrite it.
  */
 export type RankingJobProfile = Omit<WithPopulatedValues<JobProfileInput>, "experienceLevel"> & {
   experienceLevel?: MatchableExperienceLevel | null;
+  skillRecords?: MatchableSkill[];
 };
 
 export type RankingTenant = WithPopulatedValues<TenantInput>;
@@ -140,6 +146,28 @@ export const valueMatcher: RankingMatcher = {
 };
 
 /**
+ * How much of what the job says about itself the candidate can actually
+ * demonstrate — their recorded skills and profile keywords against the job's own
+ * vocabulary. See `matching/skill.ts` for the scoring.
+ *
+ * Weighted level with values, and deliberately so. Values and screening answers
+ * are both step-shaped in practice — a small shared catalog on one side, a
+ * recruiter who usually never sets an answer key on the other — and the
+ * experience matcher returns a flat 1 for everyone inside the band it is asked
+ * about. This is the signal with enough resolution to tell two otherwise
+ * identical applicants apart, so it needs the mass to do it.
+ */
+export const skillMatcher: RankingMatcher = {
+  key: "skill",
+  label: "Skills",
+  weight: 2,
+  run: ({ job, jobProfile }) => {
+    const result: SkillMatchResult = matchSkills(job, jobProfile.skillRecords, jobProfile.keywords);
+    return { ratio: result.ratio, applicable: result.applicable, details: result };
+  },
+};
+
+/**
  * How well the candidate answered the job's own screening questions, graded
  * against the `expectedAnswer` the recruiter keyed on each one — see
  * `matching/valuebasedQuestion.ts` for the scoring.
@@ -178,7 +206,7 @@ export const experienceMatcher: RankingMatcher = {
  * The matchers, in the order their signals are reported. Order is presentation
  * only — the composite score is weight-driven and order-independent.
  */
-export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, questionMatcher, experienceMatcher];
+export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, skillMatcher, questionMatcher, experienceMatcher];
 
 /**
  * Stamped onto every stored ranking. Bump it whenever a change would make old
@@ -188,7 +216,7 @@ export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, questionMatcher
  * version are stale by definition and can be found and re-ranked with a single
  * query; without it there is no way to tell a fresh score from a legacy one.
  */
-export const RANKING_PIPELINE_VERSION = 4;
+export const RANKING_PIPELINE_VERSION = 5;
 
 /**
  * Runs every matcher in the pipeline and folds the applicable ones into a

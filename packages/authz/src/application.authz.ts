@@ -33,6 +33,7 @@ export const ALL_APPLICATION_FIELDS = [
 
   // --- Ranking (application-ranking queue) ---
   'matchScore',
+  'rankingVersion',
 
   // --- Job Profile Plugin (JobProfileInput) ---
   'jobProfileId',
@@ -77,11 +78,14 @@ const CANDIDATE_CREATE_FIELDS = [
   'expectedSalary',
 ];
 
+// A candidate never sees how they were scored or where they sit against anyone
+// else — that includes the stamp saying which pipeline did the scoring.
 const CANDIDATE_READ_FIELDS = omitFields([
   'isDeleted',
   'deletedAt',
   'rank',
   'matchScore',
+  'rankingVersion',
 ]);
 
 const EMPLOYER_UPDATE_FIELDS = ['statusId'];

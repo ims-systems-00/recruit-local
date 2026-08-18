@@ -5,7 +5,9 @@ import { Application, Job, JobProfile, Tenant } from "../models";
 import { matchQuery, excludeDeletedQuery } from "../common/query";
 import { populateValuesQuery } from "../v1/modules/value/value.query";
 import { populateExperienceLevelQuery } from "../v1/modules/experience-level/experience-level.query";
+import { populateSkillsQuery } from "../v1/modules/skill/skill.query";
 import {
+  RANKING_PIPELINE_VERSION,
   RankingContext,
   RankingJobProfile,
   RankingResult,
@@ -24,7 +26,9 @@ export interface ApplicationRankingData {
  * values are excluded by `populateValuesQuery`, so a retired value cannot score.
  *
  * `extraStages` covers what only one side needs — the job profile also resolves
- * its experience level, which the tenant has no equivalent of.
+ * its experience level and its skill rows, neither of which the tenant has an
+ * equivalent of. They ride along on the one aggregation rather than costing a
+ * round trip each.
  */
 const findWithValues = async <T>(
   model: typeof JobProfile | typeof Tenant,
@@ -56,6 +60,9 @@ const findWithValues = async <T>(
  * per-signal breakdown stays in the job's `returnvalue`, visible on the board at
  * /admin/queues.
  *
+ * `rankingVersion` is stamped alongside so a score can be told apart from one a
+ * superseded pipeline produced — see `enqueueStaleApplicationRankings`.
+ *
  * An unrankable application keeps the 0 it was created with. Those cases bail
  * out with a reason instead of throwing, since "this tenant set no values" is a
  * normal state, not a failure worth retrying into the DLQ.
@@ -74,7 +81,10 @@ const processApplicationRanking = async ({
     return { skipped: "application is missing jobId, jobProfileId or tenantId" };
 
   const [jobProfile, tenant, job] = await Promise.all([
-    findWithValues<RankingJobProfile>(JobProfile, jobProfileId, populateExperienceLevelQuery()),
+    findWithValues<RankingJobProfile>(JobProfile, jobProfileId, [
+      ...populateExperienceLevelQuery(),
+      ...populateSkillsQuery(),
+    ]),
     findWithValues<RankingTenant>(Tenant, String(tenantId)),
     Job.findById(jobId).lean<IJobInput>(),
   ]);
@@ -86,7 +96,10 @@ const processApplicationRanking = async ({
   const context: RankingContext = { jobProfile, job, tenant, application };
   const result = runRankingPipeline(context);
 
-  await Application.updateOne({ _id: application._id }, { $set: { matchScore: result.score, rank: result.score } });
+  await Application.updateOne(
+    { _id: application._id },
+    { $set: { matchScore: result.score, rank: result.score, rankingVersion: RANKING_PIPELINE_VERSION } }
+  );
 
   return result;
 };
@@ -107,4 +120,39 @@ export const enqueueApplicationRanking = (applicationId: unknown): Promise<unkno
   const id = String(applicationId ?? "");
   if (!Types.ObjectId.isValid(id)) return Promise.resolve();
   return applicationRankingQueue.addJob("application-ranking", { applicationId: id });
+};
+
+/**
+ * Re-ranks every application whose score predates the current pipeline.
+ *
+ * Adding a matcher or retuning a weight makes old scores incomparable to new
+ * ones, so a board would otherwise mix two scales and sort them against each
+ * other. Filtering on `rankingVersion` keeps the sweep proportional to what
+ * actually went stale rather than re-scoring the whole collection every time.
+ *
+ * Streamed by cursor and enqueued in batches: this runs over every application
+ * on the platform, and neither the id list nor the queue writes should be held
+ * in memory all at once. Returns how many were enqueued.
+ */
+export const enqueueStaleApplicationRankings = async (batchSize = 500): Promise<number> => {
+  const cursor = Application.find({ rankingVersion: { $lt: RANKING_PIPELINE_VERSION } })
+    .select("_id")
+    .lean()
+    .cursor();
+
+  let enqueued = 0;
+  let batch: Promise<unknown>[] = [];
+
+  for await (const { _id } of cursor) {
+    batch.push(enqueueApplicationRanking(_id));
+    enqueued += 1;
+
+    if (batch.length >= batchSize) {
+      await Promise.all(batch);
+      batch = [];
+    }
+  }
+
+  await Promise.all(batch);
+  return enqueued;
 };

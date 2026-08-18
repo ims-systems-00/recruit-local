@@ -162,3 +162,34 @@ export const populateStatusQuery = (): PipelineStage[] => [
     $unwind: { path: "$status", preserveNullAndEmptyArrays: true },
   },
 ];
+
+/**
+ * Appends a deterministic tail to whatever sort the request asked for, so a
+ * paginated list has exactly one valid order.
+ *
+ * Applications tie on the obvious sort keys constantly: `rank` and `matchScore`
+ * are seeded from the same ranking pass, and two equally-matched candidates land
+ * on the same number by design. Mongo does not promise an order for documents
+ * that compare equal, so without a unique final key page 2 can repeat a row from
+ * page 1 and silently drop another — the recruiter sees one applicant twice and
+ * never sees the one that fell through.
+ *
+ * `appliedAt` first so the earliest applicant leads a tie, then `_id`, which is
+ * unique and therefore the actual guarantee. A key the caller already sorted by
+ * is left alone rather than appended twice, so an explicit `-appliedAt` still
+ * means newest first.
+ */
+export const withStableSort = <T extends { sort?: string }>(options: T): T => {
+  const requested = typeof options.sort === "string" ? options.sort.trim() : "";
+
+  const alreadySorted = new Set(
+    requested
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((field) => field.replace(/^[-+]/, ""))
+  );
+
+  const tail = ["appliedAt", "_id"].filter((field) => !alreadySorted.has(field));
+
+  return { ...options, sort: [requested, ...tail].filter(Boolean).join(" ") };
+};

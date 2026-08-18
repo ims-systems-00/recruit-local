@@ -32,6 +32,13 @@ export interface ApplicationInput extends JobProfileInput, IBoardableInput, Tena
    * board rewrites it on every move and rebalance — this is the copy that lasts.
    */
   matchScore?: number;
+  /**
+   * The `RANKING_PIPELINE_VERSION` that produced `matchScore`. A row carrying an
+   * older version was scored by a pipeline that no longer exists — its score is
+   * not comparable to a fresh one, and it can be found and re-ranked with a
+   * single query. 0 means never ranked.
+   */
+  rankingVersion?: number;
 }
 
 export interface IApplicationDoc
@@ -87,6 +94,7 @@ const applicationSchema = new Schema<IApplicationDoc>(
     currentSalary: { type: Number },
     expectedSalary: { type: Number },
     matchScore: { type: Number, default: 0 },
+    rankingVersion: { type: Number, default: 0 },
   },
   {
     timestamps: true,
@@ -118,5 +126,8 @@ applicationSchema.index({ resumeId: 1 });
 applicationSchema.index({ reference: 1 });
 // Best-match-first over one job's applications, independent of board order.
 applicationSchema.index({ jobId: 1, matchScore: -1 });
+// Finds every row scored by a superseded pipeline, so a re-rank touches only
+// what is actually stale.
+applicationSchema.index({ rankingVersion: 1 });
 
 export const Application = model<IApplicationDoc, IApplicationModel>(modelNames.APPLICATION, applicationSchema);
