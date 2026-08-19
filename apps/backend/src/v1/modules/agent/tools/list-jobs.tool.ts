@@ -53,15 +53,10 @@ const searchFilter = (search?: string): Record<string, unknown> => {
 export const listJobsTool: AgentTool<ListJobsInput> = {
   name: "list_jobs",
   description:
-    "List job postings the current user is allowed to see, most recent first. " +
-    "Employers see their own organisation's jobs in any state; candidates see jobs that are open for applications. " +
-    "Use this to answer questions about which jobs exist, how many there are, or what they are called. " +
-    "Use `search` to find a job the user named in words rather than by id — every other tool that takes a `jobId` " +
-    "needs one from here first, so a question about a job called something is two calls: search for it, then act on " +
-    "the id. " +
-    "Each result is a summary: title, location, salary, employment type and the like. It does not include the job's " +
-    "description, responsibilities or screening questions — call get_job with the id for those. " +
-    "Results are already restricted to what this user may access, so never assume a job is missing because of an error.",
+    "List job postings the user can see — employers their organisation's in any state, candidates open ones. " +
+    "Use for which jobs exist, how many, or what they are called. " +
+    "`search` finds a job the user named in words: every tool taking a `jobId` needs an id from here first. " +
+    "Results are summaries — call get_job with an id for description, responsibilities or screening questions.",
 
   parameters: {
     type: "object",
@@ -69,22 +64,19 @@ export const listJobsTool: AgentTool<ListJobsInput> = {
       status: {
         type: "string",
         enum: Object.values(JOBS_STATUS_ENUMS),
-        description:
-          "Optional. Restrict to jobs in this state. Omit to list every job the user can see. " +
-          "Candidates can only ever see 'open' jobs, so this is mainly useful for employers.",
+        description: "Optional. Restrict to jobs in this state. Candidates only ever see 'open'.",
       },
       search: {
         type: "string",
         description:
-          "Optional. Free text matched case-insensitively against a job's title, description, location and " +
-          "category. Use the distinctive words the user actually said — a search for a whole phrase such as " +
-          '"the senior React role we posted last week" will match nothing, where "React" finds it.',
+          "Optional. Case-insensitive text matched against title, description, location and category. Use the " +
+          'distinctive words the user said — "React" finds it, "the senior React role we posted last week" matches nothing.',
       },
       limit: {
         type: "integer",
         minimum: 1,
         maximum: MAX_LIMIT,
-        description: `Optional. Maximum number of jobs to return (default ${DEFAULT_LIMIT}, max ${MAX_LIMIT}).`,
+        description: `Optional. Max jobs to return (default ${DEFAULT_LIMIT}, max ${MAX_LIMIT}).`,
       },
     },
     required: [],
