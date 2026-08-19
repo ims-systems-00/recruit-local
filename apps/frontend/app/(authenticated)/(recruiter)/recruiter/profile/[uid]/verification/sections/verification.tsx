@@ -149,7 +149,7 @@ export default function Verification({ profileUid }: { profileUid: string }) {
             <Button
               variant="outline"
               className="text-label-md font-label-md-strong! cursor-pointer border-border-gray-primary h-10 rounded-lg text-text-gray-secondary"
-              onClick={() => router.push(`/candidate/profile/${profileUid}`)}
+              onClick={() => router.push(`/recruiter/profile/${profileUid}`)}
               disabled={isCreatingKyc}
             >
               Cancel
@@ -195,7 +195,7 @@ export default function Verification({ profileUid }: { profileUid: string }) {
           <div className=" flex justify-end items-center gap-spacing-sm">
             <Button
               variant="outline"
-              onClick={() => router.push(`/candidate/profile/${profileUid}`)}
+              onClick={() => router.push(`/recruiter/profile/${profileUid}`)}
               className="text-label-md font-label-md-strong! cursor-pointer border-border-gray-primary h-10 rounded-lg text-text-gray-secondary"
             >
               Cancel
