@@ -64,54 +64,37 @@ const statusIdsForStage = async (stage: string): Promise<string[]> => {
 export const listApplicationsTool: AgentTool<ListApplicationsInput> = {
   name: "list_applications",
   description:
-    "List job applications the current user is allowed to see, most recent first by default. " +
-    "Employers see applications submitted to their own organisation's jobs; candidates see only the applications they " +
-    "submitted themselves. " +
-    "Use this to answer questions about who has applied, how many applications there are, which stage of the hiring " +
-    "pipeline they are in, or what a candidate has applied to and when. " +
-    "A result may carry `matchScore`, the platform's own ranking of how well that candidate fits the job, out of " +
-    "`matchScoreOutOf` — higher is a better fit. Answer any question about who ranks best, is the strongest candidate " +
-    "or is the top applicant from this score rather than from the pipeline stage: the stage is where a human moved " +
-    'someone, the score is what the platform computed. Pass sortBy "match" for those questions so the best ' +
-    "candidates are the ones returned. " +
-    "A `matchScore` of 0 may mean the application has not been scored yet rather than that the candidate is a poor " +
-    "fit — scoring runs in the background after someone applies, and is skipped entirely when the organisation has " +
-    "set no values — so say the score is not available instead of ranking a 0 last. An application with no " +
-    "`matchScore` at all has not been scored or is not visible to this user. " +
-    "Each result is a summary — call get_application with an id from here to read a cover letter, the answers to a " +
-    "job's screening questions, or the attached files. " +
-    "Results are already restricted to what this user may access, so never assume an application is missing because of an error.",
+    "List job applications the user can see — employers those to their organisation's jobs, candidates their own. " +
+    "Use for who has applied, how many, what stage they are in, or what a candidate applied to. " +
+    "Results carry `matchScore` out of `matchScoreOutOf`; higher is a better fit. A `matchScore` of 0 or absent " +
+    "means not yet scored, not a poor fit — say the score is unavailable rather than ranking it last. " +
+    "Each result is a summary — call get_application with an id for a cover letter, screening answers or files.",
 
   parameters: {
     type: "object",
     properties: {
       jobId: {
         type: "string",
-        description:
-          "Optional. Only return applications submitted to this job. This is the `_id` of a job as returned by " +
-          "list_jobs, not a job title — look the title up first if the user named one.",
+        description: "Optional. Only applications to this job. The `_id` from list_jobs, not a title.",
       },
       stage: {
         type: "string",
         description:
-          "Optional. Only return applications sitting in this pipeline stage, matched case-insensitively against the " +
-          'name of the board column (for example "Applied", "Interview", "Rejected"). Stage names are chosen per job, ' +
-          "so a name that exists on one job may not exist on another.",
+          "Optional. Pipeline stage, matched case-insensitively against the board column name (for example " +
+          '"Applied", "Interview"). Stage names are chosen per job.',
       },
       limit: {
         type: "integer",
         minimum: 1,
         maximum: MAX_LIMIT,
-        description: `Optional. Maximum number of applications to return (default ${DEFAULT_LIMIT}, max ${MAX_LIMIT}). The total number matching is always reported separately.`,
+        description: `Optional. Max applications to return (default ${DEFAULT_LIMIT}, max ${MAX_LIMIT}).`,
       },
       sortBy: {
         type: "string",
         enum: ["recent", "match"],
         description:
-          'Optional. "recent" (the default) returns the newest applications first. "match" returns the best-matching ' +
-          "candidates first, by `matchScore` — use it for any question about who ranks best, who the strongest or top " +
-          "candidates are, or who to look at first. Because only `limit` applications come back, this is the only way " +
-          "to be sure the best ones are among them.",
+          'Optional. "recent" (default) newest first; "match" ranks by `matchScore`. Only `limit` results come ' +
+          'back, so use "match" for any question about who ranks best or who to look at first.',
       },
     },
     required: [],

@@ -50,17 +50,13 @@ const RESULT_FIELDS = JOB_SUMMARY_FIELDS;
 export const recommendJobsTool: AgentTool<RecommendJobsInput> = {
   name: "recommend_jobs",
   description:
-    "Recommend open jobs for the current user to apply to, best match first. " +
-    "Matching is by keyword overlap between their profile and the job — the roles, industries, work modes, skills and " +
-    "interests on their profile against the job's title, category, employment type and workplace. " +
-    "Use this for any question about what they should apply for, what suits them, or what is worth looking at. " +
-    'Pass `keywords` when the user narrows the ask in the question itself ("remote react jobs", "marketing roles in ' +
-    'Dublin") — those words are matched in addition to their profile, not instead of it. ' +
-    "Each result carries `matchedKeywords`, the words that actually overlapped, and `matchStrength`, how many there " +
-    "were. Explain a recommendation from those words rather than asserting a fit: `matchStrength` is a count of " +
-    "shared terms, not a percentage and not the match score an employer sees on an application. " +
-    "An empty result usually means the profile carries too few keywords to match on, which analyze_my_profile " +
-    "diagnoses — it does not mean there are no open jobs.",
+    "Recommend open jobs for the user to apply to, best match first, by keyword overlap between their profile " +
+    "and the job. Use for what they should apply for or what suits them. " +
+    'Pass `keywords` when the question narrows the ask ("remote react jobs") — matched in addition to their ' +
+    "profile, not instead of it. " +
+    "Each result carries `matchedKeywords` and `matchStrength`, a count of shared terms — not a percentage, and " +
+    "not the match score an employer sees. Explain a recommendation from those words. " +
+    "An empty result means too few profile keywords, which analyze_my_profile diagnoses — not that no jobs are open.",
 
   parameters: {
     type: "object",
@@ -68,20 +64,20 @@ export const recommendJobsTool: AgentTool<RecommendJobsInput> = {
       keywords: {
         type: "string",
         description:
-          "Optional. Extra words to match on, taken from what the user asked for. Free text; it is tokenised the " +
-          "same way job and profile keywords are. Omit to recommend purely from their profile.",
+          "Optional. Extra words to match on, from what the user asked for. Free text. Omit to match on their " +
+          "profile alone.",
       },
       limit: {
         type: "integer",
         minimum: 1,
         maximum: MAX_LIMIT,
-        description: `Optional. Maximum number of jobs to return (default ${DEFAULT_LIMIT}, max ${MAX_LIMIT}).`,
+        description: `Optional. Max jobs to return (default ${DEFAULT_LIMIT}, max ${MAX_LIMIT}).`,
       },
       excludeApplied: {
         type: "boolean",
         description:
-          "Optional, default true. Leave out jobs the user has already applied to. Set false when the question is " +
-          "about how well they match jobs generally rather than what to apply to next.",
+          "Optional, default true. Leave out jobs already applied to. Set false when the question is about how " +
+          "well they match jobs generally.",
       },
     },
     required: [],

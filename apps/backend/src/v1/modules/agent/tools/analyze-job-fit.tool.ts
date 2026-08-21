@@ -69,20 +69,13 @@ const keywordGaps = (jobKeywords: string[] | undefined, profileKeywords: string[
 export const analyzeJobFitTool: AgentTool<AnalyzeJobFitInput> = {
   name: "analyze_job_fit",
   description:
-    "Compare the current user's own profile against one specific job and report what they are short on. " +
-    "Take the id from list_jobs or recommend_jobs first — this accepts only a job's `_id`, not a title. " +
-    "Returns how their experience measures against the years the job asks for, the keywords the job names that " +
-    "their profile does not carry, what the job requires in documents and deadline, and its screening questions. " +
-    "Use this for any question about whether they should apply, what they are missing, or how to strengthen an " +
-    "application. " +
-    "This does NOT score how well they match, and does not predict where their application will rank. Employers " +
-    "rank applicants partly on how a candidate's values line up with their organisation's, and an organisation's " +
-    "values are not visible to candidates — so that comparison is absent here by design. Say it is not available " +
-    "rather than estimating it, and never guess at, infer, or describe what the hiring organisation values, from " +
-    "this payload or from the job's wording. " +
-    "An experience result marked `applicable: false` was not measured, usually because the user has not set an " +
-    "experience level — report it as not measurable and point at analyze_my_profile, not as a poor match. " +
-    "The expected answers to the screening questions are likewise not available and must never be guessed at.",
+    "Compare the user's own profile against one specific job and report what they are short on: experience " +
+    "against the years asked for, keywords the job names that their profile lacks, required documents and " +
+    "deadline, and the job's screening questions. " +
+    "Use for whether they should apply, what they are missing, or how to strengthen an application. " +
+    "Takes a job `_id` from list_jobs or recommend_jobs, not a title. " +
+    "It does not score how well they match — report the gaps it returns, and never guess the expected answers " +
+    "to screening questions.",
 
   parameters: {
     type: "object",
