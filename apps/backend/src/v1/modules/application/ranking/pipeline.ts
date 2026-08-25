@@ -1,10 +1,12 @@
 import { JobProfileInput } from "../../../../models/job-profile.model";
 import { TenantInput } from "../../../../models/tenant.model";
-import { IJobInput } from "../../../../models/job.model";
+import { IJobDoc, IJobInput } from "../../../../models/job.model";
 import { ApplicationInput } from "../../../../models/application.model";
 import { MatchableValue, ValueMatchResult, matchValues } from "./matching/value";
 import { QuestionMatchResult, matchQuestionAnswers } from "./matching/valuebasedQuestion";
 import { ExperienceMatchResult, MatchableExperienceLevel, matchExperience } from "./matching/experience";
+import { KeywordMatchResult, matchKeywords } from "./matching/keyword";
+import { SalaryMatchResult, matchSalary } from "./matching/salary";
 
 /**
  * The ranking pipeline.
@@ -37,10 +39,18 @@ export type RankingJobProfile = Omit<WithPopulatedValues<JobProfileInput>, "expe
 export type RankingTenant = WithPopulatedValues<TenantInput>;
 
 /**
+ * The job as the ranking fetch reads it. `IJobInput` is what a recruiter fills
+ * in; `keywords` is derived from those fields afterwards by
+ * `keyword-update-queue` and so lives on the document rather than the input.
+ * Both are on the row the worker loads, so both are borrowed here.
+ */
+export type RankingJob = IJobInput & Pick<IJobDoc, "keywords">;
+
+/**
  * The parts of the application a matcher may read. Narrow on purpose — widen it
  * as matchers claim fields, so the worker's `select` and this type stay in step.
  */
-export type RankingApplication = Pick<ApplicationInput, "answers">;
+export type RankingApplication = Pick<ApplicationInput, "answers" | "expectedSalary">;
 
 /**
  * Everything a matcher may look at, assembled once per application being
@@ -53,7 +63,7 @@ export interface RankingContext {
   /** The applying candidate's profile. */
   jobProfile: RankingJobProfile;
   /** The job applied to. */
-  job: IJobInput;
+  job: RankingJob;
   /** The tenant that posted the job — the recruiter side of every comparison. */
   tenant: RankingTenant;
   /** The application being scored — the candidate's own submission. */
@@ -132,7 +142,12 @@ export interface RankingResult {
 export const valueMatcher: RankingMatcher = {
   key: "value",
   label: "Values",
-  weight: 2,
+  // Held above the rest on purpose. Values are the comparison the product is
+  // built on; every other matcher sharpens the ranking within that rather than
+  // competing with it. At 3 against four matchers of 1 this carries 43% of a
+  // fully-applicable score, roughly the standing it had as the only weighted
+  // signal among three.
+  weight: 3,
   run: ({ jobProfile, tenant }) => {
     const result: ValueMatchResult = matchValues(jobProfile.values, tenant.values);
     return { ratio: result.ratio, applicable: result.applicable, details: result };
@@ -175,10 +190,55 @@ export const experienceMatcher: RankingMatcher = {
 };
 
 /**
+ * How much of the job's vocabulary the candidate's profile covers — see
+ * `matching/keyword.ts` for the scoring.
+ *
+ * Both `keywords` arrays are maintained by `keyword-update-queue` off fields the
+ * two sides already fill in, so this costs nothing to collect. It is also the
+ * only route the ranking has to a candidate's skills, which reach
+ * `JobProfile.keywords` through the profile's free-text `skills` field; `Job`
+ * carries no required-skills field to compare against directly. A coarse skills
+ * signal, in other words, and weighted as one.
+ */
+export const keywordMatcher: RankingMatcher = {
+  key: "keyword",
+  label: "Keywords",
+  weight: 1,
+  run: ({ job, jobProfile }) => {
+    const result: KeywordMatchResult = matchKeywords(job.keywords, jobProfile.keywords);
+    return { ratio: result.ratio, applicable: result.applicable, details: result };
+  },
+};
+
+/**
+ * Whether what the candidate asked to be paid fits what the job advertised —
+ * see `matching/salary.ts` for the scoring, which gives full marks to anyone at
+ * or under the budget and decays sharply above it.
+ *
+ * Drops out entirely for the many jobs that advertise no figure, which is the
+ * pipeline working as intended rather than a gap.
+ */
+export const salaryMatcher: RankingMatcher = {
+  key: "salary",
+  label: "Salary Fit",
+  weight: 1,
+  run: ({ job, application }) => {
+    const result: SalaryMatchResult = matchSalary(job.salary, job.period, application.expectedSalary);
+    return { ratio: result.ratio, applicable: result.applicable, details: result };
+  },
+};
+
+/**
  * The matchers, in the order their signals are reported. Order is presentation
  * only — the composite score is weight-driven and order-independent.
  */
-export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, questionMatcher, experienceMatcher];
+export const RANKING_PIPELINE: RankingMatcher[] = [
+  valueMatcher,
+  questionMatcher,
+  experienceMatcher,
+  keywordMatcher,
+  salaryMatcher,
+];
 
 /**
  * Stamped onto every stored ranking. Bump it whenever a change would make old
@@ -188,7 +248,7 @@ export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, questionMatcher
  * version are stale by definition and can be found and re-ranked with a single
  * query; without it there is no way to tell a fresh score from a legacy one.
  */
-export const RANKING_PIPELINE_VERSION = 4;
+export const RANKING_PIPELINE_VERSION = 5;
 
 /**
  * Runs every matcher in the pipeline and folds the applicable ones into a

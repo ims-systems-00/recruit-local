@@ -7,12 +7,12 @@ import { populateValuesQuery } from "../v1/modules/value/value.query";
 import { populateExperienceLevelQuery } from "../v1/modules/experience-level/experience-level.query";
 import {
   RankingContext,
+  RankingJob,
   RankingJobProfile,
   RankingResult,
   RankingTenant,
   runRankingPipeline,
 } from "../v1/modules/application/ranking/pipeline";
-import { IJobInput } from "../models/job.model";
 
 export interface ApplicationRankingData {
   applicationId: string;
@@ -46,7 +46,10 @@ const findWithValues = async <T>(
  * The pipeline itself is pure and synchronous; all this does is assemble the
  * context it needs — the candidate's profile, the job, the tenant that posted
  * it with both sides' values populated, and the application's own screening
- * answers — and hand it over.
+ * answers and salary expectation — and hand it over.
+ *
+ * Exported as well as queued so the one-off re-rank script can drive it inline
+ * without standing up Redis.
  *
  * The score is stored in `matchScore`, and `rank` is seeded to the same number
  * so a recruiter's board comes up best-match-first. From then on the board owns
@@ -60,12 +63,17 @@ const findWithValues = async <T>(
  * out with a reason instead of throwing, since "this tenant set no values" is a
  * normal state, not a failure worth retrying into the DLQ.
  */
-const processApplicationRanking = async ({
+export const processApplicationRanking = async ({
   applicationId,
 }: ApplicationRankingData): Promise<RankingResult | { skipped: string }> => {
   if (!Types.ObjectId.isValid(applicationId)) return { skipped: "invalid application id" };
 
-  const application = await Application.findById(applicationId).select("jobId jobProfileId tenantId answers").lean();
+  // Every field a matcher reads must be listed here — `RankingApplication` names
+  // them, and a field missing from this select reaches the matcher as undefined,
+  // which reads as "the candidate did not say" rather than as an error.
+  const application = await Application.findById(applicationId)
+    .select("jobId jobProfileId tenantId answers expectedSalary")
+    .lean();
   if (!application) return { skipped: "application not found" };
 
   const { jobId, jobProfileId, tenantId } = application;
@@ -76,7 +84,7 @@ const processApplicationRanking = async ({
   const [jobProfile, tenant, job] = await Promise.all([
     findWithValues<RankingJobProfile>(JobProfile, jobProfileId, populateExperienceLevelQuery()),
     findWithValues<RankingTenant>(Tenant, String(tenantId)),
-    Job.findById(jobId).lean<IJobInput>(),
+    Job.findById(jobId).lean<RankingJob>(),
   ]);
 
   if (!jobProfile) return { skipped: "job profile not found" };
