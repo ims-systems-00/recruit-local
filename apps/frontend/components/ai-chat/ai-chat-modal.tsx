@@ -17,6 +17,7 @@ import {
   useCreateAgentConversation,
   useCreateAgentConversationMessage,
 } from '@/services/agent/agent.client';
+import { useSession } from 'next-auth/react';
 
 type Message = {
   id: number;
@@ -59,6 +60,8 @@ function BotAvatar({ variant = 'chat' }: { variant?: 'chat' | 'launcher' }) {
 }
 
 function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
+  const { data: session } = useSession();
+  const isLoggedIn = session?.user?.email ? true : false;
   const [conversationId, setConversationId] = useState<string | null>(null);
 
   const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -368,6 +371,14 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
           )}
         </div>
 
+        {!isLoggedIn && (
+          <div className="flex items-center mx-6 gap-2.5 mb-[18px] justify-center p-4 bg-[#fefce8] rounded-lg">
+            <span className="text-label-sm text-[#894b00]">
+              Please login to continue
+            </span>
+          </div>
+        )}
+
         {/* Composer */}
         <form
           className="px-4 pt-[14px] pb-4 border-t border-[#e0e3e8] shrink-0 max-sm:p-3"
@@ -395,6 +406,7 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
               className="w-full py-[5px] border-0 outline-none text-[#19253a] text-sm placeholder:text-[#758096]"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              disabled={!isLoggedIn}
               placeholder={
                 editingId !== null ? 'Edit your message...' : 'Ask Alice...'
               }
@@ -426,6 +438,7 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
                 className="w-[34px] h-[34px] grid place-items-center ml-auto text-white border-0 rounded-lg bg-bg-brand-solid-primary transition hover:bg-brand-dark hover:-translate-y-0.5"
                 type="submit"
                 aria-label="Send message"
+                disabled={!isLoggedIn || isTyping}
               >
                 <Send size={18} />
               </button>
