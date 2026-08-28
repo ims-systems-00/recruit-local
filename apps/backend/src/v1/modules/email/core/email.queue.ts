@@ -28,7 +28,7 @@ const processEmail = async (job: Job<EmailConfiguration>) => {
   if (process.env.NODE_ENV === "production") {
     await sgMail.send({
       from: {
-        name: "Interface NRM",
+        name: "Recruit Local",
         email: sender,
       },
       to: receiver,
