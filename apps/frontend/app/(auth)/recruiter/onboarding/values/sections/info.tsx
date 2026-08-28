@@ -15,7 +15,7 @@ export default function InfoSection() {
             Why We Ask About Values
           </p>
           <p className="text-label-lg text-text-gray-quaternary">
-            Skills and experience show what a candidate can do — values help
+            Skills and experience show what a candidate can do - values help
             reveal how they work, what motivates them, and how they contribute
             within a team. Value-based matching helps employers improve
             retention, team compatibility, engagement, and long-term
