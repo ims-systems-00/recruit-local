@@ -88,14 +88,14 @@ export default function JobDescription({ job }: { job: JobData }) {
 
           <InfoCard
             icon={<Clock size={20} />}
-            title="Period"
+            title="Working Period"
             subtitle={job?.period}
           />
 
           {/* Year of Experience */}
           <InfoCard
             icon={<Sun size={20} />}
-            title="Year of Experience"
+            title="Years of Experience"
             subtitle={job?.yearOfExperience}
           />
 
@@ -106,10 +106,10 @@ export default function JobDescription({ job }: { job: JobData }) {
             subtitle={job?.vacancy}
           />
 
-          {/* Working Days */}
+          {/* Working Day(s) per Week */}
           <InfoCard
             icon={<Calendar size={20} />}
-            title="Working Days"
+            title="Working Day(s) per Week"
             subtitle={job?.workingDays}
           />
 
@@ -186,7 +186,7 @@ export default function JobDescription({ job }: { job: JobData }) {
         {Boolean(job?.attachments?.length) && (
           <div className="space-y-spacing-2xl">
             <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-              Related Attachment
+              Related Attachment(s)
             </p>
             <div className=" grid grid-cols-3 gap-spacing-sm">
               {job?.attachments?.map((attachment) => (

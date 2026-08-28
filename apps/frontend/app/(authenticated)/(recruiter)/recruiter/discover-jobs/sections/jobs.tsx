@@ -76,7 +76,7 @@ export default function Jobs() {
             Good Morning, {user?.firstName} {user?.lastName}
           </h3>
           <p className=" capitalize text-label-sm text-text-gray-tertiary">
-            Find and filter your dream jobs with Recruit Local.
+            Find and Filter your dream jobs with Recruit Local
           </p>
         </div>
         <div className=" flex flex-col sm:flex-row items-start sm:items-center gap-spacing-2xl">

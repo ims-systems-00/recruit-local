@@ -23,7 +23,7 @@ export default function ValuesStepThreeSection({
       types={STEP_THREE_TYPES}
       onboardingStep={ONBOARDING_STEP_ENUMS.VALUES_STEP_3}
       progressValue={70}
-      title="The interpersonal, ethical, and social values that matter most to you in a workplace?"
+      title="What are the interpersonal, ethical, and social values that matter most to you in a workplace?"
       onSuccessNext={() => {
         router.push(
           getOnboardingValuesRoute(ONBOARDING_STEP_ENUMS.VALUES_STEP_4),

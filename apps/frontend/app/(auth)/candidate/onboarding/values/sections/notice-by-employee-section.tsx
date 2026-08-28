@@ -118,10 +118,10 @@ export default function NoticeByEmployeeSection({
                     </div>
                     <div className="space-y-spacing-3xs!">
                       <FieldTitle className=" text-label-md! font-label-md-strong! text-text-gray-primary">
-                        Employers can find you In Recruit local
+                        Employees can find you In Recruit local
                       </FieldTitle>
                       <FieldDescription className=" text-label-sm! text-text-gray-tertiary">
-                        Employers can find your profile through Recruit Local
+                        Employees can find your profile through Recruit Local
                         and contact you about jobs. Your identifiable details
                         remain hidden until you respond.
                       </FieldDescription>
@@ -149,7 +149,7 @@ export default function NoticeByEmployeeSection({
                     </div>
                     <div className="space-y-spacing-3xs!">
                       <FieldTitle className=" text-label-md! font-label-md-strong! text-text-gray-primary">
-                        Employers can't find you on Recruit local
+                        Employees can't find you on Recruit local
                       </FieldTitle>
                       <FieldDescription className=" text-label-sm! text-text-gray-tertiary">
                         Only employers you apply to can view your profile on

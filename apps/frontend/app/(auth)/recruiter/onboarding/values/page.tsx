@@ -41,7 +41,7 @@ function ValuesPageContent() {
             <div className="flex flex-col items-center justify-center gap-spacing-lg min-w-[350px] max-w-[444px]">
               <h3>Hang Tight</h3>
               <p className="text-center leading-6">
-                The system is preparing your Profile please wait for while
+                The System is preparing your profile. Please wait.
               </p>
             </div>
           </div>

@@ -24,7 +24,7 @@ export default function SystemPreparationSection() {
             <h3>Hang Tight</h3>
             <p className="text-center leading-6">
               {isPending
-                ? 'The system is preparing your Profile please wait for while'
+                ? 'The System is preparing your profile. Please wait.'
                 : 'Almost done!'}
             </p>
           </div>

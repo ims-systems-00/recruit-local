@@ -28,7 +28,7 @@ const VALUE_LIST = [
     name: 'Culture and Behavior',
     icon: <Users className="size-5 text-fg-gray-secondary" />,
     title:
-      'The interpersonal, ethical, and social values that matter most to you in a workplace?',
+      'What are the interpersonal, ethical, and social values that matter most to you in a workplace?',
     placeholder: 'Search your culture and behavior...',
     type: VALUE_TYPE_ENUM.CULTURE_AND_BEHAVIOR,
   },
@@ -37,7 +37,7 @@ const VALUE_LIST = [
     name: 'Leadership',
     icon: <Star className="size-5 text-fg-gray-secondary" />,
     title:
-      'How you prefer teams to operate and how leadership supports performance, development, and collaboration?',
+      'How do you prefer teams to operate and how does leadership support performance, development, and collaboration?',
     placeholder: 'Search your leadership...',
     type: VALUE_TYPE_ENUM.LEADERSHIP,
   },

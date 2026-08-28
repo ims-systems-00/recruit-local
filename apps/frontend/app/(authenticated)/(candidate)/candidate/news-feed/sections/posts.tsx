@@ -77,7 +77,7 @@ export default function Posts() {
             )}
           </h3>
           <p className=" capitalize text-label-sm text-text-gray-tertiary">
-            Share updates, find talent, and stay informed with Recruit Local.
+            Share Updates, Find Talent, and Stay Informed with Recruit Local
           </p>
         </div>
         <InputGroup className=" max-w-[400px] h-10 rounded-lg shadow-xs border-border-gray-primary">

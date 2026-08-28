@@ -156,14 +156,14 @@ export default function Preview({
           />
           <InfoCard
             icon={<Clock size={20} />}
-            title="Period"
+            title="Working Period"
             subtitle={defaultValues?.period}
           />
 
           {/* Year of Experience */}
           <InfoCard
             icon={<Sun size={20} />}
-            title="Year of Experience"
+            title="Years of Experience"
             subtitle={defaultValues?.yearOfExperience}
           />
 
@@ -174,10 +174,10 @@ export default function Preview({
             subtitle={defaultValues?.vacancy}
           />
 
-          {/* Working Days */}
+          {/* Working Day(s) per Week */}
           <InfoCard
             icon={<Calendar size={20} />}
-            title="Working Days"
+            title="Working Day(s) per Week"
             subtitle={defaultValues?.workingDays}
           />
 
@@ -256,7 +256,7 @@ export default function Preview({
         {Boolean(defaultValues?.attachments?.length) && (
           <div className="space-y-spacing-2xl">
             <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-              Related Attachment
+              Related Attachment(s)
             </p>
             <div className=" grid grid-cols-3 gap-spacing-sm">
               {defaultValues?.attachments?.map((attachment) => (

@@ -187,7 +187,7 @@ export default function JobInformationForm({
               </div>
               <div className="space-y-spacing-xs ">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Employ Type
+                  Employment Type
                 </Label>
 
                 <div className=" space-y-spacing-sm">
@@ -224,7 +224,7 @@ export default function JobInformationForm({
               </div>
               <div className="space-y-spacing-xs ">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Work palace
+                  Work Place
                 </Label>
                 <div className=" space-y-spacing-sm">
                   <Controller
@@ -260,7 +260,7 @@ export default function JobInformationForm({
               </div>
               <div className="space-y-spacing-xs ">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Year of Experience
+                  Years of Experience
                 </Label>
                 <div className=" space-y-spacing-sm">
                   <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
@@ -280,7 +280,7 @@ export default function JobInformationForm({
               </div>
               <div className="space-y-spacing-xs ">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Number of vacancy
+                  Number of Vacancy
                 </Label>
                 <div className=" space-y-spacing-sm">
                   <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
@@ -322,7 +322,7 @@ export default function JobInformationForm({
 
               <div className={cn('space-y-spacing-xs ')}>
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Period
+                  Working Period
                 </Label>
                 <div className=" space-y-spacing-sm">
                   <Controller
@@ -358,7 +358,7 @@ export default function JobInformationForm({
               </div>
               <div className="space-y-spacing-xs ">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Working Days
+                  Working Day(s) per Week
                 </Label>
                 <div className=" space-y-spacing-sm">
                   <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
@@ -661,7 +661,7 @@ export default function JobInformationForm({
               <div className="space-y-spacing-xs">
                 <Label className=" text-label-sm  text-text-gray-secondary">
                   <span className="font-label-sm-strong!">
-                    Additional Information of location
+                    Additional Location Information
                   </span>{' '}
                   (Optional)
                 </Label>
@@ -669,7 +669,7 @@ export default function JobInformationForm({
                   <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
                     <InputGroupInput
                       type="text"
-                      placeholder="Eg. elena@example.com"
+                      placeholder="Write here..."
                       {...register('locationAdditionalInfo')}
                       disabled={autoFill}
                       className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"

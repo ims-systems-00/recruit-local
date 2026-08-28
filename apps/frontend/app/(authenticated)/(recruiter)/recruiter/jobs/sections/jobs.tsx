@@ -205,11 +205,11 @@ export default function Jobs({
     },
     {
       value: JOBS_STATUS_ENUMS.CLOSED,
-      label: 'Closed jobs',
+      label: 'Closed Jobs',
     },
     {
       value: JOBS_STATUS_ENUMS.DRAFT,
-      label: 'Drafts jobs',
+      label: 'Drafts',
     },
   ];
 

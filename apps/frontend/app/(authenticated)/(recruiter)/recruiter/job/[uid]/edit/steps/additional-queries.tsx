@@ -61,7 +61,7 @@ export default function AdditionalQueries({
       options:
         type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ||
         type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE
-          ? [{ id: crypto.randomUUID(), text: 'Option1' }]
+          ? [{ id: crypto.randomUUID(), text: 'Option 1' }]
           : [],
       isRequired: false,
       focused: true,
@@ -154,7 +154,7 @@ export default function AdditionalQueries({
             Additional Queries
           </h1>
           <p className=" text-label-sm text-text-gray-tertiary">
-            Add your value based custom queries here.
+            Add your value-based custom queries here.
           </p>
         </div>
         <div className="flex items-center gap-2">
