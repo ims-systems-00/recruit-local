@@ -1,7 +1,7 @@
 {
   "name": "@rl/backend",
   "version": "1.0.0",
-  "description": "Interface NRM portal backend api",
+  "description": "Recruit Local portal backend api",
   "main": "server.js",
   "scripts": {
     "bulk-import": "env-cmd -f ./.env.dev ts-node scripts/bulk-import.ts",
