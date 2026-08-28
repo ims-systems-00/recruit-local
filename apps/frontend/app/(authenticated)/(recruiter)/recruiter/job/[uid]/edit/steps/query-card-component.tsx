@@ -421,7 +421,7 @@ export function QueryCardComponent({
               setShowExpected((prev) => !prev);
             }}
           >
-            Set Expected Answer
+            Preview
           </button>
           <button
             onClick={(e) => {

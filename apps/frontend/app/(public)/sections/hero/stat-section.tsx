@@ -119,7 +119,7 @@ export default function StatSection() {
             <p className="text-heading-lg font-heading-lg-strong! text-white">
               350+
             </p>
-            <p className="text-body-sm text-white">Employers</p>
+            <p className="text-body-sm text-white">Employees</p>
           </div>
         </motion.div>
 

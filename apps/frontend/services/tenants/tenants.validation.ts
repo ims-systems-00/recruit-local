@@ -70,7 +70,7 @@ export const tenantUpdateSchema = yup.object({
 
   size: yup
     .number()
-    .typeError('Number of Employers must be a number')
+    .typeError('Number of Employees must be a number')
     .transform((value, originalValue) =>
       originalValue === '' ? undefined : value,
     )

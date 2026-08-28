@@ -197,7 +197,7 @@ export default function EditValueDialog({
 
             <div className="flex flex-wrap items-center gap-spacing-2xl">
               <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                Top 3 Most Important tags
+                Top 3 Most Selected Tags
               </span>
 
               {isTopThreeLoading ? (

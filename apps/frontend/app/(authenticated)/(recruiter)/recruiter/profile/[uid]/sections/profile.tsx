@@ -194,7 +194,7 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       value: 'jobs',
       label: 'Jobs',
       component: (
-        <Jobs title="Jobs" description="Create and view Your all jobs" />
+        <Jobs title="Jobs" description="Create and View all your Jobs" />
       ),
     },
     {
@@ -204,7 +204,7 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
     },
     {
       value: 'saves',
-      label: 'Saves',
+      label: 'Saved',
       component: <Saves />,
     },
   ];
@@ -475,8 +475,8 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
                   {completionProgress}% Profile Complete
                 </p>
                 <p className=" text-label-md text-text-gray-tertiary">
-                  You’re eligible for verification now. Complete more details
-                  first if you want to build greater trust.
+                  You’re now eligible for verification. Complete your profile if
+                  you wish to build greater trust
                 </p>
               </div>
               <div className=" flex gap-spacing-sm items-center">

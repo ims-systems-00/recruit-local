@@ -10,7 +10,7 @@ const VALUE_LIST = [
     id: '1',
     name: 'Working Style',
     icon: <Layers2 className="size-5 text-fg-gray-secondary" />,
-    title: 'How you approach growth, learning, challenges, and innovation?',
+    title: 'How do you approach growth, learning, challenges, and innovation?',
     placeholder: 'Search your working style...',
     type: VALUE_TYPE_ENUM.WORKING_STYLE,
   },
@@ -19,7 +19,7 @@ const VALUE_LIST = [
     name: 'Mindset',
     icon: <Brain className="size-5 text-fg-gray-secondary" />,
     title:
-      'How you prefer to work, communicate, organise, and contribute within a team or environment?',
+      'How do you prefer to work, communicate, organise, and contribute within a team or environment?',
     placeholder: 'Search your mindset...',
     type: VALUE_TYPE_ENUM.MINDSET,
   },
@@ -28,7 +28,7 @@ const VALUE_LIST = [
     name: 'Culture and Behavior',
     icon: <Users className="size-5 text-fg-gray-secondary" />,
     title:
-      'The interpersonal, ethical, and social values that matter most to you in a workplace?',
+      'What are the interpersonal, ethical, and social values that matter most to you in a workplace?',
     placeholder: 'Search your culture and behavior...',
     type: VALUE_TYPE_ENUM.CULTURE_AND_BEHAVIOR,
   },
@@ -37,7 +37,7 @@ const VALUE_LIST = [
     name: 'Leadership',
     icon: <Star className="size-5 text-fg-gray-secondary" />,
     title:
-      'How you prefer teams to operate and how leadership supports performance, development, and collaboration?',
+      'How do you prefer teams to operate and how does leadership support performance, development, and collaboration?',
     placeholder: 'Search your leadership...',
     type: VALUE_TYPE_ENUM.LEADERSHIP,
   },

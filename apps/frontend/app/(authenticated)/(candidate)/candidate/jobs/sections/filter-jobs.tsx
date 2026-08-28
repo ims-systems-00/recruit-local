@@ -83,7 +83,7 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
               Search Results
             </h3>
             <p className=" capitalize text-label-sm text-text-gray-tertiary">
-              {jobs?.length} matchers with the Filter
+              {jobs?.length} Matches
             </p>
           </div>
         </div>

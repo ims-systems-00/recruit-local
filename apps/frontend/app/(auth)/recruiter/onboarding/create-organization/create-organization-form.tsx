@@ -19,13 +19,13 @@ export default function CreateOrganizationForm() {
     <form onSubmit={onSubmit} className=" space-y-spacing-4xl w-full">
       <div className="space-y-spacing-xs">
         <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-          Organization Name
+          Organisation Name
         </Label>
         <div className=" space-y-spacing-3xs">
           <InputGroup className="h-12 rounded-lg shadow-light">
             <InputGroupInput
               type="text"
-              placeholder="Enter Organization name"
+              placeholder="Enter Organisation name"
               {...register('name')}
             />
           </InputGroup>

@@ -43,7 +43,7 @@ const features = [
     premiumPlan: true,
   },
   {
-    feature: 'Values-based insights',
+    feature: 'Value-based insights',
     starterPlan: false,
     proPlan: true,
     premiumPlan: true,

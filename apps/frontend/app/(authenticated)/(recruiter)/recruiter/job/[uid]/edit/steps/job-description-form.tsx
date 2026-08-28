@@ -230,7 +230,7 @@ export default function JobDescriptionForm({
               </div>
               <div className="space-y-spacing-xs sm:col-span-2">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Related Attachment
+                  Related Attachment(s)
                 </Label>
                 <div className=" space-y-spacing-sm ">
                   <Controller
@@ -267,7 +267,7 @@ export default function JobDescriptionForm({
               </div>
               <div className=" sm:col-span-2 space-y-spacing-xl mb-spacing-sm">
                 <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Required Documents
+                  Required Document(s)
                 </Label>
                 <div className=" space-y-spacing-sm">
                   <div className=" flex gap-spacing-4xl items-center">

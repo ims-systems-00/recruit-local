@@ -16,7 +16,7 @@ export default function CreateOrganization() {
         </div>
         <div className="w-full space-y-spacing-2xs">
           <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-secondary">
-            Create Your Organization
+            Create Your Organisation
           </h4>
           <p className=" text-label-sm text-text-gray-quaternary">
             Enter your organization name to begin. Setup can be completed later

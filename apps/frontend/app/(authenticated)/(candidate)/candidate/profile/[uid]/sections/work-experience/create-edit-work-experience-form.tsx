@@ -170,7 +170,7 @@ export default function CreateEditWorkExperienceForm({
           <div className="grid grid-cols-1 gap-spacing-2xl">
             <div className="space-y-spacing-xs">
               <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                Organization Name
+                Organisation Name
               </Label>
               <div className=" space-y-spacing-sm">
                 <InputGroup

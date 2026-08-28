@@ -25,7 +25,7 @@ export default function Saves() {
     <div className=" space-y-spacing-4xl">
       <div className=" flex justify-between items-center">
         <h4 className=" text-text-gray-primary text-label-xl font-label-xl-strong!">
-          Saves
+          Saved
         </h4>
       </div>
       <div>

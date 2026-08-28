@@ -97,7 +97,7 @@ export default function JobLists() {
               Available Jobs
             </h3>
             <p className=" capitalize text-label-sm text-text-gray-tertiary">
-              15 matchers with the Filter
+              15 Matches
             </p>
           </div>
           {!isFilterJobsOpen && (

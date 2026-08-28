@@ -22,7 +22,7 @@ export default function JobLists() {
         </Breadcrumb>
       </div>
       <div className=" p-spacing-4xl">
-        <Jobs title="My Jobs" description="Create and view Your all jobs" />
+        <Jobs title="My Jobs" description="Create and View all your Jobs" />
       </div>
     </div>
   );

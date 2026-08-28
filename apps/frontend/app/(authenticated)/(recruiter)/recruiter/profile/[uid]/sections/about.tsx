@@ -48,7 +48,7 @@ export default function About({ profile }: { profile: TenantData }) {
               icon={<Building />}
             />
             <ProfileInfoCard
-              title="Employers"
+              title="Employees"
               subtitle={profile.size}
               icon={<Users />}
             />

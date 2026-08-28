@@ -22,7 +22,7 @@ export default function ValuesStepFourSection({
       types={STEP_FOUR_TYPES}
       onboardingStep={ONBOARDING_STEP_ENUMS.VALUES_STEP_4}
       progressValue={80}
-      title="How you prefer teams to operate and how leadership supports performance, development, and collaboration?"
+      title="How do you prefer teams to operate and how does leadership support performance, development, and collaboration?"
       onSuccessNext={() => {
         router.push(
           getOnboardingValuesRoute(ONBOARDING_STEP_ENUMS.VALUES_STEP_5),
