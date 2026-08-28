@@ -26,7 +26,7 @@ export default function ValuesStepTwoSection({
       types={STEP_TWO_TYPES}
       onboardingStep={ONBOARDING_STEP_ENUMS.VALUES_STEP_2}
       progressValue={40}
-      title="How you prefer to work, communicate, organise, and contribute within a team or environment?"
+      title="How do you prefer to work, communicate, organise, and contribute within a team or environment?"
       onSuccessNext={() => {
         router.push(
           getOnboardingValuesRoute(ONBOARDING_STEP_ENUMS.VALUES_STEP_3),

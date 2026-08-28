@@ -543,7 +543,7 @@ export default function JobInformationForm({
           <div className="space-y-spacing-2xl">
             <div className=" flex items-center justify-between">
               <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
-                Organization Information
+                Organisation Information
               </p>
               {/* <div className="flex items-center gap-2">
                 <Controller

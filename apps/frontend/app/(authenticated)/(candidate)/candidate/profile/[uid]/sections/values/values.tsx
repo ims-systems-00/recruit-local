@@ -10,7 +10,7 @@ const VALUE_LIST = [
     id: '1',
     name: 'Working Style',
     icon: <Layers2 className="size-5 text-fg-gray-secondary" />,
-    title: 'How you approach growth, learning, challenges, and innovation?',
+    title: 'How do you approach growth, learning, challenges, and innovation?',
     placeholder: 'Search your working style...',
     type: VALUE_TYPE_ENUM.WORKING_STYLE,
   },
@@ -19,7 +19,7 @@ const VALUE_LIST = [
     name: 'Mindset',
     icon: <Brain className="size-5 text-fg-gray-secondary" />,
     title:
-      'How you prefer to work, communicate, organise, and contribute within a team or environment?',
+      'How do you prefer to work, communicate, organise, and contribute within a team or environment?',
     placeholder: 'Search your mindset...',
     type: VALUE_TYPE_ENUM.MINDSET,
   },

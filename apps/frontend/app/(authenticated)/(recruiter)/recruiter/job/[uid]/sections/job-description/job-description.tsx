@@ -130,7 +130,7 @@ export default function JobDescription({ job }: { job: JobData }) {
 
         <div className="space-y-spacing-2xl">
           <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-            About Organization
+            About Organisation
           </p>
           <p className=" text-body-md text-text-gray-secondary">
             {job?.aboutUs || 'N/A'}

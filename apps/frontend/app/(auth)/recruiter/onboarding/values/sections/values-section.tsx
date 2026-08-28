@@ -221,7 +221,7 @@ export default function ValuesSection({
             </InputGroupAddon>
           </InputGroup>
           <div className=" flex flex-wrap items-center gap-spacing-2xl">
-            <span>Top 3 Most Important tags </span>
+            <span>Top 3 Most Selected Tags </span>
             {isTopThreeLoading ? (
               <div className=" flex flex-wrap items-center gap-spacing-2xl">
                 {Array.from({ length: 3 }).map((_, index) => (

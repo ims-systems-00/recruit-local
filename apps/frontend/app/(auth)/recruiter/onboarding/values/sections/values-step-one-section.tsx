@@ -26,7 +26,7 @@ export default function ValuesStepOneSection({
       types={STEP_ONE_TYPES}
       onboardingStep={ONBOARDING_STEP_ENUMS.VALUES_STEP_1}
       progressValue={40}
-      title="How you approach growth, learning, challenges, and innovation?"
+      title="How do you approach growth, learning, challenges, and innovation?"
       onSuccessNext={() => {
         router.push(
           getOnboardingValuesRoute(ONBOARDING_STEP_ENUMS.VALUES_STEP_2),

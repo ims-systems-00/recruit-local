@@ -70,7 +70,7 @@ export default function EditProfile({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
           <div className="space-y-spacing-xs">
             <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-              Organization Name
+              Organisation Name
             </Label>
             <div className=" space-y-spacing-sm">
               <InputGroup
@@ -95,7 +95,7 @@ export default function EditProfile({
           </div>
           <div className="space-y-spacing-xs ">
             <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-              Organization Type
+              Organisation Type
             </Label>
 
             <div className=" space-y-spacing-sm">
