@@ -205,7 +205,7 @@ export default function ValuesSection({
           <InputGroup className="  h-12 rounded-lg shadow-xs border-border-gray-primary">
             <InputGroupInput
               type="text"
-              placeholder="Search your mindset..."
+              placeholder="Search..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
