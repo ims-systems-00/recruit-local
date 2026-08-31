@@ -40,12 +40,18 @@ import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import Saves from './saved/saves';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 export default function Profile({
   jobProfileData,
 }: {
   jobProfileData: JobProfileData;
 }) {
+  const { data: session } = useSession();
+  const user = session?.user;
+
+  const isAnotherUser = user?.jobProfileId !== jobProfileData._id;
+
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
@@ -133,17 +139,28 @@ export default function Profile({
       value: 'values',
       label: 'Values',
       component: <Values profile={jobProfileDetails} />,
+      hideForAnotherUser: true,
     },
     {
       value: 'work-experience',
       label: 'Work Experience',
-      component: <WorkExperience />,
+      component: (
+        <WorkExperience
+          jobProfileId={jobProfileDetails._id}
+          isViewMode={!isAnotherUser ? false : true}
+        />
+      ),
       editable: false,
     },
     {
       value: 'education-qualification',
       label: 'Education Qualification',
-      component: <EducationQualification />,
+      component: (
+        <EducationQualification
+          jobProfileId={jobProfileDetails._id}
+          isViewMode={!isAnotherUser ? false : true}
+        />
+      ),
       editable: false,
     },
     {
@@ -151,11 +168,17 @@ export default function Profile({
       label: 'Trainings',
       component: <Trainings />,
       editable: false,
+      hideForAnotherUser: true,
     },
     {
       value: 'documents',
       label: 'Documents',
-      component: <Documents />,
+      component: (
+        <Documents
+          jobProfileId={jobProfileDetails._id}
+          isViewMode={!isAnotherUser ? false : true}
+        />
+      ),
       editable: false,
     },
     {
@@ -163,6 +186,7 @@ export default function Profile({
       label: 'Taken Tests',
       component: <TakenTests />,
       editable: false,
+      hideForAnotherUser: true,
     },
 
     {
@@ -170,19 +194,37 @@ export default function Profile({
       label: 'Applied',
       component: <Applied />,
       editable: false,
+      hideForAnotherUser: true,
     },
     {
       value: 'saved',
       label: 'Saved',
       component: <Saves />,
       editable: false,
+      hideForAnotherUser: true,
     },
   ];
 
+  // const visibleTabs = useMemo(() => {
+  //   if (!isEditMode) return tabs;
+  //   return tabs.filter((tab) => tab.editable);
+  // }, [isEditMode, tabs, isAnotherUser]);
+
   const visibleTabs = useMemo(() => {
-    if (!isEditMode) return tabs;
-    return tabs.filter((tab) => tab.editable);
-  }, [isEditMode, tabs]);
+    return tabs.filter((tab) => {
+      // Hide tabs when viewing another user
+      if (isAnotherUser && tab.hideForAnotherUser) {
+        return false;
+      }
+
+      // In edit mode, show only editable tabs
+      if (isEditMode && !tab.editable) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [isEditMode, isAnotherUser, tabs]);
 
   const handleEdit = useCallback(() => {
     setIsEditMode(true);
@@ -379,130 +421,137 @@ export default function Profile({
               )} */}
             </div>
           </div>
-          <div className=" space-y-spacing-2xl">
-            <div className="flex gap-2 sm:justify-end">
-              {isEditMode ? (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={handleCancelEdit}
-                    disabled={isPending}
-                    className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleSubmit(onSubmit)}
-                    disabled={isPending}
-                    className="cursor-pointer h-10 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong!"
-                  >
-                    {isPending ? 'Saving...' : 'Save'}
-                  </Button>
-                </>
-              ) : (
-                <div className=" flex items-center gap-spacing-2xl">
-                  {!jobProfileDetails?.kycStatus && (
+          {!isAnotherUser && (
+            <div className=" space-y-spacing-2xl">
+              <div className="flex gap-2 sm:justify-end">
+                {isEditMode ? (
+                  <>
                     <Button
-                      onClick={() => {
-                        router.push(
-                          `/candidate/profile/${jobProfileDetails._id}/verification`,
-                        );
-                      }}
-                      className=" flex items-center justify-center gap-spacing-2xs cursor-pointer bg-bg-brand-solid-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-white"
+                      variant="outline"
+                      onClick={handleCancelEdit}
+                      disabled={isPending}
+                      className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
                     >
-                      <span>
-                        <ShieldCheck className=" size-5" />
-                      </span>
-                      Apply for Verification
+                      Cancel
                     </Button>
-                  )}
-                  <Button
-                    onClick={handleEdit}
-                    variant="outline"
-                    className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
-                  >
-                    Edit Profile
-                  </Button>
+                    <Button
+                      type="button"
+                      onClick={handleSubmit(onSubmit)}
+                      disabled={isPending}
+                      className="cursor-pointer h-10 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong!"
+                    >
+                      {isPending ? 'Saving...' : 'Save'}
+                    </Button>
+                  </>
+                ) : (
+                  <div className=" flex items-center gap-spacing-2xl">
+                    {!jobProfileDetails?.kycStatus && (
+                      <Button
+                        onClick={() => {
+                          router.push(
+                            `/candidate/profile/${jobProfileDetails._id}/verification`,
+                          );
+                        }}
+                        className=" flex items-center justify-center gap-spacing-2xs cursor-pointer bg-bg-brand-solid-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-white"
+                      >
+                        <span>
+                          <ShieldCheck className=" size-5" />
+                        </span>
+                        Apply for Verification
+                      </Button>
+                    )}
+                    <Button
+                      onClick={handleEdit}
+                      variant="outline"
+                      className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
+                    >
+                      Edit Profile
+                    </Button>
+                  </div>
+                )}
+              </div>
+              {!isEditMode && (
+                <div className="flex items-center gap-spacing-sm sm:justify-end">
+                  <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Open to work
+                  </span>
+
+                  <Switch
+                    checked={
+                      jobProfileDetails?.visibility === VISIBILITY.PUBLIC
+                    }
+                    disabled={isPending}
+                    onCheckedChange={async (v) => {
+                      if (v) {
+                        await updateJobProfile({
+                          id: jobProfileDetails._id,
+                          payload: {
+                            visibility: VISIBILITY.PUBLIC,
+                          },
+                          onSuccessCallback: (newData) => {
+                            setJobProfileDetails((prev) => ({
+                              ...prev,
+                              ...newData,
+                            }));
+                          },
+                        });
+                        return;
+                      }
+
+                      setShowOpenToWorkAlert(true);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className=" bg-bg-gray-soft-quaternary data-[state=checked]:bg-bg-brand-solid-primary"
+                  />
                 </div>
               )}
             </div>
-            {!isEditMode && (
-              <div className="flex items-center gap-spacing-sm sm:justify-end">
-                <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Open to work
-                </span>
-
-                <Switch
-                  checked={jobProfileDetails?.visibility === VISIBILITY.PUBLIC}
-                  disabled={isPending}
-                  onCheckedChange={async (v) => {
-                    if (v) {
-                      await updateJobProfile({
-                        id: jobProfileDetails._id,
-                        payload: {
-                          visibility: VISIBILITY.PUBLIC,
-                        },
-                        onSuccessCallback: (newData) => {
-                          setJobProfileDetails((prev) => ({
-                            ...prev,
-                            ...newData,
-                          }));
-                        },
-                      });
-                      return;
-                    }
-
-                    setShowOpenToWorkAlert(true);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  className=" bg-bg-gray-soft-quaternary data-[state=checked]:bg-bg-brand-solid-primary"
-                />
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </header>
-      {!isEditMode && completionProgress < 100 && showProgreesInfo && (
-        <div className=" px-spacing-4xl pb-spacing-4xl">
-          <div className=" relative flex gap-spacing-lg items-start bg-bg-gray-soft-primary border border-border-gray-primary p-spacing-2xl rounded-3xl">
-            <div className=" mt-spacing-3xs">
-              <Info className=" size-5 text-fg-brand-secondary" />
-            </div>
-            <div className=" space-y-spacing-2xl">
-              <div className=" space-y-spacing-2xs">
-                <p className=" text-label-md font-label-md-strong! text-text-gray-primary">
-                  {completionProgress}% Profile Complete
-                </p>
-                <p className=" text-label-md text-text-gray-tertiary">
-                  You’re now eligible for verification. Complete your profile if
-                  you wish to build greater trust
-                </p>
+      {!isEditMode &&
+        completionProgress < 100 &&
+        showProgreesInfo &&
+        !isAnotherUser && (
+          <div className=" px-spacing-4xl pb-spacing-4xl">
+            <div className=" relative flex gap-spacing-lg items-start bg-bg-gray-soft-primary border border-border-gray-primary p-spacing-2xl rounded-3xl">
+              <div className=" mt-spacing-3xs">
+                <Info className=" size-5 text-fg-brand-secondary" />
               </div>
-              <div className=" flex gap-spacing-sm items-center">
-                <span
-                  onClick={handleEdit}
-                  className=" text-label-sm font-label-sm-strong! text-text-brand-secondary cursor-pointer"
-                >
-                  Complete Profile
-                </span>
-                <span
-                  onClick={() => setShowProgreesInfo(false)}
-                  className=" text-label-sm font-label-sm-strong! text-text-gray-secondary cursor-pointer"
-                >
-                  Dismiss
-                </span>
+              <div className=" space-y-spacing-2xl">
+                <div className=" space-y-spacing-2xs">
+                  <p className=" text-label-md font-label-md-strong! text-text-gray-primary">
+                    {completionProgress}% Profile Complete
+                  </p>
+                  <p className=" text-label-md text-text-gray-tertiary">
+                    You’re now eligible for verification. Complete your profile
+                    if you wish to build greater trust
+                  </p>
+                </div>
+                <div className=" flex gap-spacing-sm items-center">
+                  <span
+                    onClick={handleEdit}
+                    className=" text-label-sm font-label-sm-strong! text-text-brand-secondary cursor-pointer"
+                  >
+                    Complete Profile
+                  </span>
+                  <span
+                    onClick={() => setShowProgreesInfo(false)}
+                    className=" text-label-sm font-label-sm-strong! text-text-gray-secondary cursor-pointer"
+                  >
+                    Dismiss
+                  </span>
+                </div>
               </div>
+              <span
+                onClick={() => setShowProgreesInfo(false)}
+                className=" absolute top-spacing-2xl right-spacing-2xl cursor-pointer"
+              >
+                <X className=" size-5 text-fg-gray-tertiary" />
+              </span>
             </div>
-            <span
-              onClick={() => setShowProgreesInfo(false)}
-              className=" absolute top-spacing-2xl right-spacing-2xl cursor-pointer"
-            >
-              <X className=" size-5 text-fg-gray-tertiary" />
-            </span>
           </div>
-        </div>
-      )}
+        )}
       <div className="px-spacing-4xl pb-spacing-4xl">
         {isEditMode ? (
           <EditProfile

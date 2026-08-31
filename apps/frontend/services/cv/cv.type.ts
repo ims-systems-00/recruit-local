@@ -21,6 +21,7 @@ export type CvListFilters = {
   page?: number;
   limit?: number;
   clientSearch?: string;
+  jobProfileId?: string;
 };
 
 // --- FRONTEND RESPONSE TYPES ---

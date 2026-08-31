@@ -11,7 +11,13 @@ import {
   EducationListFilters,
 } from './education.type';
 import { ApiResponse } from '@/types/api';
-import { educationCreateSchema, educationIdParamsSchema, educationItemResponseSchema, educationListResponseSchema, educationUpdateSchema } from './education.validation';
+import {
+  educationCreateSchema,
+  educationIdParamsSchema,
+  educationItemResponseSchema,
+  educationListResponseSchema,
+  educationUpdateSchema,
+} from './education.validation';
 
 const API_ENDPOINT = '/educations';
 
@@ -25,13 +31,17 @@ export async function getEducations(
         params: {
           page: params?.page || 1,
           limit: params?.limit || 10,
+          jobProfileId: params?.jobProfileId,
         },
       },
     );
 
-    const backendResponse = await educationListResponseSchema.validate(res.data, {
-      stripUnknown: true,
-    });
+    const backendResponse = await educationListResponseSchema.validate(
+      res.data,
+      {
+        stripUnknown: true,
+      },
+    );
 
     return {
       success: true,
@@ -52,12 +62,16 @@ export async function getEducationById(
   try {
     await educationIdParamsSchema.validate({ id });
 
-    const res =
-      await axiosServer.get<EducationItemBackendResponse>(`${API_ENDPOINT}/${id}`);
+    const res = await axiosServer.get<EducationItemBackendResponse>(
+      `${API_ENDPOINT}/${id}`,
+    );
 
-    const backendResponse = await educationItemResponseSchema.validate(res.data, {
-      stripUnknown: true,
-    });
+    const backendResponse = await educationItemResponseSchema.validate(
+      res.data,
+      {
+        stripUnknown: true,
+      },
+    );
 
     return {
       success: true,
@@ -108,7 +122,7 @@ export async function updateEducation(
       validatedData,
     );
 
-   const backendResponse = res.data;
+    const backendResponse = res.data;
 
     return {
       success: true,
@@ -169,7 +183,7 @@ export async function restoreEducation(
     const res = await axiosServer.put<EducationItemBackendResponse>(
       `${API_ENDPOINT}/${id}/restore`,
     );
-    
+
     const backendResponse = res.data;
 
     return {

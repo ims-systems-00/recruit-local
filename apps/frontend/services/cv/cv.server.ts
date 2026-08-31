@@ -36,6 +36,7 @@ export async function getCvs(
         page: params?.page || 1,
         limit: params?.limit || 10,
         clientSearch: params?.clientSearch,
+        jobProfileId: params?.jobProfileId,
       },
     });
 
