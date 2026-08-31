@@ -59,6 +59,7 @@
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
+    "mammoth": "^1.12.2",
     "migrate-mongo": "^11.0.0",
     "moment": "^2.30.1",
     "mongoose": "^8.5.2",

@@ -26,7 +26,8 @@ export const list = async ({ req }: ControllerParams) => {
   }
 
   // Reading someone else's CVs is only allowed while their profile is.
-  await assertProfileScopedListAccess(req.session, req.query.jobProfileId);
+  const requestedProfileId = typeof req.query.jobProfileId === "string" ? req.query.jobProfileId : undefined;
+  await assertProfileScopedListAccess(req.session, requestedProfileId);
 
   const filter = new MongoQuery(req.query, {
     searchFields: ["title", "summary", "skills"],
@@ -37,8 +38,14 @@ export const list = async ({ req }: ControllerParams) => {
 
   const securityQuery = cvRoleScopedSecurityQuery(ability);
 
+  // Unlike the other profile-scoped lists, a candidate's CASL rules also match
+  // any published CV, so the security query alone does not keep this list to one
+  // person. Pin it to the profile the guard just authorised. An admin passing no
+  // filter is the only caller that legitimately sees across profiles.
+  const scopedProfileId = requestedProfileId ?? req.session.jobProfileId;
+
   const finalQuery = {
-    $and: [userSearchQuery, securityQuery],
+    $and: [userSearchQuery, securityQuery, ...(scopedProfileId ? [{ jobProfileId: scopedProfileId }] : [])],
   };
 
   const results = await cvService.list({ query: finalQuery, options });

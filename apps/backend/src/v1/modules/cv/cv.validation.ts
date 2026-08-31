@@ -1,6 +1,7 @@
 import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
 import { CV_STATUS_ENUM } from "@rl/types";
+import { RESUME_EXTENSION_PATTERN, RESUME_FORMAT_MESSAGE } from "./cv.constants";
 
 const subDocId = Joi.string().custom(objectIdValidation).optional().label("Sub-doc ID");
 
@@ -10,15 +11,15 @@ const awsStorageSchema = Joi.object({
   Key: Joi.string().required().label("Key"),
 }).label("AWS Storage");
 
-const pdfStorageSchema = awsStorageSchema
+const resumeStorageSchema = awsStorageSchema
   .keys({
     Name: Joi.string()
-      .pattern(/\.pdf$/i)
+      .pattern(RESUME_EXTENSION_PATTERN)
       .required()
       .label("Name")
-      .messages({ "string.pattern.base": "Only PDF files are allowed for CV resume upload." }),
+      .messages({ "string.pattern.base": RESUME_FORMAT_MESSAGE }),
   })
-  .label("PDF Storage");
+  .label("Resume Storage");
 
 const skillSchema = Joi.object({
   _id: subDocId,
@@ -68,7 +69,7 @@ export const createBodySchema = Joi.object({
   address: Joi.string().optional().label("Address"),
 
   imageStorage: awsStorageSchema.optional(),
-  resumeStorage: pdfStorageSchema.optional(),
+  resumeStorage: resumeStorageSchema.optional(),
 
   // Arrays (Optional on create, but must follow schema if provided)
   experience: Joi.array().items(experienceSchema).optional().label("Experience"),
@@ -94,7 +95,7 @@ export const updateBodySchema = Joi.object({
   address: Joi.string().optional().allow("").label("Address"),
 
   imageStorage: awsStorageSchema.optional().allow(null),
-  resumeStorage: pdfStorageSchema.optional().allow(null),
+  resumeStorage: resumeStorageSchema.optional().allow(null),
 
   // In the "Single Update" approach, passing these arrays replaces the existing ones.
   experience: Joi.array().items(experienceSchema).optional(),
@@ -109,6 +110,15 @@ export const updateBodySchema = Joi.object({
     .valid(...Object.values(CV_STATUS_ENUM))
     .optional()
     .label("CV Status"),
+});
+
+// The onboarding form is built on createCvSchema, so it posts title and
+// jobProfileId too. Accept them: the controller reads jobProfileId from the
+// session, never the body.
+export const extractAndCreateBodySchema = Joi.object({
+  resumeStorage: resumeStorageSchema.required(),
+  jobProfileId: Joi.string().custom(objectIdValidation).optional().label("Job Profile ID"),
+  title: Joi.string().optional().label("CV Title"),
 });
 
 export const idParamsSchema = Joi.object({

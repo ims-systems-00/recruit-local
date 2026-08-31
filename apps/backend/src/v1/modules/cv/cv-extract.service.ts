@@ -2,25 +2,51 @@ import OpenAI from "openai";
 import { PROMPT_NAME } from "@rl/types";
 import { FileManager } from "../../../common/helper/file-manager";
 import { s3Client } from "../../../.config/s3.config";
-import { logger } from "../../../common/helper";
+import { BadRequestException, logger } from "../../../common/helper";
 import { resolvePrompt } from "../prompt/prompt.resolver";
-import { CV_EXTRACTION_SCHEMA, DEFAULT_CV_EXTRACT_SYSTEM_PROMPT } from "./cv.constants";
+import { CV_EXTRACTION_SCHEMA, DEFAULT_CV_EXTRACT_SYSTEM_PROMPT, RESUME_FORMAT_MESSAGE } from "./cv.constants";
 import pdfParse from "pdf-parse";
+import mammoth from "mammoth";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   timeout: 90_000,
 });
 
+const PDF_MAGIC = "%PDF-";
+const ZIP_MAGIC = "504b0304"; // PK\x03\x04 — a .docx is a zip
+
 function decodePossiblyBase64Pdf(buffer: Buffer): Buffer {
   if (!buffer.subarray(0, 32).toString("utf-8").startsWith("JVBER")) return buffer;
   const decoded = Buffer.from(buffer.toString("utf-8").replace(/\s+/g, ""), "base64");
-  return decoded.subarray(0, 5).toString("utf-8") === "%PDF-" ? decoded : buffer;
+  return decoded.subarray(0, 5).toString("utf-8") === PDF_MAGIC ? decoded : buffer;
 }
 
+function decodePossiblyBase64Docx(buffer: Buffer): Buffer {
+  if (!buffer.subarray(0, 32).toString("utf-8").startsWith("UEsDB")) return buffer;
+  const decoded = Buffer.from(buffer.toString("utf-8").replace(/\s+/g, ""), "base64");
+  return decoded.subarray(0, 4).toString("hex") === ZIP_MAGIC ? decoded : buffer;
+}
+
+/**
+ * Dispatch on the bytes, not the filename — S3 accepts whatever the client
+ * named the object, so `cv.pdf` may well be a Word file.
+ */
 async function extractTextFromBuffer(buffer: Buffer): Promise<string> {
-  const data = await pdfParse(decodePossiblyBase64Pdf(buffer));
-  return data.text;
+  const pdf = decodePossiblyBase64Pdf(buffer);
+  if (pdf.subarray(0, 5).toString("utf-8") === PDF_MAGIC) {
+    return (await pdfParse(pdf)).text;
+  }
+
+  const docx = decodePossiblyBase64Docx(buffer);
+  if (docx.subarray(0, 4).toString("hex") === ZIP_MAGIC) {
+    return (await mammoth.extractRawText({ buffer: docx })).value;
+  }
+
+  logger.warn("[extractFromResume] Unrecognised resume format", {
+    firstBytesHex: buffer.subarray(0, 8).toString("hex"),
+  });
+  throw new BadRequestException(RESUME_FORMAT_MESSAGE);
 }
 
 async function fillSchemaWithAI(resumeText: string): Promise<object> {
@@ -65,7 +91,7 @@ export async function extractFromResume({
   );
   const buffer = await Promise.race([bufferPromise, timeoutPromise]);
 
-  logger.info("[extractFromResume] Extracting text from PDF");
+  logger.info("[extractFromResume] Extracting text from resume");
   const resumeText = await extractTextFromBuffer(buffer);
   logger.info("[extractFromResume] Extracted text, sending to OpenAI", { chars: resumeText.length });
 
