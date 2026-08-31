@@ -25,28 +25,34 @@ export const recomputeTenantCompletion = async (
   const tenant = await Tenant.findById(tenantId);
   if (!tenant) return null;
 
-  const complete: Record<string, boolean> = {
-    basics:
-      filledStr(tenant.name) &&
-      filledStr(tenant.description) &&
-      filledStr(tenant.industry) &&
-      filledStr(tenant.type as unknown as string) &&
-      filledNum(tenant.size),
-    contact: filledStr(tenant.phone) && filledStr(tenant.email) && filledStr(tenant.officeAddress),
-    branding: filledStr(tenant.logoSquareSrc) || filledStr(tenant.logoRectangleSrc),
-    photo: Boolean(tenant.profileImageId),
-    web: filledStr(tenant.website) && filledStr(tenant.linkedIn),
-    missionVision: filledStr(tenant.missionStatement) && filledStr(tenant.visionStatement),
-    offerings: filledStr(tenant.coreProducts) && filledStr(tenant.coreServices),
+  // Keyed by field, matching TENANT_COMPLETION_SECTIONS — each one scores on its own.
+  const filled: Record<string, boolean> = {
+    name: filledStr(tenant.name),
+    description: filledStr(tenant.description),
+    industry: filledStr(tenant.industry),
+    type: filledStr(tenant.type as unknown as string),
+    size: filledNum(tenant.size),
+    phone: filledStr(tenant.phone),
+    email: filledStr(tenant.email),
+    officeAddress: filledStr(tenant.officeAddress),
+    logo: filledStr(tenant.logoSquareSrc) || filledStr(tenant.logoRectangleSrc),
+    profileImage: Boolean(tenant.profileImageId),
+    website: filledStr(tenant.website),
+    linkedIn: filledStr(tenant.linkedIn),
+    missionStatement: filledStr(tenant.missionStatement),
+    visionStatement: filledStr(tenant.visionStatement),
+    coreProducts: filledStr(tenant.coreProducts),
+    coreServices: filledStr(tenant.coreServices),
     values: filledArr(tenant.values),
   };
 
-  const { percentage, completeSections } = computeCompletion(
-    TENANT_COMPLETION_SECTIONS.map((s) => ({ key: s.key, weight: s.weight, complete: Boolean(complete[s.key]) }))
+  const { percentage, completeFields, completeSections } = computeCompletion(
+    TENANT_COMPLETION_SECTIONS,
+    Object.keys(filled).filter((key) => filled[key])
   );
 
   const computedAt = new Date();
-  const completion: StoredCompletion = { percentage, completeSections, computedAt };
+  const completion: StoredCompletion = { percentage, completeFields, completeSections, computedAt };
   await Tenant.updateOne({ _id: tenant._id }, { $set: { completion } });
 
   return completion;

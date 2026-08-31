@@ -43,34 +43,34 @@ export const recomputeProfileCompletion = async (
     }).select("_id"),
   ]);
 
-  const complete: Record<string, boolean> = {
-    basics:
-      filledStr(jobProfile.name) &&
-      filledStr(jobProfile.email) &&
-      filledStr(jobProfile.contactNumber) &&
-      filledStr(jobProfile.address) &&
-      filledStr(jobProfile.summary),
-    career:
-      filledArr(jobProfile.jobTitle) &&
-      filledArr(jobProfile.industry) &&
-      filledArr(jobProfile.workMode) &&
-      filledRef(jobProfile.experienceLevel),
-    photo: filledRef(jobProfile.profileImageId),
+  // Keyed by field, matching PROFILE_COMPLETION_SECTIONS — each one scores on its own.
+  const filled: Record<string, boolean> = {
+    name: filledStr(jobProfile.name),
+    email: filledStr(jobProfile.email),
+    contactNumber: filledStr(jobProfile.contactNumber),
+    address: filledStr(jobProfile.address),
+    summary: filledStr(jobProfile.summary),
+    jobTitle: filledArr(jobProfile.jobTitle),
+    profileIndustry: filledArr(jobProfile.industry),
+    workMode: filledArr(jobProfile.workMode),
+    experienceLevel: filledRef(jobProfile.experienceLevel),
+    profilePhoto: filledRef(jobProfile.profileImageId),
     experience: experienceCount > 0,
     education: educationCount > 0,
     skills: skillCount >= 3 || filledStr(jobProfile.skills),
     cv: Boolean(cvDoc),
     certifications: certificationCount > 0,
-    values: filledArr(jobProfile.values),
+    profileValues: filledArr(jobProfile.values),
     languages: filledArr(jobProfile.languages),
   };
 
-  const { percentage, completeSections } = computeCompletion(
-    PROFILE_COMPLETION_SECTIONS.map((s) => ({ key: s.key, weight: s.weight, complete: Boolean(complete[s.key]) }))
+  const { percentage, completeFields, completeSections } = computeCompletion(
+    PROFILE_COMPLETION_SECTIONS,
+    Object.keys(filled).filter((key) => filled[key])
   );
 
   const computedAt = new Date();
-  const completion: StoredCompletion = { percentage, completeSections, computedAt };
+  const completion: StoredCompletion = { percentage, completeFields, completeSections, computedAt };
   await JobProfile.updateOne({ _id: jobProfile._id }, { $set: { completion } });
 
   return completion;

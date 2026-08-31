@@ -1,5 +1,5 @@
 import { TenantResponseDto, TENANT_COMPLETION_SECTIONS } from "@rl/types";
-import { expandCompletion } from "@rl/utils";
+import { expandCompletion, StoredCompletionInput } from "@rl/utils";
 import { toValueResponse } from "../value/value.dto";
 
 const toIso = (v: unknown): string => (v instanceof Date ? v.toISOString() : (v as string));
@@ -48,8 +48,7 @@ export const toTenantResponse = (doc: unknown): TenantResponseDto => {
   // Expand the lean stored completion into the full breakdown (percentage +
   // labelled sections + missing) using the shared section config.
   if (has(d, "completion") && d.completion) {
-    const stored = d.completion as { completeSections?: string[]; computedAt?: Date | string | null };
-    d.completion = expandCompletion(TENANT_COMPLETION_SECTIONS, stored.completeSections ?? [], stored.computedAt ?? null);
+    d.completion = expandCompletion(TENANT_COMPLETION_SECTIONS, d.completion as StoredCompletionInput);
   }
 
   return d as TenantResponseDto;

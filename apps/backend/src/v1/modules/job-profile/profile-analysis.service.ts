@@ -411,11 +411,7 @@ export const analyseJobProfile = async (profile: Record<string, any>): Promise<P
 
   const stored: StoredCompletion | null = profile.userId ? await recomputeProfileCompletion(profile.userId) : null;
 
-  const completion = expandCompletion(
-    PROFILE_COMPLETION_SECTIONS,
-    stored?.completeSections ?? [],
-    stored?.computedAt ?? null
-  );
+  const completion = expandCompletion(PROFILE_COMPLETION_SECTIONS, stored);
 
   const snapshot: ProfileSnapshot = { profile, counts };
 

@@ -72,11 +72,7 @@ const finalizeJobProfile = (doc: any) => {
   // Expand only if `completion` survived sanitization — it is stripped for
   // anyone reading a profile that is not their own.
   if (doc.completion) {
-    doc.completion = expandCompletion(
-      PROFILE_COMPLETION_SECTIONS,
-      doc.completion.completeSections ?? [],
-      doc.completion.computedAt ?? null
-    );
+    doc.completion = expandCompletion(PROFILE_COMPLETION_SECTIONS, doc.completion);
   }
 
   return dropMediaObjects(doc);
