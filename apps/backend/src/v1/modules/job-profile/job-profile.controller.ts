@@ -33,11 +33,7 @@ const caslFieldOptions = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const expandProfileCompletion = (doc: any) => {
   if (doc && doc.completion) {
-    doc.completion = expandCompletion(
-      PROFILE_COMPLETION_SECTIONS,
-      doc.completion.completeSections ?? [],
-      doc.completion.computedAt ?? null
-    );
+    doc.completion = expandCompletion(PROFILE_COMPLETION_SECTIONS, doc.completion);
   }
   return doc;
 };
@@ -161,9 +157,7 @@ export const getCompletion = async ({ req }: ControllerParams) => {
 
   // Recompute on demand so the breakdown is always fresh.
   const stored = await recomputeProfileCompletion(jobProfile.userId);
-  const completion = stored
-    ? expandCompletion(PROFILE_COMPLETION_SECTIONS, stored.completeSections, stored.computedAt)
-    : null;
+  const completion = stored ? expandCompletion(PROFILE_COMPLETION_SECTIONS, stored) : null;
 
   return new ApiResponse({
     message: "Job profile completion retrieved.",
