@@ -3,7 +3,7 @@ import express from "express";
 import { list, get, create, update, softRemove, hardRemove, restore, extractAndCreate, extract } from "./cv.controller";
 import { handleController } from "../../../common/helper";
 import { validate } from "../../../common/middlewares";
-import { createBodySchema, updateBodySchema, idParamsSchema } from "./cv.validation";
+import { createBodySchema, updateBodySchema, idParamsSchema, extractAndCreateBodySchema } from "./cv.validation";
 
 const router = express.Router();
 const validateBody = validate("body");
@@ -11,7 +11,7 @@ const validateParams = validate("params");
 
 // cv routes
 
-router.post("/extract-and-create", handleController(extractAndCreate));
+router.post("/extract-and-create", validateBody(extractAndCreateBodySchema), handleController(extractAndCreate));
 router.get("/extract/:id", validateParams(idParamsSchema), handleController(extract));
 router.get("/", handleController(list));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));

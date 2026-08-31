@@ -1,4 +1,12 @@
 /**
+ * Formats the extractor can pull text out of. DOCX is a zip of XML, so it needs
+ * no system binary; .doc/.rtf would need LibreOffice, which is not in the
+ * production image.
+ */
+export const RESUME_EXTENSION_PATTERN = /\.(pdf|docx)$/i;
+export const RESUME_FORMAT_MESSAGE = "CV must be a PDF or Word (.docx) file.";
+
+/**
  * The shape the extractor asks the model to fill. Sent as a user message
  * alongside the resume text, so it is data rather than instruction and stays
  * out of the prompt registry.
