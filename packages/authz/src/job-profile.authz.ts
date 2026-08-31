@@ -195,14 +195,15 @@ export class JobProfileAbilityBuilder implements IAbilityBuilder {
       }
     }
 
-    // 3. EMPLOYER
+    // 3. EMPLOYER — may read any profile the candidate has made public.
+    // `status` used to be part of this gate, but nothing ever writes it, so it
+    // denied every read; the candidate's visibility toggle is the real gate.
     if (user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
       builder.can(
         AbilityAction.Read,
         JobProfileAuthZEntity,
         JOB_PROFILE_PUBLIC_READ_FIELDS,
         {
-          status: JOB_PROFILE_STATUS_ENUM.VERIFIED,
           visibility: VISIBILITY.PUBLIC,
         },
       );

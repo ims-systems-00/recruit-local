@@ -14,6 +14,7 @@ import * as cvService from "./cv.service";
 import * as cvExtractService from "./cv-extract.service";
 import { matchCvEntities } from "./cv-match.service";
 import { cvRoleScopedSecurityQuery } from "./cv.query";
+import { assertCanReadJobProfile, assertProfileScopedListAccess } from "../job-profile/job-profile.access";
 import { toCvResponse, toCvResponseList } from "./cv.dto";
 
 export const list = async ({ req }: ControllerParams) => {
@@ -23,6 +24,9 @@ export const list = async ({ req }: ControllerParams) => {
   if (!ability.can(AbilityAction.Read, CvAuthZEntity)) {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read CVs.`);
   }
+
+  // Reading someone else's CVs is only allowed while their profile is.
+  await assertProfileScopedListAccess(req.session, req.query.jobProfileId);
 
   const filter = new MongoQuery(req.query, {
     searchFields: ["title", "summary", "skills"],
@@ -57,6 +61,10 @@ export const get = async ({ req }: ControllerParams) => {
 
   if (!cv || !ability.can(AbilityAction.Read, new CvAuthZEntity(cv))) {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read this CV.`);
+  }
+
+  if (String(cv.jobProfileId) !== req.session.jobProfileId) {
+    await assertCanReadJobProfile(req.session, String(cv.jobProfileId));
   }
 
   return new ApiResponse({

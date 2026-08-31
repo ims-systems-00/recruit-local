@@ -1,14 +1,15 @@
 import { accessibleBy } from "@casl/mongoose";
 import { AbilityAction } from "@rl/types";
-import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
+import { CertificationAbilityBuilder, CertificationAuthZEntity } from "@rl/authz";
 import { PipelineStage } from "mongoose";
 import { projectQuery } from "../../../common/query";
 import { Certification, ICertificationDoc } from "../../../models";
 import { omit } from "lodash";
 
-export const roleScopedSecurityQuery = (ability: ReturnType<UserAbilityBuilder["getAbility"]>) => {
-  // Get the raw query from CASL
-  const query = accessibleBy(ability, AbilityAction.Read).ofType(UserAuthZEntity);
+export const certificationRoleScopedSecurityQuery = (
+  ability: ReturnType<CertificationAbilityBuilder["getAbility"]>
+) => {
+  const query = accessibleBy(ability, AbilityAction.Read).ofType(CertificationAuthZEntity);
   return query;
 };
 

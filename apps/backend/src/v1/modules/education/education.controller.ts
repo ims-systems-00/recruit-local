@@ -12,6 +12,7 @@ import { AbilityAction } from "@rl/types";
 import * as educationService from "./education.service";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { educationRoleScopedSecurityQuery } from "./education.query";
+import { assertCanReadJobProfile, assertProfileScopedListAccess } from "../job-profile/job-profile.access";
 import { toEducationResponse, toEducationResponseList } from "./education.dto";
 
 const caslFieldOptions = {
@@ -40,6 +41,9 @@ export const list = async ({ req }: ControllerParams) => {
   if (!ability.can(AbilityAction.Read, EducationAuthZEntity)) {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read educations.`);
   }
+
+  // Reading someone else's education is only allowed while their profile is.
+  await assertProfileScopedListAccess(req.session, req.query.jobProfileId);
 
   const filter = new MongoQuery(req.query, {
     searchFields: ["degree", "institution", "fieldOfStudy"],
@@ -82,6 +86,10 @@ export const get = async ({ req }: ControllerParams) => {
 
   if (!education || !ability.can(AbilityAction.Read, new EducationAuthZEntity(education))) {
     throw new UnauthorizedException("You do not have permission to view this education record.");
+  }
+
+  if (String(education.jobProfileId) !== req.session.jobProfileId) {
+    await assertCanReadJobProfile(req.session, String(education.jobProfileId));
   }
 
   return new ApiResponse({

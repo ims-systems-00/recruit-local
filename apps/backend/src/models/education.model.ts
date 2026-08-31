@@ -12,7 +12,8 @@ export interface EducationInput extends IEducation, IUserOwnedInput, JobProfileI
 export interface IEducationDoc extends EducationInput, IBaseDoc, ISoftDeleteDoc {}
 
 interface IEducationModel
-  extends Model<IEducationDoc>,
+  extends
+    Model<IEducationDoc>,
     ISoftDeleteModel<IEducationDoc>,
     PaginateModel<IEducationDoc>,
     AggregatePaginateModel<IEducationDoc> {}
