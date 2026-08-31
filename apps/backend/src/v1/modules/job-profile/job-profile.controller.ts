@@ -12,6 +12,8 @@ import {
   ALL_JOB_PROFILE_FIELDS,
   JobAbilityBuilder,
   JobAuthZEntity,
+  ApplicationAbilityBuilder,
+  ApplicationAuthZEntity,
 } from "@rl/authz";
 import { AbilityAction, PROFILE_COMPLETION_SECTIONS } from "@rl/types";
 import { expandCompletion } from "@rl/utils";
@@ -151,7 +153,9 @@ export const getCompletion = async ({ req }: ControllerParams) => {
 
   const jobProfile = await jobProfileService.getOne({ query: { _id: req.params.id } });
 
-  if (!jobProfile || !ability.can(AbilityAction.Read, new JobProfileAuthZEntity(jobProfile))) {
+  // Field-level check: `completion` is owner-only (absent from the employer's
+  // public read set), so this denies employers who can otherwise read the profile.
+  if (!jobProfile || !ability.can(AbilityAction.Read, new JobProfileAuthZEntity(jobProfile), "completion")) {
     throw new UnauthorizedException("You do not have permission to view this job profile.");
   }
 
@@ -179,6 +183,14 @@ export const getAppliedJobs = async ({ req }: ControllerParams) => {
 
   if (!jobProfile || !ability.can(AbilityAction.Read, new JobProfileAuthZEntity(jobProfile))) {
     throw new UnauthorizedException("You do not have permission to view this job profile.");
+  }
+
+  // This list spans every company the candidate applied to, so authorize it as
+  // applications rather than as the profile. An employer's application grant is
+  // scoped to { tenantId }, which a bare jobProfileId can never satisfy.
+  const applicationAbility = new ApplicationAbilityBuilder(req.session).getAbility();
+  if (!applicationAbility.can(AbilityAction.Read, new ApplicationAuthZEntity({ jobProfileId: req.params.id }))) {
+    throw new UnauthorizedException("You do not have permission to view these applications.");
   }
 
   // Get all applications for this job profile
