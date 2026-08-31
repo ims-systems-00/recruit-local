@@ -1,7 +1,15 @@
+import { accessibleBy } from "@casl/mongoose";
+import { AbilityAction } from "@rl/types";
+import { InterestAbilityBuilder, InterestAuthZEntity } from "@rl/authz";
 import { PipelineStage } from "mongoose";
 import { projectQuery } from "../../../common/query";
 import { omit } from "lodash";
 import { IInterestDoc, Interest } from "../../../models";
+
+export const interestRoleScopedSecurityQuery = (ability: ReturnType<InterestAbilityBuilder["getAbility"]>) => {
+  const query = accessibleBy(ability, AbilityAction.Read).ofType(InterestAuthZEntity);
+  return query;
+};
 
 export const interestProjectQuery = (): PipelineStage[] => {
   const fieldsToExclude: (keyof IInterestDoc | "__v")[] = ["__v"];
