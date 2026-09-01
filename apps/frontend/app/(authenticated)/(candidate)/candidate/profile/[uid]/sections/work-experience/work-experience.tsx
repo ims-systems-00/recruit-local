@@ -16,7 +16,13 @@ import WorkExperienceSkeleton from './work-experience-skeleton';
 import PaginationComponent from '../pagination-component';
 import EmptyBox from '@/components/empty-box';
 
-export default function WorkExperience() {
+export default function WorkExperience({
+  jobProfileId,
+  isViewMode,
+}: {
+  jobProfileId: string;
+  isViewMode: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [selectedExperience, setSelectedExperience] =
     useState<ExperienceData | null>(null);
@@ -25,6 +31,7 @@ export default function WorkExperience() {
   const filters = useMemo(
     () => ({
       page,
+      jobProfileId,
       limit: 10,
     }),
     [page],
@@ -43,15 +50,16 @@ export default function WorkExperience() {
           <h4 className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
             Work Experience
           </h4>
-
-          <Button
-            type="button"
-            className="cursor-pointer h-10 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong!"
-            onClick={() => setOpen(true)}
-          >
-            <Plus className=" size-4" />
-            Create
-          </Button>
+          {!isViewMode && (
+            <Button
+              type="button"
+              className="cursor-pointer h-10 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong!"
+              onClick={() => setOpen(true)}
+            >
+              <Plus className=" size-4" />
+              Create
+            </Button>
+          )}
         </div>
         <div className=" space-y-spacing-2xl">
           {isLoading ? (
@@ -67,6 +75,7 @@ export default function WorkExperience() {
                   setSelectedExperience(experience);
                   setOpen(true);
                 }}
+                isViewMode={isViewMode}
               />
             ))
           ) : (
@@ -74,14 +83,16 @@ export default function WorkExperience() {
               title="No experience added yet"
               description="Currently, there are no work experience added yet."
             >
-              <Button
-                disabled={isLoading}
-                onClick={() => setOpen(true)}
-                className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
-              >
-                <Plus />
-                <span>Create New</span>
-              </Button>
+              {!isViewMode && (
+                <Button
+                  disabled={isLoading}
+                  onClick={() => setOpen(true)}
+                  className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+                >
+                  <Plus />
+                  <span>Create New</span>
+                </Button>
+              )}
             </EmptyBox>
           )}
         </div>

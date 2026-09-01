@@ -34,9 +34,11 @@ const formatDate = (date: Date) => {
 export default function WorkExperienceItem({
   education,
   onEdit,
+  isViewMode,
 }: {
   education: EducationData;
   onEdit: () => void;
+  isViewMode: boolean;
 }) {
   const [openDeleteAlertDialog, setOpenDeleteAlertDialog] = useState(false);
   const { softDeleteEducation, isLoading } = useSoftDeleteEducation();
@@ -84,34 +86,36 @@ export default function WorkExperienceItem({
               </p>
             </div>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="text-fg-gray-secondary flex items-center justify-center cursor-pointer">
-                <EllipsisVertical size={16} />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32 bg-white">
-              <DropdownMenuItem
-                onClick={() => setOpenDeleteAlertDialog(true)}
-                className=" text-label-sm font-label-sm-strong! text-text-gray-secondary"
-              >
-                Delete
-              </DropdownMenuItem>
+          {!isViewMode && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-fg-gray-secondary flex items-center justify-center cursor-pointer">
+                  <EllipsisVertical size={16} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-32 bg-white">
+                <DropdownMenuItem
+                  onClick={() => setOpenDeleteAlertDialog(true)}
+                  className=" text-label-sm font-label-sm-strong! text-text-gray-secondary"
+                >
+                  Delete
+                </DropdownMenuItem>
 
-              <DropdownMenuItem
-                onClick={onEdit}
-                className=" text-label-sm font-label-sm-strong! text-text-gray-secondary"
-              >
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                //   onClick={onUpdateJob}
-                className=" text-label-sm font-label-sm-strong! text-text-gray-secondary"
-              >
-                Hide
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem
+                  onClick={onEdit}
+                  className=" text-label-sm font-label-sm-strong! text-text-gray-secondary"
+                >
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  //   onClick={onUpdateJob}
+                  className=" text-label-sm font-label-sm-strong! text-text-gray-secondary"
+                >
+                  Hide
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
       <AlertDialog

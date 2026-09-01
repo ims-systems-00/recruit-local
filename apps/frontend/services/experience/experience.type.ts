@@ -1,18 +1,26 @@
 import * as yup from 'yup';
 import { WORKPLACE_ENUMS, EMPLOYMENT_TYPE } from '@rl/types';
-import { experienceCreateSchema, experienceIdParamsSchema, experienceUpdateSchema } from './experience.validation';
+import {
+  experienceCreateSchema,
+  experienceIdParamsSchema,
+  experienceUpdateSchema,
+} from './experience.validation';
 import { Pagination } from '@/types/api';
 
-
 // TypeScript types
-export type ExperienceCreateInput = yup.InferType<typeof experienceCreateSchema>;
-export type ExperienceUpdateInput = yup.InferType<typeof experienceUpdateSchema>;
+export type ExperienceCreateInput = yup.InferType<
+  typeof experienceCreateSchema
+>;
+export type ExperienceUpdateInput = yup.InferType<
+  typeof experienceUpdateSchema
+>;
 export type ExperienceIdParams = yup.InferType<typeof experienceIdParamsSchema>;
 
 export type ExperienceListFilters = {
   page?: number;
   limit?: number;
   search?: string;
+  jobProfileId?: string;
 };
 
 // API Response types
@@ -51,5 +59,3 @@ export type ExperienceListResponse = {
   docs: ExperienceData[];
   pagination: Pagination;
 };
-
-

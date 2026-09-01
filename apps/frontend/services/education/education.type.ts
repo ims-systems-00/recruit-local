@@ -1,5 +1,9 @@
 import * as yup from 'yup';
-import { educationCreateSchema, educationIdParamsSchema, educationUpdateSchema } from "./education.validation";
+import {
+  educationCreateSchema,
+  educationIdParamsSchema,
+  educationUpdateSchema,
+} from './education.validation';
 import { Pagination } from '@/types/api';
 
 // TypeScript types
@@ -11,6 +15,7 @@ export type EducationListFilters = {
   page?: number;
   limit?: number;
   search?: string;
+  jobProfileId?: string;
 };
 
 // API Response types
@@ -47,4 +52,3 @@ export type EducationListResponse = {
   docs: EducationData[];
   pagination: Pagination;
 };
-

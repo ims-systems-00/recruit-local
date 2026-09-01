@@ -16,7 +16,13 @@ import PaginationComponent from '../pagination-component';
 import EmptyBox from '@/components/empty-box';
 import { EducationData, useEducations } from '@/services/education';
 
-export default function EducationQualification() {
+export default function EducationQualification({
+  jobProfileId,
+  isViewMode,
+}: {
+  isViewMode: boolean;
+  jobProfileId: string;
+}) {
   const [open, setOpen] = useState(false);
   const [selectedEducation, setSelectedEducation] =
     useState<EducationData | null>(null);
@@ -25,6 +31,7 @@ export default function EducationQualification() {
   const filters = useMemo(
     () => ({
       page,
+      jobProfileId,
       limit: 10,
     }),
     [page],
@@ -48,14 +55,16 @@ export default function EducationQualification() {
             Education Qualification
           </h4>
 
-          <Button
-            type="button"
-            className="cursor-pointer h-10 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong!"
-            onClick={() => setOpen(true)}
-          >
-            <Plus className=" size-4" />
-            Create
-          </Button>
+          {!isViewMode && (
+            <Button
+              type="button"
+              className="cursor-pointer h-10 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong!"
+              onClick={() => setOpen(true)}
+            >
+              <Plus className=" size-4" />
+              Create
+            </Button>
+          )}
         </div>
         <div className=" space-y-spacing-2xl">
           {isLoading ? (
@@ -71,6 +80,7 @@ export default function EducationQualification() {
                   setSelectedEducation(education);
                   setOpen(true);
                 }}
+                isViewMode={isViewMode}
               />
             ))
           ) : (
@@ -78,14 +88,16 @@ export default function EducationQualification() {
               title="No education qualifications added yet"
               description="Currently, there are no education qualifications added yet."
             >
-              <Button
-                disabled={isLoading}
-                onClick={() => setOpen(true)}
-                className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
-              >
-                <Plus />
-                <span>Create New</span>
-              </Button>
+              {!isViewMode && (
+                <Button
+                  disabled={isLoading}
+                  onClick={() => setOpen(true)}
+                  className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+                >
+                  <Plus />
+                  <span>Create New</span>
+                </Button>
+              )}
             </EmptyBox>
           )}
         </div>

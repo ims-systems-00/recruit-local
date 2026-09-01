@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import PaginationComponent from './pagination-component';
 import { TableSkeleton } from './table-skeleton';
 import EmptyBox from '@/components/empty-box';
+import Link from 'next/link';
 
 export const userColumns: ColumnDef<Application>[] = [
   {
@@ -22,9 +23,12 @@ export const userColumns: ColumnDef<Application>[] = [
           </AvatarFallback>
         </Avatar>
         <div>
-          <p className=" text-label-sm font-label-sm-strong! text-text-gray-primary">
+          <Link
+            href={`/candidate/profile/${row.original.jobProfile._id}`}
+            className=" text-label-sm font-label-sm-strong! text-text-gray-primary"
+          >
             {row.original.jobProfile.name}
-          </p>
+          </Link>
           <p className=" text-label-sm  text-text-gray-primary">
             {row.original.jobProfile.email}
           </p>

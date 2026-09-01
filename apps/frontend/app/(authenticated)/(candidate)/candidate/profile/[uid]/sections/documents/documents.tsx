@@ -17,7 +17,13 @@ import CreateEditDocumentForm from './create-edit-documen-form';
 import { CvData } from '@/services/cv/cv.type';
 import { useCvs } from '@/services/cv/cv.client';
 
-export default function Documents() {
+export default function Documents({
+  jobProfileId,
+  isViewMode,
+}: {
+  jobProfileId: string;
+  isViewMode: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [selectedCv, setSelectedCv] = useState<CvData | null>(null);
   const [page, setPage] = useState(1);
@@ -25,6 +31,7 @@ export default function Documents() {
   const filters = useMemo(
     () => ({
       page,
+      jobProfileId,
       limit: 9,
     }),
     [page],
@@ -44,14 +51,16 @@ export default function Documents() {
             Documents
           </h4>
 
-          <Button
-            type="button"
-            className="cursor-pointer h-10 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong!"
-            onClick={() => setOpen(true)}
-          >
-            <Plus className=" size-4" />
-            Create
-          </Button>
+          {!isViewMode && (
+            <Button
+              type="button"
+              className="cursor-pointer h-10 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong!"
+              onClick={() => setOpen(true)}
+            >
+              <Plus className=" size-4" />
+              Create
+            </Button>
+          )}
         </div>
         <div className=" space-y-spacing-2xl">
           {isLoading ? (
@@ -68,6 +77,7 @@ export default function Documents() {
                     setSelectedCv(cv);
                     setOpen(true);
                   }}
+                  isViewMode={isViewMode}
                 />
               ))}
             </div>
@@ -76,14 +86,16 @@ export default function Documents() {
               title="No documents added yet"
               description="Currently, there are no documents added yet."
             >
-              <Button
-                disabled={isLoading}
-                onClick={() => setOpen(true)}
-                className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
-              >
-                <Plus />
-                <span>Create New</span>
-              </Button>
+              {!isViewMode && (
+                <Button
+                  disabled={isLoading}
+                  onClick={() => setOpen(true)}
+                  className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+                >
+                  <Plus />
+                  <span>Create New</span>
+                </Button>
+              )}
             </EmptyBox>
           )}
         </div>
