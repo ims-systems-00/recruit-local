@@ -18,6 +18,7 @@ import { agenda } from "../../../agenda/config";
 import { JOB_NAME } from "../../../agenda/constants";
 import { salaryUpdateQueue } from "../../../queue/salaryUpdateQueue";
 import { enqueueProfileFeedRebuild } from "../../../queue/profileFeedRebuildQueue";
+import { enqueueJobCleanup } from "../../../queue/jobCleanupQueue";
 import { readFeedIds } from "./feed.service";
 import { list as listApplications } from "../application/application.service";
 import pick from "lodash/pick";
@@ -260,6 +261,8 @@ export const softRemove = async ({ req }: ControllerParams) => {
     query: { _id: req.params.id },
   });
 
+  await enqueueJobCleanup(existingJob._id, "soft");
+
   return new ApiResponse({
     message: "Job moved to trash.",
     statusCode: StatusCodes.OK,
@@ -303,6 +306,8 @@ export const hardRemove = async ({ req }: ControllerParams) => {
   const job = await jobService.hardDelete({
     query: { _id: req.params.id },
   });
+
+  await enqueueJobCleanup(existingJob._id, "hard");
 
   return new ApiResponse({
     message: "Job permanently deleted.",
