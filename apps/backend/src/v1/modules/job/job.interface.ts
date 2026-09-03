@@ -7,6 +7,7 @@ import {
 } from "../../../common/interface/service.interface";
 import { IJobInput, IJobDoc } from "../../../models/job.model";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
+import { JobSearchPreFilter } from "./job.query";
 
 // --- Standardized Parameter Interfaces ---
 
@@ -23,6 +24,10 @@ export interface IJobListParams extends IServiceListParams<IJobDoc> {
   jobProfileId?: string;
   // When set, jobs get a `matchScore` = keyword overlap with these, for ranking.
   matchKeywords?: string[];
+  // When set, the pipeline opens with a hybrid Atlas search stage instead of $match.
+  searchTerm?: string;
+  searchVector?: number[];
+  searchPreFilter?: JobSearchPreFilter;
 }
 export interface IJobGetParams extends IServiceGetParams<IJobDoc> {
   tenantId?: string;

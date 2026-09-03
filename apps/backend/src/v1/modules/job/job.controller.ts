@@ -1,5 +1,4 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import {
   ApiResponse,
   ControllerParams,
@@ -11,7 +10,9 @@ import * as jobService from "./job.service";
 import { getProfileKeywords } from "./keyword.service";
 import { JobAbilityBuilder, JobAuthZEntity, ALL_JOB_FIELDS } from "@rl/authz";
 import { AbilityAction, JOBS_STATUS_ENUMS } from "@rl/types";
-import { jobRoleScopedSecurityQuery } from "./job.query";
+import { jobListQuerySpec, jobRoleScopedSecurityQuery, jobSearchPreFilter } from "./job.query";
+import { buildListQuery } from "../../../common/query";
+import { getQueryEmbedding } from "../../../common/helper/embedding";
 import { toJobResponse, toJobResponseList } from "./job.dto";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { agenda } from "../../../agenda/config";
@@ -78,23 +79,25 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read jobs.`);
   }
 
-  // `matched` opts a seeker into profile-based ranking; it is not a real filter
-  // field, so strip it before building the Mongo query.
-  const { matched, ...restQuery } = req.query;
+  // `matched` and `semantic` switch modes rather than filter, so they are read
+  // here; the builder only ever sees the keys jobListQuerySpec declares.
+  const { matched, semantic } = req.query;
 
-  const filter = new MongoQuery(restQuery, {
-    searchFields: ["title", "description", "company", "location"],
-  }).build();
+  const { filter, options, search } = buildListQuery(req.query, jobListQuerySpec);
 
-  const options = filter.getQueryOptions();
+  const searchTerm = search;
+  const searchVector = searchTerm && semantic !== false ? await getQueryEmbedding(searchTerm) : undefined;
+
   let matchKeywords: string[] | undefined;
   let feedIds: string[] = [];
 
   if (matched && req.session.jobProfileId) {
     matchKeywords = await getProfileKeywords(req.session.jobProfileId);
     if (matchKeywords.length) {
-      // Ranking is the point of matched mode — sort best-match first.
-      options.sort = "-matchScore -createdAt";
+      // Ranking is the point of matched mode — sort best-match first. A search
+      // term outranks it: $rankFusion already ordered those results, and any
+      // trailing $sort would throw that ordering away.
+      if (!searchTerm) options.sort = "-matchScore -createdAt";
 
       // Narrow to the precomputed feed so Mongo scores/sorts only the already
       // matched candidates instead of the whole collection.
@@ -105,9 +108,13 @@ export const list = async ({ req }: ControllerParams) => {
     }
   }
 
+  // aggregatePaginate appends a trailing $sort whenever options.sort is set,
+  // which would undo the fused ranking. Relevance order is the sort in search mode.
+  if (searchTerm) delete options.sort;
+
   const finalQuery = {
     $and: [
-      filter.getFilterQuery(),
+      filter,
       jobRoleScopedSecurityQuery(ability),
       // Stale/closed jobs in the feed fall out via the pipeline's soft-delete
       // and security filters, so no per-mutation feed invalidation is needed.
@@ -121,6 +128,9 @@ export const list = async ({ req }: ControllerParams) => {
     tenantId: req.session.tenantId,
     jobProfileId: req.session.jobProfileId,
     matchKeywords,
+    searchTerm,
+    searchVector,
+    searchPreFilter: jobSearchPreFilter(req.session),
   });
 
   const sanitizedDocs = sanitizeDocuments<JobAuthZEntity>(
@@ -318,17 +328,25 @@ export const hardRemove = async ({ req }: ControllerParams) => {
 };
 
 export const publicList = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["title", "description", "location"],
-  }).build();
+  const { semantic } = req.query;
+  const { filter, options, search } = buildListQuery(req.query, jobListQuerySpec);
+
+  const searchTerm = search;
+  const searchVector = searchTerm && semantic !== false ? await getQueryEmbedding(searchTerm) : undefined;
+
+  if (searchTerm) delete options.sort;
 
   const finalQuery = {
-    $and: [filter.getFilterQuery(), { status: JOBS_STATUS_ENUMS.OPEN }],
+    $and: [filter, { status: JOBS_STATUS_ENUMS.OPEN }],
   };
 
   const results = await jobService.list({
     query: finalQuery,
-    options: filter.getQueryOptions(),
+    options,
+    searchTerm,
+    searchVector,
+    // No session here — the public list is open jobs only.
+    searchPreFilter: jobSearchPreFilter(),
   });
 
   const sanitizedDocs = results.docs.map((doc) => pick(doc, PUBLIC_JOB_FIELDS));

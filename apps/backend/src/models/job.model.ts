@@ -69,6 +69,9 @@ export interface IJobDoc
     IBoardSettings,
     IAutomaticReferenceDoc {
   keywords?: string[];
+  /** 1536-d embedding backing $vectorSearch. Never returned to clients. */
+  embedding?: number[];
+  embeddingUpdatedAt?: Date;
   totalApplications?: number;
 }
 
@@ -134,6 +137,10 @@ const jobSchema = new Schema<IJobDoc>(
       ref: modelNames.FORM,
     },
     keywords: { type: [String], default: [] },
+    // select:false keeps ~1536 floats out of every find(). Aggregations bypass
+    // select, so jobProjectionQuery() excludes it explicitly.
+    embedding: { type: [Number], select: false, default: undefined },
+    embeddingUpdatedAt: { type: Date },
     totalApplications: { type: Number, default: 0 },
     additionalQueries: [additionalQuerySchema],
   },

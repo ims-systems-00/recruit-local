@@ -1,7 +1,7 @@
 import express from "express";
 import { handleController } from "../../../common/helper";
-import { validate } from "../../../common/middlewares";
-import { createBodySchema, updateBodySchema, idParamsSchema } from "./job.validation";
+import { validate, validateQuery } from "../../../common/middlewares";
+import { createBodySchema, updateBodySchema, idParamsSchema, listQuerySchema } from "./job.validation";
 import { list, get, create, update, softRemove, hardRemove, restore, allApplicationsForJob } from "./job.controller";
 
 const router = express.Router();
@@ -9,7 +9,7 @@ const validateBody = validate("body");
 const validateParams = validate("params");
 
 // job routes
-router.get("/", handleController(list));
+router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/:id/applications", validateParams(idParamsSchema), handleController(allApplicationsForJob)); // todo : permission issue
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
 router.post("/", validateBody(createBodySchema), handleController(create));

@@ -18,4 +18,22 @@ const validate = (validationObjectName: string) => {
   };
 };
 
-export { validate };
+/**
+ * Query validation that keeps Joi's coerced value.
+ *
+ * `validate("query")` only reports errors — `helper/validate.ts` throws away the
+ * `value` Joi returns, so `.default()`s never apply and `page` stays the string
+ * "2". A list builder needs real numbers and booleans, so this writes the parsed
+ * value back. Express 4 lets us reassign `req.query`; Express 5 would not.
+ */
+const validateQuery = (schema: Schema) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const { value, error } = schema.validate(req.query, { abortEarly: false, convert: true });
+    if (error) return next(new BadRequestException(error.details.map((detail) => detail.message).join(", ")));
+
+    req.query = value;
+    next();
+  };
+};
+
+export { validate, validateQuery };

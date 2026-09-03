@@ -4,6 +4,7 @@ import { recomputeJobKeywords, recomputeProfileKeywords } from "../v1/modules/jo
 import { recomputePostKeywords } from "../v1/modules/post/keyword.service";
 import { recomputeTenantKeywords } from "../v1/modules/tenant/keyword.service";
 import { enqueueJobFanout } from "./jobFanoutQueue";
+import { enqueueJobEmbedding } from "./embeddingUpdateQueue";
 import { enqueuePostFanout } from "./postFanoutQueue";
 import { enqueueProfileFeedRebuild } from "./profileFeedRebuildQueue";
 import { enqueueProfilePostFeedRebuild, enqueueTenantPostFeedRebuild } from "./postFeedRebuildQueue";
@@ -20,6 +21,8 @@ const processKeywordUpdate = async ({ type, id }: KeywordUpdateJobData) => {
   switch (type) {
     case "job":
       await recomputeJobKeywords(id);
+      // Same trigger as keywords: every job create/update already lands here.
+      await enqueueJobEmbedding(id);
       await enqueueJobFanout(id);
       return;
     case "post":
