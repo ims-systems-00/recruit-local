@@ -263,7 +263,7 @@ export const softRemove = async ({ req }: ControllerParams) => {
 
   const existingJob = await jobService.getOne({ query: { _id: req.params.id } });
 
-  if (!existingJob || !ability.can(AbilityAction.Delete, new JobAuthZEntity(existingJob))) {
+  if (!existingJob || !ability.can(AbilityAction.SoftDelete, new JobAuthZEntity(existingJob))) {
     throw new UnauthorizedException("You do not have permission to delete this job.");
   }
 
@@ -309,7 +309,7 @@ export const hardRemove = async ({ req }: ControllerParams) => {
 
   const existingJob = await jobService.getOneSoftDeleted({ query: { _id: req.params.id } });
 
-  if (!existingJob || !ability.can(AbilityAction.Delete, new JobAuthZEntity(existingJob))) {
+  if (!existingJob || !ability.can(AbilityAction.HardDelete, new JobAuthZEntity(existingJob))) {
     throw new UnauthorizedException("You do not have permission to permanently delete this job.");
   }
 

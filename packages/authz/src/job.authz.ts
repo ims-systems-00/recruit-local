@@ -192,6 +192,9 @@ export class JobAbilityBuilder implements IAbilityBuilder {
       builder.can(AbilityAction.SoftDelete, JobAuthZEntity, {
         tenantId: this.session.tenantId,
       });
+      builder.can(AbilityAction.HardDelete, JobAuthZEntity, {
+        tenantId: this.session.tenantId,
+      });
     }
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
