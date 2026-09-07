@@ -158,3 +158,50 @@ export const updateBodySchema = Joi.object({
 export const idParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("ID"),
 });
+
+/**
+ * Accepts a bare value or the `{ in: [...] }` shape the frontend sends through
+ * qs brackets: `?employmentType[in][]=full-time&employmentType[in][]=contract`.
+ */
+const inList = (values: string[]) =>
+  Joi.alternatives().try(
+    Joi.string().valid(...values),
+    Joi.object({
+      in: Joi.array()
+        .items(Joi.string().valid(...values))
+        .single(),
+    })
+  );
+
+const numericRange = Joi.object({ gte: Joi.number(), lte: Joi.number() });
+
+/**
+ * The contract for `GET /jobs` and `GET /public/jobs`.
+ *
+ * Joi objects reject unknown keys, which is the point: before this, a typo'd param
+ * became a `$match` clause and the endpoint quietly returned nothing.
+ */
+export const listQuerySchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string()
+    .valid("-createdAt", "createdAt", "-updatedAt", "updatedAt", "-salary", "salary", "-endDate", "endDate")
+    .default("-createdAt"),
+
+  clientSearch: Joi.string().trim().max(200).allow(""),
+  // Escape hatch: `?semantic=false` runs keyword-only, for comparing result sets.
+  semantic: Joi.boolean().default(true),
+  matched: Joi.boolean(),
+
+  status: Joi.string().valid(...Object.values(JOBS_STATUS_ENUMS)),
+  category: Joi.string().trim().max(100),
+  employmentType: inList(Object.values(EMPLOYMENT_TYPE)),
+  workplace: inList(Object.values(WORKPLACE_ENUMS)),
+  period: inList(Object.values(PERIOD_ENUMS)),
+  salary: numericRange,
+  yearOfExperience: numericRange,
+
+  // The frontend sends this, but Job has no `salaryMode` field — it has only ever
+  // matched nothing. Accept and drop rather than 400 a page that works today.
+  salaryMode: Joi.any().strip(),
+});

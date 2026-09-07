@@ -6,7 +6,13 @@ import { getOne as getTenant } from "../tenant/tenant.service";
 import { NotFoundException } from "../../../common/helper";
 import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { alreadyAlliped, alreadysaved, jobAttachmentsLookupQuery, jobProjectionQuery } from "./job.query";
+import {
+  alreadyAlliped,
+  alreadysaved,
+  hybridSearchStages,
+  jobAttachmentsLookupQuery,
+  jobProjectionQuery,
+} from "./job.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { VISIBILITY_ENUM } from "@rl/types";
@@ -39,8 +45,22 @@ const getMongoSession = (session?: ClientSession) => {
   return session && typeof (session as any).inTransaction === "function" ? session : undefined;
 };
 
-export const list = ({ query = {}, options, session, tenantId, jobProfileId, matchKeywords }: IJobListParams) => {
+export const list = ({
+  query = {},
+  options,
+  session,
+  tenantId,
+  jobProfileId,
+  matchKeywords,
+  searchTerm,
+  searchVector,
+  searchPreFilter,
+}: IJobListParams) => {
   const aggregate = Job.aggregate([
+    // Atlas search has to be stage 0 — nothing may precede $search/$vectorSearch.
+    // The $match below stays the security boundary; the pre-filter inside the
+    // search stage is only there to keep recall up.
+    ...(searchTerm ? hybridSearchStages(searchTerm, searchVector ?? [], searchPreFilter) : []),
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...jobProjectionQuery(),

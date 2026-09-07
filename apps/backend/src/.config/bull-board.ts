@@ -9,6 +9,7 @@ import { fileDeleteQueue } from "../queue/fileDeleteQueue";
 import { salaryUpdateQueue } from "../queue/salaryUpdateQueue";
 import { valueWeightUpdateQueue } from "../queue/valueWeightUpdateQueue";
 import { keywordUpdateQueue } from "../queue/keywordUpdateQueue";
+import { embeddingUpdateQueue } from "../queue/embeddingUpdateQueue";
 import { jobFanoutQueue } from "../queue/jobFanoutQueue";
 import { profileFeedRebuildQueue } from "../queue/profileFeedRebuildQueue";
 import { postFanoutQueue } from "../queue/postFanoutQueue";
@@ -32,6 +33,7 @@ export const initBullBoard = () => {
       new BullMQAdapter(salaryUpdateQueue.queue),
       new BullMQAdapter(valueWeightUpdateQueue.queue),
       new BullMQAdapter(keywordUpdateQueue.queue),
+      new BullMQAdapter(embeddingUpdateQueue.queue),
       new BullMQAdapter(jobFanoutQueue.queue),
       new BullMQAdapter(profileFeedRebuildQueue.queue),
       new BullMQAdapter(postFanoutQueue.queue),
