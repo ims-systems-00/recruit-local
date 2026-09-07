@@ -100,11 +100,15 @@ export const list = async ({ req }: ControllerParams) => {
       if (!searchTerm) options.sort = "-matchScore -createdAt";
 
       // Narrow to the precomputed feed so Mongo scores/sorts only the already
-      // matched candidates instead of the whole collection.
-      feedIds = await readFeedIds(req.session.jobProfileId);
-      // Cold/evicted feed → build it in the background; this request still
-      // matches over the full collection (correct, just not accelerated).
-      if (!feedIds.length) await enqueueProfileFeedRebuild(req.session.jobProfileId);
+      // matched candidates instead of the whole collection. Skipped when there
+      // is a search term: the feed is capped at 300 profile-matched ids, so
+      // searching inside it hides every job outside the candidate's keywords.
+      if (!searchTerm) {
+        feedIds = await readFeedIds(req.session.jobProfileId);
+        // Cold/evicted feed → build it in the background; this request still
+        // matches over the full collection (correct, just not accelerated).
+        if (!feedIds.length) await enqueueProfileFeedRebuild(req.session.jobProfileId);
+      }
     }
   }
 
