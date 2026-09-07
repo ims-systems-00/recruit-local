@@ -1,3 +1,22 @@
+interface OffsetPagination {
+  totalDocs: number;
+  limit: number;
+  totalPages: number;
+  page?: number;
+  pagingCounter: number;
+  hasPrevPage: boolean;
+  hasNextPage: boolean;
+  prevPage?: number | null;
+  nextPage?: number | null;
+}
+
+/** No totals: a cursor list never runs the `$count` branch. */
+interface CursorPagination {
+  limit: number;
+  hasNextPage: boolean;
+  nextCursor?: string | null;
+}
+
 interface ApiResponseConstructorParams {
   message: string;
   statusCode: number;
@@ -5,17 +24,7 @@ interface ApiResponseConstructorParams {
   clearCookie?: any;
   data?: any;
   fieldName?: string;
-  pagination?: {
-    totalDocs: number;
-    limit: number;
-    totalPages: number;
-    page?: number;
-    pagingCounter: number;
-    hasPrevPage: boolean;
-    hasNextPage: boolean;
-    prevPage?: number | null;
-    nextPage?: number | null;
-  };
+  pagination?: OffsetPagination | CursorPagination;
 }
 
 export class ApiResponse {

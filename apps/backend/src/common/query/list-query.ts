@@ -29,9 +29,10 @@ export interface BuiltListQuery {
   filter: Record<string, unknown>;
   options: IOptions;
   search?: string;
+  /** Opaque forward cursor, decoded by the controller against its own guard. */
+  cursor?: string;
 }
 
-const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 100;
 
@@ -100,14 +101,15 @@ export const buildListQuery = (query: Record<string, unknown>, spec: ListQuerySp
     if (condition) Object.assign(filter, condition);
   }
 
-  const page = Number(query.page) > 0 ? Number(query.page) : DEFAULT_PAGE;
   const requested = Number(query.limit) > 0 ? Number(query.limit) : DEFAULT_LIMIT;
 
   const search = spec.searchKey ? String(query[spec.searchKey] ?? "").trim() || undefined : undefined;
+  const cursor = typeof query.cursor === "string" && query.cursor ? query.cursor : undefined;
 
   return {
     filter,
-    options: { page, limit: Math.min(requested, MAX_LIMIT), sort: normalizeSort(query.sort, spec) },
+    options: { limit: Math.min(requested, MAX_LIMIT), sort: normalizeSort(query.sort, spec) },
     search,
+    cursor,
   };
 };

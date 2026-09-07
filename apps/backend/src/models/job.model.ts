@@ -162,4 +162,10 @@ jobSchema.plugin(automaticReferencePlugin({ model: modelNames.JOB, referencePref
 // Backs the keyword `$in` lookup used by profile feed rebuild (profile -> matching jobs).
 jobSchema.index({ keywords: 1 });
 
+// Back the default cursor page: the keyset walks (createdAt, _id) under whichever
+// scope the security $match applies — status for candidates and the public list,
+// tenantId for an employer.
+jobSchema.index({ status: 1, createdAt: -1, _id: -1 });
+jobSchema.index({ tenantId: 1, createdAt: -1, _id: -1 });
+
 export const Job = model<IJobDoc, IJobModel>(modelNames.JOB, jobSchema);

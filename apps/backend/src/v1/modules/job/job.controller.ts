@@ -2,6 +2,7 @@ import { StatusCodes } from "http-status-codes";
 import {
   ApiResponse,
   ControllerParams,
+  formatCursorListResponse,
   formatListResponse,
   NotFoundException,
   UnauthorizedException,
@@ -11,7 +12,15 @@ import { getProfileKeywords } from "./keyword.service";
 import { JobAbilityBuilder, JobAuthZEntity, ALL_JOB_FIELDS } from "@rl/authz";
 import { AbilityAction, JOBS_STATUS_ENUMS } from "@rl/types";
 import { jobListQuerySpec, jobRoleScopedSecurityQuery, jobSearchPreFilter } from "./job.query";
-import { buildListQuery } from "../../../common/query";
+import {
+  buildListQuery,
+  cursorGuard,
+  decodeCursor,
+  encodeKeysetCursor,
+  encodeOffsetCursor,
+  keysetCondition,
+  parseSortToken,
+} from "../../../common/query";
 import { getQueryEmbedding } from "../../../common/helper/embedding";
 import { toJobResponse, toJobResponseList } from "./job.dto";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
@@ -71,6 +80,31 @@ const getSanitizedJobResponse = (doc: any, ability: any) => {
   return sanitizeDocument<JobAuthZEntity>(doc, ability, AbilityAction.Read, JobAuthZEntity, caslFieldOptions);
 };
 
+/**
+ * Token for the next page, or null when there isn't one.
+ *
+ * Call this on the *raw* service documents, before sanitizing: `sanitizeDocuments`
+ * and the public list's `pick` can both drop the field the keyset keys on, and a
+ * cursor built from a stripped document silently restarts the list from the top.
+ */
+const nextCursorFrom = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  results: { docs: any[]; hasNextPage: boolean; limit: number },
+  guard: string,
+  useKeyset: boolean,
+  sort: string | undefined,
+  offset: number
+): string | null => {
+  if (!results.hasNextPage || !results.docs.length) return null;
+
+  if (!useKeyset || !sort) return encodeOffsetCursor(guard, offset + results.limit);
+
+  const last = results.docs[results.docs.length - 1];
+  const { field } = parseSortToken(sort);
+
+  return encodeKeysetCursor(guard, sort, last[field], last._id);
+};
+
 export const list = async ({ req }: ControllerParams) => {
   const abilityBuilder = new JobAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
@@ -83,7 +117,7 @@ export const list = async ({ req }: ControllerParams) => {
   // here; the builder only ever sees the keys jobListQuerySpec declares.
   const { matched, semantic } = req.query;
 
-  const { filter, options, search } = buildListQuery(req.query, jobListQuerySpec);
+  const { filter, options, search, cursor: rawCursor } = buildListQuery(req.query, jobListQuerySpec);
 
   const searchTerm = search;
   const searchVector = searchTerm && semantic !== false ? await getQueryEmbedding(searchTerm) : undefined;
@@ -112,9 +146,22 @@ export const list = async ({ req }: ControllerParams) => {
     }
   }
 
-  // aggregatePaginate appends a trailing $sort whenever options.sort is set,
-  // which would undo the fused ranking. Relevance order is the sort in search mode.
+  // A $sort would undo the fused ranking, so relevance is the order in search mode.
   if (searchTerm) delete options.sort;
+
+  // Keyset paging needs a stored field to key on. Search is ordered by $rankFusion
+  // relevance and matched mode by a computed matchScore — neither has one, so both
+  // page by an offset carried inside the token instead.
+  const useKeyset = !searchTerm && !matchKeywords?.length;
+  const guard = cursorGuard({
+    filter,
+    sort: options.sort ?? null,
+    searchTerm: searchTerm ?? null,
+    semantic: semantic !== false,
+    matched: Boolean(matchKeywords?.length),
+  });
+  const cursor = rawCursor ? decodeCursor(rawCursor, guard) : undefined;
+  const offset = cursor?.t === "o" ? cursor.o : 0;
 
   const finalQuery = {
     $and: [
@@ -123,6 +170,7 @@ export const list = async ({ req }: ControllerParams) => {
       // Stale/closed jobs in the feed fall out via the pipeline's soft-delete
       // and security filters, so no per-mutation feed invalidation is needed.
       ...(feedIds.length ? [{ _id: { $in: feedIds } }] : []),
+      ...(cursor?.t === "k" ? [keysetCondition(cursor)] : []),
     ],
   };
 
@@ -135,7 +183,10 @@ export const list = async ({ req }: ControllerParams) => {
     searchTerm,
     searchVector,
     searchPreFilter: jobSearchPreFilter(req.session),
+    offset,
   });
+
+  const nextCursor = nextCursorFrom(results, guard, useKeyset, options.sort as string | undefined, offset);
 
   const sanitizedDocs = sanitizeDocuments<JobAuthZEntity>(
     results.docs,
@@ -145,7 +196,12 @@ export const list = async ({ req }: ControllerParams) => {
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
+  const { data, pagination } = formatCursorListResponse({
+    docs: sanitizedDocs,
+    limit: results.limit,
+    hasNextPage: results.hasNextPage,
+    nextCursor,
+  });
 
   return new ApiResponse({
     message: "Jobs retrieved",
@@ -333,15 +389,26 @@ export const hardRemove = async ({ req }: ControllerParams) => {
 
 export const publicList = async ({ req }: ControllerParams) => {
   const { semantic } = req.query;
-  const { filter, options, search } = buildListQuery(req.query, jobListQuerySpec);
+  const { filter, options, search, cursor: rawCursor } = buildListQuery(req.query, jobListQuerySpec);
 
   const searchTerm = search;
   const searchVector = searchTerm && semantic !== false ? await getQueryEmbedding(searchTerm) : undefined;
 
   if (searchTerm) delete options.sort;
 
+  const useKeyset = !searchTerm;
+  const guard = cursorGuard({
+    filter,
+    sort: options.sort ?? null,
+    searchTerm: searchTerm ?? null,
+    semantic: semantic !== false,
+    public: true,
+  });
+  const cursor = rawCursor ? decodeCursor(rawCursor, guard) : undefined;
+  const offset = cursor?.t === "o" ? cursor.o : 0;
+
   const finalQuery = {
-    $and: [filter, { status: JOBS_STATUS_ENUMS.OPEN }],
+    $and: [filter, { status: JOBS_STATUS_ENUMS.OPEN }, ...(cursor?.t === "k" ? [keysetCondition(cursor)] : [])],
   };
 
   const results = await jobService.list({
@@ -351,11 +418,19 @@ export const publicList = async ({ req }: ControllerParams) => {
     searchVector,
     // No session here — the public list is open jobs only.
     searchPreFilter: jobSearchPreFilter(),
+    offset,
   });
+
+  const nextCursor = nextCursorFrom(results, guard, useKeyset, options.sort as string | undefined, offset);
 
   const sanitizedDocs = results.docs.map((doc) => pick(doc, PUBLIC_JOB_FIELDS));
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
+  const { data, pagination } = formatCursorListResponse({
+    docs: sanitizedDocs,
+    limit: results.limit,
+    hasNextPage: results.hasNextPage,
+    nextCursor,
+  });
 
   return new ApiResponse({
     message: "Jobs retrieved",

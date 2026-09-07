@@ -28,6 +28,9 @@ export interface IJobListParams extends IServiceListParams<IJobDoc> {
   searchTerm?: string;
   searchVector?: number[];
   searchPreFilter?: JobSearchPreFilter;
+  // Set only in the cursor modes that cannot key on a stored field — relevance
+  // and matchScore ordering. Plain mode narrows with a keyset $match instead.
+  offset?: number;
 }
 export interface IJobGetParams extends IServiceGetParams<IJobDoc> {
   tenantId?: string;

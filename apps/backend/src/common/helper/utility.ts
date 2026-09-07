@@ -35,6 +35,28 @@ export const formatListResponse = (results: IResults) => {
   };
 };
 
+interface ICursorResults {
+  docs: any[];
+  limit: number;
+  hasNextPage: boolean;
+  nextCursor?: string | null;
+}
+
+/**
+ * Cursor-paged sibling of `formatListResponse`. Separate because that one picks
+ * from a fixed allowlist, so `nextCursor` would be dropped on the floor — and
+ * because there is no `totalDocs` here: skipping the `$count` branch is the point.
+ */
+export const formatCursorListResponse = (results: ICursorResults) => {
+  const { docs: data, ...paginationOption } = results;
+  const pagination = pick(paginationOption, ["limit", "hasNextPage", "nextCursor"]);
+
+  return {
+    data,
+    pagination,
+  };
+};
+
 type QueryData = {
   page?: string | number;
   limit?: string | number;
