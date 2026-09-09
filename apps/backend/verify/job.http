@@ -68,6 +68,83 @@ x-auth-access-token: {{token}}
 ### expect: .jobs[0] has no "embedding" key
 
 ###############################################################################
+# Filter-kit params
+#
+# Each proves one capability of the shared builder. Counts below are for the dev
+# dataset (endDate: Oct 50 / Nov 44 / Dec 6, vacancy 1..5, all status=open).
+###############################################################################
+
+### three keys, one field. Each bound alone, then together — the pair must be the
+### INTERSECTION. 50 or 93 would mean one bound clobbered the other.
+GET {{host}}/jobs?page=1&limit=100&endDateFrom=2026-11-01
+x-auth-access-token: {{token}}
+### -> 50
+
+GET {{host}}/jobs?page=1&limit=100&endDateTo=2026-11-30
+x-auth-access-token: {{token}}
+### -> 93
+
+GET {{host}}/jobs?page=1&limit=100&endDateFrom=2026-11-01&endDateTo=2026-11-30
+x-auth-access-token: {{token}}
+### -> 43, and that is the whole point
+
+### all three compose
+GET {{host}}/jobs?page=1&limit=100&endDateFrom=2026-10-01&endDateTo=2026-12-31&endDateBefore=2026-11-01
+x-auth-access-token: {{token}}
+### -> 50 (October only)
+
+### same shape on createdAt, which the {status, createdAt, _id} index backs
+GET {{host}}/jobs?page=1&limit=100&postedAfter=2026-09-01&postedBefore=2026-09-30
+x-auth-access-token: {{token}}
+
+### single numeric bound
+GET {{host}}/jobs?page=1&limit=100&minVacancy=3
+x-auth-access-token: {{token}}
+### -> 60
+
+### reference filter, cast to an ObjectId at the spec rather than by key name
+GET {{host}}/jobs?formId=65a0000000000000000000ab
+x-auth-access-token: {{token}}
+### -> 200, empty (no job in dev has a formId)
+
+###############################################################################
+# excludeClosed — the sibling-aware one
+#
+# Every job in dev is `open`, so row counts cannot tell "deferred" from "applied".
+# Compare the cursor's guard instead: `cursorGuard` hashes the composed filter, so
+# an identical `g` means an identical filter.
+#
+#   (no params)                      afecd6d2bf4c
+#   excludeClosed=true               a85c247156f1   <- differs: the $nin applied
+#   status=open                      cf038f8f5da6
+#   excludeClosed=true&status=open   cf038f8f5da6   <- identical: it deferred
+###############################################################################
+
+GET {{host}}/jobs?limit=2&excludeClosed=true
+x-auth-access-token: {{token}}
+
+GET {{host}}/jobs?limit=2&status=open
+x-auth-access-token: {{token}}
+
+GET {{host}}/jobs?limit=2&excludeClosed=true&status=open
+x-auth-access-token: {{token}}
+### decode pagination.nextCursor and compare `g` with the previous request
+
+### rejections — the schema is still the gate
+GET {{host}}/jobs?formId=nope
+x-auth-access-token: {{token}}
+
+GET {{host}}/jobs?endDateFrom=not-a-date
+x-auth-access-token: {{token}}
+
+GET {{host}}/jobs?minVacancy=-1
+x-auth-access-token: {{token}}
+
+GET {{host}}/jobs?excludeClosed=maybe
+x-auth-access-token: {{token}}
+### all 400
+
+###############################################################################
 # Atlas-only from here down.
 #
 # $search / $vectorSearch / $rankFusion do not exist on the local mongo:7 in

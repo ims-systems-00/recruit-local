@@ -7,11 +7,17 @@
  *
  *   pnpm --filter @rl/backend check:list-query
  */
+import { Types } from "mongoose";
 import {
   bool,
   buildListQuery,
   dateRange,
   eq,
+  gte,
+  lt,
+  lte,
+  objectId,
+  objectIdIn,
   oneOf,
   range,
   runCursorList,
@@ -77,6 +83,90 @@ check(
   ["2026-01-01T00:00:00.000Z", "2026-06-30T00:00:00.000Z"]
 );
 check("dateRange drops an unparseable bound", buildListQuery({ startDate: { gte: "not-a-date" } }, spec).filter, {});
+
+console.log("\nobjectId casting");
+
+// The bug this exists for: `sanitizeQueryIds` decides what is an id from the key's
+// *name*, so a ref like `jobTitle` never gets cast and the raw string reaches
+// `$match`, matching nothing and raising no error.
+const ID = "65a0000000000000000000ab";
+const castSpec: ListQuerySpec = {
+  filters: { jobTitle: objectId("jobTitle"), industry: objectIdIn("industry"), plain: eq("plain") },
+  sortable: ["createdAt"],
+  defaultSort: "-createdAt",
+};
+
+const cast = buildListQuery({ jobTitle: ID, plain: ID }, castSpec).filter as {
+  jobTitle: unknown;
+  plain: unknown;
+};
+check("objectId casts to an ObjectId", cast.jobTitle instanceof Types.ObjectId, true);
+check("objectId keeps the value", String(cast.jobTitle), ID);
+check("eq leaves it a string — the bug, in one line", typeof cast.plain, "string");
+check("objectId drops a malformed id", buildListQuery({ jobTitle: "nope" }, castSpec).filter, {});
+
+const castIn = buildListQuery({ industry: { in: [ID, "nope"] } }, castSpec).filter as {
+  industry: { $in: unknown[] };
+};
+check("objectIdIn casts each member", castIn.industry.$in[0] instanceof Types.ObjectId, true);
+check("objectIdIn drops unparseable members", castIn.industry.$in.length, 1);
+
+console.log("\nmerging several keys onto one field");
+
+const mergeSpec: ListQuerySpec = {
+  filters: {
+    endDateFrom: gte("endDate"),
+    endDateTo: lte("endDate"),
+    endDateBefore: lt("endDate"),
+    status: eq("status"),
+    // Sibling-aware: only applies when the caller did not choose a status.
+    excludeClosed: (value, query) =>
+      value === true && !query.status ? { status: { $nin: ["closed", "archived"] } } : undefined,
+  },
+  sortable: ["createdAt"],
+  defaultSort: "-createdAt",
+};
+
+check("one bound alone", buildListQuery({ endDateFrom: 1 }, mergeSpec).filter, { endDate: { $gte: 1 } });
+check("two bounds merge rather than clobber", buildListQuery({ endDateFrom: 1, endDateTo: 9 }, mergeSpec).filter, {
+  endDate: { $gte: 1, $lte: 9 },
+});
+check("three bounds merge", buildListQuery({ endDateFrom: 1, endDateTo: 9, endDateBefore: 5 }, mergeSpec).filter, {
+  endDate: { $gte: 1, $lte: 9, $lt: 5 },
+});
+
+// A scalar equality and an operator object cannot share one key — `{ f: "x", f: {$gte} }`
+// is not writable — so the second goes to `$and` rather than being dropped.
+const collideSpec: ListQuerySpec = {
+  filters: { exact: eq("f"), atLeast: gte("f") },
+  sortable: ["createdAt"],
+  defaultSort: "-createdAt",
+};
+check("a scalar plus an operator object goes to $and", buildListQuery({ exact: "x", atLeast: 5 }, collideSpec).filter, {
+  f: "x",
+  $and: [{ f: { $gte: 5 } }],
+});
+
+// The search clause is an `$or` array, so it can never merge into a field — this is
+// the case the old hand-written special-case covered, now handled by the same path.
+const searchCollide = buildListQuery({ clientSearch: "a", status: "open" }, spec).filter as Record<string, unknown>;
+check("search $or coexists with a field filter", Object.keys(searchCollide).sort(), ["$or", "status"]);
+
+console.log("\nbuilders that read a sibling key");
+
+check(
+  "sibling-aware builder applies when the sibling is absent",
+  buildListQuery({ excludeClosed: true }, mergeSpec).filter,
+  {
+    status: { $nin: ["closed", "archived"] },
+  }
+);
+check("an explicit status wins", buildListQuery({ excludeClosed: true, status: "closed" }, mergeSpec).filter, {
+  status: "closed",
+});
+check("neither sent", buildListQuery({}, mergeSpec).filter, {});
+
+console.log("\nbuildListQuery, continued");
 
 check("undeclared sort falls back", buildListQuery({ sort: "-secret" }, spec).options.sort, "-createdAt");
 check("declared sort is kept", buildListQuery({ sort: "name" }, spec).options.sort, "name");

@@ -1,5 +1,5 @@
 import { PipelineStage, Types } from "mongoose";
-import { projectQuery, ListQuerySpec, eq, oneOf, range } from "../../../common/query";
+import { projectQuery, ListQuerySpec, eq, gte, lt, lte, objectId, oneOf, range } from "../../../common/query";
 import { omit } from "lodash";
 import { IJobDoc, Job } from "../../../models";
 import { JobAbilityBuilder, JobAuthZEntity } from "@rl/authz";
@@ -205,6 +205,36 @@ export const jobListQuerySpec: ListQuerySpec = {
     period: oneOf("period"),
     salary: range("salary"),
     yearOfExperience: range("yearOfExperience"),
+
+    // Three keys narrowing one field. `buildListQuery` merges them, so
+    // `?endDateFrom=…&endDateTo=…` becomes a single `{ $gte, $lte }` condition
+    // instead of the last one winning.
+    endDateFrom: gte("endDate"),
+    endDateTo: lte("endDate"),
+    endDateBefore: lt("endDate"),
+
+    postedAfter: gte("createdAt"),
+    postedBefore: lte("createdAt"),
+
+    minVacancy: gte("vacancy"),
+
+    // `formId` would be cast by `sanitizeQueryIds` on its name alone, but saying so
+    // here keeps it working if the field is ever renamed to something that does not
+    // end in `Id` — which is exactly how the same filter is silently broken on
+    // `job-profile.jobTitle` and `file-media.collectionDocument`.
+    formId: objectId("formId"),
+
+    /**
+     * A default view baseline rather than a filter: hide dead postings unless the
+     * caller asked for a specific status, in which case their choice wins.
+     *
+     * Reads `query.status` — the validated request — rather than the filter being
+     * accumulated, so it does not depend on the order builders happen to run in.
+     */
+    excludeClosed: (value, query) =>
+      value === true && !query.status
+        ? { status: { $nin: [JOBS_STATUS_ENUMS.CLOSED, JOBS_STATUS_ENUMS.ARCHIVED] } }
+        : undefined,
   },
   sortable: ["createdAt", "updatedAt", "salary", "endDate"],
   defaultSort: "-createdAt",

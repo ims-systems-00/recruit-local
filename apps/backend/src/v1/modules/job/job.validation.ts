@@ -209,6 +209,23 @@ export const listQuerySchema = Joi.object({
   salary: numericRange,
   yearOfExperience: numericRange,
 
+  // Application-deadline window. Three keys, one field — the list builder merges
+  // them into a single `endDate` condition.
+  endDateFrom: Joi.date().iso(),
+  endDateTo: Joi.date().iso(),
+  endDateBefore: Joi.date().iso(),
+
+  // Posting window, same shape on `createdAt`.
+  postedAfter: Joi.date().iso(),
+  postedBefore: Joi.date().iso(),
+
+  // A default view baseline, not a filter in its own right: it only applies when
+  // the caller did not pick a `status`. See `jobListQuerySpec`.
+  excludeClosed: Joi.boolean(),
+
+  formId: Joi.string().custom(objectIdValidation),
+  minVacancy: Joi.number().integer().min(0),
+
   // The frontend sends this, but Job has no `salaryMode` field — it has only ever
   // matched nothing. Accept and drop rather than 400 a page that works today.
   salaryMode: Joi.any().strip(),

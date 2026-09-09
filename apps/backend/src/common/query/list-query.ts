@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { IOptions } from "@rl/types";
 import { escapeRegex } from "../helper/escape-regex";
 
@@ -14,7 +15,13 @@ import { escapeRegex } from "../helper/escape-regex";
  * is the number 50000, not the string.
  */
 
-export type FilterBuilder = (value: unknown) => Record<string, unknown> | undefined;
+/**
+ * `value` is this key's own value. `query` is the whole validated query, for the
+ * rare filter whose meaning depends on another key — a default view baseline that
+ * an explicit choice overrides, say. Read `query` rather than the filter being
+ * accumulated, so builders stay order-independent.
+ */
+export type FilterBuilder = (value: unknown, query: Record<string, unknown>) => Record<string, unknown> | undefined;
 
 export interface ListQuerySpec {
   /** The allowlist. A query key absent from this map never reaches the filter. */
@@ -120,6 +127,68 @@ export const dateRange =
   };
 
 /**
+ * Reference match, casting to an ObjectId here rather than downstream.
+ *
+ * `sanitizeQueryIds` decides what is an id from the key's *name* (`endsWith("Id")`),
+ * so a ref like `jobTitle` or `collectionDocument` fails that test and the raw
+ * string reaches `$match`, where it matches nothing and raises no error. Declaring
+ * the cast removes the dependence on how the field happens to be spelled.
+ *
+ * Equality against an array field is Mongo's "array contains", which is what a
+ * filter on `jobTitle: [ObjectId]` should mean — so this covers a scalar ref and an
+ * array of them alike.
+ */
+export const objectId =
+  (field: string): FilterBuilder =>
+  (value) =>
+    typeof value === "string" && Types.ObjectId.isValid(value) ? { [field]: new Types.ObjectId(value) } : undefined;
+
+/**
+ * `$in` over references. Accepts a bare value, an array, or the `{ in: [...] }`
+ * shape the frontend sends via qs brackets. Ids that do not parse are dropped —
+ * the route's Joi schema is what rejects them with a 400.
+ */
+export const objectIdIn =
+  (field: string): FilterBuilder =>
+  (value) => {
+    const raw = value as { in?: unknown[] } | unknown[] | unknown;
+    const list = Array.isArray(raw)
+      ? raw
+      : Array.isArray((raw as { in?: unknown[] })?.in)
+        ? (raw as { in: unknown[] }).in
+        : raw === undefined || raw === null || raw === ""
+          ? []
+          : [raw];
+
+    const ids = list
+      .filter((id): id is string => typeof id === "string" && Types.ObjectId.isValid(id))
+      .map((id) => new Types.ObjectId(id));
+
+    return ids.length ? { [field]: { $in: ids } } : undefined;
+  };
+
+/**
+ * Single-sided bounds, so several query keys can narrow one field:
+ * `endDateFrom` -> `$gte`, `endDateTo` -> `$lte`, `endDateBefore` -> `$lt`.
+ * `buildListQuery` merges them back into one condition.
+ *
+ * The value is passed through as-is because the Joi schema has already coerced it:
+ * `Joi.date()` yields a Date, `Joi.number()` a number. That matters — Mongo's
+ * comparison operators are type-bracketed, so a string bound against a Date field
+ * matches zero documents and raises no error.
+ */
+const bound =
+  (operator: "$gte" | "$lte" | "$gt" | "$lt") =>
+  (field: string): FilterBuilder =>
+  (value) =>
+    value === undefined || value === null || value === "" ? undefined : { [field]: { [operator]: value } };
+
+export const gte = bound("$gte");
+export const lte = bound("$lte");
+export const gt = bound("$gt");
+export const lt = bound("$lt");
+
+/**
  * Free-text match across several fields, as one escaped case-insensitive regex.
  *
  * `buildListQuery` applies this automatically when a spec declares `searchFields`.
@@ -134,6 +203,42 @@ export const regexSearch =
     const pattern = { $regex: escapeRegex(term), $options: "i" };
     return { $or: fields.map((field) => ({ [field]: pattern })) };
   };
+
+/** An object whose every key is a Mongo operator, e.g. `{ $gte: 1, $lte: 9 }`. */
+const isOperatorObject = (value: unknown): value is Record<string, unknown> =>
+  !!value &&
+  typeof value === "object" &&
+  !Array.isArray(value) &&
+  !(value instanceof Date) &&
+  !(value instanceof Types.ObjectId) &&
+  Object.keys(value).length > 0 &&
+  Object.keys(value).every((key) => key.startsWith("$"));
+
+/**
+ * Folds one builder's output into the filter.
+ *
+ * Several keys may target one field — `endDateFrom` and `endDateTo` both narrow
+ * `endDate` — so a plain assign would let the last one silently win. Two operator
+ * objects merge into one condition; anything else goes to `$and`, because
+ * `{ a: 1, a: { $gt: 2 } }` cannot be written as a single object.
+ */
+const mergeCondition = (filter: Record<string, unknown>, condition: Record<string, unknown>): void => {
+  for (const [field, value] of Object.entries(condition)) {
+    const existing = filter[field];
+
+    if (existing === undefined) {
+      filter[field] = value;
+      continue;
+    }
+
+    if (isOperatorObject(existing) && isOperatorObject(value)) {
+      filter[field] = { ...existing, ...value };
+      continue;
+    }
+
+    filter.$and = [...((filter.$and as unknown[]) ?? []), { [field]: value }];
+  }
+};
 
 const normalizeSort = (value: unknown, spec: ListQuerySpec): string => {
   if (typeof value !== "string" || !value.trim()) return spec.defaultSort;
@@ -151,9 +256,11 @@ const normalizeSort = (value: unknown, spec: ListQuerySpec): string => {
 export const buildListQuery = (query: Record<string, unknown>, spec: ListQuerySpec): BuiltListQuery => {
   const filter: Record<string, unknown> = {};
 
+  // Every declared builder runs, whether or not its own key was sent — a builder
+  // may key off a sibling instead (see `FilterBuilder`).
   for (const [key, build] of Object.entries(spec.filters)) {
-    const condition = build(query[key]);
-    if (condition) Object.assign(filter, condition);
+    const condition = build(query[key], query);
+    if (condition) mergeCondition(filter, condition);
   }
 
   const requested = Number(query.limit) > 0 ? Number(query.limit) : DEFAULT_LIMIT;
@@ -164,14 +271,11 @@ export const buildListQuery = (query: Record<string, unknown>, spec: ListQuerySp
 
   // Only when the module asked for regex search. A spec that leaves `searchFields`
   // unset still gets `search` back and decides for itself (job -> Atlas).
-  const searchClause = spec.searchFields?.length ? regexSearch(spec.searchFields)(search) : undefined;
+  const searchClause = spec.searchFields?.length ? regexSearch(spec.searchFields)(search, query) : undefined;
 
-  if (searchClause) {
-    // None of the built-in combinators emit `$or`, but a custom one might — and a
-    // second `$or` key would silently overwrite the first.
-    if (filter.$or) filter.$and = [...((filter.$and as unknown[]) ?? []), searchClause];
-    else Object.assign(filter, searchClause);
-  }
+  // `mergeCondition` handles the collision: a second `$or` is an array, not an
+  // operator object, so it lands in `$and` rather than overwriting the first.
+  if (searchClause) mergeCondition(filter, searchClause);
 
   return {
     filter,
