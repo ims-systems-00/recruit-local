@@ -22,7 +22,6 @@ export default function Jobs() {
   const { data: session } = useSession();
   const user = session?.user;
 
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
 
   const [isFilterJobsOpen, setIsFilterJobsOpen] = useState(false);
@@ -31,23 +30,22 @@ export default function Jobs() {
 
   const filters = useMemo(
     () => ({
-      page,
       limit: 10,
       clientSearch: debouncedSearch || undefined,
       status: JOBS_STATUS_ENUMS.OPEN,
     }),
-    [page, debouncedSearch],
+    [debouncedSearch],
   );
   const tabs = [
     {
       value: 'all',
       label: 'All Jobs',
-      component: <JobLists filters={filters} onPageChange={setPage} />,
+      component: <JobLists filters={filters} />,
     },
     {
       value: 'for',
       label: 'For you',
-      component: <JobLists filters={filters} onPageChange={setPage} />,
+      component: <JobLists filters={filters} />,
     },
     {
       value: 'applied',
@@ -87,7 +85,6 @@ export default function Jobs() {
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                setPage(1); // reset page on search
               }}
             />
             <InputGroupAddon>

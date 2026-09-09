@@ -1,15 +1,10 @@
 'use client';
 import React, { useMemo, useState } from 'react';
 
-import { CircleX, Filter, Search, X } from 'lucide-react';
+import { CircleX, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 import EmptyBox from '@/components/empty-box';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group';
 import {
   Combobox,
   ComboboxChips,
@@ -28,11 +23,10 @@ import {
   SALARY_MODE_OPTIONS,
   WORKPLACE_OPTIONS,
 } from '@/services/jobs/job.type';
-import { useDebounce } from '@/hooks/useDebounce';
-import { usePublicJobs } from '@/services/jobs/jobs.client';
+import { useInfinitePublicJobs } from '@/services/jobs/jobs.client';
 import CardJobItem from './card-job-item';
-import PaginationComponent from './pagination-component';
 import JobItemSkelaton from './job-item-skelaton';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { useSearchParams } from 'next/navigation';
 import { JOBS_STATUS_ENUMS } from '@rl/types';
 
@@ -48,7 +42,6 @@ export default function JobLists() {
 
   const search = searchParams.get('search') || '';
 
-  const [page, setPage] = useState(1);
   const [workplace, setWorkplace] = useState<string[]>([]);
   const [employmentType, setEmploymentType] = useState<string[]>([]);
   const [salaryMode, setSalaryMode] = useState<string[]>([]);
@@ -56,7 +49,6 @@ export default function JobLists() {
 
   const filters = useMemo(
     () => ({
-      page,
       limit: 10,
       clientSearch: search || undefined,
 
@@ -72,14 +64,22 @@ export default function JobLists() {
 
       status: JOBS_STATUS_ENUMS.OPEN,
     }),
-    [page, search, workplace, employmentType, salaryMode, period],
+    [search, workplace, employmentType, salaryMode, period],
   );
   const {
-    jobs,
+    data,
     isLoading: isJobLoading,
-    pagination,
-    isFetching,
-  } = usePublicJobs(filters);
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfinitePublicJobs(filters);
+
+  const jobs = data?.pages.flatMap((page) => page.docs) ?? [];
+
+  const sentinelRef = useInfiniteScroll({
+    enabled: hasNextPage && !isFetchingNextPage && jobs.length > 0,
+    onLoadMore: fetchNextPage,
+  });
 
   const onFilterJobs = () => {
     setIsFilterJobsOpen((prev) => !prev);
@@ -97,7 +97,7 @@ export default function JobLists() {
               Available Jobs
             </h3>
             <p className=" capitalize text-label-sm text-text-gray-tertiary">
-              15 Matches
+              {jobs?.length} Matches
             </p>
           </div>
           {!isFilterJobsOpen && (
@@ -112,20 +112,6 @@ export default function JobLists() {
         </div>
         {isFilterJobsOpen && (
           <div className=" flex items-center gap-spacing-lg flex-wrap">
-            {/* <InputGroup className=" min-w-[215px] max-w-[215px] h-10 rounded-lg shadow-xs border-border-gray-primary">
-              <InputGroupInput
-                type="text"
-                placeholder="Search..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1); // reset page on search
-                }}
-              />
-              <InputGroupAddon>
-                <Search className=" text-fg-gray-tertiary" />
-              </InputGroupAddon>
-            </InputGroup> */}
             <div className=" min-w-[215px] max-w-[215px]">
               <Combobox
                 multiple
@@ -134,7 +120,6 @@ export default function JobLists() {
                 value={workplace}
                 onValueChange={(value) => {
                   setWorkplace(value);
-                  setPage(1);
                 }}
               >
                 <ComboboxChips
@@ -184,7 +169,6 @@ export default function JobLists() {
                 value={employmentType}
                 onValueChange={(value) => {
                   setEmploymentType(value);
-                  setPage(1);
                 }}
               >
                 <ComboboxChips
@@ -234,7 +218,6 @@ export default function JobLists() {
                 value={salaryMode}
                 onValueChange={(value) => {
                   setSalaryMode(value);
-                  setPage(1);
                 }}
               >
                 <ComboboxChips
@@ -284,7 +267,6 @@ export default function JobLists() {
                 value={period}
                 onValueChange={(value) => {
                   setPeriod(value);
-                  setPage(1);
                 }}
               >
                 <ComboboxChips
@@ -332,7 +314,6 @@ export default function JobLists() {
                 setEmploymentType([]);
                 setSalaryMode([]);
                 setPeriod([]);
-                setPage(1);
                 onCloseFilterJobs();
               }}
               className=" cursor-pointer w-fit p-0! hover:bg-bg-gray-soft-primary bg-bg-gray-soft-primary h-10 text-text-gray-primary! rounded-lg text-label-sm font-label-sm-strong!"
@@ -345,7 +326,7 @@ export default function JobLists() {
 
       <div className=" py-spacing-4xl">
         <div>
-          {isJobLoading || isFetching ? (
+          {isJobLoading ? (
             <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
               {[1, 2, 3, 4].map((item) => (
                 <JobItemSkelaton key={item} />
@@ -364,13 +345,16 @@ export default function JobLists() {
             ></EmptyBox>
           )}
 
-          {Boolean(jobs?.length) && pagination?.totalPages && (
-            <PaginationComponent
-              meta={pagination}
-              onPageChange={(pageNum) => {
-                setPage(pageNum);
-              }}
-            />
+          {Boolean(jobs?.length) && (
+            <div ref={sentinelRef} aria-hidden="true">
+              {isFetchingNextPage && (
+                <div className=" grid grid-cols-1 sm:grid-cols-2 py-spacing-4xl gap-spacing-4xl">
+                  {[1, 2].map((item) => (
+                    <JobItemSkelaton key={`loading-${item}`} />
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

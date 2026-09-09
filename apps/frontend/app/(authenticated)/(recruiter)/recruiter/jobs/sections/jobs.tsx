@@ -14,6 +14,7 @@ import {
   Ellipsis,
   EllipsisVertical,
   LayoutGrid,
+  Loader2,
   MapPin,
   Plus,
   Search,
@@ -21,12 +22,12 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn, formatDate } from '@/lib/utils';
-import { useCreateJob, useJobs } from '@/services/jobs/jobs.client';
+import { useCreateJob, useInfiniteJobs } from '@/services/jobs/jobs.client';
 import JobItemSkelaton from './job-item-skelaton';
 import CardJobItem from './card-job-item';
 import EmptyBox from '../../../../../../components/empty-box';
-import PaginationComponent from './pagination-component';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { JOBS_STATUS_ENUMS } from '@rl/types';
 import { Badge } from '@/components/ui/badge';
 import { JobData } from '@/services/jobs/job.type';
@@ -175,7 +176,6 @@ export default function Jobs({
   title: string;
   description: string;
 }) {
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
 
   const [status, setStatus] = useState('');
@@ -184,15 +184,27 @@ export default function Jobs({
 
   const filters = useMemo(
     () => ({
-      page,
       limit: 10,
       clientSearch: debouncedSearch || undefined,
       status: status === 'All' || !status ? undefined : status,
     }),
-    [page, debouncedSearch, status],
+    [debouncedSearch, status],
   );
 
-  const { jobs, isLoading: isJobLoading, pagination } = useJobs(filters);
+  const {
+    data,
+    isLoading: isJobLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteJobs(filters);
+
+  const jobs = data?.pages.flatMap((page) => page.docs) ?? [];
+
+  const sentinelRef = useInfiniteScroll({
+    enabled: hasNextPage && !isFetchingNextPage && jobs.length > 0,
+    onLoadMore: fetchNextPage,
+  });
 
   const tabs = [
     {
@@ -300,7 +312,6 @@ export default function Jobs({
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
-                    setPage(1); // reset page on search
                   }}
                 />
                 <InputGroupAddon>
@@ -354,14 +365,21 @@ export default function Jobs({
                   </EmptyBox>
                 )}
 
-                {Boolean(jobs?.length) && pagination?.totalPages && (
-                  <PaginationComponent
-                    meta={pagination}
-                    onPageChange={(pageNum) => {
-                      setPage(pageNum);
-                    }}
-                    isListView={isListView}
-                  />
+                {Boolean(jobs?.length) && (
+                  <div ref={sentinelRef} aria-hidden="true">
+                    {isFetchingNextPage &&
+                      (isListView ? (
+                        <div className=" flex justify-center py-spacing-4xl">
+                          <Loader2 className=" size-5 animate-spin text-text-gray-tertiary" />
+                        </div>
+                      ) : (
+                        <div className=" grid grid-cols-1 sm:grid-cols-2 py-spacing-4xl gap-spacing-4xl">
+                          {[1, 2].map((item) => (
+                            <JobItemSkelaton key={`loading-${item}`} />
+                          ))}
+                        </div>
+                      ))}
+                  </div>
                 )}
               </TabsContent>
             ))}

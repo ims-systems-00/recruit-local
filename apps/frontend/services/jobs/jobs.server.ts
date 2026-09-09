@@ -47,7 +47,7 @@ export async function getJobs(
   try {
     const res = await axiosServer.get<JobListBackendResponse>(API_ENDPOINT, {
       params: {
-        page: params?.page || 1,
+        cursor: params?.cursor,
         limit: params?.limit || 10,
         clientSearch: params?.clientSearch,
         status: params?.status,
@@ -129,7 +129,7 @@ export async function getPublicJobs(
       PUBLIC_API_ENDPOINT,
       {
         params: {
-          page: params?.page || 1,
+          cursor: params?.cursor,
           limit: params?.limit || 10,
           clientSearch: params?.clientSearch,
           status: params?.status,

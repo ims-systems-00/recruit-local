@@ -1,4 +1,4 @@
-import { Pagination } from '@/types/api';
+import { CursorPagination, Pagination } from '@/types/api';
 import { DeleteMarker } from '../file-media/file-media.type';
 import {
   EMPLOYMENT_TYPE,
@@ -9,7 +9,7 @@ import {
 } from '@rl/types';
 
 export type JobListFilters = {
-  page?: number;
+  cursor?: string;
   limit?: number;
   clientSearch?: string;
   status?: string;
@@ -119,10 +119,17 @@ export interface JobData {
 
 export type JobListResponse = {
   docs: JobData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
 };
 
 export type JobListBackendResponse = {
+  success: boolean;
+  jobs: JobData[];
+  pagination: CursorPagination;
+  message?: string;
+};
+
+export type AppliedJobsBackendResponse = {
   success: boolean;
   jobs: JobData[];
   pagination: Pagination;
