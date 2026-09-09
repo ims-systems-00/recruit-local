@@ -106,10 +106,11 @@ export const listJobsTool: AgentTool<ListJobsInput> = {
       ...searchFilter(input.search),
     };
 
+    const query = { $and: [filter, jobRoleScopedSecurityQuery(ability)] };
+
     const results = await jobService.list({
-      query: { $and: [filter, jobRoleScopedSecurityQuery(ability)] },
+      query,
       options: {
-        page: 1,
         limit: Math.min(input.limit ?? DEFAULT_LIMIT, MAX_LIMIT),
         sort: { createdAt: -1 },
       },
@@ -122,7 +123,7 @@ export const listJobsTool: AgentTool<ListJobsInput> = {
     });
 
     return {
-      totalMatching: results.totalDocs,
+      totalMatching: await jobService.count({ query }),
       returned: jobs.length,
       // Narrowed after sanitization, not instead of it — see `present`.
       jobs: jobs.map((job) => present(job, JOB_SUMMARY_FIELDS)),

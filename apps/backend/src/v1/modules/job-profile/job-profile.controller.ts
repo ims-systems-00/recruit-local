@@ -210,10 +210,13 @@ export const getAppliedJobs = async ({ req }: ControllerParams) => {
     });
   }
 
-  // Get the jobs with authorization check
+  // Get the jobs with authorization check. The limit is the id count, not a page
+  // size — `applications` above is the paged collection, and every job on that
+  // page has to come back.
   const jobs = await jobService.list({
     query: { _id: { $in: jobIds } } as unknown as Parameters<typeof jobService.list>[0]["query"],
     options: {
+      limit: jobIds.length,
       sort: { createdAt: -1 },
     },
   });
@@ -234,7 +237,9 @@ export const getAppliedJobs = async ({ req }: ControllerParams) => {
     caslJobFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...jobs, docs: sanitizedJobs });
+  // Paginate on applications, as the empty branch above already does — the jobs
+  // query is a lookup of this page's ids, not a page of its own.
+  const { data, pagination } = formatListResponse({ ...applications, docs: sanitizedJobs });
 
   return new ApiResponse({
     message: "Applied jobs retrieved for the job profile.",

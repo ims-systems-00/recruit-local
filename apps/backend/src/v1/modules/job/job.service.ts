@@ -4,7 +4,7 @@ import { Types, ClientSession } from "mongoose";
 import { Job, Favourite } from "../../../models";
 import { getOne as getTenant } from "../tenant/tenant.service";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, cursorSortStage } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import {
   alreadyAlliped,
@@ -45,7 +45,7 @@ const getMongoSession = (session?: ClientSession) => {
   return session && typeof (session as any).inTransaction === "function" ? session : undefined;
 };
 
-export const list = ({
+export const list = async ({
   query = {},
   options,
   session,
@@ -55,7 +55,10 @@ export const list = ({
   searchTerm,
   searchVector,
   searchPreFilter,
+  offset,
 }: IJobListParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Job.aggregate([
     // Atlas search has to be stage 0 — nothing may precede $search/$vectorSearch.
     // The $match below stays the security boundary; the pre-filter inside the
@@ -73,6 +76,17 @@ export const list = ({
           },
         ]
       : []),
+
+    // In search mode $rankFusion already ordered the results; any $sort here
+    // would throw that ordering away. Otherwise sort on (field, _id) so the
+    // keyset cursor has a total order to walk.
+    ...(options?.sort ? [{ $sort: cursorSortStage(String(options.sort)) }] : []),
+    ...(offset ? [{ $skip: offset }] : []),
+    // One extra document is the whole `hasNextPage` answer — no $count branch.
+    { $limit: limit + 1 },
+
+    // Per-viewer flags, and nothing more — moved past the $limit so they join the
+    // page instead of every matching job.
     ...alreadyAlliped(jobProfileId),
     ...alreadysaved(tenantId, jobProfileId),
   ]);
@@ -80,8 +94,22 @@ export const list = ({
   const mongoSession = getMongoSession(session);
   if (mongoSession) aggregate.session(mongoSession);
 
-  return Job.aggregatePaginate(aggregate, options);
+  const docs = await aggregate;
+  const hasNextPage = docs.length > limit;
+
+  return { docs: hasNextPage ? docs.slice(0, limit) : docs, hasNextPage, limit };
 };
+
+/**
+ * How many jobs match, ignoring paging. `list` no longer returns a total — a
+ * cursor page skips the `$count` branch on purpose — so the callers that report
+ * one (the agent tools) ask for it explicitly.
+ */
+export const count = ({ query = {}, session }: IJobGetParams) =>
+  Job.countDocuments(
+    { $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] },
+    { session: getMongoSession(session) }
+  );
 
 export const getOne = async ({ query = {}, session, tenantId, jobProfileId }: IJobGetParams) => {
   const aggregate = Job.aggregate([

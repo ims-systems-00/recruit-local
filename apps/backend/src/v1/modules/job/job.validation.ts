@@ -182,7 +182,14 @@ const numericRange = Joi.object({ gte: Joi.number(), lte: Joi.number() });
  * became a `$match` clause and the endpoint quietly returned nothing.
  */
 export const listQuerySchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
+  // Forward-only cursor from the previous response's `pagination.nextCursor`.
+  // Opaque — decoded in the controller, which also rejects one issued for a
+  // different sort/filter combination.
+  cursor: Joi.string().trim().max(512),
+  // Offset paging is gone; say so, rather than Joi's bare `"page" is not allowed`.
+  page: Joi.any()
+    .forbidden()
+    .messages({ "any.unknown": "page is no longer supported on this endpoint — paginate with ?cursor=" }),
   limit: Joi.number().integer().min(1).max(100).default(10),
   sort: Joi.string()
     .valid("-createdAt", "createdAt", "-updatedAt", "updatedAt", "-salary", "salary", "-endDate", "endDate")

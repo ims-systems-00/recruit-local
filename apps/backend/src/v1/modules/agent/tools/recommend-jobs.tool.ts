@@ -143,16 +143,17 @@ export const recommendJobsTool: AgentTool<RecommendJobsInput> = {
     const limit = Math.min(input.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const excludeApplied = input.excludeApplied ?? true;
 
+    const query = {
+      $and: [
+        { status: JOBS_STATUS_ENUMS.OPEN },
+        jobRoleScopedSecurityQuery(ability),
+        ...(feedIds.length ? [{ _id: { $in: feedIds } }] : []),
+      ],
+    };
+
     const results = await jobService.list({
-      query: {
-        $and: [
-          { status: JOBS_STATUS_ENUMS.OPEN },
-          jobRoleScopedSecurityQuery(ability),
-          ...(feedIds.length ? [{ _id: { $in: feedIds } }] : []),
-        ],
-      },
+      query,
       options: {
-        page: 1,
         limit: excludeApplied ? limit * OVERFETCH : limit,
         sort: "-matchScore -createdAt",
       },
@@ -187,7 +188,7 @@ export const recommendJobsTool: AgentTool<RecommendJobsInput> = {
       });
 
     return {
-      totalMatching: results.totalDocs,
+      totalMatching: await jobService.count({ query }),
       returned: recommended.length,
       matchedOn: matchKeywords,
       jobs: recommended,
