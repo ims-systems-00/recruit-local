@@ -10,9 +10,20 @@ export type Pagination = {
   nextPage: number | null;
 };
 
+export type CursorPagination = {
+  limit: number;
+  hasNextPage: boolean;
+  nextCursor: string;
+};
+
 export type PaginatedResponse<T> = {
   docs: T[];
   pagination: Pagination;
+};
+
+export type CursorPaginatedResponse<T> = {
+  docs: T[];
+  pagination: CursorPagination;
 };
 
 export type SuccessResponse<T> = {

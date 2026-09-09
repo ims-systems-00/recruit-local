@@ -3,21 +3,28 @@ import React from 'react';
 
 import { Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useJobs } from '@/services/jobs/jobs.client';
+import { useInfiniteJobs } from '@/services/jobs/jobs.client';
 import JobItemSkelaton from './job-item-skelaton';
 import CardJobItem from './card-job-item';
 import EmptyBox from '../../../../../../components/empty-box';
-import PaginationComponent from './pagination-component';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { JobListFilters } from '@/services/jobs/job.type';
 
-export default function JobLists({
-  filters,
-  onPageChange,
-}: {
-  filters: JobListFilters;
-  onPageChange: (page: number) => void;
-}) {
-  const { jobs, isLoading: isJobLoading, pagination } = useJobs(filters);
+export default function JobLists({ filters }: { filters: JobListFilters }) {
+  const {
+    data,
+    isLoading: isJobLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteJobs(filters);
+
+  const jobs = data?.pages.flatMap((page) => page.docs) ?? [];
+
+  const sentinelRef = useInfiniteScroll({
+    enabled: hasNextPage && !isFetchingNextPage && jobs.length > 0,
+    onLoadMore: fetchNextPage,
+  });
 
   return (
     <div>
@@ -45,13 +52,16 @@ export default function JobLists({
         </EmptyBox>
       )}
 
-      {Boolean(jobs?.length) && pagination?.totalPages && (
-        <PaginationComponent
-          meta={pagination}
-          onPageChange={(pageNum) => {
-            onPageChange(pageNum);
-          }}
-        />
+      {Boolean(jobs?.length) && (
+        <div ref={sentinelRef} aria-hidden="true">
+          {isFetchingNextPage && (
+            <div className=" grid grid-cols-1 sm:grid-cols-2 py-spacing-4xl gap-spacing-4xl">
+              {[1, 2].map((item) => (
+                <JobItemSkelaton key={`loading-${item}`} />
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

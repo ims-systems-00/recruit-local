@@ -21,7 +21,8 @@ import type {
   JobProfileData,
 } from './job-profile.type';
 import { useRouter } from 'next/navigation';
-import { JobListResponse } from '../jobs/job.type';
+import { JobData } from '../jobs/job.type';
+import { PaginatedResponse } from '@/types/api';
 import { useSession } from 'next-auth/react';
 import { ONBOARDING_STEP_ENUMS } from '@rl/types';
 
@@ -227,7 +228,7 @@ export function useRestoreJobProfile() {
 export function useAppliedJobs(filters: JobProfileListFilters) {
   const { data: session } = useSession();
 
-  const query = useQuery<JobListResponse, Error>({
+  const query = useQuery<PaginatedResponse<JobData>, Error>({
     queryKey: ['applied-jobs', session?.user?.jobProfileId, filters],
     queryFn: async () => {
       const response = await getAppliedJobs(
