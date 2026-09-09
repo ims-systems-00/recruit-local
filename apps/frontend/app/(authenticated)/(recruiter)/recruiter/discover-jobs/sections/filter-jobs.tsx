@@ -5,11 +5,11 @@ import { CircleX, Filter, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 import { useDebounce } from '@/hooks/useDebounce';
-import { useJobs } from '@/services/jobs/jobs.client';
+import { useInfiniteJobs } from '@/services/jobs/jobs.client';
 import JobItemSkelaton from './job-item-skelaton';
 import CardJobItem from './card-job-item';
 import EmptyBox from '@/components/empty-box';
-import PaginationComponent from './pagination-component';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import {
   InputGroup,
   InputGroupAddon,
@@ -40,7 +40,6 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
   const salaryModeAnchor = useComboboxAnchor();
   const periodAnchor = useComboboxAnchor();
 
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [workplace, setWorkplace] = useState<string[]>([]);
   const [employmentType, setEmploymentType] = useState<string[]>([]);
@@ -51,7 +50,6 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
 
   const filters = useMemo(
     () => ({
-      page,
       limit: 10,
       clientSearch: debouncedSearch || undefined,
 
@@ -65,14 +63,22 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
 
       period: period.length ? { in: period } : undefined,
     }),
-    [page, debouncedSearch, workplace, employmentType, salaryMode, period],
+    [debouncedSearch, workplace, employmentType, salaryMode, period],
   );
   const {
-    jobs,
+    data,
     isLoading: isJobLoading,
-    pagination,
-    isFetching,
-  } = useJobs(filters);
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteJobs(filters);
+
+  const jobs = data?.pages.flatMap((page) => page.docs) ?? [];
+
+  const sentinelRef = useInfiniteScroll({
+    enabled: hasNextPage && !isFetchingNextPage && jobs.length > 0,
+    onLoadMore: fetchNextPage,
+  });
 
   return (
     <div className=" p-spacing-4xl">
@@ -95,7 +101,6 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                setPage(1); // reset page on search
               }}
             />
             <InputGroupAddon>
@@ -110,7 +115,6 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
               value={workplace}
               onValueChange={(value) => {
                 setWorkplace(value);
-                setPage(1);
               }}
             >
               <ComboboxChips
@@ -160,7 +164,6 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
               value={employmentType}
               onValueChange={(value) => {
                 setEmploymentType(value);
-                setPage(1);
               }}
             >
               <ComboboxChips
@@ -210,7 +213,6 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
               value={salaryMode}
               onValueChange={(value) => {
                 setSalaryMode(value);
-                setPage(1);
               }}
             >
               <ComboboxChips
@@ -260,7 +262,6 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
               value={period}
               onValueChange={(value) => {
                 setPeriod(value);
-                setPage(1);
               }}
             >
               <ComboboxChips
@@ -309,7 +310,6 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
               setSalaryMode([]);
               setPeriod([]);
               setSearch('');
-              setPage(1);
               onClose();
             }}
             className=" cursor-pointer w-fit p-0! hover:bg-bg-gray-soft-primary bg-bg-gray-soft-primary h-10 text-text-gray-primary! rounded-lg text-label-sm font-label-sm-strong!"
@@ -321,7 +321,7 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
 
       <div className=" py-spacing-4xl">
         <div>
-          {isJobLoading || isFetching ? (
+          {isJobLoading ? (
             <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
               {[1, 2, 3, 4].map((item) => (
                 <JobItemSkelaton key={item} />
@@ -340,13 +340,16 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
             ></EmptyBox>
           )}
 
-          {Boolean(jobs?.length) && pagination?.totalPages && (
-            <PaginationComponent
-              meta={pagination}
-              onPageChange={(pageNum) => {
-                setPage(pageNum);
-              }}
-            />
+          {Boolean(jobs?.length) && (
+            <div ref={sentinelRef} aria-hidden="true">
+              {isFetchingNextPage && (
+                <div className=" grid grid-cols-1 sm:grid-cols-2 py-spacing-4xl gap-spacing-4xl">
+                  {[1, 2].map((item) => (
+                    <JobItemSkelaton key={`loading-${item}`} />
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
