@@ -242,7 +242,12 @@ export const jobSearchPreFilter = (session?: { tenantId?: string; jobProfileId?:
 
 const toSearchFilterClauses = (preFilter: JobSearchPreFilter) => {
   const clauses: Record<string, unknown>[] = [];
-  if (preFilter.status) clauses.push({ text: { query: preFilter.status, path: "status" } });
+  // `equals`, not `text`: the index maps `status` as a `token`, which is stored
+  // unanalyzed, and the `text` operator only matches analyzed `string` fields. It
+  // returned zero rows for every term rather than erroring — which silently
+  // emptied the whole keyword branch for any caller without a tenantId
+  // (candidates, admins, and /public/jobs), leaving hybrid search vector-only.
+  if (preFilter.status) clauses.push({ equals: { value: preFilter.status, path: "status" } });
   if (preFilter.tenantId) clauses.push({ equals: { value: preFilter.tenantId, path: "tenantId" } });
   return clauses;
 };

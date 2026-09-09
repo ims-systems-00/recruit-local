@@ -27,7 +27,7 @@ const spec: ListQuerySpec = {
     isActive: bool("isActive"),
     startDate: dateRange("startDate"),
   },
-  sortable: ["createdAt", "name"],
+  sortable: ["createdAt", "name", "salary"],
   defaultSort: "-createdAt",
   searchKey: "clientSearch",
   searchFields: ["name", "description"],
@@ -85,10 +85,18 @@ check("page is read when sent", buildListQuery({ page: 3 }, spec).page, 3);
 check("page is undefined when absent", buildListQuery({}, spec).page, undefined);
 
 // A page of fake documents, newest first, so keyset cursors have a real field.
+//
+// A third of them have a null `salary`. That is deliberate and it is the case
+// most likely to break: BSON orders null below every number, so a descending
+// sort puts the nulls in a block at the end, and a condition of
+// `{ salary: { $lt: 50000 } }` alone would drop every one of them from the
+// second page onwards. `keysetCondition` carries explicit null terms for that,
+// and this is what exercises them.
 const rows = Array.from({ length: 25 }, (_, i) => ({
   _id: `65a000000000000000000${String(i).padStart(3, "0")}`,
   name: `row-${i}`,
   createdAt: new Date(Date.UTC(2026, 0, 25 - i)),
+  salary: i % 3 === 0 ? null : (25 - i) * 1000,
 }));
 
 /**
@@ -126,20 +134,36 @@ const matches = (row: Row, cond: Record<string, unknown>): boolean => {
   });
 };
 
+/** BSON collation for the fields here: null sorts below every number and date. */
+const bsonCompare = (a: unknown, b: unknown): number => {
+  if (a === null || a === undefined) return b === null || b === undefined ? 0 : -1;
+  if (b === null || b === undefined) return 1;
+  const l = a instanceof Date ? a.getTime() : (a as number);
+  const r = b instanceof Date ? b.getTime() : (b as number);
+  return l < r ? -1 : l > r ? 1 : 0;
+};
+
 const fakeFetch = async ({
   query,
   options,
   offset,
 }: {
   query: Record<string, unknown>;
-  options: { limit?: number };
+  options: { limit?: number; sort?: unknown };
   offset: number;
 }) => {
   const limit = options.limit ?? 10;
-  // Same total order the real $sort produces: -createdAt, then -_id.
+  const token = String(options.sort ?? "-createdAt")
+    .trim()
+    .split(/\s+/)[0];
+  const field = token.replace(/^-/, "") as "createdAt" | "salary" | "name";
+  const dir = token.startsWith("-") ? -1 : 1;
+
+  // The same total order the real `$sort` produces: (field, _id), both in the
+  // sort's direction, with `_id` breaking ties.
   const matched = rows
     .filter((row) => matches(row, query))
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime() || (a._id < b._id ? 1 : -1));
+    .sort((a, b) => bsonCompare(a[field], b[field]) * dir || (a._id < b._id ? -dir : dir));
 
   return toCursorPage(matched.slice(offset, offset + limit + 1), limit);
 };
@@ -171,6 +195,22 @@ const run = (query: Record<string, unknown>) => runCursorList({ query, spec, fet
   check("walk visits every row once", seen.length, rows.length);
   check("walk has no duplicates", new Set(seen).size, rows.length);
   check("walk is in order", seen[0] === rows[0]._id && seen[seen.length - 1] === rows[rows.length - 1]._id, true);
+
+  // The same walk over a NULLABLE field, in both directions. This is the case
+  // real data has not covered — every job in the dev database has a salary — and
+  // the one `keysetCondition`'s null terms exist for.
+  for (const sort of ["-salary", "salary"]) {
+    const walked: string[] = [];
+    let c: string | null = null;
+    for (let i = 0; i < 40; i++) {
+      const page: Awaited<ReturnType<typeof run>> = await run({ limit: 2, sort, ...(c ? { cursor: c } : {}) });
+      walked.push(...page.docs.map((d) => d._id as string));
+      c = (page.pagination as { nextCursor: string | null }).nextCursor;
+      if (!c) break;
+    }
+    check(`walk over nullable field (sort=${sort}) visits every row`, walked.length, rows.length);
+    check(`walk over nullable field (sort=${sort}) has no duplicates`, new Set(walked).size, rows.length);
+  }
 
   // A multi-token sort has no single field to key on, so it must fall back to an
   // offset cursor. Keyset-walking it would duplicate and skip rows.

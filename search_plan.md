@@ -188,6 +188,33 @@ throws Joi's coerced value away, so defaults never applied. Both now use the
 shared middleware, which fixes `/prompts/resolve` and `/agent/traces/stats` as
 a side effect.
 
+### Bug found while verifying against Atlas: the keyword branch was dead
+
+`toSearchFilterClauses` filtered `status` with the `text` operator:
+
+```ts
+if (preFilter.status) clauses.push({ text: { query: preFilter.status, path: "status" } });
+```
+
+The index maps `status` as a **`token`**, which Atlas stores unanalyzed, and `text`
+only matches analyzed `string` fields. It returned zero rows for every term instead
+of erroring, so the entire Lucene branch was empty for any caller without a
+`tenantId` — candidates, admins, and `/public/jobs`. `$rankFusion` fused nothing
+with the vector results, leaving "hybrid" search vector-only, and `?semantic=false`
+returning nothing at all.
+
+Proven directly against the cluster before fixing — same query, three filters:
+
+```
+no filter at all                      -> 5 hits
+filter: text on status (old code)     -> 0 hits
+filter: equals on status (token-correct) -> 5 hits
+```
+
+Fixed by switching to `equals`. Verified after: `?clientSearch=Coordinator&semantic=false`
+returns exactly the two coordinator jobs. Employers were unaffected — their
+pre-filter is `tenantId`, which already used `equals`.
+
 ### Downstream fallout of the `application` migration
 
 `applicationService.list` stopped returning `totalDocs`, which three callers used:
