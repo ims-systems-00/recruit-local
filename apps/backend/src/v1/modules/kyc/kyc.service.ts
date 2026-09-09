@@ -1,9 +1,15 @@
-import { ClientSession, Types } from "mongoose";
+import { ClientSession, FilterQuery, Types } from "mongoose";
 import { withTransaction } from "../../../common/helper/database-transaction";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { NotFoundException } from "../../../common/helper";
-import { Kyc, User } from "../../../models";
+import { IKycDoc, Kyc, User } from "../../../models";
 import { IKycCreateParams, IKycGetParams, IKycListQueryParams, IKycUpdateParams } from "./kyc.interface";
 import { kycProjectionQuery, populateKycDocumentsQuery } from "./kyc.query";
 import * as FileMediaService from "../file-media/file-media.service";
@@ -12,18 +18,27 @@ import { VISIBILITY_ENUM } from "@rl/types";
 import { agenda } from "../../../agenda/config";
 import { JOB_NAME } from "../../../agenda/constants";
 
-export const list = ({ query = {}, options, session }: IKycListQueryParams) => {
+export const list = async ({ query = {}, options, session, offset = 0 }: IKycListQueryParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Kyc.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...populateKycDocumentsQuery(),
     ...kycProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Kyc.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IKycListQueryParams) =>
+  Kyc.countDocuments({
+    $and: [sanitizeQueryIds(query) as FilterQuery<IKycDoc>, { "deleteMarker.status": { $ne: true } }],
+  });
 
 export const getOne = async ({ query = {}, session }: IKycGetParams) => {
   const aggregate = Kyc.aggregate([

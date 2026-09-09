@@ -22,3 +22,28 @@ export const updateBodySchema = Joi.object({
 export const idParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("ID"),
 });
+
+/**
+ * The contract for `GET /public/salaries`.
+ *
+ * Public and unauthenticated, so the allowlist is the only thing standing between
+ * a query string and `$match`.
+ */
+export const listQuerySchema = Joi.object({
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page.
+  page: Joi.number().integer().min(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string()
+    .valid("-createdAt", "createdAt", "minSalary", "-minSalary", "maxSalary", "-maxSalary")
+    .default("-createdAt"),
+
+  clientSearch: Joi.string().trim().max(200).allow(""),
+  jobTitle: Joi.string().trim().max(200),
+  location: Joi.string().trim().max(200),
+  experienceLevel: Joi.string().trim().max(100),
+  currency: Joi.string().trim().max(10),
+  minSalary: Joi.object({ gte: Joi.number(), lte: Joi.number() }),
+  maxSalary: Joi.object({ gte: Joi.number(), lte: Joi.number() }),
+});

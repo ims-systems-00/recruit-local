@@ -1,6 +1,13 @@
 import { IListParams, ListQueryParams } from "@rl/types";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateStatusQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  populateStatusQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { eventRegistrationProjectionQuery } from "./event-registration.query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { EventRegistrationInput, EventRegistration } from "../../../models";
@@ -8,20 +15,26 @@ import { getOne as getAEvent } from "../event/event.service";
 import * as StatusService from "../status/status.service";
 import { modelNames } from "../../../models/constants";
 
-type IListEventRegistrationParams = IListParams<EventRegistrationInput>;
+type IListEventRegistrationParams = IListParams<EventRegistrationInput> & { offset?: number };
 type IEventRegistrationQueryParams = ListQueryParams<EventRegistrationInput>;
 
-export const list = ({ query = {}, options }: IListEventRegistrationParams) => {
-  return EventRegistration.aggregatePaginate(
-    [
-      ...matchQuery(sanitizeQueryIds(query)),
-      ...excludeDeletedQuery(),
-      ...populateStatusQuery(),
-      ...eventRegistrationProjectionQuery(),
-    ],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListEventRegistrationParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const aggregate = EventRegistration.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...populateStatusQuery(),
+    ...eventRegistrationProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(await aggregate, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListEventRegistrationParams) =>
+  EventRegistration.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: IListEventRegistrationParams) => {
   const eventRegistrations = await EventRegistration.aggregate([

@@ -8,6 +8,8 @@ interface OffsetPagination {
   hasNextPage: boolean;
   prevPage?: number | null;
   nextPage?: number | null;
+  /** Present on a migrated module's `?page=` response, so a caller can switch to cursors. */
+  nextCursor?: string | null;
 }
 
 /** No totals: a cursor list never runs the `$count` branch. */

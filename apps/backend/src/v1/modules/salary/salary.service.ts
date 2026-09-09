@@ -1,19 +1,35 @@
 import { IListParams, ListQueryParams } from "@rl/types";
 import { ISalaryInput, Salary } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { salaryProjectQuery } from "./salary.query";
 
-type IListSalaryParams = IListParams<ISalaryInput>;
+type IListSalaryParams = IListParams<ISalaryInput> & { offset?: number };
 type ISalaryQueryParams = ListQueryParams<ISalaryInput>;
 
-export const list = ({ query = {}, options }: IListSalaryParams) => {
-  return Salary.aggregatePaginate(
-    Salary.aggregate([...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...salaryProjectQuery()]),
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListSalaryParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const aggregate = Salary.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...salaryProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(await aggregate, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListSalaryParams) =>
+  Salary.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: IListSalaryParams) => {
   const results = await Salary.aggregate([

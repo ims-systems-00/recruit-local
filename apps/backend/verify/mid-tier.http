@@ -1,0 +1,203 @@
+# Batch 3 — kycs, reactions, prompts, file-medias, events, event-registrations,
+# skill-assessments, skill-assessment-results, favourites, notifications, forms,
+# agent conversations, public salaries.
+#
+# The theme of this batch is repair: five of these endpoints had a search that
+# could never return anything. Those cases are called out inline.
+
+@host = http://localhost:9027/api/v1
+
+# Log in first — REST Client variables do not cross files, so each file does this.
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv ADMIN_USER_EMAIL}}",
+  "password": "{{$dotenv ADMIN_USER_PASSWORD}}"
+}
+
+###
+
+@token = {{login.response.body.user.accessToken}}
+
+###############################################################################
+# The five shared checks, on one representative endpoint
+###############################################################################
+
+### unknown param -> 400
+GET {{host}}/kycs?nonsense=x
+x-auth-access-token: {{token}}
+
+### undeclared sort -> 400
+GET {{host}}/kycs?sort=-secretField
+x-auth-access-token: {{token}}
+
+### regex metacharacters escaped, not executed -> 200, no hang
+GET {{host}}/kycs?clientSearch=(a%2B)%2B%24
+x-auth-access-token: {{token}}
+
+### legacy offset paging -> totalDocs + totalPages present
+GET {{host}}/kycs?page=1&limit=5
+x-auth-access-token: {{token}}
+
+### cursor page -> nextCursor, no totalDocs
+# @name kycFirst
+GET {{host}}/kycs?limit=5
+x-auth-access-token: {{token}}
+
+### follow it — no repeats
+GET {{host}}/kycs?limit=5&cursor={{kycFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### KYC is scoped by CASL — a non-admin must see only their own record
+GET {{host}}/kycs?limit=100
+x-auth-access-token: {{token}}
+
+###############################################################################
+# Search that was unreachable before this batch
+#
+# events, event-registrations and skill-assessments all declared `search` in
+# their schema, while MongoQuery read `clientSearch` — which the schema then
+# rejected. So neither key worked. The schema now renames `search` to
+# `clientSearch`, so both do.
+###############################################################################
+
+### the old key still works
+GET {{host}}/events?search=conference
+x-auth-access-token: {{token}}
+
+### and so does the standard one
+GET {{host}}/events?clientSearch=conference
+x-auth-access-token: {{token}}
+
+### sending both is fine (200, not 400) — `search` wins. Worth checking: with
+### Joi's rename left at its `override: false` default, this combination errors.
+GET {{host}}/events?search=conference&clientSearch=ignored
+x-auth-access-token: {{token}}
+
+GET {{host}}/skill-assessments?search=javascript
+x-auth-access-token: {{token}}
+
+GET {{host}}/event-registrations?search=confirmed
+x-auth-access-token: {{token}}
+
+### filters that are now real
+GET {{host}}/events?type=webinar&mode=online&limit=5
+x-auth-access-token: {{token}}
+
+GET {{host}}/events?startDate[gte]=2026-01-01&startDate[lte]=2026-12-31
+x-auth-access-token: {{token}}
+
+GET {{host}}/skill-assessments?level=beginner&category=technical
+x-auth-access-token: {{token}}
+
+### skill-assessment-results: minScore/maxScore were declared but ignored.
+### They filter now. `score` is a Number, so it was also never searchable —
+### the search is `recommendations` only.
+GET {{host}}/skill-assessment-results?minScore=40&maxScore=80
+x-auth-access-token: {{token}}
+
+### the legacy sort values are accepted and ignored rather than 400'ing
+GET {{host}}/skill-assessment-results?sort=desc&sortBy=score
+x-auth-access-token: {{token}}
+
+###############################################################################
+# Per-module filters
+###############################################################################
+
+### reactions
+GET {{host}}/reactions?collectionName=posts&type=like&limit=5
+x-auth-access-token: {{token}}
+
+### file-medias
+GET {{host}}/file-medias?collectionName=jobs&visibility=PUBLIC&limit=5
+x-auth-access-token: {{token}}
+
+### favourites — polymorphic, so no free-text search at all
+GET {{host}}/favourites?itemType=jobs&limit=5
+x-auth-access-token: {{token}}
+
+### and clientSearch is not a declared key here -> 400
+GET {{host}}/favourites?clientSearch=anything
+x-auth-access-token: {{token}}
+
+### agent conversations
+GET {{host}}/agent/conversations?clientSearch=interview&limit=5
+x-auth-access-token: {{token}}
+
+### public salaries — no auth header at all
+GET {{host}}/public/salaries?limit=5
+
+GET {{host}}/public/salaries?jobTitle=Software%20Engineer&currency=USD
+GET {{host}}/public/salaries?nonsense=x
+### expect 400 — this one is unauthenticated, so the allowlist is the only guard
+
+###############################################################################
+# prompts — the only list with a two-token default sort
+#
+# `name -version` cannot be walked by a keyset cursor (it keys on the first token
+# only, so rows sharing a name would repeat). runCursorList detects that and
+# issues an offset cursor instead. Both pages below must not overlap.
+###############################################################################
+
+# @name promptFirst
+GET {{host}}/prompts?limit=5
+x-auth-access-token: {{token}}
+
+GET {{host}}/prompts?limit=5&cursor={{promptFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### /resolve also stopped discarding Joi's coerced values — its route used a local
+### `validate("query")` alias that threw them away, so defaults never applied.
+GET {{host}}/prompts/resolve?name=job-description
+x-auth-access-token: {{token}}
+
+###############################################################################
+# forms
+###############################################################################
+
+### forms list — cursor paged
+GET {{host}}/forms?limit=5
+x-auth-access-token: {{token}}
+
+GET {{host}}/forms?nonsense=x
+x-auth-access-token: {{token}}
+
+### submissions are scoped by the :formId route param, not a query filter.
+### Passing formId in the query string must not widen the scope. Substitute a
+### real form id for FORM_ID.
+GET {{host}}/forms/FORM_ID/submissions?limit=5
+x-auth-access-token: {{token}}
+
+GET {{host}}/forms/FORM_ID/submissions?formId=000000000000000000000000
+x-auth-access-token: {{token}}
+### expect 400 (formId is not a declared query key), never another form's rows
+
+### elements stay offset-paged on purpose — $graphLookup returns the form's
+### structure in sequence order, which a cursor cannot key on. Still hardened.
+GET {{host}}/forms/FORM_ID/elements?page=1&limit=20
+x-auth-access-token: {{token}}
+
+GET {{host}}/forms/FORM_ID/elements?nonsense=x
+x-auth-access-token: {{token}}
+
+###############################################################################
+# notifications — READ THE WARNING
+#
+# This list has NO authorization scoping. The controller passes no security
+# query, so any authenticated user lists every notification in the collection,
+# including other people's. That predates this work and was left as-is rather
+# than silently narrowing what users see — but it is a real data leak.
+#
+# The check below is written to FAIL while that is true.
+###############################################################################
+
+GET {{host}}/notifications?limit=100
+x-auth-access-token: {{token}}
+### expect (once fixed): only notifications whose userId is your own
+### actual today: everyone's
+
+### the params are at least validated now
+GET {{host}}/notifications?nonsense=x
+x-auth-access-token: {{token}}

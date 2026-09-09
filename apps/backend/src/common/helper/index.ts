@@ -8,6 +8,7 @@ export * from "./handle-controller";
 export * from "./validate";
 export * from "./pick";
 export * from "./utility";
+export * from "./escape-regex";
 export * from "./file-manager";
 export * from "./draftjs";
 export * from "./sanitizeQueryIds";

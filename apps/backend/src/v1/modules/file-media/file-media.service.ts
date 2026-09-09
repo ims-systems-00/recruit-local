@@ -1,12 +1,18 @@
 import { IListParams } from "@rl/types";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { NotFoundException, logger, sanitizeQueryIds } from "../../../common/helper";
 import { fileMediaProjectionQuery, fileMediaSrcQuery } from "./file-media.query";
 import { FileMedia, IFileMediaInput } from "../../../models";
 import { thumbnailCreateQueue } from "../../../queue/thumbnailCreateQueue";
 import { fileDeleteQueue } from "../../../queue/fileDeleteQueue";
 
-type IFileMediaListParams = IListParams<IFileMediaInput>;
+type IFileMediaListParams = IListParams<IFileMediaInput> & { offset?: number };
 type IFileMediaQueryParams = Partial<IFileMediaInput & { _id: string }>;
 
 export interface IFileMediaUpdateParams {
@@ -37,13 +43,23 @@ export const create = async ({ payload }: IFileMediaCreateParams) => {
   return fileMedia;
 };
 
-export const list = ({ query = {}, options }: IFileMediaListParams) => {
-  const sanitizedQuery = sanitizeQueryIds(query);
-  return FileMedia.aggregatePaginate(
-    [...matchQuery(sanitizedQuery), ...excludeDeletedQuery(), ...fileMediaProjectionQuery(), ...fileMediaSrcQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IFileMediaListParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const aggregate = FileMedia.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...fileMediaProjectionQuery(),
+    ...fileMediaSrcQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(await aggregate, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IFileMediaListParams) =>
+  FileMedia.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const listSoftDeleted = async ({ query = {} }: Partial<IFileMediaGetParams> = {}) => {
   const sanitizedQuery = sanitizeQueryIds(query);

@@ -42,3 +42,42 @@ export const updateBodySchema = Joi.object({
 export const idParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("ID"),
 });
+
+/**
+ * Accepts a bare value or the `{ in: [...] }` shape the frontend sends through
+ * qs brackets: `?employmentType[in][]=full-time&employmentType[in][]=contract`.
+ */
+const inList = (values: string[]) =>
+  Joi.alternatives().try(
+    Joi.string().valid(...values),
+    Joi.object({
+      in: Joi.array()
+        .items(Joi.string().valid(...values))
+        .single(),
+    })
+  );
+
+/**
+ * The contract for `GET /experiences`.
+ *
+ * Joi objects reject unknown keys, which is the point: before this a typo'd param
+ * became a `$match` clause and the endpoint quietly returned nothing.
+ */
+export const listQuerySchema = Joi.object({
+  // Forward-only cursor from the previous response's `pagination.nextCursor`.
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page. Kept because the frontend still sends `page: … || 1`.
+  page: Joi.number().integer().min(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string()
+    .valid("-startDate", "startDate", "-endDate", "endDate", "-createdAt", "createdAt")
+    .default("-startDate"),
+
+  clientSearch: Joi.string().trim().max(200).allow(""),
+  jobProfileId: Joi.string().custom(objectIdValidation),
+  workplace: inList(Object.values(WORKPLACE_ENUMS)),
+  employmentType: inList(Object.values(EMPLOYMENT_TYPE)),
+  isActive: Joi.boolean(),
+  startDate: Joi.object({ gte: Joi.date().iso(), lte: Joi.date().iso() }),
+});

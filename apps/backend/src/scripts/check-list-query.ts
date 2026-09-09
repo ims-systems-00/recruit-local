@@ -1,0 +1,244 @@
+/**
+ * Logic check for the shared list kit — no database, no server.
+ *
+ * `buildListQuery` and `runCursorList` sit under every migrated module, so a
+ * regression here is a regression in all of them at once. Run it after touching
+ * anything in `common/query`.
+ *
+ *   pnpm --filter @rl/backend check:list-query
+ */
+import {
+  bool,
+  buildListQuery,
+  dateRange,
+  eq,
+  oneOf,
+  range,
+  runCursorList,
+  toCursorPage,
+  ListQuerySpec,
+} from "../common/query";
+
+const spec: ListQuerySpec = {
+  filters: {
+    status: eq("status"),
+    type: oneOf("type"),
+    salary: range("salary"),
+    isActive: bool("isActive"),
+    startDate: dateRange("startDate"),
+  },
+  sortable: ["createdAt", "name"],
+  defaultSort: "-createdAt",
+  searchKey: "clientSearch",
+  searchFields: ["name", "description"],
+};
+
+let failures = 0;
+const check = (label: string, actual: unknown, expected: unknown) => {
+  const a = JSON.stringify(actual);
+  const e = JSON.stringify(expected);
+  if (a === e) return console.log(`  ok   ${label}`);
+  failures++;
+  console.log(`  FAIL ${label}\n       expected ${e}\n       actual   ${a}`);
+};
+
+console.log("\nbuildListQuery");
+
+check("unknown key is ignored", buildListQuery({ nonsense: "x" }, spec).filter, {});
+
+check("declared filters apply", buildListQuery({ status: "open", type: { in: ["a", "b"] } }, spec).filter, {
+  status: "open",
+  type: { $in: ["a", "b"] },
+});
+
+check("range builds bounds", buildListQuery({ salary: { gte: 50000, lte: 90000 } }, spec).filter, {
+  salary: { $gte: 50000, $lte: 90000 },
+});
+
+check("regex metacharacters are escaped", buildListQuery({ clientSearch: "(a+)+$" }, spec).filter, {
+  $or: [
+    { name: { $regex: "\\(a\\+\\)\\+\\$", $options: "i" } },
+    { description: { $regex: "\\(a\\+\\)\\+\\$", $options: "i" } },
+  ],
+});
+
+check("bool only accepts a real boolean", buildListQuery({ isActive: true }, spec).filter, { isActive: true });
+check("bool ignores the string 'true'", buildListQuery({ isActive: "true" }, spec).filter, {});
+
+// The reason dateRange exists: Mongo's comparison operators are type-bracketed,
+// so a string bound against a Date field matches nothing and raises no error.
+const dated = buildListQuery({ startDate: { gte: "2026-01-01", lte: "2026-06-30" } }, spec).filter as {
+  startDate: { $gte: unknown; $lte: unknown };
+};
+check("dateRange coerces to Date, not string", dated.startDate.$gte instanceof Date, true);
+check(
+  "dateRange keeps both bounds",
+  [(dated.startDate.$gte as Date).toISOString(), (dated.startDate.$lte as Date).toISOString()],
+  ["2026-01-01T00:00:00.000Z", "2026-06-30T00:00:00.000Z"]
+);
+check("dateRange drops an unparseable bound", buildListQuery({ startDate: { gte: "not-a-date" } }, spec).filter, {});
+
+check("undeclared sort falls back", buildListQuery({ sort: "-secret" }, spec).options.sort, "-createdAt");
+check("declared sort is kept", buildListQuery({ sort: "name" }, spec).options.sort, "name");
+check("limit is capped at 100", buildListQuery({ limit: 5000 }, spec).options.limit, 100);
+check("page is read when sent", buildListQuery({ page: 3 }, spec).page, 3);
+check("page is undefined when absent", buildListQuery({}, spec).page, undefined);
+
+// A page of fake documents, newest first, so keyset cursors have a real field.
+const rows = Array.from({ length: 25 }, (_, i) => ({
+  _id: `65a000000000000000000${String(i).padStart(3, "0")}`,
+  name: `row-${i}`,
+  createdAt: new Date(Date.UTC(2026, 0, 25 - i)),
+}));
+
+/**
+ * Minimal Mongo matcher — enough for the shapes `keysetCondition` emits. Without
+ * this the fake fetch ignores the cursor entirely and the walk test proves nothing.
+ */
+type Row = (typeof rows)[number];
+const cmp = (value: unknown, operand: unknown) => {
+  const l = value instanceof Date ? value.getTime() : value;
+  const r = operand instanceof Date ? operand.getTime() : String(operand).length === 24 ? String(operand) : operand;
+  return { l: l as never, r: r as never };
+};
+const matches = (row: Row, cond: Record<string, unknown>): boolean => {
+  if (Array.isArray(cond.$or)) return (cond.$or as Record<string, unknown>[]).some((c) => matches(row, c));
+  if (Array.isArray(cond.$and)) return (cond.$and as Record<string, unknown>[]).every((c) => matches(row, c));
+
+  return Object.entries(cond).every(([field, test]) => {
+    const value = field === "_id" ? String(row._id) : (row as Record<string, unknown>)[field];
+    if (test === null) return value === null || value === undefined;
+
+    // Before the operator branch: a Date is an `object`, and Object.entries on one
+    // is empty, so `.every()` would vacuously match every row.
+    if (test instanceof Date) return value instanceof Date && value.getTime() === test.getTime();
+
+    if (typeof test === "object" && test !== null) {
+      return Object.entries(test as Record<string, unknown>).every(([op, operand]) => {
+        const { l, r } = cmp(value, operand);
+        if (op === "$lt") return l < r;
+        if (op === "$gt") return l > r;
+        if (op === "$ne") return l !== r;
+        return false;
+      });
+    }
+    return value === test;
+  });
+};
+
+const fakeFetch = async ({
+  query,
+  options,
+  offset,
+}: {
+  query: Record<string, unknown>;
+  options: { limit?: number };
+  offset: number;
+}) => {
+  const limit = options.limit ?? 10;
+  // Same total order the real $sort produces: -createdAt, then -_id.
+  const matched = rows
+    .filter((row) => matches(row, query))
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime() || (a._id < b._id ? 1 : -1));
+
+  return toCursorPage(matched.slice(offset, offset + limit + 1), limit);
+};
+const fakeCount = async ({ query }: { query: Record<string, unknown> }) =>
+  rows.filter((row) => matches(row, query)).length;
+
+const run = (query: Record<string, unknown>) => runCursorList({ query, spec, fetch: fakeFetch, count: fakeCount });
+
+(async () => {
+  console.log("\nrunCursorList — cursor mode");
+
+  const first = await run({ limit: 10 });
+  check("returns a full page", first.docs.length, 10);
+  check("cursor block has no totals", Object.keys(first.pagination).sort(), ["hasNextPage", "limit", "nextCursor"]);
+  check("hasNextPage is true", (first.pagination as { hasNextPage: boolean }).hasNextPage, true);
+
+  const nextCursor = (first.pagination as { nextCursor: string }).nextCursor;
+  check("nextCursor is issued", typeof nextCursor, "string");
+
+  // Walk the whole list two rows at a time and confirm no duplicates or gaps.
+  const seen: string[] = [];
+  let cursor: string | null = null;
+  for (let i = 0; i < 40; i++) {
+    const page: Awaited<ReturnType<typeof run>> = await run({ limit: 2, ...(cursor ? { cursor } : {}) });
+    seen.push(...page.docs.map((d) => d._id as string));
+    cursor = (page.pagination as { nextCursor: string | null }).nextCursor;
+    if (!cursor) break;
+  }
+  check("walk visits every row once", seen.length, rows.length);
+  check("walk has no duplicates", new Set(seen).size, rows.length);
+  check("walk is in order", seen[0] === rows[0]._id && seen[seen.length - 1] === rows[rows.length - 1]._id, true);
+
+  // A multi-token sort has no single field to key on, so it must fall back to an
+  // offset cursor. Keyset-walking it would duplicate and skip rows.
+  const multiSpec: ListQuerySpec = { ...spec, sortable: ["name"], defaultSort: "name -createdAt" };
+  const multi = await runCursorList({ query: { limit: 10 }, spec: multiSpec, fetch: fakeFetch, count: fakeCount });
+  const multiCursor = (multi.pagination as { nextCursor: string }).nextCursor;
+  check(
+    "multi-token sort issues an offset cursor, not a keyset one",
+    JSON.parse(Buffer.from(multiCursor, "base64url").toString("utf8")).t,
+    "o"
+  );
+
+  console.log("\nrunCursorList — legacy ?page= mode");
+
+  const legacy = await run({ page: 2, limit: 10 });
+  const block = legacy.pagination as unknown as Record<string, unknown>;
+  check("second page skips the first", legacy.docs[0]._id, rows[10]._id);
+  check("totalDocs is reported", block.totalDocs, 25);
+  check("totalPages is reported", block.totalPages, 3);
+  check("page echoes back", block.page, 2);
+  check("pagingCounter is 1-based", block.pagingCounter, 11);
+  check("hasPrevPage on page 2", block.hasPrevPage, true);
+  check("prevPage/nextPage", [block.prevPage, block.nextPage], [1, 3]);
+  check("legacy block still carries nextCursor", typeof block.nextCursor, "string");
+
+  const lastPage = await run({ page: 3, limit: 10 });
+  check("last page has no next", (lastPage.pagination as { hasNextPage: boolean }).hasNextPage, false);
+  check("last page nextCursor is null", (lastPage.pagination as { nextCursor: unknown }).nextCursor, null);
+
+  console.log("\ncursor guard");
+
+  try {
+    await run({ limit: 10, cursor: nextCursor, sort: "name" });
+    failures++;
+    console.log("  FAIL replaying a cursor under a different sort should throw");
+  } catch (error) {
+    check("rejects a cursor from a different sort", (error as Error).message.includes("cursor"), true);
+  }
+
+  try {
+    await run({ limit: 10, cursor: nextCursor, status: "open" });
+    failures++;
+    console.log("  FAIL replaying a cursor under a different filter should throw");
+  } catch (error) {
+    check("rejects a cursor from a different filter", (error as Error).message.includes("cursor"), true);
+  }
+
+  try {
+    await run({ limit: 10, cursor: "not-a-cursor" });
+    failures++;
+    console.log("  FAIL a malformed cursor should throw");
+  } catch (error) {
+    check("rejects a malformed cursor", (error as Error).message.includes("cursor"), true);
+  }
+
+  console.log("\nsecurity query composition");
+  const composed = await runCursorList({
+    query: { status: "open", limit: 5 },
+    spec,
+    securityQuery: { tenantId: "t1" },
+    extraConditions: [{ isActive: true }],
+    fetch: fakeFetch,
+    count: fakeCount,
+  });
+  check("security query and extras join the $and", composed.finalQuery, {
+    $and: [{ status: "open" }, { tenantId: "t1" }, { isActive: true }],
+  });
+
+  console.log(failures ? `\n${failures} FAILED\n` : "\nall passed\n");
+  process.exit(failures ? 1 : 0);
+})();

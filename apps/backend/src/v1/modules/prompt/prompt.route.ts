@@ -1,6 +1,6 @@
 import express from "express";
 import { handleController } from "../../../common/helper";
-import { validate } from "../../../common/middlewares";
+import { validate, validateQuery } from "../../../common/middlewares";
 import {
   createBodySchema,
   updateBodySchema,
@@ -8,6 +8,7 @@ import {
   labelParamsSchema,
   setLabelBodySchema,
   resolveQuerySchema,
+  listQuerySchema,
 } from "./prompt.validation";
 import {
   list,
@@ -26,12 +27,11 @@ import {
 const router = express.Router();
 const validateBody = validate("body");
 const validateParams = validate("params");
-const validateQuery = validate("query");
 
 // prompt routes
 // `/names` and `/resolve` are declared before `/:id`, or the param route
 // swallows them.
-router.get("/", handleController(list));
+router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/names", handleController(listNames));
 router.get("/resolve", validateQuery(resolveQuerySchema), handleController(resolve));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));

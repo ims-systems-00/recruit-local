@@ -25,12 +25,9 @@ import { RankingJobProfile } from "../../application/ranking/pipeline";
  * Entity-specific shaping stays with its own tools — see `application.shared.ts`.
  */
 
-/**
- * Makes a model-supplied string safe to drop into a `$regex`. Every search term
- * reaching Mongo from a tool goes through this — unescaped, `c++` fails to
- * compile and a term of nested quantifiers is a denial of service.
- */
-export const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// Lives in common/helper now — the list-query builder needs it too. Re-exported
+// so the tools that already import it from here keep working.
+export { escapeRegex } from "../../../../common/helper/escape-regex";
 
 /**
  * Narrows a sanitized document to the fields worth spending tokens on.

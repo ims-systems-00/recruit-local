@@ -1,24 +1,23 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { SalaryAbilityBuilder, SalaryAuthZEntity } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
-import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
+import { ApiResponse, ControllerParams, UnauthorizedException } from "../../../common/helper";
+import { runCursorList } from "../../../common/query";
+import { salaryListQuerySpec } from "./salary.query";
 import * as salaryService from "./salary.service";
 
 export const list = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["jobTitle", "location", "experienceLevel", "currency"],
-  }).build();
-  const query = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-
-  const results = await salaryService.list({ query, options });
-  const { data, pagination } = formatListResponse(results);
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: salaryListQuerySpec,
+    fetch: ({ query, options, offset }) => salaryService.list({ query, options, offset }),
+    count: ({ query }) => salaryService.count({ query }),
+  });
 
   return new ApiResponse({
     message: "Salaries retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "salaries",
     pagination,
   });

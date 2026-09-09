@@ -21,21 +21,27 @@ export const updateFavouriteBodySchema = Joi.object({
     .label("Favourite Type"),
 });
 
+/**
+ * The contract for `GET /favourites`.
+ *
+ * There is no free-text search here — a Favourite is just a pointer (itemType +
+ * itemId), so there is nothing on the document to match. The old
+ * `searchFields: []` said the same thing.
+ */
 export const favouriteListQuerySchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page.
+  page: Joi.number().integer().min(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string().valid("-createdAt", "createdAt").default("-createdAt"),
 
-  tenantId: Joi.string().custom(objectIdValidation).optional().label("Tenant Filter"),
-
-  jobProfileId: Joi.string().custom(objectIdValidation).optional().label("Job Profile Filter"),
-
-  itemId: Joi.string().custom(objectIdValidation).optional().label("Item Filter"),
-
+  tenantId: Joi.string().custom(objectIdValidation).label("Tenant Filter"),
+  jobProfileId: Joi.string().custom(objectIdValidation).label("Job Profile Filter"),
+  itemId: Joi.string().custom(objectIdValidation).label("Item Filter"),
   itemType: Joi.string()
     .valid(...Object.values(modelNames))
-    .optional()
     .label("Type Filter"),
 
-  startDate: Joi.date().iso().optional(),
-  endDate: Joi.date().iso().optional(),
+  createdAt: Joi.object({ gte: Joi.date().iso(), lte: Joi.date().iso() }),
 });

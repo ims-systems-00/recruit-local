@@ -1,19 +1,24 @@
 import { StatusCodes } from "http-status-codes";
 import * as notificationService from "./notification.service";
-import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
+import { ApiResponse, ControllerParams } from "../../../common/helper";
+import { runCursorList } from "../../../common/query";
+import { notificationListQuerySpec } from "./notification.query";
 
 export const listNotification = async ({ req }: ControllerParams) => {
-  const { page, limit } = req.query;
-
-  const query = {};
-  const options = { page, limit };
-  const results = await notificationService.listNotification({ query, options });
-  const { data, pagination } = formatListResponse(results);
+  // NOTE: no security query is passed here, so this still lists every user's
+  // notifications — unchanged from before, and still wrong. See the warning on
+  // `listQuerySchema`.
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: notificationListQuerySpec,
+    fetch: ({ query, options, offset }) => notificationService.listNotification({ query, options, offset }),
+    count: ({ query }) => notificationService.countNotification({ query }),
+  });
 
   return new ApiResponse({
     message: "Notifications retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "notifications",
     pagination,
   });

@@ -2,19 +2,35 @@ import { Types } from "mongoose";
 import { IListParams, ListQueryParams } from "@rl/types";
 import { IUserInterestSurveyInput, UserInterestSurvey } from "../../../models/user-interest-survey.model";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { userInterestSurveyProjectQuery } from "./user-interest-survey.query";
 
-type IListSurveyParams = IListParams<IUserInterestSurveyInput>;
+type IListSurveyParams = IListParams<IUserInterestSurveyInput> & { offset?: number };
 type ISurveyQueryParams = ListQueryParams<IUserInterestSurveyInput>;
 
-export const list = ({ query = {}, options }: IListSurveyParams) => {
-  return UserInterestSurvey.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...userInterestSurveyProjectQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListSurveyParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await UserInterestSurvey.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...userInterestSurveyProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListSurveyParams) =>
+  UserInterestSurvey.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: IListSurveyParams) => {
   const surveys = await UserInterestSurvey.aggregate([

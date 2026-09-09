@@ -2,7 +2,6 @@ import { StatusCodes } from "http-status-codes";
 import {
   ApiResponse,
   ControllerParams,
-  formatCursorListResponse,
   formatListResponse,
   NotFoundException,
   UnauthorizedException,
@@ -12,15 +11,7 @@ import { getProfileKeywords } from "./keyword.service";
 import { JobAbilityBuilder, JobAuthZEntity, ALL_JOB_FIELDS } from "@rl/authz";
 import { AbilityAction, JOBS_STATUS_ENUMS } from "@rl/types";
 import { jobListQuerySpec, jobRoleScopedSecurityQuery, jobSearchPreFilter } from "./job.query";
-import {
-  buildListQuery,
-  cursorGuard,
-  decodeCursor,
-  encodeKeysetCursor,
-  encodeOffsetCursor,
-  keysetCondition,
-  parseSortToken,
-} from "../../../common/query";
+import { runCursorList } from "../../../common/query";
 import { getQueryEmbedding } from "../../../common/helper/embedding";
 import { toJobResponse, toJobResponseList } from "./job.dto";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
@@ -80,31 +71,6 @@ const getSanitizedJobResponse = (doc: any, ability: any) => {
   return sanitizeDocument<JobAuthZEntity>(doc, ability, AbilityAction.Read, JobAuthZEntity, caslFieldOptions);
 };
 
-/**
- * Token for the next page, or null when there isn't one.
- *
- * Call this on the *raw* service documents, before sanitizing: `sanitizeDocuments`
- * and the public list's `pick` can both drop the field the keyset keys on, and a
- * cursor built from a stripped document silently restarts the list from the top.
- */
-const nextCursorFrom = (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  results: { docs: any[]; hasNextPage: boolean; limit: number },
-  guard: string,
-  useKeyset: boolean,
-  sort: string | undefined,
-  offset: number
-): string | null => {
-  if (!results.hasNextPage || !results.docs.length) return null;
-
-  if (!useKeyset || !sort) return encodeOffsetCursor(guard, offset + results.limit);
-
-  const last = results.docs[results.docs.length - 1];
-  const { field } = parseSortToken(sort);
-
-  return encodeKeysetCursor(guard, sort, last[field], last._id);
-};
-
 export const list = async ({ req }: ControllerParams) => {
   const abilityBuilder = new JobAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
@@ -117,96 +83,86 @@ export const list = async ({ req }: ControllerParams) => {
   // here; the builder only ever sees the keys jobListQuerySpec declares.
   const { matched, semantic } = req.query;
 
-  const { filter, options, search, cursor: rawCursor } = buildListQuery(req.query, jobListQuerySpec);
-
-  const searchTerm = search;
-  const searchVector = searchTerm && semantic !== false ? await getQueryEmbedding(searchTerm) : undefined;
-
+  let searchTerm: string | undefined;
+  let searchVector: number[] | undefined;
   let matchKeywords: string[] | undefined;
-  let feedIds: string[] = [];
 
-  if (matched && req.session.jobProfileId) {
-    matchKeywords = await getProfileKeywords(req.session.jobProfileId);
-    if (matchKeywords.length) {
-      // Ranking is the point of matched mode — sort best-match first. A search
-      // term outranks it: $rankFusion already ordered those results, and any
-      // trailing $sort would throw that ordering away.
-      if (!searchTerm) options.sort = "-matchScore -createdAt";
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: jobListQuerySpec,
+    securityQuery: jobRoleScopedSecurityQuery(ability),
 
-      // Narrow to the precomputed feed so Mongo scores/sorts only the already
-      // matched candidates instead of the whole collection. Skipped when there
-      // is a search term: the feed is capped at 300 profile-matched ids, so
-      // searching inside it hides every job outside the candidate's keywords.
-      if (!searchTerm) {
-        feedIds = await readFeedIds(req.session.jobProfileId);
-        // Cold/evicted feed → build it in the background; this request still
-        // matches over the full collection (correct, just not accelerated).
-        if (!feedIds.length) await enqueueProfileFeedRebuild(req.session.jobProfileId);
+    prepare: async ({ options, search }) => {
+      searchTerm = search;
+      searchVector = searchTerm && semantic !== false ? await getQueryEmbedding(searchTerm) : undefined;
+
+      let feedIds: string[] = [];
+
+      if (matched && req.session.jobProfileId) {
+        matchKeywords = await getProfileKeywords(req.session.jobProfileId);
+        if (matchKeywords.length && !searchTerm) {
+          // Ranking is the point of matched mode — sort best-match first. A search
+          // term outranks it: $rankFusion already ordered those results, and any
+          // trailing $sort would throw that ordering away.
+          options.sort = "-matchScore -createdAt";
+
+          // Narrow to the precomputed feed so Mongo scores/sorts only the already
+          // matched candidates instead of the whole collection. Skipped when there
+          // is a search term: the feed is capped at 300 profile-matched ids, so
+          // searching inside it hides every job outside the candidate's keywords.
+          feedIds = await readFeedIds(req.session.jobProfileId);
+          // Cold/evicted feed → build it in the background; this request still
+          // matches over the full collection (correct, just not accelerated).
+          if (!feedIds.length) await enqueueProfileFeedRebuild(req.session.jobProfileId);
+        }
       }
-    }
-  }
 
-  // A $sort would undo the fused ranking, so relevance is the order in search mode.
-  if (searchTerm) delete options.sort;
+      // A $sort would undo the fused ranking, so relevance is the order in search mode.
+      if (searchTerm) delete options.sort;
 
-  // Keyset paging needs a stored field to key on. Search is ordered by $rankFusion
-  // relevance and matched mode by a computed matchScore — neither has one, so both
-  // page by an offset carried inside the token instead.
-  const useKeyset = !searchTerm && !matchKeywords?.length;
-  const guard = cursorGuard({
-    filter,
-    sort: options.sort ?? null,
-    searchTerm: searchTerm ?? null,
-    semantic: semantic !== false,
-    matched: Boolean(matchKeywords?.length),
+      return {
+        // Stale/closed jobs in the feed fall out via the pipeline's soft-delete
+        // and security filters, so no per-mutation feed invalidation is needed.
+        extraConditions: feedIds.length ? [{ _id: { $in: feedIds } }] : [],
+        guardExtras: { semantic: semantic !== false, matched: Boolean(matchKeywords?.length) },
+        // Keyset paging needs a stored field to key on. Search is ordered by
+        // $rankFusion relevance and matched mode by a computed matchScore —
+        // neither has one, so both page by an offset carried inside the token.
+        useKeyset: !searchTerm && !matchKeywords?.length,
+      };
+    },
+
+    fetch: ({ query, options, offset }) =>
+      jobService.list({
+        query,
+        options,
+        tenantId: req.session.tenantId,
+        jobProfileId: req.session.jobProfileId,
+        matchKeywords,
+        searchTerm,
+        searchVector,
+        searchPreFilter: jobSearchPreFilter(req.session),
+        offset,
+      }),
+
+    // Legacy `?page=` only. In search mode this counts everything matching the
+    // filters, not the fused hits — the totals are approximate until the
+    // frontend is off offset paging.
+    count: ({ query }) => jobService.count({ query }),
   });
-  const cursor = rawCursor ? decodeCursor(rawCursor, guard) : undefined;
-  const offset = cursor?.t === "o" ? cursor.o : 0;
-
-  const finalQuery = {
-    $and: [
-      filter,
-      jobRoleScopedSecurityQuery(ability),
-      // Stale/closed jobs in the feed fall out via the pipeline's soft-delete
-      // and security filters, so no per-mutation feed invalidation is needed.
-      ...(feedIds.length ? [{ _id: { $in: feedIds } }] : []),
-      ...(cursor?.t === "k" ? [keysetCondition(cursor)] : []),
-    ],
-  };
-
-  const results = await jobService.list({
-    query: finalQuery,
-    options,
-    tenantId: req.session.tenantId,
-    jobProfileId: req.session.jobProfileId,
-    matchKeywords,
-    searchTerm,
-    searchVector,
-    searchPreFilter: jobSearchPreFilter(req.session),
-    offset,
-  });
-
-  const nextCursor = nextCursorFrom(results, guard, useKeyset, options.sort as string | undefined, offset);
 
   const sanitizedDocs = sanitizeDocuments<JobAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     JobAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatCursorListResponse({
-    docs: sanitizedDocs,
-    limit: results.limit,
-    hasNextPage: results.hasNextPage,
-    nextCursor,
-  });
-
   return new ApiResponse({
     message: "Jobs retrieved",
     statusCode: StatusCodes.OK,
-    data: toJobResponseList(data),
+    data: toJobResponseList(sanitizedDocs),
     fieldName: "jobs",
     pagination,
   });
@@ -389,53 +345,41 @@ export const hardRemove = async ({ req }: ControllerParams) => {
 
 export const publicList = async ({ req }: ControllerParams) => {
   const { semantic } = req.query;
-  const { filter, options, search, cursor: rawCursor } = buildListQuery(req.query, jobListQuerySpec);
 
-  const searchTerm = search;
-  const searchVector = searchTerm && semantic !== false ? await getQueryEmbedding(searchTerm) : undefined;
+  let searchTerm: string | undefined;
+  let searchVector: number[] | undefined;
 
-  if (searchTerm) delete options.sort;
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: jobListQuerySpec,
+    // No ability here — the public list is open jobs only.
+    extraConditions: [{ status: JOBS_STATUS_ENUMS.OPEN }],
 
-  const useKeyset = !searchTerm;
-  const guard = cursorGuard({
-    filter,
-    sort: options.sort ?? null,
-    searchTerm: searchTerm ?? null,
-    semantic: semantic !== false,
-    public: true,
-  });
-  const cursor = rawCursor ? decodeCursor(rawCursor, guard) : undefined;
-  const offset = cursor?.t === "o" ? cursor.o : 0;
+    prepare: async ({ options, search }) => {
+      searchTerm = search;
+      searchVector = searchTerm && semantic !== false ? await getQueryEmbedding(searchTerm) : undefined;
 
-  const finalQuery = {
-    $and: [filter, { status: JOBS_STATUS_ENUMS.OPEN }, ...(cursor?.t === "k" ? [keysetCondition(cursor)] : [])],
-  };
+      if (searchTerm) delete options.sort;
 
-  const results = await jobService.list({
-    query: finalQuery,
-    options,
-    searchTerm,
-    searchVector,
-    // No session here — the public list is open jobs only.
-    searchPreFilter: jobSearchPreFilter(),
-    offset,
+      return {
+        guardExtras: { semantic: semantic !== false, public: true },
+        useKeyset: !searchTerm,
+      };
+    },
+
+    fetch: ({ query, options, offset }) =>
+      jobService.list({ query, options, searchTerm, searchVector, searchPreFilter: jobSearchPreFilter(), offset }),
+
+    count: ({ query }) => jobService.count({ query }),
   });
 
-  const nextCursor = nextCursorFrom(results, guard, useKeyset, options.sort as string | undefined, offset);
-
-  const sanitizedDocs = results.docs.map((doc) => pick(doc, PUBLIC_JOB_FIELDS));
-
-  const { data, pagination } = formatCursorListResponse({
-    docs: sanitizedDocs,
-    limit: results.limit,
-    hasNextPage: results.hasNextPage,
-    nextCursor,
-  });
+  // `pick` can drop the keyset field, so this runs after the cursor is built.
+  const sanitizedDocs = docs.map((doc) => pick(doc, PUBLIC_JOB_FIELDS));
 
   return new ApiResponse({
     message: "Jobs retrieved",
     statusCode: StatusCodes.OK,
-    data: toJobResponseList(data),
+    data: toJobResponseList(sanitizedDocs),
     fieldName: "jobs",
     pagination,
   });

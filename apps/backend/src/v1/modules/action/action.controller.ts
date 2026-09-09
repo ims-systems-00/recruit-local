@@ -1,16 +1,10 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  NotFoundException,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
 import { UserAbilityBuilder, CvAbilityBuilder } from "@rl/authz"; // Updated AuthZ Entity
 import { AbilityAction } from "@rl/types";
-import { roleScopedSecurityQuery } from "../../../common/query";
+import { runCursorList } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
+import { actionListQuerySpec } from "./action.query";
 import * as actionService from "./action.service";
 
 export const list = async ({ req }: ControllerParams) => {
@@ -21,30 +15,19 @@ export const list = async ({ req }: ControllerParams) => {
   //   throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read actions.`);
   // }
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["label"],
-  }).build();
-
-  const actionSearchQuery = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-
-  // const securityQuery = roleScopedSecurityQuery(ActionAuthZEntity, ability);
-
-  const finalQuery = {
-    $and: [actionSearchQuery /*, securityQuery*/],
-  };
-
-  const results = await actionService.list({
-    query: sanitizeQueryIds(finalQuery) as any,
-    options,
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    // No CASL scoping here — the ability check above is still commented out, so
+    // this lists every action. Unchanged by the migration, but worth knowing.
+    spec: actionListQuerySpec,
+    fetch: ({ query, options, offset }) => actionService.list({ query, options, offset }),
+    count: ({ query }) => actionService.count({ query }),
   });
-
-  const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
     message: "Actions retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "actions",
     pagination,
   });

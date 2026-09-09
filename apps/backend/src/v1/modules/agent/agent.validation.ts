@@ -29,3 +29,20 @@ export const traceStatsQuerySchema = Joi.object({
   from: Joi.date().iso().optional().label("From"),
   to: Joi.date().iso().min(Joi.ref("from")).optional().label("To"),
 }).unknown(true);
+
+/**
+ * The contract for `GET /agent/conversations`.
+ *
+ * Joi objects reject unknown keys, which is the point: before this a typo'd param
+ * became a `$match` clause and the endpoint quietly returned nothing.
+ */
+export const conversationListQuerySchema = Joi.object({
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page.
+  page: Joi.number().integer().min(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string().valid("-lastMessageAt", "lastMessageAt", "-createdAt", "createdAt").default("-lastMessageAt"),
+
+  clientSearch: Joi.string().trim().max(200).allow(""),
+});

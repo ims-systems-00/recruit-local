@@ -1,0 +1,93 @@
+# Flat catalogs — job-titles, industries, work-modes, experience-levels, values.
+# All five share one spec shape, so one file covers them. Swap {{path}} to retest
+# another.
+
+@host = http://localhost:9027/api/v1
+
+# Log in first — REST Client variables do not cross files, so each file does this.
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv ADMIN_USER_EMAIL}}",
+  "password": "{{$dotenv ADMIN_USER_PASSWORD}}"
+}
+
+###
+
+@token = {{login.response.body.user.accessToken}}
+@path = job-titles
+
+### unknown param -> 400. Before the migration this returned an empty list,
+### because MongoQuery turned `nonsense=x` into a $match clause.
+GET {{host}}/{{path}}?nonsense=x
+x-auth-access-token: {{token}}
+
+### undeclared sort -> 400. It used to reach $sort as a raw string.
+GET {{host}}/{{path}}?sort=-secretField
+x-auth-access-token: {{token}}
+
+### limit above the cap -> 400 (Joi rejects >100 before the builder clamps).
+GET {{host}}/{{path}}?limit=5000
+x-auth-access-token: {{token}}
+
+### regex metacharacters are escaped, not executed. Expect 200 and an empty list,
+### not a hang — this pattern is the classic ReDoS case MongoQuery passed through.
+GET {{host}}/{{path}}?clientSearch=(a%2B)%2B%24
+x-auth-access-token: {{token}}
+
+### search actually matches. Expect only rows whose name/description contain "eng".
+GET {{host}}/{{path}}?clientSearch=eng
+x-auth-access-token: {{token}}
+
+### legacy offset paging still works: pagination has totalDocs + totalPages,
+### and additionally a nextCursor so the frontend can switch over when ready.
+GET {{host}}/{{path}}?page=1&limit=5
+x-auth-access-token: {{token}}
+
+### page 2 of the same list — pagingCounter should be 6, hasPrevPage true.
+GET {{host}}/{{path}}?page=2&limit=5
+x-auth-access-token: {{token}}
+
+### cursor page: no page param. pagination = { limit, hasNextPage, nextCursor },
+### with no totalDocs — skipping the $count branch is the point.
+# @name firstPage
+GET {{host}}/{{path}}?limit=5
+x-auth-access-token: {{token}}
+
+### follow the cursor. No row from the previous response may appear here.
+GET {{host}}/{{path}}?limit=5&cursor={{firstPage.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### replaying that cursor under a different sort -> 400. It was issued against
+### `createdAt`; under `-name` it would compare a date to a string and quietly
+### return the wrong rows.
+GET {{host}}/{{path}}?limit=5&sort=-name&cursor={{firstPage.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### a malformed cursor -> 400, not a 500.
+GET {{host}}/{{path}}?cursor=not-a-real-cursor
+x-auth-access-token: {{token}}
+
+### only active rows are listed. Every returned isActive must be true — the
+### controller pins it, so it cannot be turned off from the query string.
+GET {{host}}/{{path}}?limit=100
+x-auth-access-token: {{token}}
+
+### `isActive` is not a declared filter, so asking for inactive rows is a 400
+### rather than a way around the pin.
+GET {{host}}/{{path}}?isActive=false
+x-auth-access-token: {{token}}
+
+###############################################################################
+# values — same shape, plus a `type` enum filter
+###############################################################################
+
+### valid enum value -> 200, filtered
+GET {{host}}/values?type=CORE&limit=5
+x-auth-access-token: {{token}}
+
+### value outside the enum -> 400
+GET {{host}}/values?type=not-a-type
+x-auth-access-token: {{token}}

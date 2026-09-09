@@ -1,4 +1,6 @@
 import express from "express";
+import { validateQuery } from "../../../common/middlewares";
+import { listQuerySchema } from "./notification.validation";
 import {
   listNotification,
   getNotification,
@@ -17,7 +19,7 @@ const router = express.Router();
 const validateBody = validate("body");
 const validateParams = validate("params");
 
-router.get("/", handleController(listNotification));
+router.get("/", validateQuery(listQuerySchema), handleController(listNotification));
 router.get("/:id", validateParams(idParamsSchema), handleController(getNotification));
 router.put(
   "/:id",

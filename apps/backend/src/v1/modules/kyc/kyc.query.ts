@@ -2,7 +2,7 @@ import { PipelineStage } from "mongoose";
 import { accessibleBy } from "@casl/mongoose";
 import { omit } from "lodash";
 import { VISIBILITY_ENUM } from "@rl/types";
-import { projectQuery } from "../../../common/query";
+import { eq, ListQuerySpec, projectQuery } from "../../../common/query";
 import { IKycDoc, Kyc } from "../../../models";
 import { KycAbilityBuilder, KycAuthZEntity } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
@@ -73,4 +73,17 @@ export const populateKycDocumentsQuery = (): PipelineStage[] => {
     ...populateKycDocumentQuery("documentFrontId", "documentFront"),
     ...populateKycDocumentQuery("documentBackId", "documentBack"),
   ];
+};
+
+/**
+ * `userId` is a filter, not the security boundary — `kycRoleScopedSecurityQuery`
+ * is. Anything not listed here never reaches `$match`.
+ */
+export const kycListQuerySpec: ListQuerySpec = {
+  filters: { userId: eq("userId"), status: eq("status"), documentType: eq("documentType") },
+  sortable: ["createdAt", "updatedAt"],
+  defaultSort: "-createdAt",
+  // Kept from the old MongoQuery contract so no frontend call site has to change.
+  searchKey: "clientSearch",
+  searchFields: ["firstName", "lastName"],
 };

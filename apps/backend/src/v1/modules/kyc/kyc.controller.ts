@@ -1,16 +1,10 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  NotFoundException,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { AbilityAction } from "@rl/types";
 import * as kycService from "./kyc.service";
-import { kycRoleScopedSecurityQuery } from "./kyc.query";
+import { kycListQuerySpec, kycRoleScopedSecurityQuery } from "./kyc.query";
+import { runCursorList } from "../../../common/query";
 import { KycAbilityBuilder, KycAuthZEntity, ALL_KYC_FIELDS } from "@rl/authz";
 
 const caslFieldOptions = {
@@ -29,31 +23,27 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read KYC records.`);
   }
 
-  const filter = new MongoQuery(req.query, { searchFields: ["firstName", "lastName"] }).build();
-
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), kycRoleScopedSecurityQuery(ability)],
-  };
-
-  const results = await kycService.list({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: kycListQuerySpec,
+    securityQuery: kycRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => kycService.list({ query, options, offset }),
+    count: ({ query }) => kycService.count({ query }),
   });
 
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<KycAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     KycAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "KYC records retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: sanitizedDocs,
     fieldName: "kycs",
     pagination,
   });

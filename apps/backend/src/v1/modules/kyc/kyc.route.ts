@@ -1,14 +1,14 @@
 import express from "express";
 import { handleController } from "../../../common/helper";
-import { validate } from "../../../common/middlewares";
-import { createBodySchema, updateBodySchema, idParamsSchema } from "./kyc.validation";
+import { validate, validateQuery } from "../../../common/middlewares";
+import { createBodySchema, updateBodySchema, idParamsSchema, listQuerySchema } from "./kyc.validation";
 import { list, get, create, update, softRemove, hardRemove, restore } from "./kyc.controller";
 
 const router = express.Router();
 const validateBody = validate("body");
 const validateParams = validate("params");
 
-router.get("/", handleController(list));
+router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
 router.post("/", validateBody(createBodySchema), handleController(create));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));

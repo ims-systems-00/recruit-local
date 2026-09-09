@@ -1,19 +1,35 @@
 import { IListParams, ListQueryParams } from "@rl/types";
 import { IndustryInput, Industry } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { industryProjectQuery } from "./industry.query";
 
-type IListIndustryParams = IListParams<IndustryInput>;
+type IListIndustryParams = IListParams<IndustryInput> & { offset?: number };
 type IIndustryQueryParams = ListQueryParams<IndustryInput>;
 
-export const list = ({ query = {}, options }: IListIndustryParams) => {
-  return Industry.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...industryProjectQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListIndustryParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await Industry.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...industryProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListIndustryParams) =>
+  Industry.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: IListIndustryParams) => {
   const results = await Industry.aggregate([
@@ -48,13 +64,7 @@ export const create = async (payload: IndustryInput) => {
   return industry;
 };
 
-export const update = async ({
-  query,
-  payload,
-}: {
-  query: IIndustryQueryParams;
-  payload: Partial<IndustryInput>;
-}) => {
+export const update = async ({ query, payload }: { query: IIndustryQueryParams; payload: Partial<IndustryInput> }) => {
   const updated = await Industry.findOneAndUpdate(sanitizeQueryIds(query), { $set: payload }, { new: true });
   if (!updated) throw new NotFoundException("Industry not found.");
   return updated;

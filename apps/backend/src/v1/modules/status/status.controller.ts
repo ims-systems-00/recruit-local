@@ -1,24 +1,22 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
+import { buildListQuery, runCursorList } from "../../../common/query";
+import { statusListQuerySpec } from "./status.query";
 import * as statusService from "./status.service";
 import { toStatusResponse, toStatusResponseList } from "./status.dto";
 
 export const list = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["label", "value"],
-  }).build();
-
-  const query = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-
-  const results = await statusService.list({ query, options });
-  const { data, pagination } = formatListResponse(results);
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: statusListQuerySpec,
+    fetch: ({ query, options, offset }) => statusService.list({ query, options, offset }),
+    count: ({ query }) => statusService.count({ query }),
+  });
 
   return new ApiResponse({
     message: "Statuses retrieved.",
     statusCode: StatusCodes.OK,
-    data: toStatusResponseList(data),
+    data: toStatusResponseList(docs),
     fieldName: "statuses",
     pagination,
   });
@@ -38,14 +36,10 @@ export const get = async ({ req }: ControllerParams) => {
 };
 
 export const listSoftDeleted = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["label", "value"],
-  }).build();
+  // Trash still pages by offset — only the filter building moves off MongoQuery.
+  const { filter, options, page } = buildListQuery(req.query, statusListQuerySpec);
 
-  const query = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-
-  const results = await statusService.listSoftDeleted({ query, options });
+  const results = await statusService.listSoftDeleted({ query: filter, options: { ...options, page: page ?? 1 } });
   const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({

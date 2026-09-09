@@ -1,17 +1,11 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { UserInterestSurveyAbilityBuilder, UserInterestSurveyAuthZEntity } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  NotFoundException,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
 import { Types } from "mongoose";
 import * as surveyService from "./user-interest-survey.service";
-import { surveyRoleScopedSecurityQuery } from "./user-interest-survey.query";
+import { surveyListQuerySpec, surveyRoleScopedSecurityQuery } from "./user-interest-survey.query";
+import { runCursorList } from "../../../common/query";
 
 export const list = async ({ req }: ControllerParams) => {
   const ability = new UserInterestSurveyAbilityBuilder(req.session).getAbility();
@@ -20,19 +14,18 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You are not authorized to list user interest surveys.");
   }
 
-  const filter = new MongoQuery(req.query, { searchFields: ["interest"] }).build();
-
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), surveyRoleScopedSecurityQuery(ability)],
-  };
-
-  const results = await surveyService.list({ query: finalQuery, options: filter.getQueryOptions() });
-  const { data, pagination } = formatListResponse(results);
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: surveyListQuerySpec,
+    securityQuery: surveyRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => surveyService.list({ query, options, offset }),
+    count: ({ query }) => surveyService.count({ query }),
+  });
 
   return new ApiResponse({
     message: "User interest surveys retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "userInterestSurveys",
     pagination,
   });

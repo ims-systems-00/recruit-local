@@ -1,24 +1,21 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
+import { runCursorList } from "../../../common/query";
+import { fileMediaListQuerySpec } from "./file-media.query";
 import * as fileMediaService from "./file-media.service";
-import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
+import { ApiResponse, ControllerParams } from "../../../common/helper";
 
 export const list = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["collectionName"],
-  }).build();
-
-  const query = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-
-  // This one already matches the service structure perfectly
-  const results = await fileMediaService.list({ query, options });
-  const { data, pagination } = formatListResponse(results);
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: fileMediaListQuerySpec,
+    fetch: ({ query, options, offset }) => fileMediaService.list({ query, options, offset }),
+    count: ({ query }) => fileMediaService.count({ query }),
+  });
 
   return new ApiResponse({
     message: "File and medias retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "fileMedias",
     pagination,
   });

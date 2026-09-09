@@ -1,5 +1,11 @@
 import { Types } from "mongoose";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { cvProjectQuery, populateCvResumeQuery } from "./cv.query";
 import { NotFoundException } from "../../../common/helper";
@@ -12,7 +18,7 @@ import { VISIBILITY_ENUM } from "@rl/types";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 
 // --- Standardized Parameter Interfaces ---
-type IListCVParams = IListParams<CVInput>;
+type IListCVParams = IListParams<CVInput> & { offset?: number };
 type ICVQueryParams = ListQueryParams<CVInput>;
 
 export interface ICVUpdateParams {
@@ -34,12 +40,23 @@ export interface ICVCreateParams {
   };
 }
 
-export const list = ({ query = {}, options }: IListCVParams) => {
-  return CV.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...populateCvResumeQuery(), ...cvProjectQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListCVParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await CV.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...populateCvResumeQuery(),
+    ...cvProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListCVParams) =>
+  CV.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: ICVGetParams) => {
   const cvs = await CV.aggregate([

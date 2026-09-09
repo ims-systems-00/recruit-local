@@ -1,13 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  UnauthorizedException,
-  NotFoundException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, UnauthorizedException, NotFoundException } from "../../../common/helper";
 import {
   AgentAbilityBuilder,
   AgentConversationAuthZEntity,
@@ -17,7 +10,8 @@ import {
 } from "@rl/authz";
 import { AbilityAction, AGENT_MESSAGE_ROLE } from "@rl/types";
 import { sanitizeDocument, sanitizeDocuments } from "../../../common/helper/authz";
-import { agentConversationRoleScopedSecurityQuery } from "./agent.query";
+import { agentConversationListQuerySpec, agentConversationRoleScopedSecurityQuery } from "./agent.query";
+import { runCursorList } from "../../../common/query";
 import * as conversationService from "./conversation.service";
 import * as agentService from "./agent.service";
 import * as traceService from "./trace.service";
@@ -143,27 +137,27 @@ export const listConversations = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read conversations.`);
   }
 
-  const filter = new MongoQuery(req.query, { searchFields: ["title"] }).build();
-
-  const results = await conversationService.list({
-    query: { $and: [filter.getFilterQuery(), agentConversationRoleScopedSecurityQuery(ability)] },
-    options: filter.getQueryOptions(),
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: agentConversationListQuerySpec,
+    securityQuery: agentConversationRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => conversationService.list({ query, options, offset }),
+    count: ({ query }) => conversationService.count({ query }),
   });
 
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<AgentConversationAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     AgentConversationAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Conversations retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: sanitizedDocs,
     fieldName: "conversations",
     pagination,
   });

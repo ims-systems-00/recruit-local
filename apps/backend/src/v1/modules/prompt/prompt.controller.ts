@@ -1,18 +1,12 @@
 import { Types } from "mongoose";
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  NotFoundException,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { PromptAbilityBuilder, PromptAuthZEntity, ALL_PROMPT_FIELDS } from "@rl/authz";
 import { AbilityAction, PromptResolutionDto } from "@rl/types";
 import * as promptService from "./prompt.service";
-import { promptRoleScopedSecurityQuery } from "./prompt.query";
+import { promptListQuerySpec, promptRoleScopedSecurityQuery } from "./prompt.query";
+import { runCursorList } from "../../../common/query";
 import { toPromptResponse, toPromptResponseList } from "./prompt.dto";
 import { renderPrompt } from "./prompt.render";
 
@@ -37,35 +31,27 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read prompts.`);
   }
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["name", "content", "commitMessage"],
-  }).build();
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: promptListQuerySpec,
+    securityQuery: promptRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => promptService.list({ query, options, offset }),
+    count: ({ query }) => promptService.count({ query }),
+  });
 
-  const options = filter.getQueryOptions();
-  // Newest version of a name first — the order anyone reading a prompt's
-  // history actually wants.
-  if (!options.sort) options.sort = "name -version";
-
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), promptRoleScopedSecurityQuery(ability)],
-  };
-
-  const results = await promptService.list({ query: finalQuery, options });
-
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<PromptAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     PromptAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Prompts retrieved",
     statusCode: StatusCodes.OK,
-    data: toPromptResponseList(data),
+    data: toPromptResponseList(sanitizedDocs),
     fieldName: "prompts",
     pagination,
   });

@@ -1,17 +1,11 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  NotFoundException,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
 import { ExperienceAbilityBuilder, ExperienceAuthZEntity, ALL_EXPERIENCE_FIELDS } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import * as experienceService from "./experience.service";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
-import { experienceRoleScopedSecurityQuery } from "./experience.query";
+import { experienceListQuerySpec, experienceRoleScopedSecurityQuery } from "./experience.query";
+import { runCursorList } from "../../../common/query";
 import { assertCanReadJobProfile, assertProfileScopedListAccess } from "../job-profile/job-profile.access";
 
 const caslFieldOptions = {
@@ -44,33 +38,27 @@ export const list = async ({ req }: ControllerParams) => {
   // Reading someone else's history is only allowed while their profile is.
   await assertProfileScopedListAccess(req.session, req.query.jobProfileId);
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["company", "jobTitle", "description"],
-  }).build();
-
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), experienceRoleScopedSecurityQuery(ability)],
-  };
-
-  const results = await experienceService.list({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: experienceListQuerySpec,
+    securityQuery: experienceRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => experienceService.list({ query, options, offset }),
+    count: ({ query }) => experienceService.count({ query }),
   });
 
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<ExperienceAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     ExperienceAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Experiences retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: sanitizedDocs,
     fieldName: "experiences",
     pagination,
   });

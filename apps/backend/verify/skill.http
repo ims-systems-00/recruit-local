@@ -1,0 +1,71 @@
+# skill — the first migrated module with CASL scoping and field-level sanitizing.
+#
+
+@host = http://localhost:9027/api/v1
+
+# Log in first — REST Client variables do not cross files, so each file does this.
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv ADMIN_USER_EMAIL}}",
+  "password": "{{$dotenv ADMIN_USER_PASSWORD}}"
+}
+
+###
+
+@token = {{login.response.body.user.accessToken}}
+
+### unknown param -> 400
+GET {{host}}/skills?nonsense=x
+x-auth-access-token: {{token}}
+
+### undeclared sort -> 400
+GET {{host}}/skills?sort=-secretField
+x-auth-access-token: {{token}}
+
+### regex metacharacters are escaped, not executed -> 200, empty
+GET {{host}}/skills?clientSearch=(a%2B)%2B%24
+x-auth-access-token: {{token}}
+
+### legacy offset paging still works -> totalDocs + totalPages present
+GET {{host}}/skills?page=1&limit=5
+x-auth-access-token: {{token}}
+
+### cursor page -> nextCursor present, no totalDocs
+# @name firstPage
+GET {{host}}/skills?limit=5
+x-auth-access-token: {{token}}
+
+### follow the cursor — no row may repeat from the previous response
+GET {{host}}/skills?limit=5&cursor={{firstPage.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### cursor replayed under a different sort -> 400
+GET {{host}}/skills?limit=5&sort=name&cursor={{firstPage.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### declared filters
+GET {{host}}/skills?proficiencyLevel=Expert&limit=5
+x-auth-access-token: {{token}}
+
+###############################################################################
+# The part that matters most here: scoping did not regress.
+###############################################################################
+
+### own skills — the CASL query is the boundary, not `jobProfileId`.
+GET {{host}}/skills?limit=100
+x-auth-access-token: {{token}}
+
+### someone else's profile. Expect 403/404 from assertProfileScopedListAccess,
+### NOT a 200 with their skills. Replace the id with a real other profile.
+GET {{host}}/skills?jobProfileId=000000000000000000000000
+x-auth-access-token: {{token}}
+
+### a malformed jobProfileId is a 400 from Joi, before it reaches the access check
+GET {{host}}/skills?jobProfileId=nope
+x-auth-access-token: {{token}}
+
+### unauthenticated -> 401, never a list
+GET {{host}}/skills

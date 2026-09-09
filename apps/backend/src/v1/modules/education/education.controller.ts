@@ -1,17 +1,11 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  NotFoundException,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
 import { EducationAbilityBuilder, EducationAuthZEntity, ALL_EDUCATION_FIELDS } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import * as educationService from "./education.service";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
-import { educationRoleScopedSecurityQuery } from "./education.query";
+import { educationListQuerySpec, educationRoleScopedSecurityQuery } from "./education.query";
+import { runCursorList } from "../../../common/query";
 import { assertCanReadJobProfile, assertProfileScopedListAccess } from "../job-profile/job-profile.access";
 import { toEducationResponse, toEducationResponseList } from "./education.dto";
 
@@ -45,34 +39,28 @@ export const list = async ({ req }: ControllerParams) => {
   // Reading someone else's education is only allowed while their profile is.
   await assertProfileScopedListAccess(req.session, req.query.jobProfileId);
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["degree", "institution", "fieldOfStudy"],
-  }).build();
-
   // Apply Role/Ownership Scoped Security Query
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), educationRoleScopedSecurityQuery(ability)],
-  };
-
-  const results = await educationService.list({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: educationListQuerySpec,
+    securityQuery: educationRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => educationService.list({ query, options, offset }),
+    count: ({ query }) => educationService.count({ query }),
   });
 
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<EducationAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     EducationAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Educations retrieved",
     statusCode: StatusCodes.OK,
-    data: toEducationResponseList(data),
+    data: toEducationResponseList(sanitizedDocs),
     fieldName: "educations",
     pagination,
   });

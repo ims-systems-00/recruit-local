@@ -1,5 +1,5 @@
 import { PipelineStage } from "mongoose";
-import { projectQuery } from "../../../common/query";
+import { eq, ListQuerySpec, projectQuery } from "../../../common/query";
 import { omit } from "lodash";
 import { accessibleBy } from "@casl/mongoose";
 import { ReactionAbilityBuilder, ReactionAuthZEntity } from "@rl/authz";
@@ -19,4 +19,17 @@ export const reactionProjectQuery = (): PipelineStage[] => {
   selectedFields.push("status");
 
   return projectQuery(selectedFields);
+};
+
+/**
+ * `reactionRoleScopedSecurityQuery` is the boundary; these only narrow. Anything
+ * not listed here never reaches `$match`.
+ */
+export const reactionListQuerySpec: ListQuerySpec = {
+  filters: { collectionName: eq("collectionName"), collectionId: eq("collectionId"), type: eq("type") },
+  sortable: ["createdAt"],
+  defaultSort: "-createdAt",
+  // Kept from the old MongoQuery contract so no frontend call site has to change.
+  searchKey: "clientSearch",
+  searchFields: ["type"],
 };

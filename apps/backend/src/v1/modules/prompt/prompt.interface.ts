@@ -9,7 +9,7 @@ import { PromptConfigDto } from "@rl/types";
 
 // --- Standardized Parameter Interfaces ---
 
-export type IPromptListParams = IServiceListParams<IPromptDoc>;
+export type IPromptListParams = IServiceListParams<IPromptDoc> & { offset?: number };
 export type IPromptGetParams = IServiceGetParams<IPromptDoc>;
 
 /**

@@ -1,0 +1,99 @@
+# status + action — the two modules whose search was unreachable before this.
+#
+# Their old schemas declared `sortBy`/`sortOrder` (which MongoQuery ignored) and
+# rejected `clientSearch` (which it read). Both also searched fields that do not
+# exist on the model: `value` on Status, `label` on Action. So search returned
+# nothing here, always.
+
+@host = http://localhost:9027/api/v1
+
+# Log in first — REST Client variables do not cross files, so each file does this.
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv ADMIN_USER_EMAIL}}",
+  "password": "{{$dotenv ADMIN_USER_PASSWORD}}"
+}
+
+###
+
+@token = {{login.response.body.user.accessToken}}
+
+###############################################################################
+# status
+###############################################################################
+
+### unknown param -> 400
+GET {{host}}/statuses?nonsense=x
+x-auth-access-token: {{token}}
+
+### search now reaches `label` and returns rows. This used to be a 400
+### ("clientSearch is not allowed") from the old schema.
+GET {{host}}/statuses?clientSearch=app
+x-auth-access-token: {{token}}
+
+### the legacy sort keys are accepted and dropped, not 400'd — they never did
+### anything anyway, so a page still sending them keeps working.
+GET {{host}}/statuses?sortBy=createdAt&sortOrder=desc&limit=5
+x-auth-access-token: {{token}}
+
+### the sort that does work
+GET {{host}}/statuses?sort=-weight&limit=5
+x-auth-access-token: {{token}}
+
+### declared filters
+GET {{host}}/statuses?collectionName=applications&limit=5
+x-auth-access-token: {{token}}
+
+### legacy offset paging -> totalDocs present
+GET {{host}}/statuses?page=1&limit=5
+x-auth-access-token: {{token}}
+
+### cursor page -> nextCursor present, no totalDocs
+# @name statusFirst
+GET {{host}}/statuses?limit=5
+x-auth-access-token: {{token}}
+
+### follow it — no repeats
+GET {{host}}/statuses?limit=5&cursor={{statusFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### trash list also stopped taking raw query params -> 400
+GET {{host}}/statuses/trash?nonsense=x
+x-auth-access-token: {{token}}
+
+###############################################################################
+# action
+###############################################################################
+
+### unknown param -> 400
+GET {{host}}/actions?nonsense=x
+x-auth-access-token: {{token}}
+
+### search now reaches `actionType`. The old `label` searchField was not a path
+### on Action, so this returned nothing before.
+GET {{host}}/actions?clientSearch=email
+x-auth-access-token: {{token}}
+
+### declared filters
+GET {{host}}/actions?actionType=SEND_EMAIL&limit=5
+x-auth-access-token: {{token}}
+
+### legacy sort keys accepted and dropped
+GET {{host}}/actions?sortBy=actionType&sortOrder=asc&limit=5
+x-auth-access-token: {{token}}
+
+### legacy offset paging -> totalDocs present
+GET {{host}}/actions?page=1&limit=5
+x-auth-access-token: {{token}}
+
+### cursor page
+# @name actionFirst
+GET {{host}}/actions?limit=5
+x-auth-access-token: {{token}}
+
+### follow it — no repeats
+GET {{host}}/actions?limit=5&cursor={{actionFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}

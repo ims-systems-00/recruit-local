@@ -1,21 +1,37 @@
 import { IListParams, ListQueryParams } from "@rl/types";
 import { SkillInput, Skill } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 // Assuming this query file exists following your pattern
 import { skillProjectQuery } from "./skill.query";
 
-type IListSkillParams = IListParams<SkillInput>;
+type IListSkillParams = IListParams<SkillInput> & { offset?: number };
 type ISkillQueryParams = ListQueryParams<SkillInput>;
 
-export const list = ({ query = {}, options }: IListSkillParams) => {
-  return Skill.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...skillProjectQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListSkillParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await Skill.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...skillProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListSkillParams) =>
+  Skill.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: IListSkillParams) => {
   const skills = await Skill.aggregate([

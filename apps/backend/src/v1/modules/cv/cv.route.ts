@@ -2,8 +2,14 @@ import express from "express";
 
 import { list, get, create, update, softRemove, hardRemove, restore, extractAndCreate, extract } from "./cv.controller";
 import { handleController } from "../../../common/helper";
-import { validate } from "../../../common/middlewares";
-import { createBodySchema, updateBodySchema, idParamsSchema, extractAndCreateBodySchema } from "./cv.validation";
+import { validate, validateQuery } from "../../../common/middlewares";
+import {
+  createBodySchema,
+  updateBodySchema,
+  idParamsSchema,
+  extractAndCreateBodySchema,
+  listQuerySchema,
+} from "./cv.validation";
 
 const router = express.Router();
 const validateBody = validate("body");
@@ -13,7 +19,7 @@ const validateParams = validate("params");
 
 router.post("/extract-and-create", validateBody(extractAndCreateBodySchema), handleController(extractAndCreate));
 router.get("/extract/:id", validateParams(idParamsSchema), handleController(extract));
-router.get("/", handleController(list));
+router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
 router.post("/", validateBody(createBodySchema), handleController(create));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));

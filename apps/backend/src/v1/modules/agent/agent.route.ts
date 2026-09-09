@@ -1,11 +1,12 @@
 import express from "express";
 import { handleController } from "../../../common/helper";
-import { validate, agentRateLimiter } from "../../../common/middlewares";
+import { validate, validateQuery, agentRateLimiter } from "../../../common/middlewares";
 import {
   createConversationBodySchema,
   sendMessageBodySchema,
   idParamsSchema,
   traceStatsQuerySchema,
+  conversationListQuerySchema,
 } from "./agent.validation";
 import {
   createConversation,
@@ -19,7 +20,6 @@ import {
 const router = express.Router();
 const validateBody = validate("body");
 const validateParams = validate("params");
-const validateQuery = validate("query");
 
 // Runs cost tokens, so the two endpoints that invoke the model are rate limited
 // per user; the read endpoints are not.
@@ -41,7 +41,7 @@ router.post(
 // in the controller.
 router.get("/traces/stats", validateQuery(traceStatsQuerySchema), handleController(getToolStats));
 
-router.get("/conversations", handleController(listConversations));
+router.get("/conversations", validateQuery(conversationListQuerySchema), handleController(listConversations));
 router.get("/conversations/:id", validateParams(idParamsSchema), handleController(getConversation));
 router.delete("/conversations/:id/soft", validateParams(idParamsSchema), handleController(softRemoveConversation));
 

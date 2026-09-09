@@ -1,19 +1,35 @@
 import { IListParams, ListQueryParams } from "@rl/types";
 import { ExperienceLevelInput, ExperienceLevel } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { experienceLevelProjectQuery } from "./experience-level.query";
 
-type IListExperienceLevelParams = IListParams<ExperienceLevelInput>;
+type IListExperienceLevelParams = IListParams<ExperienceLevelInput> & { offset?: number };
 type IExperienceLevelQueryParams = ListQueryParams<ExperienceLevelInput>;
 
-export const list = ({ query = {}, options }: IListExperienceLevelParams) => {
-  return ExperienceLevel.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...experienceLevelProjectQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListExperienceLevelParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await ExperienceLevel.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...experienceLevelProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListExperienceLevelParams) =>
+  ExperienceLevel.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: IListExperienceLevelParams) => {
   const results = await ExperienceLevel.aggregate([

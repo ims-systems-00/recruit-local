@@ -1,19 +1,35 @@
 import { IListParams, ListQueryParams } from "@rl/types";
 import { JobTitleInput, JobTitle } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobTitleProjectQuery } from "./job-title.query";
 
-type IListJobTitleParams = IListParams<JobTitleInput>;
+type IListJobTitleParams = IListParams<JobTitleInput> & { offset?: number };
 type IJobTitleQueryParams = ListQueryParams<JobTitleInput>;
 
-export const list = ({ query = {}, options }: IListJobTitleParams) => {
-  return JobTitle.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...jobTitleProjectQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListJobTitleParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await JobTitle.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...jobTitleProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListJobTitleParams) =>
+  JobTitle.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: IListJobTitleParams) => {
   const results = await JobTitle.aggregate([
@@ -48,13 +64,7 @@ export const create = async (payload: JobTitleInput) => {
   return jobTitle;
 };
 
-export const update = async ({
-  query,
-  payload,
-}: {
-  query: IJobTitleQueryParams;
-  payload: Partial<JobTitleInput>;
-}) => {
+export const update = async ({ query, payload }: { query: IJobTitleQueryParams; payload: Partial<JobTitleInput> }) => {
   const updated = await JobTitle.findOneAndUpdate(sanitizeQueryIds(query), { $set: payload }, { new: true });
   if (!updated) throw new NotFoundException("Job title not found.");
   return updated;

@@ -10,14 +10,14 @@ import {
   restore,
 } from "./user-interest-survey.controller";
 import { handleController } from "../../../common/helper";
-import { validate } from "../../../common/middlewares";
-import { upsertBodySchema, updateBodySchema, idParamsSchema } from "./user-interest-survey.validation";
+import { validate, validateQuery } from "../../../common/middlewares";
+import { upsertBodySchema, updateBodySchema, idParamsSchema, listQuerySchema } from "./user-interest-survey.validation";
 
 const router = express.Router();
 const validateBody = validate("body");
 const validateParams = validate("params");
 
-router.get("/", handleController(list));
+router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/me", handleController(getMySurvey));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
 router.post("/", validateBody(upsertBodySchema), handleController(upsert));

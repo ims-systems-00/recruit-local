@@ -1,4 +1,10 @@
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { educationProjectQuery } from "./education.query";
 import { Education, EducationInput } from "../../../models";
@@ -6,15 +12,25 @@ import { NotFoundException } from "../../../common/helper";
 import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 import { IListParams, ListQueryParams } from "@rl/types";
 
-type IListEducationParams = IListParams<EducationInput>;
+type IListEducationParams = IListParams<EducationInput> & { offset?: number };
 type IEducationQueryParams = ListQueryParams<EducationInput>;
 
-export const list = ({ query = {}, options }: IListEducationParams) => {
-  return Education.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...educationProjectQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListEducationParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await Education.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...educationProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListEducationParams) =>
+  Education.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: IListEducationParams) => {
   const educations = await Education.aggregate([

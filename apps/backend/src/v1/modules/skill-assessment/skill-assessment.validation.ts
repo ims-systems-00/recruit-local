@@ -74,13 +74,22 @@ export const updateSkillAssessmentBodySchema = Joi.object({
 
 // Schema for filtering/pagination
 export const skillAssessmentListQuerySchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page.
+  page: Joi.number().integer().min(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
-  level: Joi.string()
-    .valid(...Object.values(SKILL_ASSESSMENT_LEVEL_ENUM))
-    .optional(),
-  category: Joi.string()
-    .valid(...Object.values(SKILL_ASSESSMENT_CATEGORY_ENUM))
-    .optional(),
-  search: Joi.string().trim().optional().allow(""),
-});
+  sort: Joi.string().valid("-createdAt", "createdAt", "title", "-title").default("-createdAt"),
+
+  clientSearch: Joi.string().trim().max(200).allow(""),
+  search: Joi.string().trim().max(200).allow(""),
+
+  level: Joi.string().valid(...Object.values(SKILL_ASSESSMENT_LEVEL_ENUM)),
+  category: Joi.string().valid(...Object.values(SKILL_ASSESSMENT_CATEGORY_ENUM)),
+})
+  // The old schema declared `search`, but MongoQuery read `clientSearch` — which
+  // this schema rejected. So search was unreachable here. Renaming keeps any
+  // caller sending `search` working while the rest of the codebase stays on
+  // `clientSearch`. `override` must be true: with it false, a caller sending both
+  // keys gets a 400 rather than a search.
+  .rename("search", "clientSearch", { ignoreUndefined: true, override: true });

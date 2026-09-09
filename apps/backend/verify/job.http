@@ -1,0 +1,94 @@
+# job — the reference module, retrofitted onto the shared kit.
+#
+# The first request here is the one that mattered: `?page=` used to be forbidden,
+# so every list call from the frontend (which always sends `page: … || 1`) got a
+# 400 instead of jobs.
+
+@host = http://localhost:9027/api/v1
+
+# Log in first — REST Client variables do not cross files, so each file does this.
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv ADMIN_USER_EMAIL}}",
+  "password": "{{$dotenv ADMIN_USER_PASSWORD}}"
+}
+
+###
+
+@token = {{login.response.body.user.accessToken}}
+
+### the regression: this is exactly what apps/frontend/services/jobs/jobs.server.ts
+### sends. Expect 200 with a job list — it was 400 "page is no longer supported".
+GET {{host}}/jobs?page=1&limit=10
+x-auth-access-token: {{token}}
+
+### and the legacy block is complete, so the frontend's paginationSchema validates:
+### totalDocs, totalPages, page, pagingCounter, hasPrevPage, prevPage, nextPage.
+GET {{host}}/jobs?page=2&limit=10
+x-auth-access-token: {{token}}
+
+### unknown param -> 400
+GET {{host}}/jobs?nonsense=x
+x-auth-access-token: {{token}}
+
+### typed range filter — this compared "3" to a number before, so it matched nothing
+GET {{host}}/jobs?yearOfExperience[gte]=3
+x-auth-access-token: {{token}}
+
+GET {{host}}/jobs?salary[gte]=50000&salary[lte]=90000
+x-auth-access-token: {{token}}
+
+### the `in` shape the frontend sends through qs brackets
+GET {{host}}/jobs?employmentType[in][]=full-time&employmentType[in][]=contract
+x-auth-access-token: {{token}}
+
+### salaryMode is still accepted and dropped (Job has no such field)
+GET {{host}}/jobs?salaryMode=monthly&limit=5
+x-auth-access-token: {{token}}
+
+### cursor page
+# @name jobFirst
+GET {{host}}/jobs?limit=5
+x-auth-access-token: {{token}}
+
+### follow it — no repeats
+GET {{host}}/jobs?limit=5&cursor={{jobFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### cursor replayed under a different sort -> 400
+GET {{host}}/jobs?limit=5&sort=-salary&cursor={{jobFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### the embedding must never leave the API
+GET {{host}}/jobs?limit=1
+x-auth-access-token: {{token}}
+### expect: .jobs[0] has no "embedding" key
+
+###############################################################################
+# Atlas-only from here down.
+#
+# $search / $vectorSearch / $rankFusion do not exist on the local mongo:7 in
+# docker-compose.dev.yml, and there is no fallback — a search request there is an
+# uncaught 500. Point MONGO_URL at Atlas 8.x before running these.
+###############################################################################
+
+### semantic hit: no shared words with "Remote React Developer"
+GET {{host}}/jobs?clientSearch=work%20from%20home%20frontend
+x-auth-access-token: {{token}}
+
+### keyword-only, for comparing the two result sets
+GET {{host}}/jobs?clientSearch=work%20from%20home%20frontend&semantic=false
+x-auth-access-token: {{token}}
+
+### matched mode (candidate session only)
+GET {{host}}/jobs?matched=true&limit=5
+x-auth-access-token: {{token}}
+
+### public list — no auth header at all, open jobs only
+GET {{host}}/public/jobs?limit=5
+
+### public list still accepts legacy paging too
+GET {{host}}/public/jobs?page=1&limit=5

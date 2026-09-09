@@ -3,7 +3,13 @@ import { PROMPT_LABEL } from "@rl/types";
 import { IPromptDoc, Prompt } from "../../../models";
 import { BadRequestException, ConflictException, NotFoundException } from "../../../common/helper";
 import { withTransaction } from "../../../common/helper/database-transaction";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { promptProjectionQuery, promptNameSummaryQuery } from "./prompt.query";
 import { invalidatePromptCache } from "./prompt.cache";
@@ -34,17 +40,24 @@ const inTransaction = <T>(session: ClientSession | undefined, operation: (sessio
 
 const getMongoSession = (session?: ClientSession) => session ?? null;
 
-export const list = ({ query = {}, options, session }: IPromptListParams) => {
+export const list = async ({ query = {}, options, session, offset = 0 }: IPromptListParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Prompt.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...promptProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Prompt.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IPromptListParams) =>
+  Prompt.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {}, session }: IPromptGetParams) => {
   const aggregate = Prompt.aggregate([

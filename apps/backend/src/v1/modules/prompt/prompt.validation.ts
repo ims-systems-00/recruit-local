@@ -58,3 +58,25 @@ export const resolveQuerySchema = Joi.object({
   label: labelSchema.optional(),
   variables: Joi.object().pattern(Joi.string(), Joi.string()).optional().label("Variables"),
 });
+
+/**
+ * The contract for `GET /prompts`.
+ *
+ * The default sort has two tokens, so this list pages by offset rather than a
+ * keyset — a keyset cursor keys on the first token only, and would duplicate
+ * rows that share a name. `runCursorList` enforces that; it is not optional.
+ */
+export const listQuerySchema = Joi.object({
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page. Kept because the frontend still sends `page: … || 1`.
+  page: Joi.number().integer().min(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string()
+    .valid("name -version", "-createdAt", "createdAt", "name", "-name", "-version", "version")
+    .default("name -version"),
+
+  clientSearch: Joi.string().trim().max(200).allow(""),
+  name: Joi.string().trim().max(200),
+  labels: Joi.string().trim().max(100),
+});

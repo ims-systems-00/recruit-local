@@ -1,10 +1,10 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
+import { ApiResponse, ControllerParams, UnauthorizedException } from "../../../common/helper";
 import { ReactionAbilityBuilder, ReactionAuthZEntity, ALL_REACTION_FIELDS } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
-import { reactionRoleScopedSecurityQuery } from "./reaction.query";
+import { reactionListQuerySpec, reactionRoleScopedSecurityQuery } from "./reaction.query";
+import { runCursorList } from "../../../common/query";
 import { toReactionResponse, toReactionResponseList } from "./reaction.dto";
 import * as reactionService from "./reaction.service";
 
@@ -52,30 +52,27 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You are not authorized to read reactions.");
   }
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["type"],
-  }).build();
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: reactionListQuerySpec,
+    securityQuery: reactionRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => reactionService.list({ query, options, offset }),
+    count: ({ query }) => reactionService.count({ query }),
+  });
 
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), reactionRoleScopedSecurityQuery(ability)],
-  };
-
-  const results = await reactionService.list({ query: finalQuery, options: filter.getQueryOptions() });
-
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<ReactionAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     ReactionAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Reactions retrieved",
     statusCode: StatusCodes.OK,
-    data: toReactionResponseList(data),
+    data: toReactionResponseList(sanitizedDocs),
     fieldName: "reactions",
     pagination,
   });

@@ -1,21 +1,37 @@
 import { IListParams, ListQueryParams } from "@rl/types";
 import { ExperienceInput, Experience } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 // Assuming this query file exists following your pattern
 import { experienceProjectionQuery } from "./experience.query";
 
-type IListExperienceParams = IListParams<ExperienceInput>;
+type IListExperienceParams = IListParams<ExperienceInput> & { offset?: number };
 type IExperienceQueryParams = ListQueryParams<ExperienceInput>;
 
-export const list = ({ query = {}, options }: IListExperienceParams) => {
-  return Experience.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...experienceProjectionQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListExperienceParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await Experience.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...experienceProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListExperienceParams) =>
+  Experience.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: IListExperienceParams) => {
   const experiences = await Experience.aggregate([

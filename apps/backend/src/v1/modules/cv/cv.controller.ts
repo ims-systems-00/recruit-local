@@ -1,19 +1,13 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import {
-  ApiResponse,
-  BadRequestException,
-  ControllerParams,
-  formatListResponse,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, BadRequestException, ControllerParams, UnauthorizedException } from "../../../common/helper";
 import { CvAbilityBuilder, CvAuthZEntity } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import { Types } from "mongoose";
 import * as cvService from "./cv.service";
 import * as cvExtractService from "./cv-extract.service";
 import { matchCvEntities } from "./cv-match.service";
-import { cvRoleScopedSecurityQuery } from "./cv.query";
+import { cvListQuerySpec, cvRoleScopedSecurityQuery } from "./cv.query";
+import { runCursorList } from "../../../common/query";
 import { assertCanReadJobProfile, assertProfileScopedListAccess } from "../job-profile/job-profile.access";
 import { toCvResponse, toCvResponseList } from "./cv.dto";
 
@@ -29,32 +23,25 @@ export const list = async ({ req }: ControllerParams) => {
   const requestedProfileId = typeof req.query.jobProfileId === "string" ? req.query.jobProfileId : undefined;
   await assertProfileScopedListAccess(req.session, requestedProfileId);
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["title", "summary", "skills"],
-  }).build();
-
-  const userSearchQuery = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-
-  const securityQuery = cvRoleScopedSecurityQuery(ability);
-
   // Unlike the other profile-scoped lists, a candidate's CASL rules also match
   // any published CV, so the security query alone does not keep this list to one
   // person. Pin it to the profile the guard just authorised. An admin passing no
   // filter is the only caller that legitimately sees across profiles.
   const scopedProfileId = requestedProfileId ?? req.session.jobProfileId;
 
-  const finalQuery = {
-    $and: [userSearchQuery, securityQuery, ...(scopedProfileId ? [{ jobProfileId: scopedProfileId }] : [])],
-  };
-
-  const results = await cvService.list({ query: finalQuery, options });
-  const { data, pagination } = formatListResponse(results);
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: cvListQuerySpec,
+    securityQuery: cvRoleScopedSecurityQuery(ability),
+    extraConditions: scopedProfileId ? [{ jobProfileId: scopedProfileId }] : [],
+    fetch: ({ query, options, offset }) => cvService.list({ query, options, offset }),
+    count: ({ query }) => cvService.count({ query }),
+  });
 
   return new ApiResponse({
     message: "CVs retrieved",
     statusCode: StatusCodes.OK,
-    data: toCvResponseList(data),
+    data: toCvResponseList(docs),
     fieldName: "cvs",
     pagination,
   });

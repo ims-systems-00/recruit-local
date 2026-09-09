@@ -1,7 +1,7 @@
 import { omit } from "lodash";
 import { PipelineStage } from "mongoose";
 import { VISIBILITY_ENUM } from "@rl/types";
-import { projectQuery } from "../../../common/query";
+import { eq, ListQuerySpec, projectQuery } from "../../../common/query";
 import { IFileMediaDoc, FileMedia } from "../../../models";
 
 // event queries
@@ -46,4 +46,21 @@ export const fileMediaSrcQuery = (): PipelineStage[] => {
       },
     },
   ];
+};
+
+/**
+ * This list has no CASL scoping at all — it did not before either. Anything not
+ * listed here never reaches `$match`.
+ */
+export const fileMediaListQuerySpec: ListQuerySpec = {
+  filters: {
+    collectionName: eq("collectionName"),
+    collectionDocument: eq("collectionDocument"),
+    visibility: eq("visibility"),
+  },
+  sortable: ["createdAt", "updatedAt"],
+  defaultSort: "-createdAt",
+  // Kept from the old MongoQuery contract so no frontend call site has to change.
+  searchKey: "clientSearch",
+  searchFields: ["collectionName"],
 };
