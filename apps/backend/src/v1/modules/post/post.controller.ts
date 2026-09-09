@@ -1,10 +1,10 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
+import { ApiResponse, ControllerParams, UnauthorizedException } from "../../../common/helper";
 import { PostAbilityBuilder, PostAuthZEntity, ALL_POST_FIELDS } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
-import { postRoleScopedSecurityQuery } from "./post.query";
+import { postListQuerySpec, postRoleScopedSecurityQuery } from "./post.query";
+import { runCursorList } from "../../../common/query";
 import { profilePostKey, tenantPostKey, readPostFeedIds } from "./feed.service";
 import { toPostResponse, toPostResponseList } from "./post.dto";
 import { enqueueProfilePostFeedRebuild, enqueueTenantPostFeedRebuild } from "../../../queue/postFeedRebuildQueue";
@@ -79,64 +79,68 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You are not authorized to read posts.");
   }
 
-  // `matched` opts a viewer into feed-based results; it is not a real filter
-  // field, so strip it before building the Mongo query.
-  const { matched, ...restQuery } = req.query;
+  // `matched` opts a viewer into feed-based results; it switches modes rather
+  // than filters, so the builder never sees it.
+  const { matched } = req.query;
 
-  const filter = new MongoQuery(restQuery, {
-    searchFields: ["title", "text"],
-  }).build();
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: postListQuerySpec,
+    securityQuery: postRoleScopedSecurityQuery(ability),
 
-  // Narrow to the viewer's matched-posts feed. Seekers read the profile feed,
-  // employers the tenant feed. A cold/evicted feed is rebuilt in the background;
-  // this request still lists over the full collection (correct, just unranked).
-  // ponytail: no matchScore sort like jobs — feed narrows the set, default
-  // createdAt sort applies (matched posts, newest first). Add a $setIntersection
-  // score stage in post.service.list if ranked order is needed.
-  let feedIds: string[] = [];
-  if (matched) {
-    const { tenantId, jobProfileId } = req.session ?? {};
-    if (jobProfileId) {
-      feedIds = await readPostFeedIds(profilePostKey(jobProfileId));
-      if (!feedIds.length) await enqueueProfilePostFeedRebuild(jobProfileId);
-    } else if (tenantId) {
-      feedIds = await readPostFeedIds(tenantPostKey(tenantId));
-      if (!feedIds.length) await enqueueTenantPostFeedRebuild(tenantId);
-    }
-  }
+    prepare: async () => {
+      // Narrow to the viewer's matched-posts feed. Seekers read the profile feed,
+      // employers the tenant feed. A cold/evicted feed is rebuilt in the background;
+      // this request still lists over the full collection (correct, just unranked).
+      // ponytail: no matchScore sort like jobs — feed narrows the set, default
+      // createdAt sort applies (matched posts, newest first). Add a $setIntersection
+      // score stage in post.service.list if ranked order is needed.
+      let feedIds: string[] = [];
+      if (matched) {
+        const { tenantId, jobProfileId } = req.session ?? {};
+        if (jobProfileId) {
+          feedIds = await readPostFeedIds(profilePostKey(jobProfileId));
+          if (!feedIds.length) await enqueueProfilePostFeedRebuild(jobProfileId);
+        } else if (tenantId) {
+          feedIds = await readPostFeedIds(tenantPostKey(tenantId));
+          if (!feedIds.length) await enqueueTenantPostFeedRebuild(tenantId);
+        }
+      }
 
-  const finalQuery = {
-    $and: [
-      filter.getFilterQuery(),
-      postRoleScopedSecurityQuery(ability),
-      // Stale/draft posts in the feed fall out via the security + soft-delete
-      // filters, so no per-mutation feed invalidation is needed.
-      ...(feedIds.length ? [{ _id: { $in: feedIds } }] : []),
-    ],
-  };
+      return {
+        // Stale/draft posts in the feed fall out via the security + soft-delete
+        // filters, so no per-mutation feed invalidation is needed.
+        extraConditions: feedIds.length ? [{ _id: { $in: feedIds } }] : [],
+        guardExtras: { matched: Boolean(feedIds.length) },
+      };
+    },
 
-  // Session context drives the per-viewer `alreadyReacted` / `alreadySaved` flags.
-  const results = await postService.list({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
-    tenantId: req.session?.tenantId,
-    jobProfileId: req.session?.jobProfileId,
+    // Session context drives the per-viewer `alreadyReacted` / `alreadySaved` flags.
+    fetch: ({ query, options, offset }) =>
+      postService.list({
+        query,
+        options,
+        offset,
+        tenantId: req.session?.tenantId,
+        jobProfileId: req.session?.jobProfileId,
+      }),
+
+    count: ({ query }) => postService.count({ query }),
   });
 
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<PostAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     PostAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Posts retrieved",
     statusCode: StatusCodes.OK,
-    data: toPostResponseList(data),
+    data: toPostResponseList(sanitizedDocs),
     fieldName: "posts",
     pagination,
   });

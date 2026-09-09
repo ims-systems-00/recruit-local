@@ -20,9 +20,7 @@ const filledRef = (v: unknown): boolean => v != null && String(v).trim().length 
  * Returns the lean stored completion, or null if the user has no job profile yet.
  * Callers that need the labelled breakdown expand it via `expandCompletion`.
  */
-export const recomputeProfileCompletion = async (
-  userId: string | Types.ObjectId
-): Promise<StoredCompletion | null> => {
+export const recomputeProfileCompletion = async (userId: string | Types.ObjectId): Promise<StoredCompletion | null> => {
   if (!userId || !Types.ObjectId.isValid(userId)) return null;
   const uid = new Types.ObjectId(userId);
 

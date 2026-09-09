@@ -81,3 +81,25 @@ export const logoUpdateBodySchema = Joi.object({
 })
   .or("logoSquareStorage", "logoRectangleStorage")
   .label("Logo Storage");
+
+/**
+ * The contract for `GET /tenants`.
+ *
+ * Joi objects reject unknown keys, which is the point: before this a typo'd param
+ * became a `$match` clause and the endpoint quietly returned nothing.
+ */
+export const listQuerySchema = Joi.object({
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page. Kept because the frontend still sends `page: … || 1`.
+  page: Joi.number().integer().min(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string().valid("-createdAt", "createdAt", "name", "-name").default("-createdAt"),
+
+  clientSearch: Joi.string().trim().max(200).allow(""),
+
+  status: Joi.string().valid(...Object.values(TENANT_STATUS_ENUMS)),
+  type: Joi.string().valid(...Object.values(TENANT_TYPE)),
+  industry: Joi.string().trim().max(200),
+  isRecruitmentEnabled: Joi.boolean(),
+});

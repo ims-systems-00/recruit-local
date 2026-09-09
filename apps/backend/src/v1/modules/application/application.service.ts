@@ -4,7 +4,13 @@ import { VISIBILITY_ENUM } from "@rl/types";
 import { NotFoundException } from "../../../common/helper";
 import { Application } from "../../../models";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import {
   applicationProjectionQuery,
   populateJobProfileQuery,
@@ -24,19 +30,26 @@ import {
 } from "./application.interface";
 import * as statusService from "../status/status.service";
 
-export const list = ({ query = {}, options, session }: IListApplicationParams) => {
+export const list = async ({ query = {}, options, session, offset = 0 }: IListApplicationParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Application.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...populateJobProfileQuery(),
     ...populateStatusQuery(),
     ...applicationProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Application.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListApplicationParams) =>
+  Application.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {}, session }: IApplicationGetParams) => {
   const aggregate = Application.aggregate([

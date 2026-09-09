@@ -4,6 +4,7 @@ import { UserAbilityBuilder, UserAuthZEntity } from "@rl/authz";
 import { PipelineStage } from "mongoose";
 import { IUserDoc, User } from "../../../models";
 import { omit } from "lodash";
+import { eq, ListQuerySpec } from "../../../common/query";
 
 export const roleScopedSecurityQuery = (ability: ReturnType<UserAbilityBuilder["getAbility"]>) => {
   // Get the raw query from CASL
@@ -45,4 +46,23 @@ export const userProjectionQuery = (): PipelineStage[] => {
   const selectedFields = Object.keys(omit(User.schema.paths, fieldsToExclude));
 
   return projectQuery(selectedFields);
+};
+
+/**
+ * `roleScopedSecurityQuery` above is the boundary; these only narrow. `fullName`
+ * is a virtual, so it is not searchable — `firstName`/`lastName`/`email` are the
+ * stored paths. Anything not listed here never reaches `$match`.
+ */
+export const userListQuerySpec: ListQuerySpec = {
+  filters: {
+    role: eq("role"),
+    type: eq("type"),
+    emailVerificationStatus: eq("emailVerificationStatus"),
+    kycStatus: eq("kycStatus"),
+  },
+  sortable: ["createdAt", "firstName", "lastName", "email"],
+  defaultSort: "-createdAt",
+  // Kept from the old MongoQuery contract so no frontend call site has to change.
+  searchKey: "clientSearch",
+  searchFields: ["firstName", "lastName", "email"],
 };

@@ -12,7 +12,7 @@ import {
   // getAllUsersByTenantId,
 } from "./tenant.controller";
 import { handleController } from "../../../common/helper";
-import { validate } from "../../../common/middlewares";
+import { validate, validateQuery } from "../../../common/middlewares";
 import {
   createBodySchema,
   updateBodySchema,
@@ -20,6 +20,7 @@ import {
   logoUpdateParamsSchema,
   logoUpdateBodySchema,
   bulkDeleteBodySchema,
+  listQuerySchema,
 } from "./tenant.validation";
 
 const router = express.Router();
@@ -27,7 +28,7 @@ const router = express.Router();
 const validateBody = validate("body");
 const validateParams = validate("params");
 
-router.get("/", handleController(list));
+router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));
 router.put(

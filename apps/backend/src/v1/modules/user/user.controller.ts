@@ -1,5 +1,4 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import * as userService from "./user.service";
 import {
   ApiResponse,
@@ -10,7 +9,8 @@ import {
 } from "../../../common/helper";
 import { UserAbilityBuilder, UserAuthZEntity, ALL_USER_FIELDS } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
-import { roleScopedSecurityQuery } from "./user.query";
+import { roleScopedSecurityQuery, userListQuerySpec } from "./user.query";
+import { buildListQuery, runCursorList } from "../../../common/query";
 import { toUserResponse, toUserResponseList } from "./user.dto";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 
@@ -35,31 +35,27 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read users.`);
   }
 
-  const filter = new MongoQuery(req.query, { searchFields: ["fullName"] }).build();
-
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), roleScopedSecurityQuery(ability)],
-  };
-
-  const results = await userService.list({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: userListQuerySpec,
+    securityQuery: roleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => userService.list({ query, options, offset }),
+    count: ({ query }) => userService.count({ query }),
   });
 
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<UserAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     UserAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Users retrieved",
     statusCode: StatusCodes.OK,
-    data: toUserResponseList(data),
+    data: toUserResponseList(sanitizedDocs),
     fieldName: "users",
     pagination,
   });
@@ -92,12 +88,12 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User is not authorized to read deleted users.`);
   }
 
-  const filter = new MongoQuery(req.query, { searchFields: ["fullName"] }).build();
-  const finalQuery = { $and: [filter.getFilterQuery(), roleScopedSecurityQuery(ability)] };
+  // Trash still pages by offset — only the filter building moves off MongoQuery.
+  const { filter, options, page } = buildListQuery(req.query, userListQuerySpec);
 
   const results = await userService.listSoftDeleted({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+    query: { $and: [filter, roleScopedSecurityQuery(ability)] },
+    options: { ...options, page: page ?? 1 },
   });
 
   const sanitizedDocs = sanitizeDocuments<UserAuthZEntity>(

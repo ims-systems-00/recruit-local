@@ -11,15 +11,15 @@ import {
   restore,
 } from "./job-profile.controller";
 import { handleController } from "../../../common/helper";
-import { validate } from "../../../common/middlewares";
-import { updateBodySchema, idParamsSchema, createBodySchema } from "./job-profile.validation";
+import { validate, validateQuery } from "../../../common/middlewares";
+import { updateBodySchema, idParamsSchema, createBodySchema, listQuerySchema } from "./job-profile.validation";
 
 const router = express.Router();
 const validateBody = validate("body");
 const validateParams = validate("params");
 
 // job profile routes
-router.get("/", handleController(list));
+router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/:id", validateParams(idParamsSchema), handleController(getOne));
 router.get("/:id/completion", validateParams(idParamsSchema), handleController(getCompletion));
 router.get("/:id/applied-jobs", validateParams(idParamsSchema), handleController(getAppliedJobs));

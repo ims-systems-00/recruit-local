@@ -2,7 +2,7 @@ import { StatusCodes } from "http-status-codes";
 import {
   ApiResponse,
   ControllerParams,
-  formatListResponse,
+  formatCursorListResponse,
   NotFoundException,
   UnauthorizedException,
 } from "../../../common/helper";
@@ -423,8 +423,9 @@ export const allApplicationsForJob = async ({ req }: ControllerParams) => {
 
   // todo: sanitize applications based on their own permissions
 
-  // transform applications
-  const { data, pagination } = formatListResponse({ ...results });
+  // The application list is cursor-paged now, so there is no totals block to
+  // format — pass the cursor shape straight through.
+  const { data, pagination } = formatCursorListResponse({ ...results, nextCursor: null });
 
   return new ApiResponse({
     message: "Applications retrieved for the job.",

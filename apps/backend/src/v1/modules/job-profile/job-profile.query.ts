@@ -1,5 +1,5 @@
 import { PipelineStage } from "mongoose";
-import { projectQuery } from "../../../common/query";
+import { eq, ListQuerySpec, projectQuery } from "../../../common/query";
 import { omit } from "lodash";
 import { JobProfile, IJobProfileDoc } from "../../../models";
 import { accessibleBy } from "@casl/mongoose";
@@ -51,3 +51,39 @@ export const populateJobProfileKycStatusQuery = (): PipelineStage[] => [
   },
   { $project: { _kycUser: 0 } },
 ];
+
+/**
+ * `jobProfileRoleScopedSecurityQuery` is the boundary; these only narrow. The
+ * catalog refs (`jobTitle`, `industry`, `workMode`) are arrays of ObjectIds, so an
+ * equality match on one is Mongo's "array contains" — which is what a filter on
+ * them should mean. Anything not listed here never reaches `$match`.
+ */
+export const jobProfileListQuerySpec: ListQuerySpec = {
+  filters: {
+    userId: eq("userId"),
+    status: eq("status"),
+    visibility: eq("visibility"),
+    onboardingStep: eq("onboardingStep"),
+    experienceLevel: eq("experienceLevel"),
+    jobTitle: eq("jobTitle"),
+    industry: eq("industry"),
+    workMode: eq("workMode"),
+  },
+  sortable: ["createdAt", "name"],
+  defaultSort: "-createdAt",
+  // Kept from the old MongoQuery contract so no frontend call site has to change.
+  searchKey: "clientSearch",
+  // `headline` is not a path on JobProfile — the old search never matched on it.
+  searchFields: ["name", "summary"],
+};
+
+/**
+ * `GET /job-profiles/:id/applied-jobs` returns jobs but pages over the
+ * candidate's *applications*, so its query contract is application-shaped. The
+ * profile id comes from the route param, not the query string.
+ */
+export const appliedJobsListQuerySpec: ListQuerySpec = {
+  filters: {},
+  sortable: ["createdAt"],
+  defaultSort: "-createdAt",
+};

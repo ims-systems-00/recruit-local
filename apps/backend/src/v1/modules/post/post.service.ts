@@ -2,7 +2,13 @@ import { Types } from "mongoose";
 import { IListParams, ListQueryParams, VISIBILITY_ENUM, POST_TYPE_ENUMS } from "@rl/types";
 import { Post, IPostInput } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import {
   postProjectQuery,
@@ -38,7 +44,7 @@ interface IPostViewerContext {
 }
 
 // --- Standardized Parameter Interfaces ---
-type IListPostParams = IListParams<IPostInput> & IPostViewerContext;
+type IListPostParams = IListParams<IPostInput> & IPostViewerContext & { offset?: number };
 type IPostQueryParams = ListQueryParams<IPostInput>;
 
 export interface IPostUpdateParams {
@@ -82,22 +88,30 @@ const safeDeleteMedia = async (id: Types.ObjectId) => {
   }
 };
 
-export const list = ({ query = {}, options, tenantId, jobProfileId }: IListPostParams) => {
-  return Post.aggregatePaginate(
-    [
-      ...matchQuery(sanitizeQueryIds(query)),
-      ...excludeDeletedQuery(),
-      ...populatePostMediaQuery(),
-      ...populatePostCreatorQuery(),
-      ...postProjectQuery(),
-      // After the projection: none of these are schema paths, so it would drop them.
-      ...alreadyReactedQuery(tenantId, jobProfileId),
-      ...alreadySavedQuery(tenantId, jobProfileId),
-      ...reactionCountQuery(),
-    ],
-    options
-  );
+export const list = async ({ query = {}, options, tenantId, jobProfileId, offset = 0 }: IListPostParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await Post.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...populatePostMediaQuery(),
+    ...populatePostCreatorQuery(),
+    ...postProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+    // Per-viewer flags, and nothing more — past the $limit so they join the page
+    // instead of every matching post. None are schema paths, so they also have to
+    // come after the projection, which would otherwise drop them.
+    ...alreadyReactedQuery(tenantId, jobProfileId),
+    ...alreadySavedQuery(tenantId, jobProfileId),
+    ...reactionCountQuery(),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListPostParams) =>
+  Post.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {}, tenantId, jobProfileId }: IPostGetParams) => {
   const posts = await Post.aggregate([

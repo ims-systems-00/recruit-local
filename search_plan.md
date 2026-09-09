@@ -1,8 +1,8 @@
 # Job search: per-module query builder + hybrid Atlas search
 
-Status: **shared kit extracted; `job` + 29 modules migrated.** 11 controllers still import
-`MongoQuery`, and 6 of those are unmounted dead code — 5 live modules left. See
-"Rollout progress" at the bottom.
+Status: **done for every mounted module.** `MongoQuery` is gone from all 35 live list
+endpoints; the 6 files still importing it are unmounted dead code. See "Rollout
+progress" at the bottom.
 
 ## Why
 
@@ -157,6 +157,9 @@ rollout, once no caller sends it, is one pass flipping them all to
 | `notification` | Migrated, but see the security note below — still unscoped. |
 | `forms/form`, `forms/form-submission` | Cursor-paged via `find`. Submissions stay scoped by the `:formId` route param, not a query filter. |
 | `forms/form-element` | **Hardened only, still offset-paged.** It walks the element chain with `$graphLookup` and returns a form's structure in sequence order; a keyset cursor would key on a field that traversal does not order by. Params are validated, pagination is unchanged. |
+| `application`, `user`, `tenant` | Batch 4. `user` searched `fullName` — a **virtual**, not a stored path — so its search matched nothing; it now searches `firstName`/`lastName`/`email`. `application`'s `tenantId` filter narrows *within* an employer's `{ tenantId }` CASL grant; it cannot widen past it. |
+| `job-profile` | Two lists. `list` searched `headline`, which is **not a path** on JobProfile — now `name`/`summary`. `getAppliedJobs` pages over *applications* and returns jobs, so the cursor is the applications cursor; the jobs query is a lookup of that page's ids, not a page of its own. |
+| `post` | Batch 5. Feed/matched machinery preserved via the `prepare` hook, same as `job`. Per-viewer flags (`alreadyReacted`, `alreadySaved`, reaction counts) moved past the `$limit` so they join the page instead of every matching post. |
 | `cv` | Keeps its extra pin: a candidate's CASL rules also match any *published* CV, so the security query alone does not hold the list to one person. `jobProfileId` is accepted by the schema but deliberately **not** a spec filter — the pin does the scoping, and duplicating it as a filter would obscure that. |
 
 Catalogs had **no sort at all** before (MongoQuery passes `sort: undefined`), which
@@ -185,31 +188,68 @@ throws Joi's coerced value away, so defaults never applied. Both now use the
 shared middleware, which fixes `/prompts/resolve` and `/agent/traces/stats` as
 a side effect.
 
-### Remaining — 5 live controllers
+### Downstream fallout of the `application` migration
+
+`applicationService.list` stopped returning `totalDocs`, which three callers used:
+
+- `agent/tools/list-applications.tool.ts` — hoists the composed query into a
+  variable and asks `applicationService.count({ query })` for the total, so the
+  number matches exactly what the page was drawn from.
+- `job.controller.ts` `allApplicationsForJob` — switched to `formatCursorListResponse`.
+- `job-profile.controller.ts` `getAppliedJobs` — see above.
+
+### Remaining — nothing mounted
 
 Per module: `listQuerySchema` in `*.validation.ts`, `<module>ListQuerySpec` in
 `*.query.ts`, `validateQuery` on the route, `runCursorList` in the controller,
 `cursorPageStages`/`toCursorPage` + a `count` export in the service, and a compound
 index `{ <scope>: 1, <sortField>: -1, _id: -1 }` with a migration.
 
-1. **Heavy** — `application`, `user`, `tenant`, `job-profile`. Multiple `$lookup`s,
-   field-level CASL, the boardable plugin on `application`.
-2. **`post`** last — it mirrors `job`'s feed/matched machinery and is the second
-   candidate for hybrid search.
+Every router mounted in `v1/routes/api-routes.ts` is migrated. Six controllers still
+import `MongoQuery`, all **unmounted dead code**: `board`, `comment-activity`,
+`document-folder`, `invitation`, `response-template`, `task`. Migrating them would
+cost time and prove nothing; deleting them is a separate call.
 
-Still importing `MongoQuery` but **unmounted dead code**, so not worth migrating:
-`board`, `comment-activity`, `document-folder`, `invitation`, `response-template`,
-`task`.
+### What is left to do
+
+1. **Frontend.** Every service still sends `page: … || 1`, so every list is on the
+   legacy branch and nothing has changed for the app. Moving a module to cursors
+   means: stop sending `page`, read `pagination.nextCursor`, and relax
+   `services/shared/schema.ts` — its `paginationSchema` marks `totalDocs`,
+   `totalPages`, `page`, `pagingCounter`, `hasPrevPage`, `prevPage` and `nextPage`
+   as required, so a cursor response fails validation today.
+2. **Then drop the legacy branch.** One pass flipping every `page:
+   Joi.number().integer().min(1)` to `Joi.any().forbidden()`, and deleting the
+   offset half of `runCursorList`.
+3. **Compound indexes.** Each cursor-paged list wants
+   `{ <scope>: 1, <sortField>: -1, _id: -1 }` plus a migration, mirroring
+   `20260907120000-job-cursor-indexes.js`. Only `job` has them so far; the rest
+   are correct without them, just slower on deep pages.
+4. **Close the `notification` hole** (below).
+5. **Semantic search** for `post`, `job-profile`, `tenant` — Phase 6, unstarted.
 
 Skip: `board`, `comment-activity`, `document-folder`, `invitation`, `task`,
 `response-template`, `url-metadata-parser`, `location` — routers not mounted.
 
-### Broken search fields to fix on the way
+### Broken search fields — all now fixed
 
-These match nothing today, so fixing them makes search start returning rows:
-`sar` searches `score` (a Number), `job-profile` searches `headline` (not a path),
-`user` searches `fullName` (a virtual), `favourite` searches nothing,
-`event-registration` searches `status` (an enum).
+Every one of these matched nothing before, so search on those endpoints returns
+rows where it previously returned none:
+
+| Module | Old `searchField` | Why it never matched | Now searches |
+| --- | --- | --- | --- |
+| `user` | `fullName` | a virtual, not a stored path | `firstName`, `lastName`, `email` |
+| `job-profile` | `headline` | not a path on the model | `name`, `summary` |
+| `skill-assessment-result` | `score` | a Number — regex cannot match it | `recommendations` |
+| `status` | `value` | not a path on the model | `label` |
+| `action` | `label` | not a path on the model | `actionType` |
+| `form-submission` | `name` | not a path on the model | — (no text to search) |
+| `favourite` | *(none)* | nothing to search: it is a pointer | — (unchanged, deliberately) |
+| `event-registration` | `status` | an enum — only whole values matched | `status` (kept) |
+
+Separately, `event`, `event-registration`, `skill-assessment`, `status` and
+`action` had search **unreachable** regardless of field, because their schemas
+declared `search`/`sortBy` while MongoQuery read `clientSearch`.
 
 ### Two security gaps found next door
 

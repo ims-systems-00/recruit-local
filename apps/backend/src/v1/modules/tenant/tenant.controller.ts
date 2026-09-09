@@ -1,13 +1,13 @@
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { TenantAbilityBuilder, TenantAuthZEntity, ALL_TENANT_FIELDS } from "@rl/authz";
 import { AbilityAction, TenantResponseDto, USER_ROLE_ENUMS } from "@rl/types";
 import { StatusCodes } from "http-status-codes";
-import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
+import { ApiResponse, ControllerParams, UnauthorizedException } from "../../../common/helper";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import * as tenantService from "./tenant.service";
 import { recomputeTenantCompletion } from "./tenant-completion.service";
 import { update as updateUser } from "../user/user.service";
-import { tenantRoleScopedSecurityQuery } from "./tenant.query";
+import { tenantListQuerySpec, tenantRoleScopedSecurityQuery } from "./tenant.query";
+import { runCursorList } from "../../../common/query";
 import { toTenantResponse, toTenantResponseList } from "./tenant.dto";
 
 const caslFieldOptions = {
@@ -30,36 +30,27 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read tenants.`);
   }
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["name"],
-    strictObjectIdMatch: true,
-  }).build();
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: tenantListQuerySpec,
+    securityQuery: tenantRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => tenantService.list({ query, options, offset }),
+    count: ({ query }) => tenantService.count({ query }),
+  });
 
-  const userSearchQuery = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-
-  const securityQuery = tenantRoleScopedSecurityQuery(ability);
-
-  const finalQuery = {
-    $and: [userSearchQuery, securityQuery],
-  };
-
-  const results = await tenantService.list({ query: finalQuery, options });
-
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<TenantResponseDto>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     TenantAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Organisations retrieved.",
     statusCode: StatusCodes.OK,
-    data: toTenantResponseList(data),
+    data: toTenantResponseList(sanitizedDocs),
     fieldName: "tenants",
     pagination,
   });

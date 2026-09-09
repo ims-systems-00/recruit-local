@@ -1,5 +1,4 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
 import * as jobProfileService from "./job-profile.service";
 import { recomputeProfileCompletion } from "./profile-completion.service";
@@ -17,7 +16,12 @@ import {
 } from "@rl/authz";
 import { AbilityAction, PROFILE_COMPLETION_SECTIONS } from "@rl/types";
 import { expandCompletion } from "@rl/utils";
-import { jobProfileRoleScopedSecurityQuery } from "./job-profile.query";
+import {
+  appliedJobsListQuerySpec,
+  jobProfileListQuerySpec,
+  jobProfileRoleScopedSecurityQuery,
+} from "./job-profile.query";
+import { buildListQuery, runCursorList } from "../../../common/query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { toValueResponseList } from "../value/value.dto";
 import { toNamedRefResponse, toNamedRefResponseList } from "./job-profile.dto";
@@ -85,33 +89,27 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read job profiles.`);
   }
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["headline", "summary"],
-  }).build();
-
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), jobProfileRoleScopedSecurityQuery(ability)],
-  };
-
-  const results = await jobProfileService.list({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: jobProfileListQuerySpec,
+    securityQuery: jobProfileRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => jobProfileService.list({ query, options, offset }),
+    count: ({ query }) => jobProfileService.count({ query }),
   });
 
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<JobProfileAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     JobProfileAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs.map(finalizeJobProfile) });
-
   return new ApiResponse({
     message: "Job Profiles retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: sanitizedDocs.map(finalizeJobProfile),
     fieldName: "jobProfiles",
     pagination,
   });
@@ -187,12 +185,14 @@ export const getAppliedJobs = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You do not have permission to view these applications.");
   }
 
-  // Get all applications for this job profile
-  const applications = await applicationService.list({
-    query: { jobProfileId: req.params.id },
-    options: {
-      sort: { createdAt: -1 },
-    },
+  // Paged on applications, not on jobs: the jobs query below is a lookup of this
+  // page's ids, not a page of its own. So the cursor is the applications cursor.
+  const applications = await runCursorList({
+    query: req.query,
+    spec: appliedJobsListQuerySpec,
+    extraConditions: [{ jobProfileId: req.params.id }],
+    fetch: ({ query, options, offset }) => applicationService.list({ query, options, offset }),
+    count: ({ query }) => applicationService.count({ query }),
   });
 
   // Extract unique job IDs from applications
@@ -200,13 +200,12 @@ export const getAppliedJobs = async ({ req }: ControllerParams) => {
   const jobIds = Array.from(new Set(applicationDocs.map((app) => app.jobId?.toString()).filter(Boolean)));
 
   if (jobIds.length === 0) {
-    const { data, pagination } = formatListResponse({ ...applications, docs: [] });
     return new ApiResponse({
       message: "No applied jobs found.",
       statusCode: StatusCodes.OK,
-      data,
+      data: [],
       fieldName: "jobs",
-      pagination,
+      pagination: applications.pagination,
     });
   }
 
@@ -237,16 +236,12 @@ export const getAppliedJobs = async ({ req }: ControllerParams) => {
     caslJobFieldOptions
   );
 
-  // Paginate on applications, as the empty branch above already does — the jobs
-  // query is a lookup of this page's ids, not a page of its own.
-  const { data, pagination } = formatListResponse({ ...applications, docs: sanitizedJobs });
-
   return new ApiResponse({
     message: "Applied jobs retrieved for the job profile.",
     statusCode: StatusCodes.OK,
-    data,
+    data: sanitizedJobs,
     fieldName: "jobs",
-    pagination,
+    pagination: applications.pagination,
   });
 };
 
@@ -258,15 +253,12 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You are not authorized to read deleted job profiles.");
   }
 
-  const filter = new MongoQuery(req.query, { searchFields: ["headline", "summary"] }).build();
-
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), jobProfileRoleScopedSecurityQuery(ability)],
-  };
+  // Trash still pages by offset — only the filter building moves off MongoQuery.
+  const { filter, options, page } = buildListQuery(req.query, jobProfileListQuerySpec);
 
   const results = await jobProfileService.listSoftDeleted({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+    query: { $and: [filter, jobProfileRoleScopedSecurityQuery(ability)] },
+    options: { ...options, page: page ?? 1 },
   });
 
   const sanitizedDocs = sanitizeDocuments<JobProfileAuthZEntity>(

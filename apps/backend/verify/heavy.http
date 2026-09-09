@@ -1,0 +1,184 @@
+# Batch 4 + 5 — applications, users, tenants, job-profiles, posts.
+#
+# These are the lists with the most to lose: multiple $lookups, field-level CASL,
+# and two endpoints that page over one collection while returning another. The
+# scoping checks matter more here than anywhere else in the rollout.
+
+@host = http://localhost:9027/api/v1
+
+# Log in first — REST Client variables do not cross files, so each file does this.
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv ADMIN_USER_EMAIL}}",
+  "password": "{{$dotenv ADMIN_USER_PASSWORD}}"
+}
+
+###
+
+@token = {{login.response.body.user.accessToken}}
+
+###############################################################################
+# The five shared checks
+###############################################################################
+
+### unknown param -> 400
+GET {{host}}/applications?nonsense=x
+x-auth-access-token: {{token}}
+
+### undeclared sort -> 400
+GET {{host}}/applications?sort=-secretField
+x-auth-access-token: {{token}}
+
+### regex metacharacters escaped, not executed -> 200, no hang
+GET {{host}}/applications?clientSearch=(a%2B)%2B%24
+x-auth-access-token: {{token}}
+
+### legacy offset paging -> totalDocs + totalPages present
+GET {{host}}/applications?page=1&limit=5
+x-auth-access-token: {{token}}
+
+### cursor page -> nextCursor, no totalDocs
+# @name appFirst
+GET {{host}}/applications?limit=5
+x-auth-access-token: {{token}}
+
+### follow it — no row may repeat
+GET {{host}}/applications?limit=5&cursor={{appFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### cursor replayed under a different sort -> 400
+GET {{host}}/applications?limit=5&sort=-matchScore&cursor={{appFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+###############################################################################
+# Scoping — what must not have regressed
+###############################################################################
+
+### applications: an employer's CASL grant is scoped to { tenantId }. Asking for
+### another tenant's id must return nothing, not their applications — the filter
+### narrows within the grant, it cannot widen past it.
+GET {{host}}/applications?tenantId=000000000000000000000000
+x-auth-access-token: {{token}}
+
+### tenants: a non-admin must see only their own organisation
+GET {{host}}/tenants?limit=100
+x-auth-access-token: {{token}}
+
+### users: a non-admin must not be able to list everyone
+GET {{host}}/users?limit=100
+x-auth-access-token: {{token}}
+
+### job-profiles: only profiles the viewer may read
+GET {{host}}/job-profiles?limit=100
+x-auth-access-token: {{token}}
+
+### unauthenticated -> 401 on all of them
+GET {{host}}/applications
+GET {{host}}/users
+GET {{host}}/tenants
+
+###############################################################################
+# Searches that were broken and now work
+#
+# users searched `fullName` (a virtual, not a stored path) and job-profiles
+# searched `headline` (not a path at all). Both matched nothing, always.
+###############################################################################
+
+### now searches firstName / lastName / email
+GET {{host}}/users?clientSearch=sayem
+x-auth-access-token: {{token}}
+
+### now searches name / summary
+GET {{host}}/job-profiles?clientSearch=engineer
+x-auth-access-token: {{token}}
+
+###############################################################################
+# Per-module filters
+###############################################################################
+
+### applications
+GET {{host}}/applications?matchScore[gte]=50&matchScore[lte]=100
+x-auth-access-token: {{token}}
+
+GET {{host}}/applications?sort=-matchScore&limit=5
+x-auth-access-token: {{token}}
+
+### users
+GET {{host}}/users?role=admin&type=recruiter
+x-auth-access-token: {{token}}
+
+GET {{host}}/users?role=not-a-role
+x-auth-access-token: {{token}}
+### expect 400
+
+### tenants
+GET {{host}}/tenants?status=active&isRecruitmentEnabled=true&limit=5
+x-auth-access-token: {{token}}
+
+### job-profiles — catalog refs are arrays, so equality means "array contains"
+GET {{host}}/job-profiles?jobTitle=JOB_TITLE_ID&limit=5
+x-auth-access-token: {{token}}
+
+GET {{host}}/job-profiles?visibility=public&status=verified
+x-auth-access-token: {{token}}
+
+###############################################################################
+# job-profiles/:id/applied-jobs — pages over applications, returns jobs
+#
+# The jobs query is a lookup of this page's ids, not a page of its own, so the
+# cursor is the applications cursor. Walking it must not repeat or skip jobs.
+###############################################################################
+
+# @name appliedFirst
+GET {{host}}/job-profiles/PROFILE_ID/applied-jobs?limit=5
+x-auth-access-token: {{token}}
+
+GET {{host}}/job-profiles/PROFILE_ID/applied-jobs?limit=5&cursor={{appliedFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### another candidate's applied jobs -> 403, never their applications
+GET {{host}}/job-profiles/000000000000000000000000/applied-jobs
+x-auth-access-token: {{token}}
+
+###############################################################################
+# posts — mirrors job's feed machinery
+###############################################################################
+
+### plain list
+# @name postFirst
+GET {{host}}/posts?limit=5
+x-auth-access-token: {{token}}
+
+GET {{host}}/posts?limit=5&cursor={{postFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### matched mode narrows to the viewer's feed (profile feed for a seeker, tenant
+### feed for an employer). A cold feed rebuilds in the background and this request
+### still lists over the full collection — correct, just unranked.
+GET {{host}}/posts?matched=true&limit=5
+x-auth-access-token: {{token}}
+
+### a cursor from matched mode must not be replayable unmatched: the guard covers
+### `matched`, so this is a 400 rather than a silently different result set.
+# @name matchedFirst
+GET {{host}}/posts?matched=true&limit=5
+x-auth-access-token: {{token}}
+
+GET {{host}}/posts?limit=5&cursor={{matchedFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### filters
+GET {{host}}/posts?type=article&status=published&limit=5
+x-auth-access-token: {{token}}
+
+GET {{host}}/posts?status=not-a-status
+x-auth-access-token: {{token}}
+### expect 400
+
+### the per-viewer flags still land on the page
+GET {{host}}/posts?limit=3
+x-auth-access-token: {{token}}
+### expect: each post has alreadyReacted / alreadySaved / reaction counts

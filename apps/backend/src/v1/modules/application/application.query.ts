@@ -1,6 +1,6 @@
 import { omit } from "lodash";
 import { PipelineStage } from "mongoose";
-import { projectQuery } from "../../../common/query";
+import { eq, ListQuerySpec, projectQuery, range } from "../../../common/query";
 import { IApplicationDoc, Application } from "../../../models";
 import { accessibleBy } from "@casl/mongoose";
 import { AbilityAction } from "../../../types/ability";
@@ -162,3 +162,24 @@ export const populateStatusQuery = (): PipelineStage[] => [
     $unwind: { path: "$status", preserveNullAndEmptyArrays: true },
   },
 ];
+
+/**
+ * `applicationRoleScopedSecurityQuery` is the boundary — an employer's grant is
+ * scoped to `{ tenantId }`, so the `tenantId` filter here only narrows within what
+ * they may already see. Anything not listed here never reaches `$match`.
+ */
+export const applicationListQuerySpec: ListQuerySpec = {
+  filters: {
+    jobId: eq("jobId"),
+    tenantId: eq("tenantId"),
+    jobProfileId: eq("jobProfileId"),
+    statusId: eq("statusId"),
+    reference: eq("reference"),
+    matchScore: range("matchScore"),
+  },
+  sortable: ["createdAt", "updatedAt", "matchScore"],
+  defaultSort: "-createdAt",
+  // Kept from the old MongoQuery contract so no frontend call site has to change.
+  searchKey: "clientSearch",
+  searchFields: ["portfolioUrl", "coverLetter"],
+};

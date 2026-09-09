@@ -1,9 +1,7 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import {
   ApiResponse,
   ControllerParams,
-  formatListResponse,
   logger,
   NotFoundException,
   UnauthorizedException,
@@ -14,7 +12,8 @@ import * as applicationService from "./application.service";
 import * as jobService from "../job/job.service";
 import { withTransaction } from "../../../common/helper/database-transaction";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
-import { applicationRoleScopedSecurityQuery } from "./application.query";
+import { applicationListQuerySpec, applicationRoleScopedSecurityQuery } from "./application.query";
+import { runCursorList } from "../../../common/query";
 import { toApplicationResponse, toApplicationResponseList } from "./application.dto";
 import { enqueueApplicationRanking } from "../../../queue/applicationRankingQueue";
 
@@ -45,34 +44,27 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read applications.`);
   }
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["portfolioUrl", "coverLetter"],
-  }).build();
-
-  // Apply Role/Tenant Scoped Security Query
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), applicationRoleScopedSecurityQuery(ability)],
-  };
-
-  const results = await applicationService.list({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: applicationListQuerySpec,
+    securityQuery: applicationRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => applicationService.list({ query, options, offset }),
+    count: ({ query }) => applicationService.count({ query }),
   });
 
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<ApplicationAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     ApplicationAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Applications retrieved",
     statusCode: StatusCodes.OK,
-    data: toApplicationResponseList(data),
+    data: toApplicationResponseList(sanitizedDocs),
     fieldName: "applications",
     pagination,
   });

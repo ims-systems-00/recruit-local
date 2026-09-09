@@ -1,5 +1,7 @@
 import { PipelineStage, Types } from "mongoose";
 import {
+  eq,
+  ListQuerySpec,
   projectQuery,
   populateFileMediaQuery,
   populateFileMediaListQuery,
@@ -231,4 +233,23 @@ export const postProjectQuery = (): PipelineStage[] => {
   selectedFields.push("creator");
 
   return projectQuery(selectedFields);
+};
+
+/**
+ * `matched` is deliberately absent — it switches modes rather than filters, so
+ * the controller reads it directly. `postRoleScopedSecurityQuery` is the
+ * boundary; these only narrow. Anything not listed here never reaches `$match`.
+ */
+export const postListQuerySpec: ListQuerySpec = {
+  filters: {
+    tenantId: eq("tenantId"),
+    jobProfileId: eq("jobProfileId"),
+    type: eq("type"),
+    status: eq("status"),
+  },
+  sortable: ["createdAt", "updatedAt"],
+  defaultSort: "-createdAt",
+  // Kept from the old MongoQuery contract so no frontend call site has to change.
+  searchKey: "clientSearch",
+  searchFields: ["title", "text"],
 };
