@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import isEqual from "lodash/isEqual";
 import dotenv from "dotenv";
 dotenv.config();
 import { connectDB } from "../.config/database";
@@ -30,6 +31,7 @@ const searchIndex = {
         title: { type: "string" },
         description: { type: "string" },
         location: { type: "string" },
+        locationAdditionalInfo: { type: "string" },
         category: { type: "string" },
         // Filter fields: narrow the candidate set inside the search stage so the
         // security $match afterwards is not left with a handful of rows.
@@ -102,16 +104,29 @@ const ensureSearchIndexes = async () => {
     await connectDB();
     await checkRankFusion();
 
-    const existing = (await Job.listSearchIndexes()).map((index) => index.name);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existing = new Map((await Job.listSearchIndexes()).map((index: any) => [index.name, index]));
 
     for (const index of [searchIndex, vectorIndex]) {
-      if (existing.includes(index.name)) {
-        logger.info(`${index.name} already exists — skipping.`);
+      const current = existing.get(index.name);
+
+      if (!current) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await Job.createSearchIndex(index as any);
+        logger.info(`${index.name} created.`);
         continue;
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await Job.createSearchIndex(index as any);
-      logger.info(`${index.name} created.`);
+
+      // Comparing definitions, not just names. Skipping on name alone means adding a
+      // field to a mapping above does nothing on a cluster that already has the index
+      // — the search silently keeps using the old one.
+      if (isEqual(current.latestDefinition, index.definition)) {
+        logger.info(`${index.name} already matches — skipping.`);
+        continue;
+      }
+
+      await Job.updateSearchIndex(index.name, index.definition);
+      logger.info(`${index.name} definition changed — updating.`);
     }
 
     // createSearchIndex returns before the index is queryable. Until it reports

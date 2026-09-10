@@ -351,7 +351,12 @@ export const hybridSearchStages = (
             {
               text: {
                 query: term,
-                path: ["title", "description", "location", "category"],
+                // locationAdditionalInfo is the free-text address line ("Additional
+                // Location Information" in the UI). Kept out of the embedded text on
+                // purpose — it is boilerplate (100 jobs share 21 distinct values), so
+                // it would pull every job vector together and widen the noise band the
+                // MIN_SEMANTIC_SCORE floor is measured against.
+                path: ["title", "description", "location", "locationAdditionalInfo", "category"],
                 // prefixLength pins the first three characters. Without it a
                 // three-letter query is one edit away from half the dictionary —
                 // "SEO" matched "see"/"sea" and pulled in Online English Tutor and
