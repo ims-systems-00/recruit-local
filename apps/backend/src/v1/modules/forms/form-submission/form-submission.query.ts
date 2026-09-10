@@ -1,4 +1,4 @@
-import { eq, ListQuerySpec } from "../../../../common/query";
+import { eq, ListQuerySpec, objectId } from "../../../../common/query";
 
 /**
  * Scoped by the `formId` route param, not by CASL — unchanged by the migration.
@@ -6,7 +6,11 @@ import { eq, ListQuerySpec } from "../../../../common/query";
  * search never matched. Anything not listed here never reaches `$match`.
  */
 export const formSubmissionListQuerySpec: ListQuerySpec = {
-  filters: { collectionName: eq("collectionName"), collectionDocument: eq("collectionDocument") },
+  filters: {
+    collectionName: eq("collectionName"),
+    // An ObjectId ref whose key does not end in `Id`, so it needs the cast declared.
+    collectionDocument: objectId("collectionDocument"),
+  },
   sortable: ["createdAt"],
   defaultSort: "-createdAt",
 };

@@ -24,6 +24,9 @@ import {
   toCursorPage,
   ListQuerySpec,
 } from "../common/query";
+import { fileMediaListQuerySpec } from "../v1/modules/file-media/file-media.query";
+import { formSubmissionListQuerySpec } from "../v1/modules/forms/form-submission/form-submission.query";
+import { jobProfileListQuerySpec } from "../v1/modules/job-profile/job-profile.query";
 
 const spec: ListQuerySpec = {
   filters: {
@@ -110,6 +113,28 @@ const castIn = buildListQuery({ industry: { in: [ID, "nope"] } }, castSpec).filt
 };
 check("objectIdIn casts each member", castIn.industry.$in[0] instanceof Types.ObjectId, true);
 check("objectIdIn drops unparseable members", castIn.industry.$in.length, 1);
+
+console.log("\nreal specs: every ObjectId ref actually casts");
+
+// Imported from the modules themselves rather than rebuilt here, so these track the
+// shipped specs. All six targeted ObjectId fields whose keys do not end in `Id`, so
+// `sanitizeQueryIds` left them as strings and the filters matched nothing — and an
+// empty collection makes that invisible over HTTP, which is how it shipped.
+const castsTo = (build: (v: unknown, q: Record<string, unknown>) => unknown, field: string) => {
+  const built = build(ID, {}) as Record<string, unknown> | undefined;
+  return built?.[field] instanceof Types.ObjectId;
+};
+
+for (const [label, spec, field] of [
+  ["job-profile.jobTitle", jobProfileListQuerySpec, "jobTitle"],
+  ["job-profile.industry", jobProfileListQuerySpec, "industry"],
+  ["job-profile.workMode", jobProfileListQuerySpec, "workMode"],
+  ["job-profile.experienceLevel", jobProfileListQuerySpec, "experienceLevel"],
+  ["file-media.collectionDocument", fileMediaListQuerySpec, "collectionDocument"],
+  ["form-submission.collectionDocument", formSubmissionListQuerySpec, "collectionDocument"],
+] as [string, ListQuerySpec, string][]) {
+  check(`${label} casts to ObjectId`, castsTo(spec.filters[field], field), true);
+}
 
 console.log("\nmerging several keys onto one field");
 

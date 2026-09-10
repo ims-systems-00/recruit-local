@@ -1,7 +1,7 @@
 import { omit } from "lodash";
 import { PipelineStage } from "mongoose";
 import { VISIBILITY_ENUM } from "@rl/types";
-import { eq, ListQuerySpec, projectQuery } from "../../../common/query";
+import { eq, ListQuerySpec, objectId, projectQuery } from "../../../common/query";
 import { IFileMediaDoc, FileMedia } from "../../../models";
 
 // event queries
@@ -55,7 +55,8 @@ export const fileMediaSrcQuery = (): PipelineStage[] => {
 export const fileMediaListQuerySpec: ListQuerySpec = {
   filters: {
     collectionName: eq("collectionName"),
-    collectionDocument: eq("collectionDocument"),
+    // An ObjectId ref whose key does not end in `Id`, so it needs the cast declared.
+    collectionDocument: objectId("collectionDocument"),
     visibility: eq("visibility"),
   },
   sortable: ["createdAt", "updatedAt"],

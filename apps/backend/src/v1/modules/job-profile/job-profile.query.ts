@@ -1,5 +1,5 @@
 import { PipelineStage } from "mongoose";
-import { eq, ListQuerySpec, projectQuery } from "../../../common/query";
+import { eq, ListQuerySpec, objectId, projectQuery } from "../../../common/query";
 import { omit } from "lodash";
 import { JobProfile, IJobProfileDoc } from "../../../models";
 import { accessibleBy } from "@casl/mongoose";
@@ -64,10 +64,14 @@ export const jobProfileListQuerySpec: ListQuerySpec = {
     status: eq("status"),
     visibility: eq("visibility"),
     onboardingStep: eq("onboardingStep"),
-    experienceLevel: eq("experienceLevel"),
-    jobTitle: eq("jobTitle"),
-    industry: eq("industry"),
-    workMode: eq("workMode"),
+    // `objectId`, not `eq`: these are ObjectId refs whose keys do not end in `Id`,
+    // so `sanitizeQueryIds` — which decides from the key's name — left them as
+    // strings and every one of these filters matched nothing. Equality against the
+    // array-valued ones is Mongo's "array contains", which is what they should mean.
+    experienceLevel: objectId("experienceLevel"),
+    jobTitle: objectId("jobTitle"),
+    industry: objectId("industry"),
+    workMode: objectId("workMode"),
   },
   sortable: ["createdAt", "name"],
   defaultSort: "-createdAt",
