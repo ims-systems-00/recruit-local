@@ -249,6 +249,26 @@ export const JOB_VECTOR_INDEX = "job_vector_index";
 /** Candidates pulled from each branch before fusion. */
 const SEARCH_CANDIDATES = 200;
 
+/**
+ * Cosine floor a semantic-only hit must clear to stay in the results.
+ *
+ * `$vectorSearch` ranks but never rejects, so without this every search returned
+ * the whole collection reordered — "website" surfaced all 100 open jobs, with a
+ * construction role third. Measured against text-embedding-3-small over 100 seeded
+ * jobs (kept / 100):
+ *
+ *   term                0.60  0.63  0.65  0.70
+ *   website               34     2     0     0
+ *   SEO                   38     7     3     1
+ *   marketing             53    29    13     1
+ *   qwertyuiop             2     0     0     0
+ *
+ * 0.63 is the point where "website" keeps its two real answers, gibberish returns
+ * nothing, and broad terms stay usable. Raise it to tighten; the relevant jobs sit
+ * within ~0.02 of the noise band, so changes of 0.01 move results a lot.
+ */
+const MIN_SEMANTIC_SCORE = 0.63;
+
 export interface JobSearchPreFilter {
   status?: JOBS_STATUS_ENUMS;
   tenantId?: Types.ObjectId;
@@ -288,6 +308,21 @@ const toVectorFilter = (preFilter: JobSearchPreFilter) => {
   if (preFilter.tenantId) filter.tenantId = preFilter.tenantId;
   return Object.keys(filter).length ? filter : undefined;
 };
+
+/** Pulls one field of one branch out of the `scoreDetails` array `$rankFusion` attaches. */
+const branchDetail = (pipelineName: string, field: "rank" | "value") => ({
+  $map: {
+    input: {
+      $filter: {
+        input: "$_scoreDetails.details",
+        as: "detail",
+        cond: { $eq: ["$$detail.inputPipelineName", pipelineName] },
+      },
+    },
+    as: "detail",
+    in: `$$detail.${field}`,
+  },
+});
 
 /**
  * Hybrid search: Lucene keyword matching fused with vector similarity by
@@ -356,7 +391,39 @@ export const hybridSearchStages = (
           },
         },
         combination: { weights: { keyword: 1, semantic: 1 } },
+        // Carries each branch's raw score through the fusion. The floor below is
+        // the only reason this is on.
+        scoreDetails: true,
       },
     },
+
+    // The floor has to be applied out here, not inside the semantic branch:
+    // $rankFusion only accepts selection stages, so the $addFields that reads
+    // $meta is rejected in there, and a $match/$expr reading $meta directly
+    // matches nothing at all rather than erroring.
+    { $addFields: { _scoreDetails: { $meta: "scoreDetails" } } },
+    {
+      $addFields: {
+        // A branch that did not return this document still gets a details entry,
+        // with rank 0 and no value.
+        _keywordRank: {
+          $ifNull: [{ $first: branchDetail("keyword", "rank") }, 0],
+        },
+        _semanticScore: {
+          $ifNull: [{ $first: branchDetail("semantic", "value") }, 0],
+        },
+      },
+    },
+    {
+      // A literal match always survives — someone typing "foreman" expects the job
+      // called Site Foreman whatever the embedding thinks. The floor only judges
+      // hits the semantic branch found on its own.
+      $match: {
+        $expr: {
+          $or: [{ $gt: ["$_keywordRank", 0] }, { $gte: ["$_semanticScore", MIN_SEMANTIC_SCORE] }],
+        },
+      },
+    },
+    { $project: { _scoreDetails: 0, _keywordRank: 0, _semanticScore: 0 } },
   ] as unknown as PipelineStage[];
 };
