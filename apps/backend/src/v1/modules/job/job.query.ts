@@ -352,7 +352,13 @@ export const hybridSearchStages = (
               text: {
                 query: term,
                 path: ["title", "description", "location", "category"],
-                fuzzy: { maxEdits: 1 },
+                // prefixLength pins the first three characters. Without it a
+                // three-letter query is one edit away from half the dictionary —
+                // "SEO" matched "see"/"sea" and pulled in Online English Tutor and
+                // Primary School Teaching Assistant. Typo tolerance is unaffected,
+                // since the edit is still allowed after character 3: "developr",
+                // "enginer" and "marketng" all return the same jobs as before.
+                fuzzy: { maxEdits: 1, prefixLength: 3 },
               },
             },
           ],
