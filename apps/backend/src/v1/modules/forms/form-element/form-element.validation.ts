@@ -31,3 +31,15 @@ export const orderChangeBodySchema = Joi.object({
   nextElementId: Joi.string().custom(objectIdValidation).allow(null).label("Next Element ID"),
   previousElementId: Joi.string().custom(objectIdValidation).allow(null).label("Previous Element ID"),
 });
+
+/**
+ * The contract for `GET /forms/:formId/elements`. Offset-paged — see the note on
+ * `formElementListQuerySpec`.
+ */
+export const listQuerySchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+
+  type: Joi.string().trim().max(100),
+  parentElementId: Joi.string().hex().length(24),
+});

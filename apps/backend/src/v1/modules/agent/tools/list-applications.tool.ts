@@ -150,13 +150,15 @@ export const listApplicationsTool: AgentTool<ListApplicationsInput> = {
     ).includes("matchScore");
     const sortByMatch = askedForMatch && canReadMatchScore;
 
+    // Hoisted so the total below counts exactly what the page was drawn from.
+    const query = { $and: [filter, applicationSecurityQuery(ability)] };
+
     const results = await applicationService.list({
-      query: { $and: [filter, applicationSecurityQuery(ability)] },
+      query,
       options: {
-        page: 1,
         limit: Math.min(input.limit ?? DEFAULT_LIMIT, MAX_LIMIT),
         // Recency breaks ties so the order is total, not just best-first.
-        sort: sortByMatch ? { matchScore: -1, createdAt: -1 } : { createdAt: -1 },
+        sort: sortByMatch ? "-matchScore -createdAt" : "-createdAt",
       },
     });
 
@@ -174,7 +176,9 @@ export const listApplicationsTool: AgentTool<ListApplicationsInput> = {
     );
 
     return {
-      totalMatching: results.totalDocs,
+      // `list` no longer returns a total — a cursor page skips the $count
+      // branch on purpose — so ask for one explicitly.
+      totalMatching: await applicationService.count({ query }),
       returned: applications.length,
       applications: applications.map((application) => toApplicationSummary(application, jobs)),
       // Stated rather than left silent: unexplained recency order would be read

@@ -1,8 +1,9 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ValueAbilityBuilder, ValueAuthZEntity } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
-import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
+import { ApiResponse, ControllerParams, UnauthorizedException } from "../../../common/helper";
+import { buildListQuery, runCursorList } from "../../../common/query";
+import { valueListQuerySpec } from "./value.query";
 import * as valueService from "./value.service";
 
 export const list = async ({ req }: ControllerParams) => {
@@ -11,17 +12,19 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You are not authorized to read values.");
   }
 
-  const filter = new MongoQuery(req.query, { searchFields: ["type", "label"] }).build();
-  const query = { ...filter.getFilterQuery(), isActive: true };
-  const options = filter.getQueryOptions();
-
-  const results = await valueService.list({ query, options });
-  const { data, pagination } = formatListResponse(results);
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: valueListQuerySpec,
+    // Catalog list: gated by the ability check above, then narrowed to active rows.
+    extraConditions: [{ isActive: true }],
+    fetch: ({ query, options, offset }) => valueService.list({ query, options, offset }),
+    count: ({ query }) => valueService.count({ query }),
+  });
 
   return new ApiResponse({
     message: "Values retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "values",
     pagination,
   });
@@ -33,10 +36,10 @@ export const topThree = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You are not authorized to read values.");
   }
 
-  const filter = new MongoQuery(req.query, { searchFields: ["type", "label"] }).build();
-  const query = { ...filter.getFilterQuery(), isActive: true };
-
-  const values = await valueService.topThree({ query });
+  // Not a list endpoint — it returns the three heaviest values, no paging. The
+  // only query input it ever honoured was `type`.
+  const { filter } = buildListQuery(req.query, valueListQuerySpec);
+  const values = await valueService.topThree({ query: { ...filter, isActive: true } });
 
   return new ApiResponse({
     message: "Top three values retrieved.",

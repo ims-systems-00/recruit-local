@@ -1,4 +1,6 @@
 import express from "express";
+import { validateQuery } from "../../../../common/middlewares";
+import { listQuerySchema } from "./form.validation";
 import {
   listForm,
   getForm,
@@ -17,7 +19,7 @@ const router = express.Router();
 const validateBody = validate("body");
 const validateParams = validate("params");
 
-router.get("/", handleController(listForm));
+router.get("/", validateQuery(listQuerySchema), handleController(listForm));
 router.get("/:id", validateParams(idParamsSchema), handleController(getForm));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(updateForm));
 router.post("/", validateBody(createBodySchema), handleController(createForm));

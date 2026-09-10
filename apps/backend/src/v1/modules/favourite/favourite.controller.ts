@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import {
   ApiResponse,
   ControllerParams,
@@ -14,7 +13,8 @@ import { sanitizeFavouriteItem } from "./favourite.helper";
 import * as jobService from "../job/job.service";
 import { AbilityAction, ACCOUNT_TYPE_ENUMS } from "@rl/types";
 import { ALL_FAVOURITE_FIELDS, FavouriteAbilityBuilder, FavouriteAuthZEntity } from "@rl/authz";
-import { favouriteRoleScopedSecurityQuery } from "./favourite.query";
+import { favouriteListQuerySpec, favouriteRoleScopedSecurityQuery } from "./favourite.query";
+import { buildListQuery, runCursorList } from "../../../common/query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 
 const caslFieldOptions = {
@@ -39,17 +39,12 @@ export const list = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read favourites.`);
   }
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: [],
-  }).build();
-
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), favouriteRoleScopedSecurityQuery(ability)],
-  };
-
-  const favoritesResult = await favouriteService.list({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+  const favoritesResult = await runCursorList({
+    query: req.query,
+    spec: favouriteListQuerySpec,
+    securityQuery: favouriteRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => favouriteService.list({ query, options, offset }),
+    count: ({ query }) => favouriteService.count({ query }),
   });
 
   const groupedIds = favoritesResult.docs.reduce<Record<string, string[]>>((acc, fav: any) => {
@@ -104,14 +99,12 @@ export const list = async ({ req }: ControllerParams) => {
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...favoritesResult, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Favourites retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: sanitizedDocs,
     fieldName: "favourites",
-    pagination,
+    pagination: favoritesResult.pagination,
   });
 };
 
@@ -151,17 +144,12 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
   const abilityBuilder = new FavouriteAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: [],
-  }).build();
-
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), favouriteRoleScopedSecurityQuery(ability)],
-  };
+  // Trash still pages by offset — only the filter building moves off MongoQuery.
+  const { filter, options, page } = buildListQuery(req.query, favouriteListQuerySpec);
 
   const results = await favouriteService.listSoftDeleted({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+    query: { $and: [filter, favouriteRoleScopedSecurityQuery(ability)] },
+    options: { ...options, page: page ?? 1 },
   });
 
   const sanitizedDocs = sanitizeDocuments<FavouriteAuthZEntity>(

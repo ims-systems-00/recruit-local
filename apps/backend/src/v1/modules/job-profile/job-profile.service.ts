@@ -9,6 +9,8 @@ import {
   populateNamedRefQuery,
   populateSingleNamedRefQuery,
   populateFileMediaQuery,
+  cursorPageStages,
+  toCursorPage,
 } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { jobProfileProjectQuery, populateJobProfileKycStatusQuery } from "./job-profile.query";
@@ -82,23 +84,29 @@ const resolvePhotoStorage = async (
   return ids;
 };
 
-export const list = ({ query = {}, options, allowedFields }: IListJobProfileParams) => {
-  return JobProfile.aggregatePaginate(
-    [
-      ...matchQuery(sanitizeQueryIds(query)),
-      ...excludeDeletedQuery(),
-      ...populateValuesQuery(),
-      ...populateNamedRefQuery(JobTitle, "jobTitle"),
-      ...populateNamedRefQuery(Industry, "industry"),
-      ...populateNamedRefQuery(WorkMode, "workMode"),
-      ...populateSingleNamedRefQuery(ExperienceLevel, "experienceLevel"),
-      ...populateFileMediaQuery("profileImageId", "profileImage"),
-      ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
-      ...jobProfileProjectQuery(allowedFields),
-    ],
-    options
-  );
+export const list = async ({ query = {}, options, allowedFields, offset = 0 }: IListJobProfileParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await JobProfile.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...populateValuesQuery(),
+    ...populateNamedRefQuery(JobTitle, "jobTitle"),
+    ...populateNamedRefQuery(Industry, "industry"),
+    ...populateNamedRefQuery(WorkMode, "workMode"),
+    ...populateSingleNamedRefQuery(ExperienceLevel, "experienceLevel"),
+    ...populateFileMediaQuery("profileImageId", "profileImage"),
+    ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
+    ...jobProfileProjectQuery(allowedFields),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListJobProfileParams) =>
+  JobProfile.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {}, allowedFields }: IJobProfileGetParams) => {
   const jobProfiles = await JobProfile.aggregate([

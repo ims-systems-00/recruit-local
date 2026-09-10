@@ -1,27 +1,21 @@
 import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
+import { buildListQuery, runCursorList } from "../../../common/query";
+import { eventRegistrationListQuerySpec } from "./event-registration.query";
 import * as eventRegistrationService from "./event-registration.service";
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 
 export const list = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["status"],
-  }).build();
-
-  const query = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-
-  const results = await eventRegistrationService.list({
-    query,
-    options,
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: eventRegistrationListQuerySpec,
+    fetch: ({ query, options, offset }) => eventRegistrationService.list({ query, options, offset }),
+    count: ({ query }) => eventRegistrationService.count({ query }),
   });
-
-  const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
     message: "Event registrations retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "eventRegistrations",
     pagination,
   });
@@ -41,16 +35,12 @@ export const getOne = async ({ req }: ControllerParams) => {
 };
 
 export const listSoftDeleted = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["status"],
-  }).build();
-
-  const query = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
+  // Trash still pages by offset — only the filter building moves off MongoQuery.
+  const { filter, options, page } = buildListQuery(req.query, eventRegistrationListQuerySpec);
 
   const results = await eventRegistrationService.listSoftDeleted({
-    query,
-    options,
+    query: filter,
+    options: { ...options, page: page ?? 1 },
   });
 
   const { data, pagination } = formatListResponse(results);

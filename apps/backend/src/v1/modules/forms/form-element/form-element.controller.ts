@@ -1,21 +1,19 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import * as formElementService from "./form-element.service";
 import { ApiResponse, ControllerParams } from "../../../../common/helper";
+import { buildListQuery } from "../../../../common/query";
+import { formElementListQuerySpec } from "./form-element.query";
 
 export const listFormElement = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(
-    { ...req.query, formId: req.params.formId },
-    {
-      searchFields: ["name"],
-      strictObjectIdMatch: true,
-    }
-  ).build();
+  // Offset-paged on purpose: this walks the element chain with $graphLookup and
+  // returns the form's structure in sequence order, which a keyset cursor cannot
+  // key on. Only the filter building moves off MongoQuery.
+  const { filter, options, page } = buildListQuery(req.query, formElementListQuerySpec);
 
-  const query = { ...filter.getFilterQuery() };
-  const options = filter.getQueryOptions();
-
-  const results = await formElementService.listFormElement({ query, options });
+  const results = await formElementService.listFormElement({
+    query: { ...filter, formId: req.params.formId },
+    options: { ...options, page: page ?? 1 },
+  });
   const { docs: data, ...pagination } = results;
 
   return new ApiResponse({

@@ -8,6 +8,7 @@ export type IKycQueryParams = ListQueryParams<IKycInput>;
 
 export interface IKycListQueryParams extends IKycListParams {
   session?: ClientSession;
+  offset?: number;
 }
 
 export interface IKycGetParams {

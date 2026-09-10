@@ -1,0 +1,171 @@
+# job — the reference module, retrofitted onto the shared kit.
+#
+# The first request here is the one that mattered: `?page=` used to be forbidden,
+# so every list call from the frontend (which always sends `page: … || 1`) got a
+# 400 instead of jobs.
+
+@host = http://localhost:9027/api/v1
+
+# Log in first — REST Client variables do not cross files, so each file does this.
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv ADMIN_USER_EMAIL}}",
+  "password": "{{$dotenv ADMIN_USER_PASSWORD}}"
+}
+
+###
+
+@token = {{login.response.body.user.accessToken}}
+
+### the regression: this is exactly what apps/frontend/services/jobs/jobs.server.ts
+### sends. Expect 200 with a job list — it was 400 "page is no longer supported".
+GET {{host}}/jobs?page=1&limit=10
+x-auth-access-token: {{token}}
+
+### and the legacy block is complete, so the frontend's paginationSchema validates:
+### totalDocs, totalPages, page, pagingCounter, hasPrevPage, prevPage, nextPage.
+GET {{host}}/jobs?page=2&limit=10
+x-auth-access-token: {{token}}
+
+### unknown param -> 400
+GET {{host}}/jobs?nonsense=x
+x-auth-access-token: {{token}}
+
+### typed range filter — this compared "3" to a number before, so it matched nothing
+GET {{host}}/jobs?yearOfExperience[gte]=3
+x-auth-access-token: {{token}}
+
+GET {{host}}/jobs?salary[gte]=50000&salary[lte]=90000
+x-auth-access-token: {{token}}
+
+### the `in` shape the frontend sends through qs brackets
+GET {{host}}/jobs?employmentType[in][]=full-time&employmentType[in][]=contract
+x-auth-access-token: {{token}}
+
+### salaryMode is still accepted and dropped (Job has no such field)
+GET {{host}}/jobs?salaryMode=monthly&limit=5
+x-auth-access-token: {{token}}
+
+### cursor page
+# @name jobFirst
+GET {{host}}/jobs?limit=5
+x-auth-access-token: {{token}}
+
+### follow it — no repeats
+GET {{host}}/jobs?limit=5&cursor={{jobFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### cursor replayed under a different sort -> 400
+GET {{host}}/jobs?limit=5&sort=-salary&cursor={{jobFirst.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### the embedding must never leave the API
+GET {{host}}/jobs?limit=1
+x-auth-access-token: {{token}}
+### expect: .jobs[0] has no "embedding" key
+
+###############################################################################
+# Filter-kit params
+#
+# Each proves one capability of the shared builder. Counts below are for the dev
+# dataset (endDate: Oct 50 / Nov 44 / Dec 6, vacancy 1..5, all status=open).
+###############################################################################
+
+### three keys, one field. Each bound alone, then together — the pair must be the
+### INTERSECTION. 50 or 93 would mean one bound clobbered the other.
+GET {{host}}/jobs?page=1&limit=100&endDateFrom=2026-11-01
+x-auth-access-token: {{token}}
+### -> 50
+
+GET {{host}}/jobs?page=1&limit=100&endDateTo=2026-11-30
+x-auth-access-token: {{token}}
+### -> 93
+
+GET {{host}}/jobs?page=1&limit=100&endDateFrom=2026-11-01&endDateTo=2026-11-30
+x-auth-access-token: {{token}}
+### -> 43, and that is the whole point
+
+### all three compose
+GET {{host}}/jobs?page=1&limit=100&endDateFrom=2026-10-01&endDateTo=2026-12-31&endDateBefore=2026-11-01
+x-auth-access-token: {{token}}
+### -> 50 (October only)
+
+### same shape on createdAt, which the {status, createdAt, _id} index backs
+GET {{host}}/jobs?page=1&limit=100&postedAfter=2026-09-01&postedBefore=2026-09-30
+x-auth-access-token: {{token}}
+
+### single numeric bound
+GET {{host}}/jobs?page=1&limit=100&minVacancy=3
+x-auth-access-token: {{token}}
+### -> 60
+
+### reference filter, cast to an ObjectId at the spec rather than by key name
+GET {{host}}/jobs?formId=65a0000000000000000000ab
+x-auth-access-token: {{token}}
+### -> 200, empty (no job in dev has a formId)
+
+###############################################################################
+# excludeClosed — the sibling-aware one
+#
+# Every job in dev is `open`, so row counts cannot tell "deferred" from "applied".
+# Compare the cursor's guard instead: `cursorGuard` hashes the composed filter, so
+# an identical `g` means an identical filter.
+#
+#   (no params)                      afecd6d2bf4c
+#   excludeClosed=true               a85c247156f1   <- differs: the $nin applied
+#   status=open                      cf038f8f5da6
+#   excludeClosed=true&status=open   cf038f8f5da6   <- identical: it deferred
+###############################################################################
+
+GET {{host}}/jobs?limit=2&excludeClosed=true
+x-auth-access-token: {{token}}
+
+GET {{host}}/jobs?limit=2&status=open
+x-auth-access-token: {{token}}
+
+GET {{host}}/jobs?limit=2&excludeClosed=true&status=open
+x-auth-access-token: {{token}}
+### decode pagination.nextCursor and compare `g` with the previous request
+
+### rejections — the schema is still the gate
+GET {{host}}/jobs?formId=nope
+x-auth-access-token: {{token}}
+
+GET {{host}}/jobs?endDateFrom=not-a-date
+x-auth-access-token: {{token}}
+
+GET {{host}}/jobs?minVacancy=-1
+x-auth-access-token: {{token}}
+
+GET {{host}}/jobs?excludeClosed=maybe
+x-auth-access-token: {{token}}
+### all 400
+
+###############################################################################
+# Atlas-only from here down.
+#
+# $search / $vectorSearch / $rankFusion do not exist on the local mongo:7 in
+# docker-compose.dev.yml, and there is no fallback — a search request there is an
+# uncaught 500. Point MONGO_URL at Atlas 8.x before running these.
+###############################################################################
+
+### semantic hit: no shared words with "Remote React Developer"
+GET {{host}}/jobs?clientSearch=work%20from%20home%20frontend
+x-auth-access-token: {{token}}
+
+### keyword-only, for comparing the two result sets
+GET {{host}}/jobs?clientSearch=work%20from%20home%20frontend&semantic=false
+x-auth-access-token: {{token}}
+
+### matched mode (candidate session only)
+GET {{host}}/jobs?matched=true&limit=5
+x-auth-access-token: {{token}}
+
+### public list — no auth header at all, open jobs only
+GET {{host}}/public/jobs?limit=5
+
+### public list still accepts legacy paging too
+GET {{host}}/public/jobs?page=1&limit=5

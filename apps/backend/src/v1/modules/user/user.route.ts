@@ -11,8 +11,8 @@ import {
   getOneSoftDeleted,
 } from "./user.controller";
 import { handleController } from "../../../common/helper";
-import { validate } from "../../../common/middlewares";
-import { updateBodySchema, idParamsSchema } from "./user.validation";
+import { validate, validateQuery } from "../../../common/middlewares";
+import { updateBodySchema, idParamsSchema, listQuerySchema } from "./user.validation";
 
 const router = express.Router();
 
@@ -20,7 +20,7 @@ const validateBody = validate("body");
 const validateParams = validate("params");
 
 // List & Create
-router.get("/", handleController(list));
+router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.post("/", handleController(create));
 
 // Trash (Must come before /:id routes)

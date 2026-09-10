@@ -1,5 +1,4 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import {
   ApiResponse,
   ControllerParams,
@@ -11,7 +10,8 @@ import { CertificationAbilityBuilder, CertificationAuthZEntity, ALL_CERTIFICATIO
 import { AbilityAction } from "@rl/types";
 import * as certificationService from "./certification.service";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
-import { certificationRoleScopedSecurityQuery } from "./certification.query";
+import { certificationListQuerySpec, certificationRoleScopedSecurityQuery } from "./certification.query";
+import { runCursorList } from "../../../common/query";
 import { assertCanReadJobProfile, assertProfileScopedListAccess } from "../job-profile/job-profile.access";
 import { toCertificationResponse, toCertificationResponseList } from "./certification.dto";
 
@@ -45,33 +45,27 @@ export const list = async ({ req }: ControllerParams) => {
   // Reading someone else's certifications is only allowed while their profile is.
   await assertProfileScopedListAccess(req.session, req.query.jobProfileId);
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["title", "issuingOrganization"],
-  }).build();
-
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), certificationRoleScopedSecurityQuery(ability)],
-  };
-
-  const results = await certificationService.list({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: certificationListQuerySpec,
+    securityQuery: certificationRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => certificationService.list({ query, options, offset }),
+    count: ({ query }) => certificationService.count({ query }),
   });
 
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<CertificationAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     CertificationAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Certifications retrieved",
     statusCode: StatusCodes.OK,
-    data: toCertificationResponseList(data),
+    data: toCertificationResponseList(sanitizedDocs),
     fieldName: "certifications",
     pagination,
   });

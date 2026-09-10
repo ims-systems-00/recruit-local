@@ -1,5 +1,11 @@
 import { BadRequestException, NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { favouriteProjectQuery } from "./favourite.query";
 import { Favourite } from "../../../models";
@@ -10,17 +16,24 @@ import {
   IListFavouriteParams,
 } from "./favourite.interface";
 
-export const list = ({ query = {}, options, session }: IListFavouriteParams) => {
+export const list = async ({ query = {}, options, session, offset = 0 }: IListFavouriteParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Favourite.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...favouriteProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Favourite.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListFavouriteParams) =>
+  Favourite.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {}, session }: IFavouriteGetParams) => {
   const aggregate = Favourite.aggregate([

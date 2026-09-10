@@ -1,5 +1,5 @@
 import { PipelineStage, Types } from "mongoose";
-import { projectQuery, ListQuerySpec, eq, oneOf, range } from "../../../common/query";
+import { projectQuery, ListQuerySpec, eq, gte, lt, lte, objectId, oneOf, range } from "../../../common/query";
 import { omit } from "lodash";
 import { IJobDoc, Job } from "../../../models";
 import { JobAbilityBuilder, JobAuthZEntity } from "@rl/authz";
@@ -205,6 +205,36 @@ export const jobListQuerySpec: ListQuerySpec = {
     period: oneOf("period"),
     salary: range("salary"),
     yearOfExperience: range("yearOfExperience"),
+
+    // Three keys narrowing one field. `buildListQuery` merges them, so
+    // `?endDateFrom=…&endDateTo=…` becomes a single `{ $gte, $lte }` condition
+    // instead of the last one winning.
+    endDateFrom: gte("endDate"),
+    endDateTo: lte("endDate"),
+    endDateBefore: lt("endDate"),
+
+    postedAfter: gte("createdAt"),
+    postedBefore: lte("createdAt"),
+
+    minVacancy: gte("vacancy"),
+
+    // `formId` would be cast by `sanitizeQueryIds` on its name alone, but saying so
+    // here keeps it working if the field is ever renamed to something that does not
+    // end in `Id` — which is exactly how the same filter is silently broken on
+    // `job-profile.jobTitle` and `file-media.collectionDocument`.
+    formId: objectId("formId"),
+
+    /**
+     * A default view baseline rather than a filter: hide dead postings unless the
+     * caller asked for a specific status, in which case their choice wins.
+     *
+     * Reads `query.status` — the validated request — rather than the filter being
+     * accumulated, so it does not depend on the order builders happen to run in.
+     */
+    excludeClosed: (value, query) =>
+      value === true && !query.status
+        ? { status: { $nin: [JOBS_STATUS_ENUMS.CLOSED, JOBS_STATUS_ENUMS.ARCHIVED] } }
+        : undefined,
   },
   sortable: ["createdAt", "updatedAt", "salary", "endDate"],
   defaultSort: "-createdAt",
@@ -218,6 +248,26 @@ export const JOB_VECTOR_INDEX = "job_vector_index";
 
 /** Candidates pulled from each branch before fusion. */
 const SEARCH_CANDIDATES = 200;
+
+/**
+ * Cosine floor a semantic-only hit must clear to stay in the results.
+ *
+ * `$vectorSearch` ranks but never rejects, so without this every search returned
+ * the whole collection reordered — "website" surfaced all 100 open jobs, with a
+ * construction role third. Measured against text-embedding-3-small over 100 seeded
+ * jobs (kept / 100):
+ *
+ *   term                0.60  0.63  0.65  0.70
+ *   website               34     2     0     0
+ *   SEO                   38     7     3     1
+ *   marketing             53    29    13     1
+ *   qwertyuiop             2     0     0     0
+ *
+ * 0.63 is the point where "website" keeps its two real answers, gibberish returns
+ * nothing, and broad terms stay usable. Raise it to tighten; the relevant jobs sit
+ * within ~0.02 of the noise band, so changes of 0.01 move results a lot.
+ */
+const MIN_SEMANTIC_SCORE = 0.63;
 
 export interface JobSearchPreFilter {
   status?: JOBS_STATUS_ENUMS;
@@ -242,7 +292,12 @@ export const jobSearchPreFilter = (session?: { tenantId?: string; jobProfileId?:
 
 const toSearchFilterClauses = (preFilter: JobSearchPreFilter) => {
   const clauses: Record<string, unknown>[] = [];
-  if (preFilter.status) clauses.push({ text: { query: preFilter.status, path: "status" } });
+  // `equals`, not `text`: the index maps `status` as a `token`, which is stored
+  // unanalyzed, and the `text` operator only matches analyzed `string` fields. It
+  // returned zero rows for every term rather than erroring — which silently
+  // emptied the whole keyword branch for any caller without a tenantId
+  // (candidates, admins, and /public/jobs), leaving hybrid search vector-only.
+  if (preFilter.status) clauses.push({ equals: { value: preFilter.status, path: "status" } });
   if (preFilter.tenantId) clauses.push({ equals: { value: preFilter.tenantId, path: "tenantId" } });
   return clauses;
 };
@@ -253,6 +308,21 @@ const toVectorFilter = (preFilter: JobSearchPreFilter) => {
   if (preFilter.tenantId) filter.tenantId = preFilter.tenantId;
   return Object.keys(filter).length ? filter : undefined;
 };
+
+/** Pulls one field of one branch out of the `scoreDetails` array `$rankFusion` attaches. */
+const branchDetail = (pipelineName: string, field: "rank" | "value") => ({
+  $map: {
+    input: {
+      $filter: {
+        input: "$_scoreDetails.details",
+        as: "detail",
+        cond: { $eq: ["$$detail.inputPipelineName", pipelineName] },
+      },
+    },
+    as: "detail",
+    in: `$$detail.${field}`,
+  },
+});
 
 /**
  * Hybrid search: Lucene keyword matching fused with vector similarity by
@@ -281,8 +351,19 @@ export const hybridSearchStages = (
             {
               text: {
                 query: term,
-                path: ["title", "description", "location", "category"],
-                fuzzy: { maxEdits: 1 },
+                // locationAdditionalInfo is the free-text address line ("Additional
+                // Location Information" in the UI). Kept out of the embedded text on
+                // purpose — it is boilerplate (100 jobs share 21 distinct values), so
+                // it would pull every job vector together and widen the noise band the
+                // MIN_SEMANTIC_SCORE floor is measured against.
+                path: ["title", "description", "location", "locationAdditionalInfo", "category"],
+                // prefixLength pins the first three characters. Without it a
+                // three-letter query is one edit away from half the dictionary —
+                // "SEO" matched "see"/"sea" and pulled in Online English Tutor and
+                // Primary School Teaching Assistant. Typo tolerance is unaffected,
+                // since the edit is still allowed after character 3: "developr",
+                // "enginer" and "marketng" all return the same jobs as before.
+                fuzzy: { maxEdits: 1, prefixLength: 3 },
               },
             },
           ],
@@ -321,7 +402,39 @@ export const hybridSearchStages = (
           },
         },
         combination: { weights: { keyword: 1, semantic: 1 } },
+        // Carries each branch's raw score through the fusion. The floor below is
+        // the only reason this is on.
+        scoreDetails: true,
       },
     },
+
+    // The floor has to be applied out here, not inside the semantic branch:
+    // $rankFusion only accepts selection stages, so the $addFields that reads
+    // $meta is rejected in there, and a $match/$expr reading $meta directly
+    // matches nothing at all rather than erroring.
+    { $addFields: { _scoreDetails: { $meta: "scoreDetails" } } },
+    {
+      $addFields: {
+        // A branch that did not return this document still gets a details entry,
+        // with rank 0 and no value.
+        _keywordRank: {
+          $ifNull: [{ $first: branchDetail("keyword", "rank") }, 0],
+        },
+        _semanticScore: {
+          $ifNull: [{ $first: branchDetail("semantic", "value") }, 0],
+        },
+      },
+    },
+    {
+      // A literal match always survives — someone typing "foreman" expects the job
+      // called Site Foreman whatever the embedding thinks. The floor only judges
+      // hits the semantic branch found on its own.
+      $match: {
+        $expr: {
+          $or: [{ $gt: ["$_keywordRank", 0] }, { $gte: ["$_semanticScore", MIN_SEMANTIC_SCORE] }],
+        },
+      },
+    },
+    { $project: { _scoreDetails: 0, _keywordRank: 0, _semanticScore: 0 } },
   ] as unknown as PipelineStage[];
 };

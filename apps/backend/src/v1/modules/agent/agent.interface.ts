@@ -13,7 +13,7 @@ import { IServiceListParams, IServiceGetParams } from "../../../common/interface
 import { AgentConversationInput, IAgentConversationDoc } from "../../../models/agent-conversation.model";
 import { AgentTraceInput } from "../../../models/agent-trace.model";
 
-export type IListAgentConversationParams = IServiceListParams<AgentConversationInput>;
+export type IListAgentConversationParams = IServiceListParams<AgentConversationInput> & { offset?: number };
 export type IAgentConversationGetParams = IServiceGetParams<AgentConversationInput>;
 
 export interface ICreateConversationParams {

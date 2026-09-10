@@ -1,5 +1,6 @@
 import mongoose, { PipelineStage } from "mongoose";
 import { BadRequestException, logger, NotFoundException } from "../../../../common/helper";
+import { cursorSortStage, toCursorPage } from "../../../../common/query";
 import {
   IListFormSubmissionParams,
   ICreateFormSubmission,
@@ -19,15 +20,25 @@ const populates = [
   },
 ];
 
-export const listFormSubmission = async ({ query = {}, options }: IListFormSubmissionParams) => {
-  const formSubmissions = await FormSubmission.paginateAndExcludeDeleted(
-    { ...query, formId: query.formId },
-    { ...options, populate: populates }
-  );
+export const listFormSubmission = async ({ query = {}, options, offset = 0 }: IListFormSubmissionParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+  const sort = options?.sort ? String(options.sort) : "-createdAt";
 
-  const { docs, ...pagination } = formSubmissions;
-  return { data: docs, pagination };
+  // `find` rather than the paginate helper: one extra document is the whole
+  // `hasNextPage` answer, so there is no $count branch to run.
+  const docs = await FormSubmission.find({ $and: [query, { "deleteMarker.status": { $ne: true } }] })
+    .populate(populates)
+    .sort(cursorSortStage(sort))
+    .skip(offset)
+    .limit(limit + 1)
+    .lean();
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const countFormSubmission = ({ query = {} }: IListFormSubmissionParams) =>
+  FormSubmission.countDocuments({ $and: [query, { "deleteMarker.status": { $ne: true } }] });
 
 export const getFormSubmission = async ({ submissionId, formId, tenantId }: IGetFormSubmission) => {
   const formSubmission = await FormSubmission.findOne({ _id: submissionId, formId: formId, tenantId: tenantId });

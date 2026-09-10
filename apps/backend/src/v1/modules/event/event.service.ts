@@ -1,6 +1,13 @@
 import { Types } from "mongoose";
 import { IListParams, ListQueryParams, VISIBILITY_ENUM } from "@rl/types";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateStatusQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  populateStatusQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { NotFoundException } from "../../../common/helper";
 import { EventInput, Event } from "../../../models";
 import { eventProjectionQuery } from "./event.query";
@@ -10,7 +17,7 @@ import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 
-type IListEventParams = IListParams<EventInput>;
+type IListEventParams = IListParams<EventInput> & { offset?: number };
 type IEventQueryParams = ListQueryParams<EventInput>;
 
 export interface IEventUpdateParams {
@@ -26,17 +33,23 @@ export interface IEventCreateParams {
   payload: EventInput & { bannerImageStorage?: AwsStorageTemplate };
 }
 
-export const list = ({ query = {}, options }: IListEventParams) => {
-  return Event.aggregatePaginate(
-    [
-      ...matchQuery(sanitizeQueryIds(query)),
-      ...excludeDeletedQuery(),
-      ...populateStatusQuery(),
-      ...eventProjectionQuery(),
-    ],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListEventParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const aggregate = Event.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...populateStatusQuery(),
+    ...eventProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(await aggregate, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListEventParams) =>
+  Event.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: IEventGetParams) => {
   const events = await Event.aggregate([

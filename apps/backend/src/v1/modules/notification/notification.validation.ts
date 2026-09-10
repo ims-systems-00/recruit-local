@@ -27,3 +27,26 @@ export const updateBodySchema = Joi.object({
 export const idParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("ID"),
 });
+
+/**
+ * The contract for `GET /notifications`.
+ *
+ * !! This list has NO authorization scoping. The controller passes `{}` as the
+ * query, so any authenticated user lists every notification in the collection,
+ * including other people's. That predates this migration and is deliberately left
+ * as-is here rather than silently narrowing what users see — but it needs fixing:
+ * the list should be scoped to `req.session.user._id` (or a CASL query), and the
+ * `userId` filter below should stop being a caller-supplied value.
+ */
+export const listQuerySchema = Joi.object({
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page.
+  page: Joi.number().integer().min(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string().valid("-createdAt", "createdAt").default("-createdAt"),
+
+  clientSearch: Joi.string().trim().max(200).allow(""),
+  userId: Joi.string().custom(objectIdValidation),
+  status: Joi.string().trim().max(50),
+});

@@ -1,7 +1,13 @@
 import { ClientSession } from "mongoose";
 import { Types } from "mongoose";
 import { BadRequestException, NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { IListParams, ListQueryParams } from "@rl/types";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { withTransaction } from "../../../common/helper/database-transaction";
@@ -9,7 +15,7 @@ import { statusProjectionQuery } from "./status.query";
 import { IStatusDoc, IStatusInput, Status } from "../../../models";
 
 // --- Standardized Parameter Interfaces ---
-type IStatusListParams = IListParams<IStatusInput>;
+type IStatusListParams = IListParams<IStatusInput> & { offset?: number };
 type IStatusQueryParams = ListQueryParams<IStatusInput>;
 
 export interface IStatusUpdateParams {
@@ -30,12 +36,22 @@ export interface IStatusCreateManyParams {
   payloads: IStatusInput[];
 }
 
-export const list = ({ query = {}, options }: IStatusListParams) => {
-  return Status.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...statusProjectionQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IStatusListParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await Status.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...statusProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IStatusListParams) =>
+  Status.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {}, session }: IStatusGetParams): Promise<IStatusDoc> => {
   const status = await Status.aggregate([

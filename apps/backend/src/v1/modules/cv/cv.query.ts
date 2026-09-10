@@ -1,6 +1,6 @@
 import { omit } from "lodash";
 import { PipelineStage } from "mongoose";
-import { projectQuery } from "../../../common/query";
+import { eq, ListQuerySpec, projectQuery } from "../../../common/query";
 import { ICVDoc, CV } from "../../../models";
 import { CvAbilityBuilder, CvAuthZEntity } from "@rl/authz";
 import { accessibleBy } from "@casl/mongoose";
@@ -68,4 +68,19 @@ export const populateCvResumeQuery = (): PipelineStage[] => {
       },
     },
   ];
+};
+
+/**
+ * `jobProfileId` is absent on purpose. A candidate's CASL rules also match any
+ * published CV, so the security query alone does not keep this list to one
+ * person — the controller pins the profile the access guard authorised. Making
+ * it a filter here as well would just duplicate that pin.
+ */
+export const cvListQuerySpec: ListQuerySpec = {
+  filters: { status: eq("status") },
+  sortable: ["createdAt", "updatedAt", "title"],
+  defaultSort: "-createdAt",
+  // Kept from the old MongoQuery contract so no frontend call site has to change.
+  searchKey: "clientSearch",
+  searchFields: ["title", "summary", "skills"],
 };

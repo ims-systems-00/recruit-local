@@ -30,14 +30,33 @@ export const updateStatusBodySchema = Joi.object({
     .label("Background Color"),
 });
 
+/**
+ * The contract for `GET /statuses`.
+ *
+ * The old schema declared `sortBy`/`sortOrder`, which `MongoQuery` ignored, while
+ * rejecting `clientSearch`, which it read — so search was unreachable here. Both
+ * legacy keys are accepted and dropped rather than 400'ing a page that works today.
+ */
 export const statusListQuerySchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page.
+  page: Joi.number().integer().min(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
+  // "asc"/"desc" were this key's old values. They are not sort tokens, so the
+  // builder ignores them and falls back to the default — which is what happened
+  // before anyway, since MongoQuery never applied this sort.
+  sort: Joi.string()
+    .valid("createdAt", "-createdAt", "weight", "-weight", "label", "-label", "asc", "desc")
+    .default("createdAt"),
 
-  collectionName: Joi.string().trim().max(100).optional().label("Filter by Collection Name"),
-  collectionId: objectId.optional().label("Filter by Collection ID"),
-  label: Joi.string().trim().max(100).optional().label("Filter by Status Label"),
+  clientSearch: Joi.string().trim().max(200).allow(""),
 
-  sort: Joi.string().valid("desc", "asc").default("desc"),
-  sortBy: Joi.string().valid("createdAt", "collectionName", "label").default("createdAt"),
+  collectionName: Joi.string().trim().max(100).label("Filter by Collection Name"),
+  collectionId: objectId.label("Filter by Collection ID"),
+  label: Joi.string().trim().max(100).label("Filter by Status Label"),
+
+  // Never actually applied by MongoQuery. Accept and drop.
+  sortBy: Joi.any().strip(),
+  sortOrder: Joi.any().strip(),
 });

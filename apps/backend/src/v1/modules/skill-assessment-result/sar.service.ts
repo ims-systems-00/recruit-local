@@ -1,5 +1,11 @@
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { IListParams, ListQueryParams } from "@rl/types";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { withTransaction } from "../../../common/helper/database-transaction";
@@ -8,15 +14,25 @@ import { IQuestion, ISkillAssessmentResultInput, SkillAssessmentResult } from ".
 import * as skillAssessmentService from "../skill-assessment/skill-assessment.service";
 import { QUESTION_TYPE_ENUM } from "@rl/types";
 
-type IListSARParams = IListParams<ISkillAssessmentResultInput>;
+type IListSARParams = IListParams<ISkillAssessmentResultInput> & { offset?: number };
 type ISARQueryParams = ListQueryParams<ISkillAssessmentResultInput>;
 
-export const list = ({ query = {}, options }: IListSARParams) => {
-  return SkillAssessmentResult.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...skillAssessmentResultQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListSARParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const aggregate = SkillAssessmentResult.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...skillAssessmentResultQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(await aggregate, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListSARParams) =>
+  SkillAssessmentResult.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: IListSARParams) => {
   const results = await SkillAssessmentResult.aggregate([

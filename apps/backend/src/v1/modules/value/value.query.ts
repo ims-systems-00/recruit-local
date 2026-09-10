@@ -1,5 +1,5 @@
 import { PipelineStage } from "mongoose";
-import { excludeDeletedQuery, projectQuery } from "../../../common/query";
+import { eq, excludeDeletedQuery, ListQuerySpec, projectQuery } from "../../../common/query";
 import { omit } from "lodash";
 import { IValueDoc, Value } from "../../../models";
 
@@ -25,4 +25,17 @@ export const populateValuesQuery = (): PipelineStage[] => {
       },
     },
   ];
+};
+
+/**
+ * `isActive` is not a filter — the controller pins it, because this endpoint only
+ * serves the active catalog. Anything not listed here never reaches `$match`.
+ */
+export const valueListQuerySpec: ListQuerySpec = {
+  filters: { type: eq("type") },
+  sortable: ["createdAt", "label", "weight"],
+  defaultSort: "createdAt",
+  // Kept from the old MongoQuery contract so no frontend call site has to change.
+  searchKey: "clientSearch",
+  searchFields: ["type", "label"],
 };

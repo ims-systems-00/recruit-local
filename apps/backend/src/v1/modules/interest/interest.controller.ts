@@ -1,17 +1,11 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  NotFoundException,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
 import { InterestAbilityBuilder, InterestAuthZEntity, ALL_INTEREST_FIELDS } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import * as interestService from "./interest.service";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
-import { interestRoleScopedSecurityQuery } from "./interest.query";
+import { interestListQuerySpec, interestRoleScopedSecurityQuery } from "./interest.query";
+import { runCursorList } from "../../../common/query";
 import { assertCanReadJobProfile, assertProfileScopedListAccess } from "../job-profile/job-profile.access";
 
 const caslFieldOptions = {
@@ -38,33 +32,27 @@ export const list = async ({ req }: ControllerParams) => {
   // Reading someone else's interests is only allowed while their profile is.
   await assertProfileScopedListAccess(req.session, req.query.jobProfileId);
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["name", "description"],
-  }).build();
-
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), interestRoleScopedSecurityQuery(ability)],
-  };
-
-  const results = await interestService.list({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: interestListQuerySpec,
+    securityQuery: interestRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => interestService.list({ query, options, offset }),
+    count: ({ query }) => interestService.count({ query }),
   });
 
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<InterestAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     InterestAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Interests retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: sanitizedDocs,
     fieldName: "interests",
     pagination,
   });

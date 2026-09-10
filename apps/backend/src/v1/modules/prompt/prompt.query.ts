@@ -3,7 +3,7 @@ import { omit } from "lodash";
 import { accessibleBy } from "@casl/mongoose";
 import { AbilityAction } from "@rl/types";
 import { PromptAbilityBuilder, PromptAuthZEntity } from "@rl/authz";
-import { projectQuery, excludeDeletedQuery } from "../../../common/query";
+import { eq, ListQuerySpec, projectQuery, excludeDeletedQuery } from "../../../common/query";
 import { IPromptDoc, Prompt } from "../../../models";
 
 export const promptRoleScopedSecurityQuery = (ability: ReturnType<PromptAbilityBuilder["getAbility"]>) => {
@@ -73,3 +73,16 @@ export const promptNameSummaryQuery = (): PipelineStage[] => [
   },
   { $sort: { name: 1 } },
 ];
+
+/**
+ * Newest version of a name first — the order anyone reading a prompt's history
+ * actually wants. Two sort tokens, so `runCursorList` pages this by offset.
+ */
+export const promptListQuerySpec: ListQuerySpec = {
+  filters: { name: eq("name"), labels: eq("labels") },
+  sortable: ["name", "version", "createdAt"],
+  defaultSort: "name -version",
+  // Kept from the old MongoQuery contract so no frontend call site has to change.
+  searchKey: "clientSearch",
+  searchFields: ["name", "content", "commitMessage"],
+};

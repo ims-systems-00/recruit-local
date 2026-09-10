@@ -1,19 +1,13 @@
+import { IOptions } from "@rl/types";
 import { Schema } from "mongoose";
 import { FormSubmissionInput } from "../../../../models";
 
-export type Query = Partial<FormSubmissionInput & { _id: string }>;
-
-export interface IOptions {
-  page?: number;
-  limit?: number;
-}
+export type Query = Partial<FormSubmissionInput & { _id: string }> & Record<string, unknown>;
 
 export interface IListFormSubmissionParams {
   query: Query;
-  options?: {
-    page?: number;
-    limit?: number;
-  };
+  options?: IOptions;
+  offset?: number;
 }
 
 export interface ICreateFormSubmission extends FormSubmissionInput {

@@ -2,7 +2,13 @@ import { IListParams, VISIBILITY_ENUM } from "@rl/types";
 import { CertificationInput, Certification } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { certificationProjectionQuery } from "./certification.query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
@@ -10,7 +16,7 @@ import * as FileMediaService from "../file-media/file-media.service";
 import { Types } from "mongoose";
 import { modelNames } from "../../../models/constants";
 
-type IListCertificationParams = IListParams<CertificationInput>;
+type IListCertificationParams = IListParams<CertificationInput> & { offset?: number };
 type ICertificationQueryParams = Partial<CertificationInput & { _id: string }>;
 
 export interface ICertificationUpdateParams {
@@ -26,12 +32,22 @@ export interface ICertificationCreateParams {
   payload: CertificationInput & { imageStorage?: AwsStorageTemplate };
 }
 
-export const list = ({ query = {}, options }: IListCertificationParams) => {
-  return Certification.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...certificationProjectionQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListCertificationParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await Certification.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...certificationProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListCertificationParams) =>
+  Certification.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query }: ICertificationGetParams) => {
   const certification = await Certification.aggregate([

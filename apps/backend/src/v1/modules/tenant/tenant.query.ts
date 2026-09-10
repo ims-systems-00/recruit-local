@@ -2,7 +2,7 @@ import { accessibleBy } from "@casl/mongoose";
 import { TenantAbilityBuilder, TenantAuthZEntity } from "@rl/authz";
 import { AbilityAction, USER_ROLE_ENUMS } from "@rl/types";
 import { PipelineStage } from "mongoose";
-import { projectQuery } from "../../../common/query";
+import { bool, eq, ListQuerySpec, projectQuery } from "../../../common/query";
 import { omit } from "lodash";
 import { ITenantDoc, Tenant } from "../../../models";
 import { modelNames } from "../../../models/constants";
@@ -54,3 +54,21 @@ export const populateTenantKycStatusQuery = (): PipelineStage[] => [
   },
   { $project: { _kycAdmin: 0 } },
 ];
+
+/**
+ * `tenantRoleScopedSecurityQuery` is the boundary; these only narrow. Anything
+ * not listed here never reaches `$match`.
+ */
+export const tenantListQuerySpec: ListQuerySpec = {
+  filters: {
+    status: eq("status"),
+    type: eq("type"),
+    industry: eq("industry"),
+    isRecruitmentEnabled: bool("isRecruitmentEnabled"),
+  },
+  sortable: ["createdAt", "name"],
+  defaultSort: "-createdAt",
+  // Kept from the old MongoQuery contract so no frontend call site has to change.
+  searchKey: "clientSearch",
+  searchFields: ["name"],
+};

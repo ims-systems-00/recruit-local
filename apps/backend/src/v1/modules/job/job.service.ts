@@ -4,7 +4,13 @@ import { Types, ClientSession } from "mongoose";
 import { Job, Favourite } from "../../../models";
 import { getOne as getTenant } from "../tenant/tenant.service";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, cursorSortStage } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import {
   alreadyAlliped,
@@ -77,13 +83,11 @@ export const list = async ({
         ]
       : []),
 
-    // In search mode $rankFusion already ordered the results; any $sort here
-    // would throw that ordering away. Otherwise sort on (field, _id) so the
-    // keyset cursor has a total order to walk.
-    ...(options?.sort ? [{ $sort: cursorSortStage(String(options.sort)) }] : []),
-    ...(offset ? [{ $skip: offset }] : []),
-    // One extra document is the whole `hasNextPage` answer — no $count branch.
-    { $limit: limit + 1 },
+    // In search mode $rankFusion already ordered the results, so `options.sort`
+    // is unset and no $sort is emitted — any $sort here would throw that
+    // ordering away. Otherwise this sorts on (field, _id) so the keyset cursor
+    // has a total order to walk.
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset ?? 0, limit),
 
     // Per-viewer flags, and nothing more — moved past the $limit so they join the
     // page instead of every matching job.
@@ -94,10 +98,7 @@ export const list = async ({
   const mongoSession = getMongoSession(session);
   if (mongoSession) aggregate.session(mongoSession);
 
-  const docs = await aggregate;
-  const hasNextPage = docs.length > limit;
-
-  return { docs: hasNextPage ? docs.slice(0, limit) : docs, hasNextPage, limit };
+  return toCursorPage(await aggregate, limit);
 };
 
 /**

@@ -186,10 +186,11 @@ export const listQuerySchema = Joi.object({
   // Opaque — decoded in the controller, which also rejects one issued for a
   // different sort/filter combination.
   cursor: Joi.string().trim().max(512),
-  // Offset paging is gone; say so, rather than Joi's bare `"page" is not allowed`.
-  page: Joi.any()
-    .forbidden()
-    .messages({ "any.unknown": "page is no longer supported on this endpoint — paginate with ?cursor=" }),
+  // Deprecated, and still accepted: every frontend service sends `page: … || 1`
+  // unconditionally, so forbidding it 400s the whole list. Sending it selects the
+  // legacy offset response (totalDocs/totalPages); omitting it returns a cursor
+  // page. Flip this to `Joi.any().forbidden()` once no caller sends it.
+  page: Joi.number().integer().min(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
   sort: Joi.string()
     .valid("-createdAt", "createdAt", "-updatedAt", "updatedAt", "-salary", "salary", "-endDate", "endDate")
@@ -207,6 +208,23 @@ export const listQuerySchema = Joi.object({
   period: inList(Object.values(PERIOD_ENUMS)),
   salary: numericRange,
   yearOfExperience: numericRange,
+
+  // Application-deadline window. Three keys, one field — the list builder merges
+  // them into a single `endDate` condition.
+  endDateFrom: Joi.date().iso(),
+  endDateTo: Joi.date().iso(),
+  endDateBefore: Joi.date().iso(),
+
+  // Posting window, same shape on `createdAt`.
+  postedAfter: Joi.date().iso(),
+  postedBefore: Joi.date().iso(),
+
+  // A default view baseline, not a filter in its own right: it only applies when
+  // the caller did not pick a `status`. See `jobListQuerySpec`.
+  excludeClosed: Joi.boolean(),
+
+  formId: Joi.string().custom(objectIdValidation),
+  minVacancy: Joi.number().integer().min(0),
 
   // The frontend sends this, but Job has no `salaryMode` field — it has only ever
   // matched nothing. Accept and drop rather than 400 a page that works today.

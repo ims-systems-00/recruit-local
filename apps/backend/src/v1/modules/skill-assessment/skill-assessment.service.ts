@@ -1,19 +1,35 @@
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { IListParams, ListQueryParams } from "@rl/types";
 import { skillAssessmentProjectionQuery } from "./skill-assessment.query";
 import { ISkillAssessmentInput, SkillAssessment } from "../../../models";
 
-type IListSkillAssessmentParams = IListParams<ISkillAssessmentInput>;
+type IListSkillAssessmentParams = IListParams<ISkillAssessmentInput> & { offset?: number };
 type ISkillAssessmentQueryParams = ListQueryParams<ISkillAssessmentInput>;
 
-export const list = ({ query = {}, options }: IListSkillAssessmentParams) => {
-  return SkillAssessment.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...excludeDeletedQuery(), ...skillAssessmentProjectionQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListSkillAssessmentParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const aggregate = SkillAssessment.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...skillAssessmentProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(await aggregate, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListSkillAssessmentParams) =>
+  SkillAssessment.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: ISkillAssessmentQueryParams) => {
   const skillAssessments = await SkillAssessment.aggregate([

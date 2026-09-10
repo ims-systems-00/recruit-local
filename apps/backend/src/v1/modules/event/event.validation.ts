@@ -117,16 +117,26 @@ export const updateEventBodySchema = Joi.object({
 });
 
 export const eventListQuerySchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page.
+  page: Joi.number().integer().min(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
-  search: Joi.string().trim().optional().allow(""),
-  statusId: Joi.string().custom(objectIdValidation).optional(),
-  type: Joi.string()
-    .valid(...Object.values(EVENT_TYPE_ENUMS))
-    .optional(),
-  mode: Joi.string()
-    .valid(...Object.values(EVENT_MODE_ENUMS))
-    .optional(),
-  startDate: Joi.date().iso().optional(),
-  endDate: Joi.date().iso().optional(),
-});
+  sort: Joi.string()
+    .valid("-createdAt", "createdAt", "-startDate", "startDate", "title", "-title")
+    .default("-createdAt"),
+
+  clientSearch: Joi.string().trim().max(200).allow(""),
+  search: Joi.string().trim().max(200).allow(""),
+
+  statusId: Joi.string().custom(objectIdValidation),
+  type: Joi.string().valid(...Object.values(EVENT_TYPE_ENUMS)),
+  mode: Joi.string().valid(...Object.values(EVENT_MODE_ENUMS)),
+  startDate: Joi.object({ gte: Joi.date().iso(), lte: Joi.date().iso() }),
+})
+  // The old schema declared `search`, but MongoQuery read `clientSearch` — which
+  // this schema rejected. So search was unreachable here. Renaming keeps any
+  // caller sending `search` working while the rest of the codebase stays on
+  // `clientSearch`. `override` must be true: with it false, a caller sending both
+  // keys gets a 400 rather than a search.
+  .rename("search", "clientSearch", { ignoreUndefined: true, override: true });

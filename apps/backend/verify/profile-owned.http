@@ -1,0 +1,140 @@
+# Owner-scoped CRUD — educations, experiences, certifications, interests, cvs.
+#
+# These all hang off a job profile and share one shape: an ability check, then
+# `assertProfileScopedListAccess`, then a CASL security query. Swap {{path}} to
+# retest another. `cv` has an extra pin, covered in its own section below.
+
+@host = http://localhost:9027/api/v1
+
+# Log in first — REST Client variables do not cross files, so each file does this.
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv ADMIN_USER_EMAIL}}",
+  "password": "{{$dotenv ADMIN_USER_PASSWORD}}"
+}
+
+###
+
+@token = {{login.response.body.user.accessToken}}
+@path = experiences
+
+### unknown param -> 400. It used to become a $match clause and return nothing.
+GET {{host}}/{{path}}?nonsense=x
+x-auth-access-token: {{token}}
+
+### undeclared sort -> 400
+GET {{host}}/{{path}}?sort=-secretField
+x-auth-access-token: {{token}}
+
+### regex metacharacters are escaped, not executed -> 200, empty, no hang
+GET {{host}}/{{path}}?clientSearch=(a%2B)%2B%24
+x-auth-access-token: {{token}}
+
+### legacy offset paging still works -> totalDocs + totalPages present
+GET {{host}}/{{path}}?page=1&limit=5
+x-auth-access-token: {{token}}
+
+### cursor page -> nextCursor present, no totalDocs
+# @name firstPage
+GET {{host}}/{{path}}?limit=5
+x-auth-access-token: {{token}}
+
+### follow the cursor — no row may repeat from the previous response
+GET {{host}}/{{path}}?limit=5&cursor={{firstPage.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### cursor replayed under a different sort -> 400
+GET {{host}}/{{path}}?limit=5&sort=-createdAt&cursor={{firstPage.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+###############################################################################
+# Scoping — the part that must not have regressed
+###############################################################################
+
+### someone else's profile -> 403/404 from assertProfileScopedListAccess,
+### never a 200 with their rows. Replace with a real other profile id.
+GET {{host}}/{{path}}?jobProfileId=000000000000000000000000
+x-auth-access-token: {{token}}
+
+### a malformed jobProfileId is a 400 from Joi, before the access check
+GET {{host}}/{{path}}?jobProfileId=nope
+x-auth-access-token: {{token}}
+
+### unauthenticated -> 401, never a list
+GET {{host}}/{{path}}
+
+###############################################################################
+# Per-module filters
+###############################################################################
+
+### experiences — enum filters, including the qs bracket shape
+GET {{host}}/experiences?workplace=remote&limit=5
+x-auth-access-token: {{token}}
+
+GET {{host}}/experiences?employmentType[in][]=full-time&employmentType[in][]=contract
+x-auth-access-token: {{token}}
+
+### a value outside the enum -> 400
+GET {{host}}/experiences?workplace=not-a-workplace
+x-auth-access-token: {{token}}
+
+### date range. `dateRange` coerces to a real Date — a string bound against a
+### Date field is type-bracketed by Mongo and would match nothing, silently.
+GET {{host}}/experiences?startDate[gte]=2020-01-01&startDate[lte]=2026-12-31
+x-auth-access-token: {{token}}
+
+### an unparseable date bound is dropped rather than passed through -> 400 from Joi
+GET {{host}}/experiences?startDate[gte]=not-a-date
+x-auth-access-token: {{token}}
+
+### educations
+GET {{host}}/educations?fieldOfStudy=Computer%20Science&limit=5
+x-auth-access-token: {{token}}
+
+### certifications
+GET {{host}}/certifications?issuingOrganization=AWS&limit=5
+x-auth-access-token: {{token}}
+
+GET {{host}}/certifications?issueDate[gte]=2024-01-01
+x-auth-access-token: {{token}}
+
+### interests
+GET {{host}}/interests?clientSearch=music&limit=5
+x-auth-access-token: {{token}}
+
+### user-interest-surveys — scoped by userId, not jobProfileId
+GET {{host}}/user-interest-surveys?isSkipped=false&limit=5
+x-auth-access-token: {{token}}
+
+GET {{host}}/user-interest-surveys?clientSearch=design
+x-auth-access-token: {{token}}
+
+###############################################################################
+# cv — has a pin the others do not
+#
+# A candidate's CASL rules also match any *published* CV, so the security query
+# alone does not keep this list to one person. The controller pins it to the
+# profile the access guard authorised. These two must not leak across profiles.
+###############################################################################
+
+### own CVs only
+GET {{host}}/cvs?limit=100
+x-auth-access-token: {{token}}
+### expect: every returned jobProfileId is your own
+
+### `jobProfileId` is accepted by the schema but is NOT a spec filter — the pin
+### is what scopes the list, so this cannot be used to widen it.
+GET {{host}}/cvs?jobProfileId=000000000000000000000000
+x-auth-access-token: {{token}}
+### expect: 403/404 from the guard, never someone else's CVs
+
+### status filter
+GET {{host}}/cvs?status=draft&limit=5
+x-auth-access-token: {{token}}
+
+### unknown status -> 400
+GET {{host}}/cvs?status=not-a-status
+x-auth-access-token: {{token}}

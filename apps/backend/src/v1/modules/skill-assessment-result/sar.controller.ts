@@ -1,23 +1,26 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
+import { buildListQuery, runCursorList } from "../../../common/query";
+import { sarListQuerySpec, sarScoreCondition } from "./sar.query";
 import * as skillAssessmentResultService from "./sar.service";
 
 export const list = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["score", "recommendations"], // Adjusted search fields
-  }).build();
+  const { minScore, maxScore } = req.query as { minScore?: number; maxScore?: number };
 
-  const query = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-
-  const results = await skillAssessmentResultService.list({ query, options });
-  const { data, pagination } = formatListResponse(results);
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: sarListQuerySpec,
+    // Two query keys, one field — the spec builds one condition per key, so this
+    // pair is composed here instead.
+    extraConditions: sarScoreCondition(minScore, maxScore),
+    fetch: ({ query, options, offset }) => skillAssessmentResultService.list({ query, options, offset }),
+    count: ({ query }) => skillAssessmentResultService.count({ query }),
+  });
 
   return new ApiResponse({
     message: "Skill assessment results retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "skillAssessmentResults",
     pagination,
   });
@@ -37,14 +40,13 @@ export const getOne = async ({ req }: ControllerParams) => {
 };
 
 export const listSoftDeleted = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["score", "recommendations"],
-  }).build();
+  // Trash still pages by offset — only the filter building moves off MongoQuery.
+  const { filter, options, page } = buildListQuery(req.query, sarListQuerySpec);
 
-  const query = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-
-  const results = await skillAssessmentResultService.listSoftDeleted({ query, options });
+  const results = await skillAssessmentResultService.listSoftDeleted({
+    query: filter,
+    options: { ...options, page: page ?? 1 },
+  });
   const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({

@@ -1,23 +1,21 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import * as formService from "./form.service";
-import { ApiResponse, ControllerParams, formatListResponse } from "../../../../common/helper";
+import { ApiResponse, ControllerParams } from "../../../../common/helper";
+import { runCursorList } from "../../../../common/query";
+import { formListQuerySpec } from "./form.query";
 
 export const listForm = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["title"],
-  }).build();
-
-  const query = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-
-  const results = await formService.listForm({ query, options });
-  const { data, pagination } = formatListResponse(results);
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: formListQuerySpec,
+    fetch: ({ query, options, offset }) => formService.listForm({ query, options, offset }),
+    count: ({ query }) => formService.countForm({ query }),
+  });
 
   return new ApiResponse({
     message: "Forms retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "forms",
     pagination,
   });

@@ -15,7 +15,7 @@ import { AwsStorageTemplate } from "../../../models/templates/aws-storage.templa
 // }
 
 // --- Standardized Parameter Interfaces ---
-export type IListJobProfileParams = IListParams<JobProfileInput>;
+export type IListJobProfileParams = IListParams<JobProfileInput> & { offset?: number };
 export type IJobProfileQueryParams = ListQueryParams<JobProfileInput>;
 
 // Transient upload templates accepted on writes: the service turns each into a

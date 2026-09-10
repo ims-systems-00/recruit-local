@@ -47,3 +47,32 @@ export const updatePostBodySchema = Joi.object({
 export const postIdParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("Post ID"),
 });
+
+/**
+ * The contract for `GET /posts`.
+ *
+ * `matched` switches modes rather than filters, so the controller reads it
+ * directly — the builder only ever sees the keys `postListQuerySpec` declares.
+ */
+export const listQuerySchema = Joi.object({
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page. Kept because the frontend still sends `page: … || 1`.
+  page: Joi.number().integer().min(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string().valid("-createdAt", "createdAt", "-updatedAt", "updatedAt").default("-createdAt"),
+
+  clientSearch: Joi.string().trim().max(200).allow(""),
+  matched: Joi.boolean(),
+
+  tenantId: Joi.string().custom(objectIdValidation),
+  jobProfileId: Joi.string().custom(objectIdValidation),
+  type: Joi.string().valid(...Object.values(POST_TYPE_ENUMS)),
+  status: Joi.string().valid(...Object.values(POST_STATUS_ENUMS)),
+
+  // The frontend sends this, but Post has no `statusId` field — it has `status`, an
+  // enum. It matched nothing under MongoQuery either, so this filter has never done
+  // anything. Accept and drop rather than 400 a screen that renders today. Remove
+  // once the frontend stops sending it.
+  statusId: Joi.any().strip(),
+});

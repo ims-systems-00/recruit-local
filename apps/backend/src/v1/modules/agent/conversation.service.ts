@@ -4,6 +4,7 @@ import { AGENT_MESSAGE_ROLE } from "@rl/types";
 import { AgentConversation, AgentMessage, IAgentConversationDoc, AgentMessageInput } from "../../../models";
 import { IAgentSessionFingerprint } from "../../../models/agent-conversation.model";
 import { NotFoundException, ConflictException } from "../../../common/helper";
+import { cursorSortStage, toCursorPage } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { HISTORY_LIMIT, REPLAYED_TOOL_RESULT_MAX_CHARS, RUN_DEADLINE_MS, TITLE_MAX_CHARS } from "./agent.constants";
 import { truncate } from "./context";
@@ -39,12 +40,28 @@ export const create = async ({ session, title }: ICreateConversationParams): Pro
   });
 };
 
-export const list = ({ query = {}, options }: IListAgentConversationParams) => {
-  return AgentConversation.paginateAndExcludeDeleted(sanitizeQueryIds(query), {
-    ...options,
-    sort: options?.sort ?? { lastMessageAt: -1 },
-  });
+export const list = async ({ query = {}, options, offset = 0 }: IListAgentConversationParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+  const sort = options?.sort ? String(options.sort) : "-lastMessageAt";
+
+  // `find` rather than the paginate helper: one extra document is the whole
+  // `hasNextPage` answer, so there is no $count branch to run.
+  const docs = await AgentConversation.find({
+    $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }],
+  })
+    .sort(cursorSortStage(sort))
+    .skip(offset)
+    .limit(limit + 1)
+    .lean();
+
+  return toCursorPage(docs, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListAgentConversationParams) =>
+  AgentConversation.countDocuments({
+    $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }],
+  });
 
 export const getOne = async ({ query = {} }: IAgentConversationGetParams): Promise<IAgentConversationDoc> => {
   const conversation = await AgentConversation.findOneWithExcludeDeleted(sanitizeQueryIds(query));

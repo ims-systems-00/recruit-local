@@ -6,7 +6,14 @@ import { NotFoundException, FileManager } from "../../../common/helper";
 import { Tenant, ITenantDoc } from "../../../models";
 import { modelNames } from "../../../models/constants";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateFileMediaQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  populateFileMediaQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
 import { enqueueTenantKeywords } from "../../../queue/keywordUpdateQueue";
 import * as FileMediaService from "../file-media/file-media.service";
@@ -92,7 +99,9 @@ const resolvePhotoStorage = async (
   return clean as Partial<ITenantDoc>;
 };
 
-export const list = ({ query = {}, options, session }: IListTenantParams) => {
+export const list = async ({ query = {}, options, session, offset = 0 }: IListTenantParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Tenant.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
@@ -100,12 +109,17 @@ export const list = ({ query = {}, options, session }: IListTenantParams) => {
     ...populateFileMediaQuery("profileImageId", "profileImage"),
     ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
     ...tenantProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Tenant.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListTenantParams) =>
+  Tenant.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {}, session }: ITenantGetParams): Promise<ITenantDoc> => {
   const aggregate = Tenant.aggregate([

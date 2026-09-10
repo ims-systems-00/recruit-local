@@ -1,7 +1,12 @@
 import express from "express";
 import { handleController } from "../../../common/helper";
-import { validate } from "../../../common/middlewares";
-import { createReactionBodySchema, updateReactionBodySchema, reactionIdParamsSchema } from "./reaction.validation";
+import { validate, validateQuery } from "../../../common/middlewares";
+import {
+  createReactionBodySchema,
+  updateReactionBodySchema,
+  reactionIdParamsSchema,
+  listQuerySchema,
+} from "./reaction.validation";
 import { list, getOne, create, update, softRemove, hardRemove, restore } from "./reaction.controller";
 
 const router = express.Router();
@@ -9,7 +14,7 @@ const validateBody = validate("body");
 const validateParams = validate("params");
 
 // reaction routes
-router.get("/", handleController(list));
+router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/:id", validateParams(reactionIdParamsSchema), handleController(getOne));
 router.post("/", validateBody(createReactionBodySchema), handleController(create));
 router.put(

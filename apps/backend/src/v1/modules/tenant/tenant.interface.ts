@@ -17,7 +17,7 @@ export interface ITenantPhotoStorage {
 }
 
 // --- Standardized Parameter Interfaces ---
-export type IListTenantParams = IServiceListParams<TenantInput>;
+export type IListTenantParams = IServiceListParams<TenantInput> & { offset?: number };
 export type ITenantGetParams = IServiceGetParams<TenantInput>;
 export interface ITenantUpdateParams extends Omit<IServiceUpdateParams<ITenantDoc>, "payload"> {
   payload: Partial<ITenantDoc> & ITenantPhotoStorage;

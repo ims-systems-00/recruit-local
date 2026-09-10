@@ -1,24 +1,37 @@
 import { IListParams, ListQueryParams } from "@rl/types";
 import { Reaction, IReactionInput } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery, populateStatusQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  populateStatusQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { reactionProjectQuery } from "./reaction.query";
 
-type IListReactionParams = IListParams<IReactionInput>;
+type IListReactionParams = IListParams<IReactionInput> & { offset?: number };
 type IReactionQueryParams = ListQueryParams<IReactionInput>;
 
-export const list = ({ query = {}, options }: IListReactionParams) => {
-  return Reaction.aggregatePaginate(
-    [
-      ...matchQuery(sanitizeQueryIds(query)),
-      ...excludeDeletedQuery(),
-      ...populateStatusQuery(),
-      ...reactionProjectQuery(),
-    ],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IListReactionParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const aggregate = Reaction.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...populateStatusQuery(),
+    ...reactionProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(await aggregate, limit);
 };
+
+/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+export const count = ({ query = {} }: IListReactionParams) =>
+  Reaction.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
 export const getOne = async ({ query = {} }: IListReactionParams) => {
   const reactions = await Reaction.aggregate([

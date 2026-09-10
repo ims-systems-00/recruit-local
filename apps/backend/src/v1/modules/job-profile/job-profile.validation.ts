@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
-import { PROFICIENCY, VISIBILITY, ONBOARDING_STEP_ENUMS } from "@rl/types";
+import { PROFICIENCY, VISIBILITY, ONBOARDING_STEP_ENUMS, JOB_PROFILE_STATUS_ENUM } from "@rl/types";
 
 // --- Sub-Schemas ---
 
@@ -89,4 +89,53 @@ export const updateBodySchema = Joi.object({
 
 export const idParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("ID"),
+});
+
+/**
+ * The contract for `GET /job-profiles`.
+ *
+ * `headline` was the old `searchField`, but JobProfile has no such path — that
+ * half of the search never matched anything. `name` and `summary` are the stored
+ * fields.
+ */
+export const listQuerySchema = Joi.object({
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page. Kept because the frontend still sends `page: … || 1`.
+  page: Joi.number().integer().min(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string().valid("-createdAt", "createdAt", "name", "-name").default("-createdAt"),
+
+  clientSearch: Joi.string().trim().max(200).allow(""),
+  search: Joi.string().trim().max(200).allow(""),
+
+  userId: Joi.string().custom(objectIdValidation),
+  status: Joi.string().valid(...Object.values(JOB_PROFILE_STATUS_ENUM)),
+  visibility: Joi.string().valid(...Object.values(VISIBILITY)),
+  onboardingStep: Joi.string().valid(...Object.values(ONBOARDING_STEP_ENUMS)),
+  experienceLevel: Joi.string().custom(objectIdValidation),
+  jobTitle: Joi.string().custom(objectIdValidation),
+  industry: Joi.string().custom(objectIdValidation),
+  workMode: Joi.string().custom(objectIdValidation),
+})
+  // The frontend sends `search`; everything downstream reads `clientSearch`, so
+  // rename rather than teach the pipeline a second key. `override` must be true:
+  // with Joi's default of false, a caller sending both keys gets a 400.
+  .rename("search", "clientSearch", { ignoreUndefined: true, override: true });
+
+/**
+ * The contract for `GET /job-profiles/:id/applied-jobs`.
+ *
+ * It returns jobs but pages over the candidate's *applications* — the jobs query is
+ * a lookup of the ids on that page, not a page of its own — so the cursor and the
+ * sort belong to the application, and there are no job filters here. The profile
+ * comes from the route param, never the query string.
+ */
+export const appliedJobsQuerySchema = Joi.object({
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page. Kept because the frontend still sends `page: … || 1`.
+  page: Joi.number().integer().min(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string().valid("-createdAt", "createdAt").default("-createdAt"),
 });

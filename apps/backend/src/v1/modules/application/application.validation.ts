@@ -62,3 +62,29 @@ export const statusUpdateBodySchema = Joi.object({
 export const idParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("Application ID"),
 });
+
+/**
+ * The contract for `GET /applications`.
+ *
+ * Joi objects reject unknown keys, which is the point: before this a typo'd param
+ * became a `$match` clause and the endpoint quietly returned nothing.
+ */
+export const listQuerySchema = Joi.object({
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page. Kept because the frontend still sends `page: … || 1`.
+  page: Joi.number().integer().min(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string()
+    .valid("-createdAt", "createdAt", "-matchScore", "matchScore", "-updatedAt", "updatedAt")
+    .default("-createdAt"),
+
+  clientSearch: Joi.string().trim().max(200).allow(""),
+
+  jobId: Joi.string().custom(objectIdValidation),
+  tenantId: Joi.string().custom(objectIdValidation),
+  jobProfileId: Joi.string().custom(objectIdValidation),
+  statusId: Joi.string().custom(objectIdValidation),
+  reference: Joi.string().trim().max(200),
+  matchScore: Joi.object({ gte: Joi.number(), lte: Joi.number() }),
+});

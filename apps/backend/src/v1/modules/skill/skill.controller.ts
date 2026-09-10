@@ -1,17 +1,11 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  NotFoundException,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
 import { SkillAbilityBuilder, SkillAuthZEntity, ALL_SKILL_FIELDS } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import * as skillService from "./skill.service";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
-import { skillRoleScopedSecurityQuery } from "./skill.query";
+import { skillListQuerySpec, skillRoleScopedSecurityQuery } from "./skill.query";
+import { runCursorList } from "../../../common/query";
 import { assertCanReadJobProfile, assertProfileScopedListAccess } from "../job-profile/job-profile.access";
 
 const caslFieldOptions = {
@@ -38,33 +32,27 @@ export const list = async ({ req }: ControllerParams) => {
   // Reading someone else's skills is only allowed while their profile is.
   await assertProfileScopedListAccess(req.session, req.query.jobProfileId);
 
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["name", "description"],
-  }).build();
-
-  const finalQuery = {
-    $and: [filter.getFilterQuery(), skillRoleScopedSecurityQuery(ability)],
-  };
-
-  const results = await skillService.list({
-    query: finalQuery,
-    options: filter.getQueryOptions(),
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: skillListQuerySpec,
+    securityQuery: skillRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => skillService.list({ query, options, offset }),
+    count: ({ query }) => skillService.count({ query }),
   });
 
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<SkillAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     SkillAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
-
   return new ApiResponse({
     message: "Skills retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: sanitizedDocs,
     fieldName: "skills",
     pagination,
   });
