@@ -69,4 +69,10 @@ export const listQuerySchema = Joi.object({
   jobProfileId: Joi.string().custom(objectIdValidation),
   type: Joi.string().valid(...Object.values(POST_TYPE_ENUMS)),
   status: Joi.string().valid(...Object.values(POST_STATUS_ENUMS)),
+
+  // The frontend sends this, but Post has no `statusId` field — it has `status`, an
+  // enum. It matched nothing under MongoQuery either, so this filter has never done
+  // anything. Accept and drop rather than 400 a screen that renders today. Remove
+  // once the frontend stops sending it.
+  statusId: Joi.any().strip(),
 });

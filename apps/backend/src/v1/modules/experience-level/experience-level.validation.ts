@@ -57,4 +57,9 @@ export const listQuerySchema = Joi.object({
   sort: Joi.string().valid("createdAt", "-createdAt", "name", "-name", "updatedAt", "-updatedAt").default("createdAt"),
 
   clientSearch: Joi.string().trim().max(200).allow(""),
-});
+  search: Joi.string().trim().max(200).allow(""),
+})
+  // The frontend sends `search`; everything downstream reads `clientSearch`, so
+  // rename rather than teach the pipeline a second key. `override` must be true:
+  // with Joi's default of false, a caller sending both keys gets a 400.
+  .rename("search", "clientSearch", { ignoreUndefined: true, override: true });
