@@ -140,7 +140,6 @@ export const create = async ({ payload, session }: IKycCreateParams) => {
     return getOne({ query: { _id: kyc._id!.toString() }, session: activeSession });
   });
 
-  // ponytail: auto-verify in all envs for now; re-gate on NODE_ENV when real KYC review lands
   const runAt = new Date(Date.now() + 3 * 60 * 1000);
   await agenda.schedule(runAt, JOB_NAME.DEV_AUTO_VERIFY_KYC, { kycId: result._id.toString() });
 
