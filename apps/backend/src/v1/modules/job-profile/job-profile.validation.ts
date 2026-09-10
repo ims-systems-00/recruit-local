@@ -122,3 +122,20 @@ export const listQuerySchema = Joi.object({
   // rename rather than teach the pipeline a second key. `override` must be true:
   // with Joi's default of false, a caller sending both keys gets a 400.
   .rename("search", "clientSearch", { ignoreUndefined: true, override: true });
+
+/**
+ * The contract for `GET /job-profiles/:id/applied-jobs`.
+ *
+ * It returns jobs but pages over the candidate's *applications* — the jobs query is
+ * a lookup of the ids on that page, not a page of its own — so the cursor and the
+ * sort belong to the application, and there are no job filters here. The profile
+ * comes from the route param, never the query string.
+ */
+export const appliedJobsQuerySchema = Joi.object({
+  cursor: Joi.string().trim().max(512),
+  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
+  // cursor page. Kept because the frontend still sends `page: … || 1`.
+  page: Joi.number().integer().min(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  sort: Joi.string().valid("-createdAt", "createdAt").default("-createdAt"),
+});

@@ -12,7 +12,13 @@ import {
 } from "./job-profile.controller";
 import { handleController } from "../../../common/helper";
 import { validate, validateQuery } from "../../../common/middlewares";
-import { updateBodySchema, idParamsSchema, createBodySchema, listQuerySchema } from "./job-profile.validation";
+import {
+  updateBodySchema,
+  idParamsSchema,
+  createBodySchema,
+  listQuerySchema,
+  appliedJobsQuerySchema,
+} from "./job-profile.validation";
 
 const router = express.Router();
 const validateBody = validate("body");
@@ -22,7 +28,12 @@ const validateParams = validate("params");
 router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/:id", validateParams(idParamsSchema), handleController(getOne));
 router.get("/:id/completion", validateParams(idParamsSchema), handleController(getCompletion));
-router.get("/:id/applied-jobs", validateParams(idParamsSchema), handleController(getAppliedJobs));
+router.get(
+  "/:id/applied-jobs",
+  validateParams(idParamsSchema),
+  validateQuery(appliedJobsQuerySchema),
+  handleController(getAppliedJobs)
+);
 router.post("/", validateBody(createBodySchema), handleController(create));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));
 router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemove));
