@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { paginationSchema } from '../shared';
+import { cursorPaginationSchema } from '../shared';
 
 // Reusable schema for AWS storage
 export const awsStorageSchema = yup
@@ -70,7 +70,7 @@ export const postSchema = yup.object({
 
 export const postListResponseSchema = yup.object({
   posts: yup.array().of(postSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });
 

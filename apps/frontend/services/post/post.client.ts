@@ -4,6 +4,8 @@ import {
   useMutation,
   useQueryClient,
   useInfiniteQuery,
+  InfiniteData,
+  QueryKey,
 } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -219,13 +221,18 @@ export function useInfinitePosts(
   filters: PostListFilters = {},
   isEnabled = true,
 ) {
-  return useInfiniteQuery({
+  return useInfiniteQuery<
+    PostListResponse,
+    Error,
+    InfiniteData<PostListResponse, string | undefined>,
+    QueryKey,
+    string | undefined
+  >({
     queryKey: postKeys.list(filters),
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await getPosts({
-        ...filters,
-        page: pageParam,
-      });
+    queryFn: async ({ pageParam }) => {
+      const response = await getPosts(
+        pageParam ? { ...filters, cursor: pageParam } : filters,
+      );
 
       if (!response.success) {
         throw new Error(response.message);
@@ -233,10 +240,10 @@ export function useInfinitePosts(
 
       return response.data;
     },
-    initialPageParam: 1,
+    initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination?.hasNextPage
-        ? lastPage.pagination.page + 1
+        ? lastPage.pagination.nextCursor
         : undefined;
     },
     enabled: isEnabled,

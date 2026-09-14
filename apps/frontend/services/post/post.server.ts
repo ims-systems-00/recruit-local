@@ -18,6 +18,7 @@ import {
   postUpdateSchema,
 } from './post.validation';
 import { ApiResponse } from '@/types/api';
+import qs from 'qs';
 
 const API_ENDPOINT = '/posts';
 
@@ -27,12 +28,15 @@ export async function getPosts(
   try {
     const res = await axiosServer.get<PostListBackendResponse>(API_ENDPOINT, {
       params: {
-        page: params?.page || 1,
+        cursor: params?.cursor,
         limit: params?.limit || 10,
         clientSearch: params?.clientSearch,
         statusId: params?.statusId,
         type: params?.type,
+        matched: params?.matched,
       },
+      paramsSerializer: (params) =>
+        qs.stringify(params, { arrayFormat: 'brackets' }),
     });
     // const backendResponse = await postListResponseSchema.validate(res.data, {
     //   stripUnknown: true,

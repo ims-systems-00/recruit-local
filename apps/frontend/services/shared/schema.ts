@@ -35,3 +35,9 @@ export const paginationSchema = yup.object({
   nextPage: yup.number().nullable().defined(),
   total: yup.number().optional(),
 });
+
+export const cursorPaginationSchema = yup.object({
+  limit: yup.number().required(),
+  hasNextPage: yup.boolean().required(),
+  nextCursor: yup.string().nullable().optional(),
+});
