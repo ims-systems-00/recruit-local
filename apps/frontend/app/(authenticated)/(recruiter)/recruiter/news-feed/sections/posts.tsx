@@ -10,7 +10,7 @@ import {
 import { Search } from 'lucide-react';
 import Image from 'next/image';
 import NewsFeedPost from './news-feed-post';
-import { useInfinitePosts, usePosts } from '@/services/post';
+import { useInfinitePosts } from '@/services/post';
 import { useDebounce } from '@/hooks/useDebounce';
 import PostSkelaton from './post-skelaton';
 import PostActions from './post-actions';
@@ -35,7 +35,6 @@ export default function Posts() {
   );
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 500);
-  const [page, setPage] = useState(1);
 
   const {
     fetchNextPage,
@@ -44,7 +43,7 @@ export default function Posts() {
     isLoading,
     isError,
     data,
-  } = useInfinitePosts({ clientSearch: debouncedSearch, page });
+  } = useInfinitePosts({ clientSearch: debouncedSearch });
 
   const posts = data?.pages.flatMap((page) => page.docs) ?? [];
 

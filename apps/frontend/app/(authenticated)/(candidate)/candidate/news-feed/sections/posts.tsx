@@ -8,7 +8,7 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { Search } from 'lucide-react';
-import { useInfinitePosts, usePosts } from '@/services/post';
+import { useInfinitePosts } from '@/services/post';
 import { useDebounce } from '@/hooks/useDebounce';
 import { POST_TYPE_ENUMS } from '@rl/types';
 import { useTenant } from '@/services/tenants/tenants.client';
@@ -33,7 +33,6 @@ export default function Posts() {
   );
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 500);
-  const [page, setPage] = useState(1);
 
   const {
     fetchNextPage,
@@ -42,7 +41,7 @@ export default function Posts() {
     isLoading,
     isError,
     data,
-  } = useInfinitePosts({ clientSearch: debouncedSearch, page });
+  } = useInfinitePosts({ clientSearch: debouncedSearch });
 
   const posts = data?.pages.flatMap((page) => page.docs) ?? [];
 
