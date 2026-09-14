@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { paginationSchema } from '../shared';
+import { cursorPaginationSchema } from '../shared';
 
 export const jobTitleSchema = yup.object({
   _id: yup.string().required('ID is required'),
@@ -9,7 +9,7 @@ export const jobTitleSchema = yup.object({
 
 export const jobTitleListResponseSchema = yup.object({
   jobTitles: yup.array().of(jobTitleSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });
 

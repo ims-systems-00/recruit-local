@@ -132,7 +132,7 @@ export type JobListBackendResponse = {
 export type AppliedJobsBackendResponse = {
   success: boolean;
   jobs: JobData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
   message?: string;
 };
 

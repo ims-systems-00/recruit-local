@@ -1,7 +1,7 @@
-import { Pagination } from '@/types/api';
+import { CursorPagination } from '@/types/api';
 
 export type ExperienceLevelListFilters = {
-  page?: number;
+  cursor?: string;
   limit?: number;
   search?: string;
 };
@@ -22,12 +22,12 @@ export type ExperienceLevelData = {
 
 export type ExperienceLevelListResponse = {
   experienceLevels: ExperienceLevelData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
 };
 
 export type ExperienceLevelListBackendResponse = {
   success: boolean;
   experienceLevels: ExperienceLevelData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
   message?: string;
 };

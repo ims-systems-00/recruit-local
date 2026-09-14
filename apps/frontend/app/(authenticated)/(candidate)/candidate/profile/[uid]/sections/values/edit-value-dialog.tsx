@@ -87,18 +87,16 @@ export default function EditValueDialog({
   const { updateJobProfile, isPending: isUpdating } = useUpdateJobProfile();
 
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
 
   const debouncedSearch = useDebounce(search, 500);
 
   const listFilters = useMemo(
     () => ({
-      page,
       limit: PAGE_LIMIT,
-      type: { in: types },
-      search: debouncedSearch || undefined,
+      type: types?.[0],
+      clientSearch: debouncedSearch || undefined,
     }),
-    [page, debouncedSearch],
+    [debouncedSearch, types],
   );
 
   const { values: topThreeValues, isLoading: isTopThreeLoading } =
@@ -112,6 +110,8 @@ export default function EditValueDialog({
     isLoading,
     isError,
   } = useInfiniteValues(listFilters);
+
+  console.log('data', data);
 
   const values = data?.pages.flatMap((page) => page.values) ?? [];
 

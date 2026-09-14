@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 
 import { Plus } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import EducationQualificationItem from './education-qualification-item';
 import {
   Sheet,
@@ -12,9 +12,10 @@ import {
 } from '@/components/ui/sheet';
 import CreateEditEducationQualificationForm from './create-edit-education-qualification-form';
 import EducationQualificationSkeleton from './education-qualification-skeleton';
-import PaginationComponent from '../pagination-component';
 import EmptyBox from '@/components/empty-box';
-import { EducationData, useEducations } from '@/services/education';
+import { EducationData, useInfiniteEducations } from '@/services/education';
+
+const SCROLL_THRESHOLD = 80;
 
 export default function EducationQualification({
   jobProfileId,
@@ -26,22 +27,43 @@ export default function EducationQualification({
   const [open, setOpen] = useState(false);
   const [selectedEducation, setSelectedEducation] =
     useState<EducationData | null>(null);
-  const [page, setPage] = useState(1);
 
   const filters = useMemo(
     () => ({
-      page,
       jobProfileId,
       limit: 10,
     }),
-    [page],
+    [jobProfileId],
   );
 
   const {
-    educations: educationQualifications,
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     isLoading,
-    pagination,
-  } = useEducations(filters);
+  } = useInfiniteEducations(filters);
+
+  const educationQualifications =
+    data?.pages.flatMap((page) => page.docs) ?? [];
+
+  const handleScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const target = event.currentTarget;
+
+      const distanceFromBottom =
+        target.scrollHeight - target.scrollTop - target.clientHeight;
+
+      if (
+        distanceFromBottom < SCROLL_THRESHOLD &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
 
   const onClearSelectedEducation = () => {
     setSelectedEducation(null);
@@ -67,48 +89,56 @@ export default function EducationQualification({
           )}
         </div>
         <div className=" space-y-spacing-2xl">
-          {isLoading ? (
-            Array.from({ length: 3 }).map((_, index) => (
-              <EducationQualificationSkeleton key={index} />
-            ))
-          ) : Boolean(educationQualifications?.length) ? (
-            educationQualifications?.map((education) => (
-              <EducationQualificationItem
-                key={education._id}
-                education={education}
-                onEdit={() => {
-                  setSelectedEducation(education);
-                  setOpen(true);
-                }}
-                isViewMode={isViewMode}
-              />
-            ))
-          ) : (
-            <EmptyBox
-              title="No education qualifications added yet"
-              description="Currently, there are no education qualifications added yet."
-            >
-              {!isViewMode && (
-                <Button
-                  disabled={isLoading}
-                  onClick={() => setOpen(true)}
-                  className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
-                >
-                  <Plus />
-                  <span>Create New</span>
-                </Button>
-              )}
-            </EmptyBox>
-          )}
+          <div
+            onScroll={handleScroll}
+            className="space-y-spacing-2xl max-h-[calc(100vh-320px)] overflow-y-auto"
+          >
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <EducationQualificationSkeleton key={index} />
+              ))
+            ) : Boolean(educationQualifications?.length) ? (
+              <>
+                {educationQualifications?.map((education) => (
+                  <EducationQualificationItem
+                    key={education._id}
+                    education={education}
+                    onEdit={() => {
+                      setSelectedEducation(education);
+                      setOpen(true);
+                    }}
+                    isViewMode={isViewMode}
+                  />
+                ))}
+                {isFetchingNextPage && (
+                  <div className=" space-y-spacing-2xl">
+                    {Array.from({ length: 2 }).map((_, index) => (
+                      <EducationQualificationSkeleton
+                        key={`loading-${index}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <EmptyBox
+                title="No education qualifications added yet"
+                description="Currently, there are no education qualifications added yet."
+              >
+                {!isViewMode && (
+                  <Button
+                    disabled={isLoading}
+                    onClick={() => setOpen(true)}
+                    className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+                  >
+                    <Plus />
+                    <span>Create New</span>
+                  </Button>
+                )}
+              </EmptyBox>
+            )}
+          </div>
         </div>
-        {Boolean(educationQualifications?.length) && pagination?.totalPages && (
-          <PaginationComponent
-            meta={pagination}
-            onPageChange={(pageNum) => {
-              setPage(pageNum);
-            }}
-          />
-        )}
       </div>
       <Sheet
         open={open}

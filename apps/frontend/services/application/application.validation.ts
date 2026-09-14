@@ -1,6 +1,6 @@
 import * as yup from 'yup';
 
-import { objectIdSchema, paginationSchema } from '@/services/shared';
+import { objectIdSchema, cursorPaginationSchema } from '@/services/shared';
 import { JobData } from '../jobs/job.type';
 import { REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
 
@@ -126,7 +126,7 @@ export const moveApplicationToColumnSchema = yup.object({
 // --- BACKEND RESPONSE ENVELOPES ---
 export const applicationListResponseSchema = yup.object({
   applications: yup.array().of(applicationSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });
 

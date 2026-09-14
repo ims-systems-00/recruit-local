@@ -4,7 +4,7 @@ import {
   favouriteIdParamsSchema,
   favouriteUpdateSchema,
 } from './favourite.validation';
-import { Pagination } from '@/types/api';
+import { CursorPagination } from '@/types/api';
 import { JobData } from '../jobs/job.type';
 
 // TypeScript types
@@ -13,7 +13,7 @@ export type FavouriteUpdateInput = yup.InferType<typeof favouriteUpdateSchema>;
 export type FavouriteIdParams = yup.InferType<typeof favouriteIdParamsSchema>;
 
 export type FavouriteListFilters = {
-  page?: number;
+  cursor?: string;
   limit?: number;
   tenantId?: string;
   jobProfileId?: string;
@@ -44,7 +44,7 @@ export type FavouriteData = {
 export type FavouriteListBackendResponse = {
   success: boolean;
   favourites: FavouriteData[];
-  pagination?: Pagination;
+  pagination?: CursorPagination;
   message?: string;
 };
 
@@ -56,5 +56,5 @@ export type FavouriteItemBackendResponse = {
 
 export type FavouriteListResponse = {
   docs: FavouriteData[];
-  pagination?: Pagination;
+  pagination?: CursorPagination;
 };

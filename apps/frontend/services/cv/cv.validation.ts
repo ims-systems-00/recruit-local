@@ -3,7 +3,7 @@ import { CV_STATUS_ENUM } from '@rl/types';
 import {
   objectIdSchema,
   deleteMarkerSchema,
-  paginationSchema,
+  cursorPaginationSchema,
 } from '../shared';
 
 const awsStorageSchema = yup
@@ -165,7 +165,7 @@ export const cvListResponseSchema = yup.object({
   message: yup.string().required(),
   statusCode: yup.number().required(),
   cvs: yup.array().of(cvSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
 });
 
 export const cvItemResponseSchema = yup.object({

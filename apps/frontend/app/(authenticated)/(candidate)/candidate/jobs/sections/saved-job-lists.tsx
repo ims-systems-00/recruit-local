@@ -1,57 +1,83 @@
 'use client';
+import { useCallback } from 'react';
 import JobItemSkelaton from './job-item-skelaton';
 import CardJobItem from './card-job-item';
 import EmptyBox from '../../../../../../components/empty-box';
-import PaginationComponent from './pagination-component';
 import { JobData } from '@/services/jobs/job.type';
-import { useFavourites } from '@/services/favourite/favourite.client';
-import { useState } from 'react';
-export default function SavedJobLists() {
-  const [page, setPage] = useState(1);
+import { useInfiniteFavourites } from '@/services/favourite/favourite.client';
 
+const SCROLL_THRESHOLD = 80;
+
+export default function SavedJobLists() {
   const {
-    favourites,
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     isLoading: isFavouriteLoading,
-    pagination,
-  } = useFavourites({
-    page: page,
+  } = useInfiniteFavourites({
     limit: 10,
     itemType: 'jobs',
   });
 
+  const favourites = data?.pages.flatMap((page) => page.docs) ?? [];
+
+  const handleScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const target = event.currentTarget;
+
+      const distanceFromBottom =
+        target.scrollHeight - target.scrollTop - target.clientHeight;
+
+      if (
+        distanceFromBottom < SCROLL_THRESHOLD &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
+
   return (
     <div>
-      {isFavouriteLoading ? (
-        <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
-          {[1, 2, 3, 4].map((item) => (
-            <JobItemSkelaton key={item} />
-          ))}
-        </div>
-      ) : Boolean(favourites?.length) ? (
-        <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
-          {favourites?.map((item) => (
-            <CardJobItem
-              key={item._id}
-              job={item?.item as JobData}
-              isShowAppliedBtn={false}
-            />
-          ))}
-        </div>
-      ) : (
-        <EmptyBox
-          title="No Saved Jobs Yet!"
-          description="Currently, there are no saved jobs available."
-        ></EmptyBox>
-      )}
-
-      {Boolean(favourites?.length) && pagination?.totalPages && (
-        <PaginationComponent
-          meta={pagination}
-          onPageChange={(pageNum) => {
-            setPage(pageNum);
-          }}
-        />
-      )}
+      <div
+        onScroll={handleScroll}
+        className="max-h-[calc(100vh-320px)] overflow-y-auto space-y-spacing-4xl"
+      >
+        {isFavouriteLoading ? (
+          <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
+            {[1, 2, 3, 4].map((item) => (
+              <JobItemSkelaton key={item} />
+            ))}
+          </div>
+        ) : Boolean(favourites?.length) ? (
+          <>
+            <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
+              {favourites?.map((item) => (
+                <CardJobItem
+                  key={item._id}
+                  job={item?.item as JobData}
+                  isShowAppliedBtn={false}
+                />
+              ))}
+            </div>
+            {isFetchingNextPage && (
+              <div className=" grid grid-cols-1 sm:grid-cols-2 gap-spacing-4xl">
+                {[1, 2].map((item) => (
+                  <JobItemSkelaton key={item} />
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <EmptyBox
+            title="No Saved Jobs Yet!"
+            description="Currently, there are no saved jobs available."
+          ></EmptyBox>
+        )}
+      </div>
     </div>
   );
 }

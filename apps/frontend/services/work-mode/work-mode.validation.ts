@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { paginationSchema } from '../shared';
+import { cursorPaginationSchema } from '../shared';
 
 export const workModeSchema = yup.object({
   _id: yup.string().required('ID is required'),
@@ -10,7 +10,7 @@ export const workModeSchema = yup.object({
 
 export const workModeListResponseSchema = yup.object({
   workModes: yup.array().of(workModeSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });
 

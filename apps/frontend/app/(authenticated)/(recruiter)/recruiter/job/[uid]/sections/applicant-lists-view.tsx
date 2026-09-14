@@ -1,14 +1,15 @@
 import { DataTable } from '@/components/table/data-table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn, formatDate } from '@/lib/utils';
-import { useApplications } from '@/services/application/application.client';
+import { useInfiniteApplications } from '@/services/application/application.client';
 import { Application } from '@/services/application/application.type';
 import { ColumnDef } from '@tanstack/react-table';
-import React, { useState } from 'react';
-import PaginationComponent from './pagination-component';
+import React, { useCallback } from 'react';
 import { TableSkeleton } from './table-skeleton';
 import EmptyBox from '@/components/empty-box';
 import Link from 'next/link';
+
+const SCROLL_THRESHOLD = 80;
 
 export const userColumns: ColumnDef<Application>[] = [
   {
@@ -61,36 +62,58 @@ export const userColumns: ColumnDef<Application>[] = [
   },
 ];
 export default function ApplicantListsView({ jobId }: { jobId: string }) {
-  const [page, setPage] = useState(1);
-  const { applications, isLoading, pagination } = useApplications({
-    jobId,
-    page,
-  });
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteApplications({ jobId });
+
+  const applications = data?.pages.flatMap((page) => page.docs) ?? [];
+
+  const handleScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const target = event.currentTarget;
+
+      const distanceFromBottom =
+        target.scrollHeight - target.scrollTop - target.clientHeight;
+
+      if (
+        distanceFromBottom < SCROLL_THRESHOLD &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border-gray-primary space-y-spacing-4xl">
-      {isLoading ? (
-        <TableSkeleton columns={userColumns.length} rows={5} />
-      ) : (
-        <>
-          {Boolean(applications?.length) ? (
-            <DataTable columns={userColumns} data={applications} />
-          ) : (
-            <EmptyBox
-              title="No Applicants Found"
-              description="No applicants found for this job."
-            />
-          )}
-          {Boolean(applications?.length) && pagination?.totalPages && (
-            <PaginationComponent
-              meta={pagination}
-              onPageChange={(pageNum) => {
-                setPage(pageNum);
-              }}
-            />
-          )}
-        </>
-      )}
+    <div className="overflow-hidden rounded-2xl border border-border-gray-primary">
+      <div
+        onScroll={handleScroll}
+        className="max-h-[calc(100vh-320px)] overflow-y-auto space-y-spacing-4xl"
+      >
+        {isLoading ? (
+          <TableSkeleton columns={userColumns.length} rows={5} />
+        ) : (
+          <>
+            {Boolean(applications?.length) ? (
+              <DataTable columns={userColumns} data={applications} />
+            ) : (
+              <EmptyBox
+                title="No Applicants Found"
+                description="No applicants found for this job."
+              />
+            )}
+            {isFetchingNextPage && (
+              <TableSkeleton columns={userColumns.length} rows={2} />
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

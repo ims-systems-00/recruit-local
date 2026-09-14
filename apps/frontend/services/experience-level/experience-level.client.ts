@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQuery,
+  InfiniteData,
+  QueryKey,
+} from '@tanstack/react-query';
 import {
   ExperienceLevelListFilters,
   ExperienceLevelListResponse,
@@ -48,13 +53,18 @@ export function useInfiniteExperienceLevels(
   filters: ExperienceLevelListFilters = {},
   isEnabled = true,
 ) {
-  return useInfiniteQuery({
+  return useInfiniteQuery<
+    ExperienceLevelListResponse,
+    Error,
+    InfiniteData<ExperienceLevelListResponse, string | undefined>,
+    QueryKey,
+    string | undefined
+  >({
     queryKey: experienceLevelKeys.list(filters),
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await getExperienceLevels({
-        ...filters,
-        page: pageParam,
-      });
+    queryFn: async ({ pageParam }) => {
+      const response = await getExperienceLevels(
+        pageParam ? { ...filters, cursor: pageParam } : filters,
+      );
 
       if (!response.success) {
         throw new Error(response.message);
@@ -62,10 +72,10 @@ export function useInfiniteExperienceLevels(
 
       return response.data;
     },
-    initialPageParam: 1,
+    initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination?.hasNextPage
-        ? lastPage.pagination.page + 1
+        ? lastPage.pagination.nextCursor
         : undefined;
     },
     enabled: isEnabled,

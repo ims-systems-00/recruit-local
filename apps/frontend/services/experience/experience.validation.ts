@@ -1,6 +1,6 @@
 import { EMPLOYMENT_TYPE, WORKPLACE_ENUMS } from '@rl/types';
 import * as yup from 'yup';
-import { paginationSchema } from '../shared';
+import { cursorPaginationSchema } from '../shared';
 
 // Yup schemas for validation
 export const experienceCreateSchema = yup.object({
@@ -78,7 +78,7 @@ export const experienceSchema = yup.object({
 
 export const experienceListResponseSchema = yup.object({
   experiences: yup.array().of(experienceSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });
 

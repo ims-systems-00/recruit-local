@@ -69,17 +69,15 @@ export default function WorkModeSection({
   }, [existingWorkModes]);
 
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
 
   const debouncedSearch = useDebounce(search, 500);
 
   const listFilters = useMemo(
     () => ({
-      page,
       limit: PAGE_LIMIT,
-      search: debouncedSearch || undefined,
+      clientSearch: debouncedSearch || undefined,
     }),
-    [page, debouncedSearch],
+    [debouncedSearch],
   );
 
   const {

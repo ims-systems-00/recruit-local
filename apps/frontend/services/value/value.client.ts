@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQuery,
+  InfiniteData,
+  QueryKey,
+} from '@tanstack/react-query';
 import { ValueData, ValueListFilters, ValueListResponse } from './value.type';
 import { getTopThreeValues, getValues } from './value.server';
 import { VALUE_TYPE_ENUM } from '@rl/types';
@@ -44,13 +49,18 @@ export function useInfiniteValues(
   filters: ValueListFilters = {},
   isEnabled = true,
 ) {
-  return useInfiniteQuery({
+  return useInfiniteQuery<
+    ValueListResponse,
+    Error,
+    InfiniteData<ValueListResponse, string | undefined>,
+    QueryKey,
+    string | undefined
+  >({
     queryKey: valueKeys.list(filters),
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await getValues({
-        ...filters,
-        page: pageParam,
-      });
+    queryFn: async ({ pageParam }) => {
+      const response = await getValues(
+        pageParam ? { ...filters, cursor: pageParam } : filters,
+      );
 
       if (!response.success) {
         throw new Error(response.message);
@@ -58,10 +68,10 @@ export function useInfiniteValues(
 
       return response.data;
     },
-    initialPageParam: 1,
+    initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination?.hasNextPage
-        ? lastPage.pagination.page + 1
+        ? lastPage.pagination.nextCursor
         : undefined;
     },
     enabled: isEnabled,

@@ -19,12 +19,22 @@ export async function getValues(
   params?: ValueListFilters,
 ): Promise<ApiResponse<ValueListResponse>> {
   try {
+    const typeParam =
+      typeof params?.type === 'string'
+        ? params.type
+        : params?.type &&
+            typeof params.type === 'object' &&
+            'in' in params.type &&
+            Array.isArray(params.type.in)
+          ? params.type.in[0]
+          : undefined;
+
     const res = await axiosServer.get<ValueListBackendResponse>(API_ENDPOINT, {
       params: {
-        page: params?.page || 1,
+        cursor: params?.cursor,
         limit: params?.limit || 10,
         clientSearch: params?.clientSearch,
-        type: params?.type,
+        type: typeParam,
       },
       paramsSerializer: (params) =>
         qs.stringify(params, { arrayFormat: 'brackets' }),
@@ -32,6 +42,8 @@ export async function getValues(
     // const backendResponse = await valueListResponseSchema.validate(res.data, {
     //   stripUnknown: true,
     // });
+
+    console.log('res', res);
 
     return {
       success: true,

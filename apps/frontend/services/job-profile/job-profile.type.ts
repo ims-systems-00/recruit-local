@@ -116,6 +116,13 @@ export type JobProfileListFilters = {
   search?: string;
 };
 
+// Filters for the candidate's applied-jobs list (paged over the candidate's
+// applications cursor, so there are no job-level filters).
+export type AppliedJobsListFilters = {
+  cursor?: string;
+  limit?: number;
+};
+
 // --- FRONTEND RESPONSE TYPES ---
 export type JobProfileListResponse = PaginatedResponse<JobProfile>;
 export type JobProfileApiResponse<T> = ApiResponse<T>;

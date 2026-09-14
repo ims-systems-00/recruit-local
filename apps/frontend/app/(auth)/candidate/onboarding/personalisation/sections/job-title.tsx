@@ -74,17 +74,15 @@ export default function JobTitleSection({
   const selectedJobTitles = watch('jobTitle');
 
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
 
   const debouncedSearch = useDebounce(search, 500);
 
   const listFilters = useMemo(
     () => ({
-      page,
       limit: PAGE_LIMIT,
       clientSearch: debouncedSearch || undefined,
     }),
-    [page, debouncedSearch],
+    [debouncedSearch],
   );
 
   const {

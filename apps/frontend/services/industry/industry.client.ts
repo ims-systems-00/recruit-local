@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQuery,
+  InfiniteData,
+  QueryKey,
+} from '@tanstack/react-query';
 import { IndustryListFilters, IndustryListResponse } from './industry.type';
 import { getIndustries } from './industry.server';
 
@@ -45,13 +50,18 @@ export function useInfiniteIndustries(
   filters: IndustryListFilters = {},
   isEnabled = true,
 ) {
-  return useInfiniteQuery({
+  return useInfiniteQuery<
+    IndustryListResponse,
+    Error,
+    InfiniteData<IndustryListResponse, string | undefined>,
+    QueryKey,
+    string | undefined
+  >({
     queryKey: industryKeys.list(filters),
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await getIndustries({
-        ...filters,
-        page: pageParam,
-      });
+    queryFn: async ({ pageParam }) => {
+      const response = await getIndustries(
+        pageParam ? { ...filters, cursor: pageParam } : filters,
+      );
 
       if (!response.success) {
         throw new Error(response.message);
@@ -59,10 +69,10 @@ export function useInfiniteIndustries(
 
       return response.data;
     },
-    initialPageParam: 1,
+    initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination?.hasNextPage
-        ? lastPage.pagination.page + 1
+        ? lastPage.pagination.nextCursor
         : undefined;
     },
     enabled: isEnabled,

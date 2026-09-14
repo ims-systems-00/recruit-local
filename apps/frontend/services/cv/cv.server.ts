@@ -15,9 +15,10 @@ import type {
   CvApiResponse,
   Cv,
   CvListResponse,
+  CvListCursorResponse,
   CvCreateInput,
   CvUpdateInput,
-  CvListFilters,
+  CvListRequestFilters,
   ExtractAndCreateCvInput,
   CvExtractionData,
 } from './cv.type';
@@ -28,12 +29,13 @@ const API_ENDPOINT = '/cvs';
  * GET ALL CVS
  */
 export async function getCvs(
-  params?: CvListFilters,
-): Promise<CvApiResponse<CvListResponse>> {
+  params?: CvListRequestFilters,
+): Promise<CvApiResponse<CvListResponse | CvListCursorResponse>> {
   try {
     const res = await axiosServer.get(API_ENDPOINT, {
       params: {
-        page: params?.page || 1,
+        page: params?.page,
+        cursor: params?.cursor,
         limit: params?.limit || 10,
         clientSearch: params?.clientSearch,
         jobProfileId: params?.jobProfileId,
