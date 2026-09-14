@@ -91,18 +91,16 @@ export default function ValuesSection({
   const { updateTenant, isPending: isUpdating } = useUpdateTenant();
 
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
 
   const debouncedSearch = useDebounce(search, 500);
 
   const listFilters = useMemo(
     () => ({
-      page,
       limit: PAGE_LIMIT,
-      type: { in: types },
+      type: types?.[0],
       clientSearch: debouncedSearch || undefined,
     }),
-    [page, debouncedSearch],
+    [debouncedSearch, types],
   );
 
   const {

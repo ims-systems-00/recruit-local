@@ -1,5 +1,12 @@
 'use client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+  InfiniteData,
+  QueryKey,
+} from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   getExperiences,
@@ -51,6 +58,36 @@ export function useExperiences(filters: ExperienceListFilters = {}) {
     refetch: query.refetch,
     isFetching: query.isFetching,
   };
+}
+
+// Hook to fetch list of experiences with cursor-based infinite scroll
+export function useInfiniteExperiences(filters: ExperienceListFilters = {}) {
+  return useInfiniteQuery<
+    ExperienceListResponse,
+    Error,
+    InfiniteData<ExperienceListResponse, string | undefined>,
+    QueryKey,
+    string | undefined
+  >({
+    queryKey: experienceKeys.list(filters),
+    queryFn: async ({ pageParam }) => {
+      const response = await getExperiences(
+        pageParam ? { ...filters, cursor: pageParam } : filters,
+      );
+
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+
+      return response.data;
+    },
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination?.hasNextPage
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
+  });
 }
 
 // Hook to fetch a single experience by ID

@@ -1,55 +1,81 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useCallback } from 'react';
 
-import { useAppliedJobs } from '@/services/job-profile';
+import { useInfiniteAppliedJobs } from '@/services/job-profile';
 import JobItemSkelaton from './job-item-skelaton';
 import CardJobItem from './card-job-item';
 import EmptyBox from '@/components/empty-box';
-import PaginationComponent from './pagination-component';
+
+const SCROLL_THRESHOLD = 80;
 
 export default function Applied() {
-  const [page, setPage] = useState(1);
-
   const {
-    jobs,
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     isLoading: isJobLoading,
-    pagination,
-  } = useAppliedJobs({ page: page });
+  } = useInfiniteAppliedJobs({});
+
+  const jobs = data?.pages.flatMap((page) => page.docs) ?? [];
+
+  const handleScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const target = event.currentTarget;
+
+      const distanceFromBottom =
+        target.scrollHeight - target.scrollTop - target.clientHeight;
+
+      if (
+        distanceFromBottom < SCROLL_THRESHOLD &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
 
   return (
     <div>
-      {isJobLoading ? (
-        <div className=" grid sm:grid-cols-2 gap-spacing-4xl">
-          {[1, 2, 3, 4].map((item) => (
-            <JobItemSkelaton key={item} />
-          ))}
-        </div>
-      ) : Boolean(jobs?.length) ? (
-        <div className=" grid sm:grid-cols-2 gap-spacing-4xl">
-          {jobs?.map((item, index) => (
-            <CardJobItem
-              key={index}
-              job={item}
-              isShowAppliedBtn={false}
-              isShowFavouriteBtn={false}
-            />
-          ))}
-        </div>
-      ) : (
-        <EmptyBox
-          title="No Applied Jobs Yet!"
-          description="Currently, there are no applied jobs available."
-        />
-      )}
-
-      {Boolean(jobs?.length) && pagination?.totalPages && (
-        <PaginationComponent
-          meta={pagination}
-          onPageChange={(pageNum) => {
-            setPage(pageNum);
-          }}
-        />
-      )}
+      <div
+        onScroll={handleScroll}
+        className="max-h-[calc(100vh-320px)] overflow-y-auto space-y-spacing-4xl"
+      >
+        {isJobLoading ? (
+          <div className=" grid sm:grid-cols-2 gap-spacing-4xl">
+            {[1, 2, 3, 4].map((item) => (
+              <JobItemSkelaton key={item} />
+            ))}
+          </div>
+        ) : Boolean(jobs?.length) ? (
+          <>
+            <div className=" grid sm:grid-cols-2 gap-spacing-4xl">
+              {jobs?.map((item) => (
+                <CardJobItem
+                  key={item._id}
+                  job={item}
+                  isShowAppliedBtn={false}
+                  isShowFavouriteBtn={false}
+                />
+              ))}
+            </div>
+            {isFetchingNextPage && (
+              <div className=" grid sm:grid-cols-2 gap-spacing-4xl">
+                {[1, 2].map((item) => (
+                  <JobItemSkelaton key={item} />
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <EmptyBox
+            title="No Applied Jobs Yet!"
+            description="Currently, there are no applied jobs available."
+          />
+        )}
+      </div>
     </div>
   );
 }

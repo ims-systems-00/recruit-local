@@ -5,7 +5,7 @@ import {
   experienceIdParamsSchema,
   experienceUpdateSchema,
 } from './experience.validation';
-import { Pagination } from '@/types/api';
+import { CursorPagination } from '@/types/api';
 
 // TypeScript types
 export type ExperienceCreateInput = yup.InferType<
@@ -17,7 +17,7 @@ export type ExperienceUpdateInput = yup.InferType<
 export type ExperienceIdParams = yup.InferType<typeof experienceIdParamsSchema>;
 
 export type ExperienceListFilters = {
-  page?: number;
+  cursor?: string;
   limit?: number;
   search?: string;
   jobProfileId?: string;
@@ -45,7 +45,7 @@ export type ExperienceData = {
 export type ExperienceListBackendResponse = {
   success: boolean;
   experiences: ExperienceData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
   message?: string;
 };
 
@@ -57,5 +57,5 @@ export type ExperienceItemBackendResponse = {
 
 export type ExperienceListResponse = {
   docs: ExperienceData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
 };

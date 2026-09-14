@@ -17,9 +17,10 @@ import type {
   JobProfileUpdateInput,
   JobProfileListFilters,
   JobProfileData,
+  AppliedJobsListFilters,
 } from './job-profile.type';
 import { AppliedJobsBackendResponse, JobData } from '../jobs/job.type';
-import { PaginatedResponse } from '@/types/api';
+import { CursorPaginatedResponse } from '@/types/api';
 
 const API_ENDPOINT = '/job-profiles';
 
@@ -228,14 +229,14 @@ export async function hardDeleteJobProfile(
 
 export async function getAppliedJobs(
   jobProfileId: string,
-  filters: JobProfileListFilters,
-): Promise<JobProfileApiResponse<PaginatedResponse<JobData>>> {
+  filters: AppliedJobsListFilters,
+): Promise<JobProfileApiResponse<CursorPaginatedResponse<JobData>>> {
   try {
     const res = await axiosServer.get<AppliedJobsBackendResponse>(
       `${API_ENDPOINT}/${jobProfileId}/applied-jobs`,
       {
         params: {
-          page: filters?.page || 1,
+          cursor: filters?.cursor,
           limit: filters?.limit || 10,
         },
       },

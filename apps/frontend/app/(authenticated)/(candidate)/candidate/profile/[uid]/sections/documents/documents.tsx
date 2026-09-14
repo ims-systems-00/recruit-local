@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 
 import { Plus } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import DocumentItem from './document-item';
 import {
   Sheet,
@@ -11,11 +11,12 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import DocumentsSkeleton from './documents-skeleton';
-import PaginationComponent from '../pagination-component';
 import EmptyBox from '@/components/empty-box';
 import CreateEditDocumentForm from './create-edit-documen-form';
 import { CvData } from '@/services/cv/cv.type';
-import { useCvs } from '@/services/cv/cv.client';
+import { useInfiniteCvs } from '@/services/cv/cv.client';
+
+const SCROLL_THRESHOLD = 80;
 
 export default function Documents({
   jobProfileId,
@@ -26,18 +27,42 @@ export default function Documents({
 }) {
   const [open, setOpen] = useState(false);
   const [selectedCv, setSelectedCv] = useState<CvData | null>(null);
-  const [page, setPage] = useState(1);
 
   const filters = useMemo(
     () => ({
-      page,
       jobProfileId,
       limit: 9,
     }),
-    [page],
+    [jobProfileId],
   );
 
-  const { cvs, isLoading, pagination } = useCvs(filters);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteCvs(filters);
+
+  const cvs = data?.pages.flatMap((page) => page.docs) ?? [];
+
+  const handleScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const target = event.currentTarget;
+
+      const distanceFromBottom =
+        target.scrollHeight - target.scrollTop - target.clientHeight;
+
+      if (
+        distanceFromBottom < SCROLL_THRESHOLD &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
 
   const onClearSelectedCv = () => {
     setSelectedCv(null);
@@ -62,25 +87,37 @@ export default function Documents({
             </Button>
           )}
         </div>
-        <div className=" space-y-spacing-2xl">
+        <div
+          onScroll={handleScroll}
+          className="max-h-[calc(100vh-320px)] overflow-y-auto space-y-spacing-2xl"
+        >
           {isLoading ? (
             Array.from({ length: 3 }).map((_, index) => (
               <DocumentsSkeleton key={index} />
             ))
           ) : Boolean(cvs?.length) ? (
-            <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-4xl">
-              {cvs?.map((cv) => (
-                <DocumentItem
-                  key={cv._id}
-                  cv={cv}
-                  onEdit={() => {
-                    setSelectedCv(cv);
-                    setOpen(true);
-                  }}
-                  isViewMode={isViewMode}
-                />
-              ))}
-            </div>
+            <>
+              <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-4xl">
+                {cvs?.map((cv) => (
+                  <DocumentItem
+                    key={cv._id}
+                    cv={cv}
+                    onEdit={() => {
+                      setSelectedCv(cv);
+                      setOpen(true);
+                    }}
+                    isViewMode={isViewMode}
+                  />
+                ))}
+              </div>
+              {isFetchingNextPage && (
+                <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-4xl">
+                  {Array.from({ length: 2 }).map((_, index) => (
+                    <DocumentsSkeleton key={`loading-${index}`} />
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
             <EmptyBox
               title="No documents added yet"
@@ -99,14 +136,6 @@ export default function Documents({
             </EmptyBox>
           )}
         </div>
-        {Boolean(cvs?.length) && pagination?.totalPages && (
-          <PaginationComponent
-            meta={pagination}
-            onPageChange={(pageNum) => {
-              setPage(pageNum);
-            }}
-          />
-        )}
       </div>
       <Sheet
         open={open}

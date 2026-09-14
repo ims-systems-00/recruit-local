@@ -1,7 +1,7 @@
-import { Pagination } from '@/types/api';
+import { CursorPagination } from '@/types/api';
 
 export type WorkModeListFilters = {
-  page?: number;
+  cursor?: string;
   limit?: number;
   clientSearch?: string;
 };
@@ -22,12 +22,12 @@ export type WorkModeData = {
 
 export type WorkModeListResponse = {
   workModes: WorkModeData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
 };
 
 export type WorkModeListBackendResponse = {
   success: boolean;
   workModes: WorkModeData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
   message?: string;
 };

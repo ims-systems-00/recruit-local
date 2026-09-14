@@ -13,8 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 // import type { Applicant } from './data';
 import { ApplicantCard } from './applicant-card';
-import { useState } from 'react';
-import { useApplications } from '@/services/application/application.client';
+import { useInfiniteApplications } from '@/services/application/application.client';
 import { Application } from '@/services/application/application.type';
 import { KanbanColumnSkeleton } from './kanban-column-skeleton';
 
@@ -45,12 +44,18 @@ export function KanbanColumn({
   optimisticItems,
   removedIds,
 }: Props) {
-  const [page, setPage] = useState(1);
-  const { applications, isLoading, pagination } = useApplications({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteApplications({
     jobId,
-    page,
     statusId: id,
   });
+
+  const applications = data?.pages.flatMap((page) => page.docs) ?? [];
 
   const mergedApplications = [
     ...optimisticItems,
@@ -139,6 +144,15 @@ export function KanbanColumn({
             />
           ))}
         </SortableContext>
+        {hasNextPage && (
+          <button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="mt-spacing-2xl cursor-pointer text-label-sm font-label-sm-strong! text-text-brand-secondary"
+          >
+            {isFetchingNextPage ? 'Loading...' : 'Load more'}
+          </button>
+        )}
       </div>
     </div>
   );

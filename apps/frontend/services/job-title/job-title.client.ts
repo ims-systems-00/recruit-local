@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQuery,
+  InfiniteData,
+  QueryKey,
+} from '@tanstack/react-query';
 import { JobTitleListFilters, JobTitleListResponse } from './job-title.type';
 import { getJobTitles } from './job-title.server';
 
@@ -45,13 +50,18 @@ export function useInfiniteJobTitles(
   filters: JobTitleListFilters = {},
   isEnabled = true,
 ) {
-  return useInfiniteQuery({
+  return useInfiniteQuery<
+    JobTitleListResponse,
+    Error,
+    InfiniteData<JobTitleListResponse, string | undefined>,
+    QueryKey,
+    string | undefined
+  >({
     queryKey: jobTitleKeys.list(filters),
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await getJobTitles({
-        ...filters,
-        page: pageParam,
-      });
+    queryFn: async ({ pageParam }) => {
+      const response = await getJobTitles(
+        pageParam ? { ...filters, cursor: pageParam } : filters,
+      );
 
       if (!response.success) {
         throw new Error(response.message);
@@ -59,10 +69,10 @@ export function useInfiniteJobTitles(
 
       return response.data;
     },
-    initialPageParam: 1,
+    initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination?.hasNextPage
-        ? lastPage.pagination.page + 1
+        ? lastPage.pagination.nextCursor
         : undefined;
     },
     enabled: isEnabled,

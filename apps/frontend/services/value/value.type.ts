@@ -1,11 +1,11 @@
-import { Pagination } from '@/types/api';
+import { CursorPagination } from '@/types/api';
 import { VALUE_TYPE_ENUM } from '@rl/types';
 
 export type ValueListFilters = {
-  page?: number;
+  cursor?: string;
   limit?: number;
   clientSearch?: string;
-  type?: { in: string[] };
+  type?: { in: string[] } | VALUE_TYPE_ENUM | string;
 };
 
 export type ValueData = {
@@ -26,12 +26,12 @@ export type ValueData = {
 
 export type ValueListResponse = {
   values: ValueData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
 };
 
 export type ValueListBackendResponse = {
   success: boolean;
   values: ValueData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
   message?: string;
 };

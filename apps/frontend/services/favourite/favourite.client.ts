@@ -1,5 +1,12 @@
 'use client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+  InfiniteData,
+  QueryKey,
+} from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   getFavourites,
@@ -49,6 +56,35 @@ export function useFavourites(filters?: FavouriteListFilters) {
     refetch: query.refetch,
     isFetching: query.isFetching,
   };
+}
+
+export function useInfiniteFavourites(filters?: FavouriteListFilters) {
+  return useInfiniteQuery<
+    FavouriteListResponse,
+    Error,
+    InfiniteData<FavouriteListResponse, string | undefined>,
+    QueryKey,
+    string | undefined
+  >({
+    queryKey: favouriteKeys.list(filters),
+    queryFn: async ({ pageParam }) => {
+      const response = await getFavourites(
+        pageParam ? { ...filters, cursor: pageParam } : filters,
+      );
+
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+
+      return response.data;
+    },
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination?.hasNextPage
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
+  });
 }
 
 export function useFavourite(id: string) {

@@ -1,5 +1,10 @@
 import * as yup from 'yup';
-import type { Pagination, PaginatedResponse, ApiResponse } from '@/types/api';
+import type {
+  Pagination,
+  PaginatedResponse,
+  CursorPaginatedResponse,
+  ApiResponse,
+} from '@/types/api';
 import {
   createCvSchema,
   updateCvSchema,
@@ -24,8 +29,24 @@ export type CvListFilters = {
   jobProfileId?: string;
 };
 
+export type CvListCursorFilters = {
+  cursor?: string;
+  limit?: number;
+  clientSearch?: string;
+  jobProfileId?: string;
+};
+
+export type CvListRequestFilters = {
+  page?: number;
+  cursor?: string;
+  limit?: number;
+  clientSearch?: string;
+  jobProfileId?: string;
+};
+
 // --- FRONTEND RESPONSE TYPES ---
 export type CvListResponse = PaginatedResponse<CvData>;
+export type CvListCursorResponse = CursorPaginatedResponse<CvData>;
 export type CvApiResponse<T> = ApiResponse<T>;
 
 export interface Skill {

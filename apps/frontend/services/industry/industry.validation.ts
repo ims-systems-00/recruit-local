@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { paginationSchema } from '../shared';
+import { cursorPaginationSchema } from '../shared';
 
 export const industrySchema = yup.object({
   _id: yup.string().required('ID is required'),
@@ -9,7 +9,7 @@ export const industrySchema = yup.object({
 
 export const industryListResponseSchema = yup.object({
   industries: yup.array().of(industrySchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });
 

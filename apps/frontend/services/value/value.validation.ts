@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { paginationSchema } from '../shared';
+import { cursorPaginationSchema } from '../shared';
 import { VALUE_TYPE_ENUM } from '@rl/types';
 
 export const valueSchema = yup.object({
@@ -15,6 +15,6 @@ export const valueSchema = yup.object({
 
 export const valueListResponseSchema = yup.object({
   values: yup.array().of(valueSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });

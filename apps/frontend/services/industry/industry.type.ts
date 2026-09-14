@@ -1,7 +1,7 @@
-import { Pagination } from '@/types/api';
+import { CursorPagination } from '@/types/api';
 
 export type IndustryListFilters = {
-  page?: number;
+  cursor?: string;
   limit?: number;
   clientSearch?: string;
 };
@@ -21,12 +21,12 @@ export type IndustryData = {
 
 export type IndustryListResponse = {
   industries: IndustryData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
 };
 
 export type IndustryListBackendResponse = {
   success: boolean;
   industries: IndustryData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
   message?: string;
 };

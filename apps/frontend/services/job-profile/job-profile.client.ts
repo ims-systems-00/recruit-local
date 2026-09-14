@@ -1,6 +1,13 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+  InfiniteData,
+  QueryKey,
+} from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   getJobProfiles,
@@ -19,10 +26,11 @@ import type {
   JobProfileListResponse,
   JobProfileListFilters,
   JobProfileData,
+  AppliedJobsListFilters,
 } from './job-profile.type';
 import { useRouter } from 'next/navigation';
 import { JobData } from '../jobs/job.type';
-import { PaginatedResponse } from '@/types/api';
+import { CursorPaginatedResponse } from '@/types/api';
 import { useSession } from 'next-auth/react';
 import { ONBOARDING_STEP_ENUMS } from '@rl/types';
 
@@ -225,31 +233,37 @@ export function useRestoreJobProfile() {
   };
 }
 
-export function useAppliedJobs(filters: JobProfileListFilters) {
+export function useInfiniteAppliedJobs(filters: AppliedJobsListFilters = {}) {
   const { data: session } = useSession();
 
-  const query = useQuery<PaginatedResponse<JobData>, Error>({
-    queryKey: ['applied-jobs', session?.user?.jobProfileId, filters],
-    queryFn: async () => {
+  return useInfiniteQuery<
+    CursorPaginatedResponse<JobData>,
+    Error,
+    InfiniteData<CursorPaginatedResponse<JobData>, string | undefined>,
+    QueryKey,
+    string | undefined
+  >({
+    queryKey: [
+      'applied-jobs',
+      session?.user?.jobProfileId,
+      filters,
+    ],
+    queryFn: async ({ pageParam }) => {
       const response = await getAppliedJobs(
         session?.user?.jobProfileId || '',
-        filters,
+        pageParam ? { ...filters, cursor: pageParam } : filters,
       );
       if (!response.success) {
         throw new Error(response.message);
       }
       return response.data;
     },
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination?.hasNextPage
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
     enabled: !!session?.user?.jobProfileId,
   });
-
-  return {
-    jobs: query.data?.docs || [],
-    pagination: query.data?.pagination,
-    isLoading: query.isLoading,
-    isError: query.isError,
-    error: query.error,
-    refetch: query.refetch,
-    isFetching: query.isFetching,
-  };
 }

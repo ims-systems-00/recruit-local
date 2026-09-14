@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { paginationSchema } from '../shared';
+import { cursorPaginationSchema } from '../shared';
 
 export const experienceLevelSchema = yup.object({
   _id: yup.string().required('ID is required'),
@@ -10,7 +10,7 @@ export const experienceLevelSchema = yup.object({
 
 export const experienceLevelListResponseSchema = yup.object({
   experienceLevels: yup.array().of(experienceLevelSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });
 

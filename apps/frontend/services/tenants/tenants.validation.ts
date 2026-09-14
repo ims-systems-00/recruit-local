@@ -57,7 +57,7 @@ export const tenantUpdateSchema = yup.object({
     .string()
     .trim()
     .max(50, 'Name must be at most 50 characters')
-    .required('Name is required'),
+    .optional(),
 
   description: yup.string().optional(),
 
