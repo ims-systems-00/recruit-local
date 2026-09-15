@@ -1,5 +1,8 @@
 import * as yup from 'yup';
-import type { PaginatedResponse, ApiResponse } from '@/types/api';
+import type {
+  CursorPaginatedResponse,
+  ApiResponse,
+} from '@/types/api';
 import {
   createApplicationSchema,
   updateApplicationSchema,
@@ -23,12 +26,12 @@ export type MoveApplicationToColumnInput = yup.InferType<
 // --- QUERY FILTERS ---
 export type ApplicationListFilters = {
   jobId?: string;
-  page?: number;
+  cursor?: string;
   limit?: number;
   clientSearch?: string;
   statusId?: string;
 };
 
 // --- FRONTEND RESPONSE TYPES ---
-export type ApplicationListResponse = PaginatedResponse<Application>;
+export type ApplicationListResponse = CursorPaginatedResponse<Application>;
 export type ApplicationApiResponse<T> = ApiResponse<T>;

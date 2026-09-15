@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQuery,
+  InfiniteData,
+  QueryKey,
+} from '@tanstack/react-query';
 import { WorkModeListFilters, WorkModeListResponse } from './work-mode.type';
 import { getWorkModes } from './work-mode.server';
 
@@ -45,13 +50,18 @@ export function useInfiniteWorkModes(
   filters: WorkModeListFilters = {},
   isEnabled = true,
 ) {
-  return useInfiniteQuery({
+  return useInfiniteQuery<
+    WorkModeListResponse,
+    Error,
+    InfiniteData<WorkModeListResponse, string | undefined>,
+    QueryKey,
+    string | undefined
+  >({
     queryKey: workModeKeys.list(filters),
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await getWorkModes({
-        ...filters,
-        page: pageParam,
-      });
+    queryFn: async ({ pageParam }) => {
+      const response = await getWorkModes(
+        pageParam ? { ...filters, cursor: pageParam } : filters,
+      );
 
       if (!response.success) {
         throw new Error(response.message);
@@ -59,10 +69,10 @@ export function useInfiniteWorkModes(
 
       return response.data;
     },
-    initialPageParam: 1,
+    initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination?.hasNextPage
-        ? lastPage.pagination.page + 1
+        ? lastPage.pagination.nextCursor
         : undefined;
     },
     enabled: isEnabled,

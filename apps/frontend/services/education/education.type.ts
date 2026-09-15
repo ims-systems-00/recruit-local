@@ -4,7 +4,7 @@ import {
   educationIdParamsSchema,
   educationUpdateSchema,
 } from './education.validation';
-import { Pagination } from '@/types/api';
+import { CursorPagination } from '@/types/api';
 
 // TypeScript types
 export type EducationCreateInput = yup.InferType<typeof educationCreateSchema>;
@@ -12,7 +12,7 @@ export type EducationUpdateInput = yup.InferType<typeof educationUpdateSchema>;
 export type EducationIdParams = yup.InferType<typeof educationIdParamsSchema>;
 
 export type EducationListFilters = {
-  page?: number;
+  cursor?: string;
   limit?: number;
   search?: string;
   jobProfileId?: string;
@@ -38,7 +38,7 @@ export type EducationData = {
 export type EducationListBackendResponse = {
   success: boolean;
   educations: EducationData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
   message?: string;
 };
 
@@ -50,5 +50,5 @@ export type EducationItemBackendResponse = {
 
 export type EducationListResponse = {
   docs: EducationData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
 };

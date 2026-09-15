@@ -20,7 +20,7 @@ export async function getJobTitles(
       API_ENDPOINT,
       {
         params: {
-          page: params?.page || 1,
+          cursor: params?.cursor,
           limit: params?.limit || 10,
           clientSearch: params?.clientSearch,
         },

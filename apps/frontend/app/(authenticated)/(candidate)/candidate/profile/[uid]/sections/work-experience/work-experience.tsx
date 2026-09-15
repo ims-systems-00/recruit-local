@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 
 import { Plus } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import WorkExperienceItem from './work-experience-item';
 import {
   Sheet,
@@ -11,10 +11,11 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import CreateEditWorkExperienceForm from './create-edit-work-experience-form';
-import { ExperienceData, useExperiences } from '@/services/experience';
+import { ExperienceData, useInfiniteExperiences } from '@/services/experience';
 import WorkExperienceSkeleton from './work-experience-skeleton';
-import PaginationComponent from '../pagination-component';
 import EmptyBox from '@/components/empty-box';
+
+const SCROLL_THRESHOLD = 80;
 
 export default function WorkExperience({
   jobProfileId,
@@ -26,18 +27,42 @@ export default function WorkExperience({
   const [open, setOpen] = useState(false);
   const [selectedExperience, setSelectedExperience] =
     useState<ExperienceData | null>(null);
-  const [page, setPage] = useState(1);
 
   const filters = useMemo(
     () => ({
-      page,
       jobProfileId,
       limit: 10,
     }),
-    [page],
+    [jobProfileId],
   );
 
-  const { experiences, isLoading, pagination } = useExperiences(filters);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteExperiences(filters);
+
+  const experiences = data?.pages.flatMap((page) => page.docs) ?? [];
+
+  const handleScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const target = event.currentTarget;
+
+      const distanceFromBottom =
+        target.scrollHeight - target.scrollTop - target.clientHeight;
+
+      if (
+        distanceFromBottom < SCROLL_THRESHOLD &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
 
   const onClearSelectedExperience = () => {
     setSelectedExperience(null);
@@ -62,48 +87,54 @@ export default function WorkExperience({
           )}
         </div>
         <div className=" space-y-spacing-2xl">
-          {isLoading ? (
-            Array.from({ length: 3 }).map((_, index) => (
-              <WorkExperienceSkeleton key={index} />
-            ))
-          ) : Boolean(experiences?.length) ? (
-            experiences?.map((experience) => (
-              <WorkExperienceItem
-                key={experience._id}
-                experience={experience}
-                onEdit={() => {
-                  setSelectedExperience(experience);
-                  setOpen(true);
-                }}
-                isViewMode={isViewMode}
-              />
-            ))
-          ) : (
-            <EmptyBox
-              title="No experience added yet"
-              description="Currently, there are no work experience added yet."
-            >
-              {!isViewMode && (
-                <Button
-                  disabled={isLoading}
-                  onClick={() => setOpen(true)}
-                  className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
-                >
-                  <Plus />
-                  <span>Create New</span>
-                </Button>
-              )}
-            </EmptyBox>
-          )}
+          <div
+            onScroll={handleScroll}
+            className="space-y-spacing-2xl max-h-[calc(100vh-320px)] overflow-y-auto"
+          >
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <WorkExperienceSkeleton key={index} />
+              ))
+            ) : Boolean(experiences?.length) ? (
+              <>
+                {experiences?.map((experience) => (
+                  <WorkExperienceItem
+                    key={experience._id}
+                    experience={experience}
+                    onEdit={() => {
+                      setSelectedExperience(experience);
+                      setOpen(true);
+                    }}
+                    isViewMode={isViewMode}
+                  />
+                ))}
+                {isFetchingNextPage && (
+                  <div className=" space-y-spacing-2xl">
+                    {Array.from({ length: 2 }).map((_, index) => (
+                      <WorkExperienceSkeleton key={`loading-${index}`} />
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <EmptyBox
+                title="No experience added yet"
+                description="Currently, there are no work experience added yet."
+              >
+                {!isViewMode && (
+                  <Button
+                    disabled={isLoading}
+                    onClick={() => setOpen(true)}
+                    className=" bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
+                  >
+                    <Plus />
+                    <span>Create New</span>
+                  </Button>
+                )}
+              </EmptyBox>
+            )}
+          </div>
         </div>
-        {Boolean(experiences?.length) && pagination?.totalPages && (
-          <PaginationComponent
-            meta={pagination}
-            onPageChange={(pageNum) => {
-              setPage(pageNum);
-            }}
-          />
-        )}
       </div>
       <Sheet
         open={open}

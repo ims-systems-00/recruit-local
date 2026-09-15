@@ -1,5 +1,12 @@
 'use client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+  InfiniteData,
+  QueryKey,
+} from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   getEducations,
@@ -50,6 +57,36 @@ export function useEducations(filters: EducationListFilters = {}) {
     refetch: query.refetch,
     isFetching: query.isFetching,
   };
+}
+
+// Hook to fetch list of educations with cursor-based infinite scroll
+export function useInfiniteEducations(filters: EducationListFilters = {}) {
+  return useInfiniteQuery<
+    EducationListResponse,
+    Error,
+    InfiniteData<EducationListResponse, string | undefined>,
+    QueryKey,
+    string | undefined
+  >({
+    queryKey: educationKeys.list(filters),
+    queryFn: async ({ pageParam }) => {
+      const response = await getEducations(
+        pageParam ? { ...filters, cursor: pageParam } : filters,
+      );
+
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+
+      return response.data;
+    },
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination?.hasNextPage
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
+  });
 }
 
 // Hook to fetch a single education by ID

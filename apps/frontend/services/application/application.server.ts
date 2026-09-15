@@ -31,7 +31,7 @@ export async function getApplications(
   try {
     const res = await axiosServer.get(API_ENDPOINT, {
       params: {
-        page: params?.page || 1,
+        cursor: params?.cursor,
         limit: params?.limit || 10,
         clientSearch: params?.clientSearch,
         jobId: params?.jobId,

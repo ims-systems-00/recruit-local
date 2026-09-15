@@ -20,7 +20,7 @@ export async function getExperienceLevels(
       API_ENDPOINT,
       {
         params: {
-          page: params?.page || 1,
+          cursor: params?.cursor,
           limit: params?.limit || 10,
           search: params?.search,
         },

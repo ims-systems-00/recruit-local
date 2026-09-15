@@ -29,26 +29,26 @@ export async function getExperiences(
       API_ENDPOINT,
       {
         params: {
-          page: params?.page || 1,
+          cursor: params?.cursor,
           limit: params?.limit || 10,
           jobProfileId: params?.jobProfileId,
         },
       },
     );
-    const backendResponse = await experienceListResponseSchema.validate(
-      res.data,
-      {
-        stripUnknown: true,
-      },
-    );
+    // const backendResponse = await experienceListResponseSchema.validate(
+    //   res.data,
+    //   {
+    //     stripUnknown: true,
+    //   },
+    // );
 
     return {
       success: true,
       data: {
-        docs: backendResponse.experiences || [],
-        pagination: backendResponse.pagination,
+        docs: res.data.experiences || [],
+        pagination: res.data.pagination,
       },
-      message: backendResponse.message,
+      message: res.data.message,
     };
   } catch (error) {
     return handleServerError(error, 'Failed to fetch experiences');

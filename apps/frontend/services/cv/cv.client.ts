@@ -5,6 +5,8 @@ import {
   useMutation,
   useQueryClient,
   useInfiniteQuery,
+  InfiniteData,
+  QueryKey,
 } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -22,7 +24,9 @@ import type {
   CvUpdateInput,
   Cv,
   CvListResponse,
+  CvListCursorResponse,
   CvListFilters,
+  CvListCursorFilters,
   ExtractAndCreateCvInput,
   CvExtractionData,
 } from './cv.type';
@@ -32,7 +36,7 @@ import { experienceLevelKeys } from '../experience-level/experience-level.client
 export const cvKeys = {
   all: ['cvs'] as const,
   lists: () => [...cvKeys.all, 'list'] as const,
-  infiniteLists: (filters: CvListFilters) =>
+  infiniteLists: (filters: CvListCursorFilters) =>
     [...cvKeys.all, 'infiniteList', filters] as const,
   list: (filters: CvListFilters) => [...cvKeys.lists(), filters] as const,
   details: () => [...cvKeys.all, 'detail'] as const,
@@ -230,25 +234,33 @@ export function useExtractAndCreateCv() {
   };
 }
 
-export function useInfiniteCvs(filters: CvListFilters = {}, isEnabled = true) {
-  return useInfiniteQuery({
+export function useInfiniteCvs(
+  filters: CvListCursorFilters = {},
+  isEnabled = true,
+) {
+  return useInfiniteQuery<
+    CvListCursorResponse,
+    Error,
+    InfiniteData<CvListCursorResponse, string | undefined>,
+    QueryKey,
+    string | undefined
+  >({
     queryKey: cvKeys.infiniteLists(filters),
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await getCvs({
-        ...filters,
-        page: pageParam,
-      });
+    queryFn: async ({ pageParam }) => {
+      const response = await getCvs(
+        pageParam ? { ...filters, cursor: pageParam } : filters,
+      );
 
       if (!response.success) {
         throw new Error(response.message);
       }
 
-      return response.data;
+      return response.data as CvListCursorResponse;
     },
-    initialPageParam: 1,
+    initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination?.hasNextPage
-        ? lastPage.pagination.page + 1
+        ? lastPage.pagination.nextCursor
         : undefined;
     },
     enabled: isEnabled,

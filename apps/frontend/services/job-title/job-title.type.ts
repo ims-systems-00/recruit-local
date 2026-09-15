@@ -1,7 +1,7 @@
-import { Pagination } from '@/types/api';
+import { CursorPagination } from '@/types/api';
 
 export type JobTitleListFilters = {
-  page?: number;
+  cursor?: string;
   limit?: number;
   clientSearch?: string;
 };
@@ -21,12 +21,12 @@ export type JobTitleData = {
 
 export type JobTitleListResponse = {
   jobTitles: JobTitleData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
 };
 
 export type JobTitleListBackendResponse = {
   success: boolean;
   jobTitles: JobTitleData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
   message?: string;
 };

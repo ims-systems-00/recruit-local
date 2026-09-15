@@ -31,7 +31,6 @@ export default function CvSelectSection({
   value: UploadedFile;
 }) {
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
 
   const [selectedCv, setSelectedCv] = useState('');
 
@@ -39,11 +38,10 @@ export default function CvSelectSection({
 
   const listFilters = useMemo(
     () => ({
-      page,
       limit: 10,
       clientSearch: debouncedSearch || undefined,
     }),
-    [page, debouncedSearch],
+    [debouncedSearch],
   );
 
   const {
@@ -54,8 +52,6 @@ export default function CvSelectSection({
     isLoading,
     isError,
   } = useInfiniteCvs(listFilters);
-
-  console.log(data);
 
   const cvs = data?.pages.flatMap((page) => page.docs) ?? [];
 

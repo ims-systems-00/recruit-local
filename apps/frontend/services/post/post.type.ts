@@ -4,7 +4,7 @@ import {
   postIdParamsSchema,
   postUpdateSchema,
 } from './post.validation';
-import { Pagination } from '@/types/api';
+import { CursorPagination } from '@/types/api';
 
 // TypeScript types
 export type PostCreateInput = yup.InferType<typeof postCreateSchema>;
@@ -12,11 +12,12 @@ export type PostUpdateInput = yup.InferType<typeof postUpdateSchema>;
 export type PostIdParams = yup.InferType<typeof postIdParamsSchema>;
 
 export type PostListFilters = {
-  page?: number;
+  cursor?: string;
   limit?: number;
   clientSearch?: string;
   statusId?: string;
   type?: string;
+  matched?: boolean;
 };
 
 // API Response types
@@ -77,7 +78,7 @@ export interface Creator {
 export type PostListBackendResponse = {
   success: boolean;
   posts: PostData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
   message?: string;
 };
 
@@ -89,5 +90,5 @@ export type PostItemBackendResponse = {
 
 export type PostListResponse = {
   docs: PostData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
 };
