@@ -6,7 +6,8 @@ export const statusCreateSchema = yup.object({
   collectionName: yup.string().required('Collection Name is required'),
   collectionId: yup.string().optional().nullable(),
   label: yup.string().required('Label is required'),
-  weight: yup.number().integer().min(0).default(0),
+  // Omit to let the backend append the status after the last one on its board.
+  weight: yup.number().integer().min(0).optional(),
   default: yup.boolean().default(false),
   backgroundColor: yup
     .string()

@@ -1,7 +1,14 @@
 import { omit } from "lodash";
 import { PipelineStage } from "mongoose";
+import { accessibleBy } from "@casl/mongoose";
+import { AbilityAction } from "@rl/types";
+import { StatusAbilityBuilder, StatusAuthZEntity } from "@rl/authz";
 import { eq, ListQuerySpec, projectQuery } from "../../../common/query";
 import { IStatusDoc, Status } from "../../../models";
+
+export const statusRoleScopedSecurityQuery = (ability: ReturnType<StatusAbilityBuilder["getAbility"]>) => {
+  return accessibleBy(ability, AbilityAction.Read).ofType(StatusAuthZEntity);
+};
 
 // event queries
 export const statusProjectionQuery = (): PipelineStage[] => {

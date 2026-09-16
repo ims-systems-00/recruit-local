@@ -12,6 +12,7 @@ export type StatusUpdateInput = yup.InferType<typeof statusUpdateSchema>;
 export type StatusIdParams = yup.InferType<typeof statusIdParamsSchema>;
 
 export type StatusListFilters = {
+  cursor?: string;
   limit?: number;
   collectionName?: string;
   collectionId?: string;
@@ -41,6 +42,18 @@ export type StatusListBackendResponse = {
   success: boolean;
   statuses: StatusData[];
   pagination: CursorPagination;
+  message?: string;
+};
+
+export type StatusReorderInput = {
+  collectionName: string;
+  collectionId?: string;
+  /** Every status on the board, in the new order. */
+  statusIds: string[];
+};
+
+export type StatusReorderBackendResponse = {
+  statuses: StatusData[];
   message?: string;
 };
 

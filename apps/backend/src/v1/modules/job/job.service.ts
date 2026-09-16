@@ -212,6 +212,7 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
       {
         collectionName: modelNames.JOB,
         collectionId: job._id as Types.ObjectId,
+        tenantId: job.tenantId,
         label: "New Applicants",
         default: true,
         weight: 0,
@@ -219,6 +220,7 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
       {
         collectionName: modelNames.JOB,
         collectionId: job._id as Types.ObjectId,
+        tenantId: job.tenantId,
         label: "Interview",
         default: false,
         weight: 1,
@@ -226,6 +228,7 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
       {
         collectionName: modelNames.JOB,
         collectionId: job._id as Types.ObjectId,
+        tenantId: job.tenantId,
         label: "Hire",
         default: false,
         weight: 2,

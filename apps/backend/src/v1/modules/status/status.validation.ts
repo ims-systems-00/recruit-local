@@ -6,7 +6,8 @@ export const createStatusBodySchema = Joi.object({
   collectionName: Joi.string().trim().max(100).required().label("Collection Name"),
   collectionId: objectId.optional().label("Collection ID"),
   label: Joi.string().trim().max(100).required().label("Status Label"),
-  weight: Joi.number().integer().min(0).default(0).label("Status Weight"),
+  // Omit to append the status after the last one on its board.
+  weight: Joi.number().integer().min(0).optional().label("Status Weight"),
   default: Joi.boolean().default(false).label("Is Default Status"),
   backgroundColor: Joi.string()
     .trim()
@@ -28,6 +29,16 @@ export const updateStatusBodySchema = Joi.object({
     .pattern(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/)
     .optional()
     .label("Background Color"),
+});
+
+/**
+ * Validation for reordering a board's statuses. `statusIds` is the complete new
+ * order, first to last — every live status on the board, each exactly once.
+ */
+export const reorderStatusBodySchema = Joi.object({
+  collectionName: Joi.string().trim().max(100).required().label("Collection Name"),
+  collectionId: objectId.optional().label("Collection ID"),
+  statusIds: Joi.array().items(objectId.required()).min(1).unique().required().label("Status IDs"),
 });
 
 /**

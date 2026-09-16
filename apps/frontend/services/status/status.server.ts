@@ -9,6 +9,8 @@ import {
   StatusListBackendResponse,
   StatusItemBackendResponse,
   StatusListFilters,
+  StatusReorderInput,
+  StatusReorderBackendResponse,
 } from './status.type';
 import {
   statusCreateSchema,
@@ -27,6 +29,7 @@ export async function getStatuses(
   try {
     const res = await axiosServer.get<StatusListBackendResponse>(API_ENDPOINT, {
       params: {
+        cursor: params?.cursor,
         limit: params?.limit || 10,
         collectionName: params?.collectionName,
         collectionId: params?.collectionId,
@@ -48,6 +51,46 @@ export async function getStatuses(
   } catch (error) {
     return handleServerError(error, 'Failed to fetch statuses');
   }
+}
+
+// The backend caps `limit` at 100.
+const ALL_STATUSES_PAGE_SIZE = 100;
+// Guards against a cursor that never ends (10,000 statuses).
+const ALL_STATUSES_MAX_PAGES = 100;
+
+/**
+ * GET EVERY STATUS matching the filters, following `nextCursor` to the last
+ * page. For callers that need the complete set, e.g. the kanban board, where a
+ * missing status is a missing column.
+ */
+export async function getAllStatuses(
+  params?: Omit<StatusListFilters, 'cursor' | 'limit'>,
+): Promise<ApiResponse<StatusListResponse>> {
+  const docs: StatusData[] = [];
+  let cursor: string | undefined;
+
+  for (let page = 0; page < ALL_STATUSES_MAX_PAGES; page++) {
+    const response = await getStatuses({
+      ...params,
+      cursor,
+      limit: ALL_STATUSES_PAGE_SIZE,
+    });
+    if (!response.success) return response;
+
+    docs.push(...response.data.docs);
+
+    const { hasNextPage, nextCursor } = response.data.pagination;
+    if (!hasNextPage || !nextCursor) {
+      return {
+        success: true,
+        data: { docs, pagination: response.data.pagination },
+        message: response.message,
+      };
+    }
+    cursor = nextCursor;
+  }
+
+  return { success: false, message: 'Too many statuses to load.' };
 }
 
 export async function getStatusById(
@@ -95,6 +138,25 @@ export async function createStatus(
     };
   } catch (error) {
     return handleServerError(error, 'Failed to create status');
+  }
+}
+
+export async function reorderStatuses(
+  payload: StatusReorderInput,
+): Promise<ApiResponse<StatusData[]>> {
+  try {
+    const res = await axiosServer.put<StatusReorderBackendResponse>(
+      `${API_ENDPOINT}/reorder`,
+      payload,
+    );
+
+    return {
+      success: true,
+      data: res.data.statuses,
+      message: res.data.message,
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to reorder statuses');
   }
 }
 
