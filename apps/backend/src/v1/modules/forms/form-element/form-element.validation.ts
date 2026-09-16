@@ -37,7 +37,9 @@ export const orderChangeBodySchema = Joi.object({
  * `formElementListQuerySpec`.
  */
 export const listQuerySchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
+  // Removed: paging is by cursor. Accepted and dropped rather than 400'ing a
+  // caller that still sends it.
+  page: Joi.any().strip(),
   limit: Joi.number().integer().min(1).max(100).default(10),
 
   type: Joi.string().trim().max(100),

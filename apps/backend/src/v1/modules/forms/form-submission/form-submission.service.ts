@@ -36,10 +36,6 @@ export const listFormSubmission = async ({ query = {}, options, offset = 0 }: IL
   return toCursorPage(docs, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const countFormSubmission = ({ query = {} }: IListFormSubmissionParams) =>
-  FormSubmission.countDocuments({ $and: [query, { "deleteMarker.status": { $ne: true } }] });
-
 export const getFormSubmission = async ({ submissionId, formId, tenantId }: IGetFormSubmission) => {
   const formSubmission = await FormSubmission.findOne({ _id: submissionId, formId: formId, tenantId: tenantId });
   if (!formSubmission) throw new NotFoundException("Form submission not found.");

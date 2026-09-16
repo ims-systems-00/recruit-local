@@ -124,8 +124,6 @@ export const list = async ({ req }: ControllerParams) => {
         tenantId: req.session?.tenantId,
         jobProfileId: req.session?.jobProfileId,
       }),
-
-    count: ({ query }) => postService.count({ query }),
   });
 
   // After the cursor is built: field stripping can drop the field it keys on.

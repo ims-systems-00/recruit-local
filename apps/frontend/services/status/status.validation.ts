@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { paginationSchema } from '../shared';
+import { cursorPaginationSchema } from '../shared';
 
 // Yup schemas for validation
 export const statusCreateSchema = yup.object({
@@ -45,7 +45,7 @@ export const statusSchema = yup.object({
 
 export const statusListResponseSchema = yup.object({
   statuses: yup.array().of(statusSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });
 

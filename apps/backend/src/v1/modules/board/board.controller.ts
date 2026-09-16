@@ -1,9 +1,7 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import {
   ApiResponse,
   ControllerParams,
-  formatListResponse,
   logger,
   NotFoundException,
   pick,
@@ -11,8 +9,9 @@ import {
 } from "../../../common/helper";
 import { UserAbilityBuilder, EventRegistrationAuthZEntity } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
-import { roleScopedSecurityQuery } from "../../../common/query";
+import { runCursorList } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
+import { boardListQuerySpec } from "./board.query";
 import * as boardService from "./board.service";
 
 export const list = async ({ req }: ControllerParams) => {
@@ -21,29 +20,17 @@ export const list = async ({ req }: ControllerParams) => {
   //   if (!ability.can(AbilityAction.Read, EventRegistrationAuthZEntity)) {
   //     throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read skill assessment results.`);
   //   }
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["name", "description"],
-  }).build();
-
-  const boardSearchQuery = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-  //   const securityQuery = roleScopedSecurityQuery(EventRegistrationAuthZEntity, ability);
-
-  const finalQuery = {
-    $and: [boardSearchQuery /*securityQuery*/],
-  };
-
-  const results = await boardService.list({
-    query: finalQuery as unknown,
-    options,
+  //   securityQuery: roleScopedSecurityQuery(EventRegistrationAuthZEntity, ability),
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: boardListQuerySpec,
+    fetch: ({ query, options, offset }) => boardService.list({ query, options, offset }),
   });
-
-  const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
     message: "Boards retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "boards",
     pagination,
   });

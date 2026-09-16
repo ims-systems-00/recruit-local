@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
-import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
-import { buildListQuery, runCursorList } from "../../../common/query";
+import { ApiResponse, ControllerParams } from "../../../common/helper";
+import { runCursorList } from "../../../common/query";
 import { skillAssessmentListQuerySpec } from "./skill-assessment.query";
 import * as skillAssessmentService from "./skill-assessment.service";
 
@@ -9,7 +9,6 @@ export const list = async ({ req }: ControllerParams) => {
     query: req.query,
     spec: skillAssessmentListQuerySpec,
     fetch: ({ query, options, offset }) => skillAssessmentService.list({ query, options, offset }),
-    count: ({ query }) => skillAssessmentService.count({ query }),
   });
 
   return new ApiResponse({
@@ -35,19 +34,16 @@ export const get = async ({ req }: ControllerParams) => {
 };
 
 export const listSoftDeleted = async ({ req }: ControllerParams) => {
-  // Trash still pages by offset — only the filter building moves off MongoQuery.
-  const { filter, options, page } = buildListQuery(req.query, skillAssessmentListQuerySpec);
-
-  const results = await skillAssessmentService.listSoftDeleted({
-    query: filter,
-    options: { ...options, page: page ?? 1 },
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: skillAssessmentListQuerySpec,
+    fetch: ({ query, options, offset }) => skillAssessmentService.listSoftDeleted({ query, options, offset }),
   });
-  const { data, pagination } = formatListResponse(results);
 
   return new ApiResponse({
     message: "Soft deleted skill assessments retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "skillAssessments",
     pagination,
   });

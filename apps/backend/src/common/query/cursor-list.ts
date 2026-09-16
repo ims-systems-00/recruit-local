@@ -29,20 +29,6 @@ export interface CursorPageResult<T> {
   limit: number;
 }
 
-/** Legacy offset block, plus `nextCursor` so a caller can switch over mid-list. */
-export interface OffsetPaginationBlock {
-  totalDocs: number;
-  limit: number;
-  totalPages: number;
-  page: number;
-  pagingCounter: number;
-  hasPrevPage: boolean;
-  hasNextPage: boolean;
-  prevPage: number | null;
-  nextPage: number | null;
-  nextCursor: string | null;
-}
-
 export interface CursorPaginationBlock {
   limit: number;
   hasNextPage: boolean;
@@ -84,18 +70,12 @@ export interface CursorListInput<T> {
     search?: string;
   }) => Promise<PrepareResult> | PrepareResult;
   fetch: (args: { query: Record<string, unknown>; options: IOptions; offset: number }) => Promise<CursorPageResult<T>>;
-  /**
-   * Total matching documents, for legacy `?page=` requests only. Required because
-   * the frontend's shared `paginationSchema` marks `totalDocs` as mandatory — a
-   * block without it fails validation on the client.
-   */
-  count: (args: { query: Record<string, unknown> }) => Promise<number>;
 }
 
 export interface CursorListOutput<T> {
   /** Raw, unsanitized. The caller applies CASL field stripping to these. */
   docs: T[];
-  pagination: OffsetPaginationBlock | CursorPaginationBlock;
+  pagination: CursorPaginationBlock;
   /** The free-text term, for a module that handles search itself. */
   search?: string;
   /** The composed `$and`, for a caller that needs a second query against the same scope. */
@@ -155,16 +135,12 @@ export const runCursorList = async <T extends Record<string, unknown>>({
   useKeyset = true,
   prepare,
   fetch,
-  count,
 }: CursorListInput<T>): Promise<CursorListOutput<T>> => {
-  const { filter, options, search, cursor: rawCursor, page } = buildListQuery(query, spec);
+  const { filter, options, search, cursor: rawCursor } = buildListQuery(query, spec);
 
   // May rewrite `options.sort`, so it has to run before the guard is taken.
   const prepared = prepare ? await prepare({ filter, options, search }) : undefined;
 
-  // `?page=` is the deprecated path, kept so the frontend can move module by
-  // module. It always skips — a page number has no keyset to walk.
-  const legacy = page !== undefined;
   const sort = options.sort as string | undefined;
 
   // A keyset cursor keys on the *first* sort token only, so a multi-token sort
@@ -182,9 +158,9 @@ export const runCursorList = async <T extends Record<string, unknown>>({
     ...prepared?.guardExtras,
   });
 
-  const cursor = !legacy && rawCursor ? decodeCursor(rawCursor, guard) : undefined;
+  const cursor = rawCursor ? decodeCursor(rawCursor, guard) : undefined;
   const limit = options.limit ?? 10;
-  const offset = legacy ? (page - 1) * limit : cursor?.t === "o" ? cursor.o : 0;
+  const offset = cursor?.t === "o" ? cursor.o : 0;
 
   const finalQuery = {
     $and: [
@@ -197,33 +173,11 @@ export const runCursorList = async <T extends Record<string, unknown>>({
   };
 
   const results = await fetch({ query: finalQuery, options, offset });
-  const nextCursor = nextCursorFrom(results, guard, keyset && !legacy, sort, offset);
-
-  if (!legacy) {
-    return {
-      docs: results.docs,
-      pagination: { limit: results.limit, hasNextPage: results.hasNextPage, nextCursor },
-      search,
-      finalQuery,
-    };
-  }
-
-  const totalDocs = await count({ query: finalQuery });
+  const nextCursor = nextCursorFrom(results, guard, keyset, sort, offset);
 
   return {
     docs: results.docs,
-    pagination: {
-      totalDocs,
-      limit: results.limit,
-      totalPages: Math.ceil(totalDocs / results.limit),
-      page,
-      pagingCounter: offset + 1,
-      hasPrevPage: page > 1,
-      hasNextPage: results.hasNextPage,
-      prevPage: page > 1 ? page - 1 : null,
-      nextPage: results.hasNextPage ? page + 1 : null,
-      nextCursor,
-    },
+    pagination: { limit: results.limit, hasNextPage: results.hasNextPage, nextCursor },
     search,
     finalQuery,
   };

@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
-import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
-import { buildListQuery, runCursorList } from "../../../common/query";
+import { ApiResponse, ControllerParams } from "../../../common/helper";
+import { runCursorList } from "../../../common/query";
 import { statusListQuerySpec } from "./status.query";
 import * as statusService from "./status.service";
 import { toStatusResponse, toStatusResponseList } from "./status.dto";
@@ -10,7 +10,6 @@ export const list = async ({ req }: ControllerParams) => {
     query: req.query,
     spec: statusListQuerySpec,
     fetch: ({ query, options, offset }) => statusService.list({ query, options, offset }),
-    count: ({ query }) => statusService.count({ query }),
   });
 
   return new ApiResponse({
@@ -36,16 +35,16 @@ export const get = async ({ req }: ControllerParams) => {
 };
 
 export const listSoftDeleted = async ({ req }: ControllerParams) => {
-  // Trash still pages by offset — only the filter building moves off MongoQuery.
-  const { filter, options, page } = buildListQuery(req.query, statusListQuerySpec);
-
-  const results = await statusService.listSoftDeleted({ query: filter, options: { ...options, page: page ?? 1 } });
-  const { data, pagination } = formatListResponse(results);
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: statusListQuerySpec,
+    fetch: ({ query, options, offset }) => statusService.listSoftDeleted({ query, options, offset }),
+  });
 
   return new ApiResponse({
     message: "Soft deleted statuses retrieved",
     statusCode: StatusCodes.OK,
-    data: toStatusResponseList(data),
+    data: toStatusResponseList(docs),
     fieldName: "statuses",
     pagination,
   });

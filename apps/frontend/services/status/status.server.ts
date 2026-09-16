@@ -27,7 +27,6 @@ export async function getStatuses(
   try {
     const res = await axiosServer.get<StatusListBackendResponse>(API_ENDPOINT, {
       params: {
-        page: params?.page || 1,
         limit: params?.limit || 10,
         collectionName: params?.collectionName,
         collectionId: params?.collectionId,

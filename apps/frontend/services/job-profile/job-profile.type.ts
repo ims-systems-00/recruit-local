@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import type { Pagination, PaginatedResponse, ApiResponse } from '@/types/api';
+import type { CursorPaginatedResponse, ApiResponse } from '@/types/api';
 import { PROFICIENCY, VISIBILITY } from '@rl/types';
 import {
   createJobProfileSchema,
@@ -111,7 +111,6 @@ export type JobProfile = yup.InferType<typeof jobProfileSchema>;
 
 // --- QUERY FILTERS ---
 export type JobProfileListFilters = {
-  page?: number;
   limit?: number;
   search?: string;
 };
@@ -124,5 +123,5 @@ export type AppliedJobsListFilters = {
 };
 
 // --- FRONTEND RESPONSE TYPES ---
-export type JobProfileListResponse = PaginatedResponse<JobProfile>;
+export type JobProfileListResponse = CursorPaginatedResponse<JobProfile>;
 export type JobProfileApiResponse<T> = ApiResponse<T>;

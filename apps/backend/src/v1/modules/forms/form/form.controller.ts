@@ -9,7 +9,6 @@ export const listForm = async ({ req }: ControllerParams) => {
     query: req.query,
     spec: formListQuerySpec,
     fetch: ({ query, options, offset }) => formService.listForm({ query, options, offset }),
-    count: ({ query }) => formService.countForm({ query }),
   });
 
   return new ApiResponse({

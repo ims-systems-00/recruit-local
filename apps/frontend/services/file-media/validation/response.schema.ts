@@ -4,7 +4,7 @@ import {
   storageInformationSchema,
   deleteMarkerSchema,
   validVisibilities,
-  paginationSchema,
+  cursorPaginationSchema,
 } from '@/services/shared';
 
 // The core model
@@ -23,7 +23,7 @@ export const fileMediaSchema = yup.object({
 // The Backend "Envelope" for Lists
 export const fileMediaListResponseSchema = yup.object({
   fileMedias: yup.array().of(fileMediaSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });
 

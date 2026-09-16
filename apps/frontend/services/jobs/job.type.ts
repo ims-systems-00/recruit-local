@@ -1,4 +1,4 @@
-import { CursorPagination, Pagination } from '@/types/api';
+import { CursorPagination } from '@/types/api';
 import { DeleteMarker } from '../file-media/file-media.type';
 import {
   EMPLOYMENT_TYPE,

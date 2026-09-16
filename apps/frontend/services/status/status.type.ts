@@ -4,7 +4,7 @@ import {
   statusIdParamsSchema,
   statusUpdateSchema,
 } from './status.validation';
-import { Pagination } from '@/types/api';
+import { CursorPagination } from '@/types/api';
 
 // TypeScript types
 export type StatusCreateInput = yup.InferType<typeof statusCreateSchema>;
@@ -12,7 +12,6 @@ export type StatusUpdateInput = yup.InferType<typeof statusUpdateSchema>;
 export type StatusIdParams = yup.InferType<typeof statusIdParamsSchema>;
 
 export type StatusListFilters = {
-  page?: number;
   limit?: number;
   collectionName?: string;
   collectionId?: string;
@@ -41,7 +40,7 @@ export type StatusData = {
 export type StatusListBackendResponse = {
   success: boolean;
   statuses: StatusData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
   message?: string;
 };
 
@@ -53,5 +52,5 @@ export type StatusItemBackendResponse = {
 
 export type StatusListResponse = {
   docs: StatusData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
 };

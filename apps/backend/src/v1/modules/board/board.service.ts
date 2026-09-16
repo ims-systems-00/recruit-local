@@ -1,19 +1,30 @@
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { IListParams } from "@rl/types";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { boardProjectQuery } from "./board.query";
 import { IBoardInput, Board, IBoardDoc } from "../../../models";
 
-type IBoardListParams = IListParams<IBoardInput>;
+type IBoardListParams = IListParams<IBoardInput> & { offset?: number };
 type IBoardQueryParams = Partial<IBoardInput & { _id: string }>;
 
-export const list = ({ query = {}, options }: IBoardListParams) => {
-  const sanitizedQuery = sanitizeQueryIds(query);
-  return Board.aggregatePaginate(
-    [...matchQuery(sanitizedQuery), ...excludeDeletedQuery(), ...boardProjectQuery()],
-    options
-  );
+export const list = async ({ query = {}, options, offset = 0 }: IBoardListParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await Board.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    ...boardProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
 export const getOne = async (query = {}): Promise<IBoardDoc> => {
   const sanitizedQuery = sanitizeQueryIds(query);

@@ -27,10 +27,6 @@ export const list = async ({ query = {}, options, offset = 0 }: IListSalaryParam
   return toCursorPage(await aggregate, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const count = ({ query = {} }: IListSalaryParams) =>
-  Salary.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
-
 export const getOne = async ({ query = {} }: IListSalaryParams) => {
   const results = await Salary.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
@@ -41,11 +37,17 @@ export const getOne = async ({ query = {} }: IListSalaryParams) => {
   return results[0];
 };
 
-export const listSoftDeleted = ({ query = {}, options }: IListSalaryParams) => {
-  return Salary.aggregatePaginate(
-    Salary.aggregate([...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...salaryProjectQuery()]),
-    options
-  );
+export const listSoftDeleted = async ({ query = {}, options, offset = 0 }: IListSalaryParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await Salary.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...onlyDeletedQuery(),
+    ...salaryProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
 
 export const getOneSoftDeleted = async ({ query = {} }: IListSalaryParams) => {

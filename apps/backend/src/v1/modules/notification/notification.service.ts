@@ -26,10 +26,6 @@ export const listNotification = async ({ query = {}, options, offset = 0 }: ILis
   return toCursorPage(docs, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const countNotification = ({ query = {} }: IListNotificationParams) =>
-  Notification.countDocuments({ $and: [query, { "deleteMarker.status": { $ne: true } }] });
-
 export const getNotification = async (id: string) => {
   const notification = await Notification.findOneWithExcludeDeleted({ _id: id });
   if (!notification) throw new NotFoundException("Notification not found.");

@@ -1,25 +1,24 @@
 import { StatusCodes } from "http-status-codes";
 import * as formElementService from "./form-element.service";
 import { ApiResponse, ControllerParams } from "../../../../common/helper";
-import { buildListQuery } from "../../../../common/query";
+import { runCursorList } from "../../../../common/query";
 import { formElementListQuerySpec } from "./form-element.query";
 
 export const listFormElement = async ({ req }: ControllerParams) => {
-  // Offset-paged on purpose: this walks the element chain with $graphLookup and
-  // returns the form's structure in sequence order, which a keyset cursor cannot
-  // key on. Only the filter building moves off MongoQuery.
-  const { filter, options, page } = buildListQuery(req.query, formElementListQuerySpec);
-
-  const results = await formElementService.listFormElement({
-    query: { ...filter, formId: req.params.formId },
-    options: { ...options, page: page ?? 1 },
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: formElementListQuerySpec,
+    // The sequence order is built by $graphLookup, not stored on a field, so
+    // there is nothing to key on — the cursor carries a $skip instead.
+    useKeyset: false,
+    extraConditions: [{ formId: req.params.formId }],
+    fetch: ({ query, options, offset }) => formElementService.listFormElement({ query, options, offset }),
   });
-  const { docs: data, ...pagination } = results;
 
   return new ApiResponse({
     message: "FormElements retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "formElements",
     pagination,
   });

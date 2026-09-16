@@ -1,15 +1,14 @@
 import { StatusCodes } from "http-status-codes";
-import { buildListQuery, runCursorList } from "../../../common/query";
+import { runCursorList } from "../../../common/query";
 import { eventListQuerySpec } from "./event.query";
 import * as eventService from "./event.service";
-import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
+import { ApiResponse, ControllerParams } from "../../../common/helper";
 
 export const list = async ({ req }: ControllerParams) => {
   const { docs, pagination } = await runCursorList({
     query: req.query,
     spec: eventListQuerySpec,
     fetch: ({ query, options, offset }) => eventService.list({ query, options, offset }),
-    count: ({ query }) => eventService.count({ query }),
   });
 
   return new ApiResponse({
@@ -35,16 +34,16 @@ export const get = async ({ req }: ControllerParams) => {
 };
 
 export const listSoftDeleted = async ({ req }: ControllerParams) => {
-  // Trash still pages by offset — only the filter building moves off MongoQuery.
-  const { filter, options, page } = buildListQuery(req.query, eventListQuerySpec);
-
-  const results = await eventService.listSoftDeleted({ query: filter, options: { ...options, page: page ?? 1 } });
-  const { data, pagination } = formatListResponse(results);
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: eventListQuerySpec,
+    fetch: ({ query, options, offset }) => eventService.listSoftDeleted({ query, options, offset }),
+  });
 
   return new ApiResponse({
     message: "Soft deleted events retrieved",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "events",
     pagination,
   });

@@ -1,24 +1,8 @@
-export type Pagination = {
-  totalDocs: number;
-  limit: number;
-  totalPages: number;
-  page: number;
-  pagingCounter: number;
-  hasPrevPage: boolean;
-  hasNextPage: boolean;
-  prevPage: number | null;
-  nextPage: number | null;
-};
-
 export type CursorPagination = {
   limit: number;
   hasNextPage: boolean;
-  nextCursor: string;
-};
-
-export type PaginatedResponse<T> = {
-  docs: T[];
-  pagination: Pagination;
+  /** null on the last page. */
+  nextCursor: string | null;
 };
 
 export type CursorPaginatedResponse<T> = {

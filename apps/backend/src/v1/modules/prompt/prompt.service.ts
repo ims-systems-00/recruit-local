@@ -55,10 +55,6 @@ export const list = async ({ query = {}, options, session, offset = 0 }: IPrompt
   return toCursorPage(await aggregate, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const count = ({ query = {} }: IPromptListParams) =>
-  Prompt.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
-
 export const getOne = async ({ query = {}, session }: IPromptGetParams) => {
   const aggregate = Prompt.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
@@ -73,16 +69,19 @@ export const getOne = async ({ query = {}, session }: IPromptGetParams) => {
   return prompts[0];
 };
 
-export const listSoftDeleted = ({ query = {}, options, session }: IPromptListParams) => {
+export const listSoftDeleted = async ({ query = {}, options, session, offset = 0 }: IPromptListParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Prompt.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...promptProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Prompt.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
 
 export const getOneSoftDeleted = async ({ query = {}, session }: IPromptGetParams) => {

@@ -35,7 +35,6 @@ export const list = async ({ req }: ControllerParams) => {
     spec: tenantListQuerySpec,
     securityQuery: tenantRoleScopedSecurityQuery(ability),
     fetch: ({ query, options, offset }) => tenantService.list({ query, options, offset }),
-    count: ({ query }) => tenantService.count({ query }),
   });
 
   // After the cursor is built: field stripping can drop the field it keys on.

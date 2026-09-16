@@ -9,7 +9,6 @@ export const list = async ({ req }: ControllerParams) => {
     query: req.query,
     spec: fileMediaListQuerySpec,
     fetch: ({ query, options, offset }) => fileMediaService.list({ query, options, offset }),
-    count: ({ query }) => fileMediaService.count({ query }),
   });
 
   return new ApiResponse({

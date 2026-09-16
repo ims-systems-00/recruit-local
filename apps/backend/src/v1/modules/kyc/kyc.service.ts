@@ -34,12 +34,6 @@ export const list = async ({ query = {}, options, session, offset = 0 }: IKycLis
   return toCursorPage(await aggregate, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const count = ({ query = {} }: IKycListQueryParams) =>
-  Kyc.countDocuments({
-    $and: [sanitizeQueryIds(query) as FilterQuery<IKycDoc>, { "deleteMarker.status": { $ne: true } }],
-  });
-
 export const getOne = async ({ query = {}, session }: IKycGetParams) => {
   const aggregate = Kyc.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
@@ -55,17 +49,20 @@ export const getOne = async ({ query = {}, session }: IKycGetParams) => {
   return kycs[0];
 };
 
-export const listSoftDeleted = ({ query = {}, options, session }: IKycListQueryParams) => {
+export const listSoftDeleted = async ({ query = {}, options, session, offset = 0 }: IKycListQueryParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Kyc.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...populateKycDocumentsQuery(),
     ...kycProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Kyc.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
 
 export const getOneSoftDeleted = async ({ query = {}, session }: IKycGetParams) => {

@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { paginationSchema } from '../shared';
+import { cursorPaginationSchema } from '../shared';
 
 const awsStorageSchema = yup.object({
   Name: yup.string().required('File Name is required'),
@@ -53,7 +53,7 @@ export const certificationSchema = yup.object({
 
 export const certificationListResponseSchema = yup.object({
   certifications: yup.array().of(certificationSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });
 

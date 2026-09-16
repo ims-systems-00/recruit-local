@@ -11,7 +11,6 @@ export const list = async ({ req }: ControllerParams) => {
     query: req.query,
     spec: salaryListQuerySpec,
     fetch: ({ query, options, offset }) => salaryService.list({ query, options, offset }),
-    count: ({ query }) => salaryService.count({ query }),
   });
 
   return new ApiResponse({

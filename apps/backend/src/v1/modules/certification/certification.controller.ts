@@ -1,11 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  NotFoundException,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
 import { CertificationAbilityBuilder, CertificationAuthZEntity, ALL_CERTIFICATION_FIELDS } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import * as certificationService from "./certification.service";
@@ -50,7 +44,6 @@ export const list = async ({ req }: ControllerParams) => {
     spec: certificationListQuerySpec,
     securityQuery: certificationRoleScopedSecurityQuery(ability),
     fetch: ({ query, options, offset }) => certificationService.list({ query, options, offset }),
-    count: ({ query }) => certificationService.count({ query }),
   });
 
   // After the cursor is built: field stripping can drop the field it keys on.

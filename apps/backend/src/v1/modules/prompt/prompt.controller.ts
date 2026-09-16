@@ -36,7 +36,6 @@ export const list = async ({ req }: ControllerParams) => {
     spec: promptListQuerySpec,
     securityQuery: promptRoleScopedSecurityQuery(ability),
     fetch: ({ query, options, offset }) => promptService.list({ query, options, offset }),
-    count: ({ query }) => promptService.count({ query }),
   });
 
   // After the cursor is built: field stripping can drop the field it keys on.

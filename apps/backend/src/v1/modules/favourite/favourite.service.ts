@@ -31,10 +31,6 @@ export const list = async ({ query = {}, options, session, offset = 0 }: IListFa
   return toCursorPage(await aggregate, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const count = ({ query = {} }: IListFavouriteParams) =>
-  Favourite.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
-
 export const getOne = async ({ query = {}, session }: IFavouriteGetParams) => {
   const aggregate = Favourite.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
@@ -50,16 +46,19 @@ export const getOne = async ({ query = {}, session }: IFavouriteGetParams) => {
   return favourites[0];
 };
 
-export const listSoftDeleted = async ({ query = {}, options, session }: IListFavouriteParams) => {
+export const listSoftDeleted = async ({ query = {}, options, session, offset = 0 }: IListFavouriteParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Favourite.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...favouriteProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Favourite.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
 
 export const getOneSoftDeleted = async ({ query = {}, session }: IFavouriteGetParams) => {

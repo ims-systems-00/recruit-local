@@ -4,7 +4,7 @@ import { ONBOARDING_STEP_ENUMS, PROFICIENCY, VISIBILITY } from '@rl/types';
 import {
   objectIdSchema,
   deleteMarkerSchema,
-  paginationSchema,
+  cursorPaginationSchema,
 } from '@/services/shared';
 import { valueSchema } from '../value/value.validation';
 
@@ -146,7 +146,7 @@ export const updateJobProfileSchema = yup.object({
 // --- BACKEND RESPONSE ENVELOPES ---
 export const jobProfileListResponseSchema = yup.object({
   jobProfiles: yup.array().of(jobProfileSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });
 

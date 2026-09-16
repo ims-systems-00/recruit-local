@@ -148,7 +148,6 @@ export const list = async ({ req }: ControllerParams) => {
     // Legacy `?page=` only. In search mode this counts everything matching the
     // filters, not the fused hits — the totals are approximate until the
     // frontend is off offset paging.
-    count: ({ query }) => jobService.count({ query }),
   });
 
   const sanitizedDocs = sanitizeDocuments<JobAuthZEntity>(
@@ -369,8 +368,6 @@ export const publicList = async ({ req }: ControllerParams) => {
 
     fetch: ({ query, options, offset }) =>
       jobService.list({ query, options, searchTerm, searchVector, searchPreFilter: jobSearchPreFilter(), offset }),
-
-    count: ({ query }) => jobService.count({ query }),
   });
 
   // `pick` can drop the keyset field, so this runs after the cursor is built.

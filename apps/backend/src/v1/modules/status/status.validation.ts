@@ -39,9 +39,9 @@ export const updateStatusBodySchema = Joi.object({
  */
 export const statusListQuerySchema = Joi.object({
   cursor: Joi.string().trim().max(512),
-  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
-  // cursor page.
-  page: Joi.number().integer().min(1),
+  // Removed: paging is by cursor. Accepted and dropped rather than 400'ing a
+  // caller that still sends it.
+  page: Joi.any().strip(),
   limit: Joi.number().integer().min(1).max(100).default(10),
   // "asc"/"desc" were this key's old values. They are not sort tokens, so the
   // builder ignores them and falls back to the default — which is what happened

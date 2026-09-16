@@ -117,10 +117,6 @@ export const list = async ({ query = {}, options, session, offset = 0 }: IListTe
   return toCursorPage(await aggregate, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const count = ({ query = {} }: IListTenantParams) =>
-  Tenant.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
-
 export const getOne = async ({ query = {}, session }: ITenantGetParams): Promise<ITenantDoc> => {
   const aggregate = Tenant.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
@@ -140,16 +136,19 @@ export const getOne = async ({ query = {}, session }: ITenantGetParams): Promise
   return tenants[0] as unknown as ITenantDoc;
 };
 
-export const listSoftDeleted = async ({ query = {}, options, session }: IListTenantParams) => {
+export const listSoftDeleted = async ({ query = {}, options, session, offset = 0 }: IListTenantParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Tenant.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...tenantProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Tenant.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
 
 export const getOneSoftDeleted = async ({ query = {}, session }: ITenantGetParams): Promise<ITenantDoc> => {
