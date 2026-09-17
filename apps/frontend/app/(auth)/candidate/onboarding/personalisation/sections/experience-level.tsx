@@ -91,7 +91,9 @@ export default function ExperienceLevelSection({
     (level) => level._id === selectedExperienceLevels,
   );
 
-  // Lets Alice see this step and choose a level on it. Saving is still Next.
+  const levelsFullyLoaded = !isLoading && !hasNextPage;
+
+  // Lets Alice see this step and choose a level on it. Saving is still Continue.
   useCatalogStepAgent({
     kind: 'experience_level',
     label: 'experience levels',
@@ -100,6 +102,15 @@ export default function ExperienceLevelSection({
     selected: selectedLevel
       ? [{ _id: selectedLevel._id, name: selectedLevel.name }]
       : [],
+    ...(levelsFullyLoaded
+      ? {
+          knownIds: experienceLevels.map((level) => level._id),
+          visibleOptions: experienceLevels.map((level) => ({
+            _id: level._id,
+            name: level.name,
+          })),
+        }
+      : {}),
     apply: ([option]) => {
       setValue('experienceLevel', option._id, {
         shouldDirty: true,

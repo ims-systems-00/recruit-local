@@ -1,6 +1,6 @@
 import { Model, Types } from "mongoose";
-import { CANDIDATE_ONBOARDING_SEQUENCE, ONBOARDING_STEP_ENUMS } from "@rl/types";
-import { ExperienceLevel, Industry, JobTitle, WorkMode } from "../../../../models";
+import { CANDIDATE_ONBOARDING_SEQUENCE, ONBOARDING_STEP_ENUMS, VALUE_TYPE_ENUM } from "@rl/types";
+import { ExperienceLevel, Industry, JobTitle, Value, WorkMode } from "../../../../models";
 
 /**
  * The catalogs a candidate picks from during personalisation, described once so
@@ -139,3 +139,85 @@ export const nextOnboardingStep = (
 
 /** Escaped for use in a RegExp; the query is model-supplied. */
 export const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/* ------------------------------------------------------------------------- *
+ * Searchable lists
+ *
+ * Everything a candidate picks from during setup, including workplace values.
+ * Values are searchable and page-selectable but deliberately not writable
+ * through `set_profile_catalog`: they span five rounds stored in one array, and
+ * each round's page already merges its own round into that array on save.
+ * ------------------------------------------------------------------------- */
+
+export const SEARCHABLE_KINDS = [...CATALOG_KINDS, "value"] as const;
+export type SearchableKind = (typeof SEARCHABLE_KINDS)[number];
+
+export const VALUE_TYPES = Object.values(VALUE_TYPE_ENUM);
+
+/**
+ * The filter for one searchable list. Values need their round's type: without
+ * it, a "leadership" round would offer every value on the platform.
+ */
+const searchableFilter = (kind: SearchableKind, valueType?: string): Record<string, unknown> =>
+  kind === "value" ? { ...selectableFilter, type: valueType } : selectableFilter;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const searchableModel = (kind: SearchableKind): Model<any> => (kind === "value" ? Value : CATALOGS[kind].model);
+
+/** Values call their display text `label`; the other catalogs call it `name`. */
+const displayField = (kind: SearchableKind) => (kind === "value" ? "label" : "name");
+
+/** Options matching `query` (or all, when omitted), as `{ id, name }`. */
+export const searchOptions = async (
+  kind: SearchableKind,
+  { query, limit, valueType }: { query?: string; limit: number; valueType?: string }
+): Promise<{ id: string; name: string; description?: string }[]> => {
+  const field = displayField(kind);
+  const text = query?.trim();
+
+  const match = text
+    ? {
+        ...searchableFilter(kind, valueType),
+        $or: [{ [field]: new RegExp(escapeRegExp(text), "i") }, { description: new RegExp(escapeRegExp(text), "i") }],
+      }
+    : searchableFilter(kind, valueType);
+
+  const docs = (await searchableModel(kind)
+    .find(match)
+    .select(`${field} description`)
+    .sort({ [field]: 1 })
+    .limit(limit)
+    .lean()) as unknown as Record<string, unknown>[];
+
+  return docs.map((doc) => ({
+    id: String(doc._id),
+    name: String(doc[field]),
+    ...(doc.description ? { description: String(doc.description) } : {}),
+  }));
+};
+
+/**
+ * Resolves ids to their real, selectable rows — the check that stops an
+ * invented id reaching a page. Names come from the database, so a correct id
+ * paired with a wrong name is corrected rather than trusted.
+ */
+export const resolveSelectable = async (
+  kind: SearchableKind,
+  ids: string[],
+  valueType?: string
+): Promise<{ rows: { id: string; name: string }[]; missing: string[] }> => {
+  const field = displayField(kind);
+  const valid = ids.filter((id) => Types.ObjectId.isValid(id));
+
+  const docs = (await searchableModel(kind)
+    .find({ _id: { $in: valid.map((id) => new Types.ObjectId(id)) }, ...searchableFilter(kind, valueType) })
+    .select(field)
+    .lean()) as unknown as Record<string, unknown>[];
+
+  const byId = new Map(docs.map((doc) => [String(doc._id), String(doc[field])]));
+
+  return {
+    rows: ids.filter((id) => byId.has(id)).map((id) => ({ id, name: byId.get(id) as string })),
+    missing: ids.filter((id) => !byId.has(id)),
+  };
+};

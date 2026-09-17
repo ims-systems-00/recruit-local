@@ -142,6 +142,27 @@ export interface AgentPageActionDefDto {
   description: string;
   /** JSON Schema for the arguments, as the model should send them. */
   parameters: Record<string, unknown>;
+  /**
+   * Declares that this action selects catalog options, sent as
+   * `selections: [{ id, name }]`. The server then checks every id against that
+   * catalog before the action reaches the page, so an id the model invented is
+   * rejected back to the model (which corrects itself) instead of being ticked
+   * on nothing and saved. Never shown to the model.
+   */
+  catalog?: AgentPageActionCatalogDto;
+}
+
+export type AgentCatalogKind =
+  | 'job_title'
+  | 'industry'
+  | 'experience_level'
+  | 'work_mode'
+  | 'value';
+
+export interface AgentPageActionCatalogDto {
+  kind: AgentCatalogKind;
+  /** Required for `value`: the value type of the round on screen. */
+  valueType?: string;
 }
 
 export interface AgentPageContextDto {

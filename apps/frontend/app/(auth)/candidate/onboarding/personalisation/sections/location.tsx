@@ -11,6 +11,10 @@ import { useRouter } from 'next/navigation';
 import { ONBOARDING_STEP_ENUMS } from '@rl/types';
 import { useQueryClient } from '@tanstack/react-query';
 import LocationSelector from '@/components/location-selector';
+import {
+  usePageAction,
+  usePageContext,
+} from '@/components/ai-chat/page-context';
 
 export default function LocationSection({
   jobProfileId,
@@ -26,6 +30,8 @@ export default function LocationSection({
     handleSubmit,
     formState: { errors },
     control,
+    setValue,
+    watch,
   } = useForm<JobProfileUpdateInput>({
     resolver: yupResolver(
       updateJobProfileSchema,
@@ -36,6 +42,47 @@ export default function LocationSection({
   });
 
   const { updateJobProfile, isPending } = useUpdateJobProfile();
+
+  const currentAddress = watch('address');
+
+  // Lets Alice see this step and fill in the location. Saving is still Continue.
+  usePageContext({
+    page: 'candidate.onboarding.location',
+    summary:
+      'Candidate setup step: "What is your current location?" The user enters their city or state, then presses Continue to save.',
+    state: { location: currentAddress || null },
+  });
+
+  usePageAction({
+    name: 'set_location',
+    description:
+      "Fill in the user's city or state on this page, e.g. 'Dhaka, Bangladesh'. Use only what the user told you — " +
+      'never guess where they live. This does not save; the user presses Continue.',
+    parameters: {
+      type: 'object',
+      properties: {
+        address: {
+          type: 'string',
+          description:
+            'City and country, or state and country, as the user gave it.',
+        },
+      },
+      required: ['address'],
+    },
+    handler: (args) => {
+      const address =
+        typeof args.address === 'string' ? args.address.trim() : '';
+      if (address.length < 2 || address.length > 200) {
+        throw new Error(
+          "Alice's location wasn't usable. Ask her to try again.",
+        );
+      }
+      // The location picker re-reads its value when this changes, so the new
+      // address shows in the field without remounting it.
+      setValue('address', address, { shouldDirty: true, shouldValidate: true });
+      return `Location set to ${address}.`;
+    },
+  });
 
   const onSubmit = (data: JobProfileUpdateInput) => {
     let payload = {

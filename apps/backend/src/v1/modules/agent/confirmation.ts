@@ -177,3 +177,29 @@ export const verifyConfirmationToken = (
 
   return { ok: true };
 };
+
+/** Whether a tool's calls go through the confirmation gate. */
+export const isConfirmationGated = (tool: { mutating: boolean; requiresConfirmation?: boolean }): boolean =>
+  tool.mutating && tool.requiresConfirmation !== false;
+
+/**
+ * Separates the confirmation token from a gated tool's arguments.
+ *
+ * Must run before the arguments are validated: tool schemas are strict and do
+ * not list `confirmationToken`, so validating the raw input rejects every
+ * confirmed call with `"confirmationToken" is not allowed`.
+ *
+ * Only gated tools have the token removed. On any other tool a
+ * `confirmationToken` key is left in place, so the tool's own schema rejects it
+ * as the stray argument it is.
+ */
+export const splitConfirmationToken = (
+  tool: { mutating: boolean; requiresConfirmation?: boolean },
+  input: Record<string, unknown> | undefined
+): { confirmationToken: unknown; args: Record<string, unknown> } => {
+  const raw = input ?? {};
+  if (!isConfirmationGated(tool)) return { confirmationToken: undefined, args: raw };
+
+  const { confirmationToken, ...args } = raw;
+  return { confirmationToken, args };
+};

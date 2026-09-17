@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { AgentClientActionDto, AgentPageActionDefDto, AgentPageContextDto } from "@rl/types";
+import { resolveSelectable } from "./tools/catalog.shared";
 
 /**
  * Page awareness: what the user is looking at, and what that page lets the
@@ -103,22 +104,73 @@ export interface PageActionOutcome {
   error?: string;
 }
 
+type CatalogResolver = typeof resolveSelectable;
+
+/**
+ * Checks a catalog-backed action's `selections` against the real catalog.
+ *
+ * This is the guard against invented ids. Models that have seen a few ObjectIds
+ * will happily produce a plausible next one; unchecked, that id ticks nothing on
+ * the page and is then saved to the profile when the user presses Continue.
+ *
+ * On failure the model gets a message it can act on in the same run — search,
+ * then retry — which is why this is an error result and not a silent drop.
+ * On success, names are replaced with the catalog's own, so the chips the page
+ * shows can never disagree with the ids it saves.
+ */
+const verifyCatalogSelections = async (
+  action: AgentPageActionDefDto,
+  args: Record<string, unknown>,
+  resolve: CatalogResolver
+): Promise<{ ok: boolean; args?: Record<string, unknown>; error?: string }> => {
+  const catalog = action.catalog;
+  const selections = args.selections;
+
+  if (!Array.isArray(selections) || selections.length === 0) {
+    return { ok: false, error: "Pass `selections` as a non-empty array of { id, name } from search_catalog." };
+  }
+
+  const ids = selections.map((item) => String((item as { id?: unknown })?.id ?? ""));
+  const { rows, missing } = await resolve(catalog.kind, ids, catalog.valueType);
+
+  if (missing.length > 0) {
+    const search =
+      catalog.kind === "value"
+        ? `search_catalog with kind "value" and valueType "${catalog.valueType}"`
+        : `search_catalog with kind "${catalog.kind}"`;
+
+    return {
+      ok: false,
+      error:
+        `These ids are not options on this page: ${missing.join(", ")}. Do not invent or reuse ids. ` +
+        `Call ${search}, then call this action again with ids exactly as it returns them.`,
+    };
+  }
+
+  return { ok: true, args: { ...args, selections: rows } };
+};
+
 /**
  * Turns a model's call to a page action into a queued client action.
  *
- * The arguments are checked for being a plain, bounded object and nothing more:
- * the JSON Schema came from the browser, so enforcing it here would only verify
- * the browser against itself. The page's handler is where the arguments meet
- * real form rules, and it is written to reject what it cannot apply.
+ * For an ordinary action the arguments are checked for being a plain, bounded
+ * object and nothing more: the JSON Schema came from the browser, so enforcing it
+ * here would only verify the browser against itself. The page's handler is where
+ * the arguments meet real form rules, and it is written to reject what it cannot
+ * apply.
+ *
+ * A catalog-backed action is the exception, because its arguments name rows the
+ * server can check and the browser cannot — see `verifyCatalogSelections`.
  *
  * The result told to the model is explicit that nothing was saved, because the
  * most likely mistake after filling a form is announcing that it is done.
  */
-export const queuePageAction = (
+export const queuePageAction = async (
   action: AgentPageActionDefDto,
   rawArguments: string | undefined,
-  alreadyQueued: number
-): PageActionOutcome => {
+  alreadyQueued: number,
+  resolve: CatalogResolver = resolveSelectable
+): Promise<PageActionOutcome> => {
   if (alreadyQueued >= MAX_CLIENT_ACTIONS_PER_RUN) {
     return { ok: false, error: "Too many page actions in one reply. Stop and let the user review the page." };
   }
@@ -137,9 +189,17 @@ export const queuePageAction = (
     return { ok: false, error: "Page action arguments are too large." };
   }
 
+  let finalArgs = args as Record<string, unknown>;
+
+  if (action.catalog) {
+    const verified = await verifyCatalogSelections(action, finalArgs, resolve);
+    if (!verified.ok) return { ok: false, error: verified.error };
+    finalArgs = verified.args;
+  }
+
   return {
     ok: true,
-    action: { name: action.name, args: args as Record<string, unknown> },
+    action: { name: action.name, args: finalArgs },
     content: JSON.stringify({
       ok: true,
       result: {

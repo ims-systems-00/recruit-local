@@ -16,7 +16,12 @@ import { logger } from "../../../common/helper";
 import { validate } from "../../../common/helper/validate";
 import { llm, AGENT_MODEL } from "./llm/client";
 import { findTool, toolDefinitionsFor, AgentTool } from "./tools";
-import { issueConfirmationToken, verifyConfirmationToken } from "./confirmation";
+import {
+  isConfirmationGated,
+  issueConfirmationToken,
+  splitConfirmationToken,
+  verifyConfirmationToken,
+} from "./confirmation";
 import {
   buildSystemPrompt,
   CONTEXT_BUDGET_TOKENS,
@@ -248,7 +253,7 @@ const runToolCall = async ({
   // execute here: the call is queued for the browser. See `page-context.ts`.
   const pageAction = findPageAction(pageContext, name);
   if (pageAction) {
-    const queued = queuePageAction(pageAction, toolCall.function.arguments, queuedActions);
+    const queued = await queuePageAction(pageAction, toolCall.function.arguments, queuedActions);
     if (!queued.ok) return fail(queued.error);
 
     await persist(queued.content, true);
@@ -271,17 +276,18 @@ const runToolCall = async ({
     return fail("Tool arguments were not valid JSON.");
   }
 
+  // The confirmation token is an envelope for the loop, not a tool argument, so
+  // it comes off BEFORE validation. Validating first rejected every confirmed
+  // write: the tools' schemas are strict and do not (and must not) list
+  // `confirmationToken`. It also must never reach a tool, or it ends up signed
+  // into the next preview and written to the database as if it were a field.
+  const { confirmationToken, args } = splitConfirmationToken(tool, input);
+
   // The model's output is untrusted input, whatever the JSON Schema advertised.
-  const errors = validate(tool.inputSchema, input);
+  const errors = validate(tool.inputSchema, args);
   if (errors) return fail(Object.values(errors).join(", "));
 
-  // The confirmation gate. Everything below this block operates on `args`, which
-  // is `input` minus the token — the token is an envelope for the loop and must
-  // never reach a tool, or it ends up signed into the next preview and written
-  // to the database as if it were a field.
-  const { confirmationToken, ...args } = input as { confirmationToken?: unknown } & Record<string, unknown>;
-
-  if (tool.mutating && tool.requiresConfirmation !== false) {
+  if (isConfirmationGated(tool)) {
     const gated = await applyConfirmationGate({
       tool,
       args,

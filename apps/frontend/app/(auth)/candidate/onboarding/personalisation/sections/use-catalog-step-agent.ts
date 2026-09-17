@@ -3,19 +3,23 @@ import {
   usePageAction,
   usePageContext,
 } from '@/components/ai-chat/page-context';
+import type { AgentCatalogKind } from '@rl/types';
 
 /**
- * Makes a catalog-based personalisation step (job title, industry, experience
- * level, work mode) visible to Alice, and lets her tick options on it.
+ * Makes a catalog-based setup step (job title, industry, experience level, work
+ * mode, or a workplace-values round) visible to Alice, and lets her tick options
+ * on it.
  *
- * The action only changes form state. The user still presses the step's Next
- * button, which runs the page's normal submit — so the save, the onboarding
- * step and the navigation all stay exactly as they are without Alice.
+ * The action only changes form state. The user still presses the step's
+ * Continue button, which runs the page's normal submit — so the save, the
+ * onboarding step and the navigation all stay exactly as they are without Alice.
  *
- * Arguments carry names as well as ids because the "Selected:" chips render
- * names, and a chosen option may not be in the currently loaded page of the
- * list. Both come from `search_catalog`, which is the only source the prompt
- * allows.
+ * Two guards stop an invented id reaching the form:
+ * - The action declares its `catalog`, so the server checks every id against
+ *   that catalog before the action is sent here, and corrects the names.
+ * - When the page has its whole option list loaded, it passes `knownIds` and the
+ *   handler refuses anything outside it — the check that would have caught an
+ *   id that ticks nothing and then gets saved.
  */
 
 const OBJECT_ID = /^[a-f0-9]{24}$/i;
@@ -26,8 +30,11 @@ export interface CatalogOption {
 }
 
 interface Options {
-  /** `candidate.onboarding.<step>` suffix and the `search_catalog` kind. */
-  kind: 'job_title' | 'industry' | 'experience_level' | 'work_mode';
+  kind: AgentCatalogKind;
+  /** Required for `value`: the value type of this round. */
+  valueType?: string;
+  /** Page id suffix; defaults to the kind. Values rounds pass their step. */
+  pageId?: string;
   /** Plural label used in prompts and messages, e.g. "job titles". */
   label: string;
   /** What the step asks, in a sentence. */
@@ -36,6 +43,18 @@ interface Options {
   max: number;
   /** Currently selected options, for the page state Alice sees. */
   selected: CatalogOption[];
+  /**
+   * Every option id this page can show, when the full list is loaded. When set,
+   * ids outside it are rejected. Omit for long, paginated lists.
+   */
+  knownIds?: string[];
+  /**
+   * Options to show Alice directly, for short lists. Saves her a search and
+   * gives her real ids up front. Keep it small: page state is size-capped.
+   */
+  visibleOptions?: CatalogOption[];
+  /** Extra facts about the page worth telling Alice, e.g. popular choices. */
+  extraState?: Record<string, unknown>;
   /** Applies a validated selection to the form. */
   apply: (options: CatalogOption[]) => void;
 }
@@ -44,12 +63,14 @@ const parseSelections = (
   args: Record<string, unknown>,
   max: number,
   label: string,
+  knownIds?: string[],
 ) => {
   const raw = args.selections;
   if (!Array.isArray(raw) || raw.length === 0) {
     throw new Error(`Alice didn't pick any ${label}. Try asking again.`);
   }
 
+  const known = knownIds ? new Set(knownIds) : null;
   const seen = new Set<string>();
   const options: CatalogOption[] = [];
 
@@ -60,10 +81,11 @@ const parseSelections = (
       typeof id !== 'string' ||
       !OBJECT_ID.test(id) ||
       typeof name !== 'string' ||
-      !name.trim()
+      !name.trim() ||
+      (known && !known.has(id))
     ) {
       throw new Error(
-        `Alice sent a ${label} choice this page doesn't recognise.`,
+        `Alice picked a ${label.replace(/s$/, '')} that isn't in this list. Ask her to try again.`,
       );
     }
     if (seen.has(id)) continue;
@@ -84,34 +106,55 @@ const parseSelections = (
 
 export function useCatalogStepAgent({
   kind,
+  valueType,
+  pageId,
   label,
   question,
   max,
   selected,
+  knownIds,
+  visibleOptions,
+  extraState,
   apply,
 }: Options) {
   const single = max === 1;
+  const searchHint =
+    kind === 'value'
+      ? `search_catalog with kind "value" and valueType "${valueType}"`
+      : `search_catalog with kind "${kind}"`;
 
   usePageContext({
-    page: `candidate.onboarding.${kind}`,
+    page: `candidate.onboarding.${pageId ?? kind}`,
+    // Question trimmed so the summary stays inside the server's size cap.
     summary:
-      `Candidate setup step: "${question}" The user ${single ? 'chooses one' : `chooses up to ${max}`} ` +
-      `from a list of ${label}, then presses Next to save and continue.`,
+      `Candidate setup step: "${question.slice(0, 120)}" The user ${single ? 'chooses one' : `chooses up to ${max}`} ` +
+      `${label}, then presses Continue to save.`,
     state: {
       selected: selected.map((option) => option.name),
       limit: max,
-      catalogKind: kind,
+      searchWith: searchHint,
+      ...(valueType ? { valueType } : {}),
+      ...(visibleOptions?.length
+        ? {
+            options: visibleOptions.map((option) => ({
+              id: option._id,
+              name: option.name,
+            })),
+          }
+        : {}),
+      ...extraState,
     },
   });
 
   usePageAction({
     name: `select_${kind}`,
     description:
-      `Select ${label} in the list on this page, replacing the current selection. ` +
-      `Get options from search_catalog with kind "${kind}" first. Pass options the user chose, or — if they ` +
-      'explicitly asked you to choose — the best fits for what they told you, without asking them to confirm first. ' +
+      `Select ${label} on this page, replacing the current selection. ` +
+      `Use ids from ${searchHint} (or the page's listed options) — never invent or reuse one. ` +
+      'Pass options the user chose, or, if they explicitly asked you to choose, the best fits for what they told you. ' +
       (single ? 'Pass exactly one.' : `Pass at most ${max}.`) +
-      ' This does not save; the user presses Next on the page to save.',
+      ' This does not save; the user presses Continue.',
+    catalog: { kind, ...(valueType ? { valueType } : {}) },
     parameters: {
       type: 'object',
       properties: {
@@ -119,19 +162,12 @@ export function useCatalogStepAgent({
           type: 'array',
           minItems: 1,
           maxItems: max,
-          description:
-            'The chosen options, exactly as search_catalog returned them.',
+          description: 'The chosen options, with ids exactly as returned.',
           items: {
             type: 'object',
             properties: {
-              id: {
-                type: 'string',
-                description: 'The option id from search_catalog.',
-              },
-              name: {
-                type: 'string',
-                description: 'The option name from search_catalog.',
-              },
+              id: { type: 'string', description: 'The option id.' },
+              name: { type: 'string', description: 'The option name.' },
             },
             required: ['id', 'name'],
           },
@@ -140,7 +176,7 @@ export function useCatalogStepAgent({
       required: ['selections'],
     },
     handler: (args) => {
-      const options = parseSelections(args, max, label);
+      const options = parseSelections(args, max, label, knownIds);
       apply(options);
       return `Selected ${options.map((option) => option.name).join(', ')}.`;
     },

@@ -2,6 +2,7 @@ import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
 import { ANSWER_LENGTH, SPEECH_RATE_MAX, SPEECH_RATE_MIN } from "@rl/types";
 import { SPEECH_MAX_CHARS, SPEECH_VOICES } from "./speech.service";
+import { SEARCHABLE_KINDS, VALUE_TYPES } from "./tools/catalog.shared";
 
 const instruction = Joi.string().trim().min(1).max(4000).label("Instruction");
 
@@ -37,12 +38,20 @@ const pageContextSchema = Joi.object({
           .pattern(/^[a-z][a-z0-9_]{2,40}$/)
           .required()
           .label("Action name"),
-        description: Joi.string().trim().min(1).max(500).required().label("Action description"),
+        description: Joi.string().trim().min(1).max(800).required().label("Action description"),
         parameters: Joi.object({ type: Joi.string().valid("object").required() })
           .unknown(true)
           .custom(maxSerialized(PAGE_ACTION_PARAMETERS_MAX_CHARS, "Action parameters"))
           .required()
           .label("Action parameters"),
+        catalog: Joi.object({
+          kind: Joi.string()
+            .valid(...SEARCHABLE_KINDS)
+            .required(),
+          valueType: Joi.string()
+            .valid(...VALUE_TYPES)
+            .when("kind", { is: "value", then: Joi.required(), otherwise: Joi.forbidden() }),
+        }).label("Action catalog"),
       })
     )
     .max(PAGE_ACTIONS_MAX)
