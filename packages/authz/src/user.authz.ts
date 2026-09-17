@@ -36,6 +36,10 @@ export const ALL_USER_FIELDS = [
   'isDeleted',
   'deletedAt',
   'kycStatus',
+  // How this person wants to be communicated with. Readable and writable by
+  // nobody but themselves — see SELF_ONLY_FIELDS.
+  'accessibility',
+  'accessibility.*',
 ];
 
 // Helper: build a field list by removing the given fields from ALL_USER_FIELDS.
@@ -44,16 +48,53 @@ const omitFields = (fieldsToOmit: string[]) =>
 
 // Base groups shared across rules.
 const SENSITIVE_FIELDS = ['password']; // never read or mass-assigned
+
+/**
+ * Readable and writable by the account holder alone — not by an employer
+ * browsing candidates, not by a tenant admin, not by a platform admin.
+ *
+ * Accessibility preferences describe how someone needs to be communicated with,
+ * and a request for plain language or read-aloud can disclose a disability.
+ * Disability is a protected characteristic, so exposing these to anyone making a
+ * hiring decision creates a discrimination risk that the feature has no reason
+ * to carry: nothing in hiring needs to read them, and the owner's own client
+ * does.
+ *
+ * Granted by a dedicated `_id`-conditioned rule rather than by inclusion in the
+ * read sets below, because `CANDIDATE_READ_FIELDS` serves both a candidate
+ * reading themselves and an employer reading that candidate. CASL unions the
+ * fields of every matching rule, so the self rule adds these on top for the
+ * owner while the employer's rule never matches it.
+ */
+const SELF_ONLY_FIELDS = ['accessibility', 'accessibility.*'];
+
 const NON_READABLE_FIELDS = [...SENSITIVE_FIELDS, 'isDeleted', 'deletedAt']; // hidden from every read
 
 // Everything except the sensitive fields — admin-level read / manage scope.
-const NON_SENSITIVE_FIELDS = omitFields(SENSITIVE_FIELDS);
+const NON_SENSITIVE_FIELDS = omitFields([
+  ...SENSITIVE_FIELDS,
+  ...SELF_ONLY_FIELDS,
+]);
 
 // Read scopes per role. A candidate exposes the same fields whether viewed by
 // itself or by an employer, so one list covers both cases.
-const CANDIDATE_READ_FIELDS = omitFields([...NON_READABLE_FIELDS, 'role', 'tenantId']);
-const EMPLOYER_SELF_READ_FIELDS = omitFields([...NON_READABLE_FIELDS, 'tenantId']);
-const EMPLOYER_PUBLIC_READ_FIELDS = omitFields([...NON_READABLE_FIELDS, 'role', 'jobProfileId']);
+const CANDIDATE_READ_FIELDS = omitFields([
+  ...NON_READABLE_FIELDS,
+  ...SELF_ONLY_FIELDS,
+  'role',
+  'tenantId',
+]);
+const EMPLOYER_SELF_READ_FIELDS = omitFields([
+  ...NON_READABLE_FIELDS,
+  ...SELF_ONLY_FIELDS,
+  'tenantId',
+]);
+const EMPLOYER_PUBLIC_READ_FIELDS = omitFields([
+  ...NON_READABLE_FIELDS,
+  ...SELF_ONLY_FIELDS,
+  'role',
+  'jobProfileId',
+]);
 
 // Update scopes. Self-service is limited to personal details (and the user's own
 // password); everything else is system- or admin-managed.
@@ -74,6 +115,7 @@ const SELF_UPDATE_FIELDS = omitFields([
 ]);
 const TENANT_ADMIN_UPDATE_FIELDS = omitFields([
   ...SENSITIVE_FIELDS,
+  ...SELF_ONLY_FIELDS,
   'tenantId',
   'type',
   'isDeleted',
@@ -125,6 +167,15 @@ export class UserAbilityBuilder implements IAbilityBuilder {
 
     // BASELINE: All users can read and update their own safe fields
     can(AbilityAction.Update, UserAuthZEntity, SELF_UPDATE_FIELDS, {
+      _id: user._id,
+    });
+
+    // The owner's private fields, added on top of whatever their role's read
+    // rule already grants. Declared here rather than folded into those lists
+    // because several of them double as the set an *employer* sees. Stated
+    // before the platform-admin early return on purpose: an admin reading their
+    // own account is still the owner, and reading someone else's still is not.
+    can(AbilityAction.Read, UserAuthZEntity, SELF_ONLY_FIELDS, {
       _id: user._id,
     });
 

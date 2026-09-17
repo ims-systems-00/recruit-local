@@ -12,7 +12,8 @@ import {
 import { logger } from "../../../common/helper";
 import { validate } from "../../../common/helper/validate";
 import { llm, AGENT_MODEL } from "./llm/client";
-import { findTool, toolDefinitionsFor } from "./tools";
+import { findTool, toolDefinitionsFor, AgentTool } from "./tools";
+import { issueConfirmationToken, verifyConfirmationToken } from "./confirmation";
 import {
   buildSystemPrompt,
   CONTEXT_BUDGET_TOKENS,
@@ -121,6 +122,74 @@ const callLlm = async (
 };
 
 /**
+ * Decides whether a mutating tool may execute on this call.
+ *
+ * Three outcomes. `rejected` means the call must not run and the model is told
+ * why. `pending` means the tool proposed a write and is waiting on the user.
+ * `approved` means a valid token was presented and the caller should execute.
+ *
+ * The no-preview case is a rejection rather than a pass-through, which is the
+ * whole design in one branch: a tool that declares `mutating: true` and forgets
+ * `preview` fails closed. The alternative — writing unconfirmed because the
+ * safety mechanism was not implemented — inverts what the flag is for.
+ */
+const applyConfirmationGate = async ({
+  tool,
+  args,
+  confirmationToken,
+  session,
+  conversationId,
+  turnId,
+}: {
+  tool: AgentTool;
+  args: Record<string, unknown>;
+  confirmationToken: unknown;
+  session: IAgentRunParams["session"];
+  conversationId: string;
+  turnId: string;
+}): Promise<{ kind: "approved" } | { kind: "pending"; result: unknown } | { kind: "rejected"; reason: string }> => {
+  if (!tool.preview) {
+    logger.error("[agent] a mutating tool has no preview and cannot be run", { tool: tool.name });
+    return {
+      kind: "rejected",
+      reason: `The tool "${tool.name}" is not configured to be run safely. Tell the user this action is unavailable right now.`,
+    };
+  }
+
+  if (typeof confirmationToken === "string" && confirmationToken.length > 0) {
+    const verified = verifyConfirmationToken(confirmationToken, {
+      conversationId,
+      toolName: tool.name,
+      input: args,
+      currentTurnId: turnId,
+    });
+
+    if (verified.ok) return { kind: "approved" };
+    return { kind: "rejected", reason: verified.reason };
+  }
+
+  // No token: propose. `preview` runs under the caller's session and is allowed
+  // to throw — input that could never be written should fail here, before the
+  // user is asked to agree to it, rather than after.
+  const preview = await tool.preview(args, { session });
+
+  return {
+    kind: "pending",
+    result: {
+      pending: true,
+      summary: preview.summary,
+      details: preview.details,
+      ...(preview.warnings?.length ? { warnings: preview.warnings } : {}),
+      confirmationToken: issueConfirmationToken({ conversationId, toolName: tool.name, turnId, input: args }),
+      instruction:
+        "NOTHING HAS BEEN SAVED. Show the user these exact values, mention any warnings, and ask them to confirm. " +
+        "Do not call this tool again in this turn. When they reply approving it, call it again with identical arguments " +
+        "plus confirmationToken. If they want something changed, call it again without a token to propose the corrected version.",
+    },
+  };
+};
+
+/**
  * Runs one tool call: validate the model's arguments, execute under the
  * caller's session, persist the result. Always resolves — failures come back as
  * a serialized error for the model rather than as a throw.
@@ -134,10 +203,12 @@ const runToolCall = async ({
   toolCall,
   session,
   conversationId,
+  turnId,
 }: {
   toolCall: ToolCall;
   session: IAgentRunParams["session"];
   conversationId: IAgentRunParams["conversation"]["_id"];
+  turnId: string;
 }): Promise<{ step: AgentStepDto; content: string; result?: unknown }> => {
   const startedAt = Date.now();
   const name = toolCall.function.name;
@@ -180,15 +251,48 @@ const runToolCall = async ({
   const errors = validate(tool.inputSchema, input);
   if (errors) return fail(Object.values(errors).join(", "));
 
+  // The confirmation gate. Everything below this block operates on `args`, which
+  // is `input` minus the token — the token is an envelope for the loop and must
+  // never reach a tool, or it ends up signed into the next preview and written
+  // to the database as if it were a field.
+  const { confirmationToken, ...args } = input as { confirmationToken?: unknown } & Record<string, unknown>;
+
+  if (tool.mutating && tool.requiresConfirmation !== false) {
+    const gated = await applyConfirmationGate({
+      tool,
+      args,
+      confirmationToken,
+      session,
+      conversationId: String(conversationId),
+      turnId,
+    });
+
+    if (gated.kind === "rejected") return fail(gated.reason);
+
+    if (gated.kind === "pending") {
+      // Serialized as a success, because it is one: the tool was asked to
+      // propose and it proposed. Reporting it as an error would push the model
+      // into retrying the call rather than relaying the preview.
+      const content = JSON.stringify({ ok: true, result: gated.result });
+      await persist(content, true);
+
+      return {
+        step: { tool: name, input: args, ok: true, pending: true, durationMs: Date.now() - startedAt },
+        content,
+        result: gated.result,
+      };
+    }
+  }
+
   try {
-    const result = await tool.execute(input, { session });
+    const result = await tool.execute(args, { session });
     const content = JSON.stringify({ ok: true, result });
 
-    logger.debug(`[agent] tool ${name} succeeded`, { conversationId: String(conversationId), input, result });
+    logger.debug(`[agent] tool ${name} succeeded`, { conversationId: String(conversationId), input: args, result });
     await persist(content, true);
 
     return {
-      step: { tool: name, input, ok: true, durationMs: Date.now() - startedAt },
+      step: { tool: name, input: args, ok: true, durationMs: Date.now() - startedAt },
       content,
       result,
     };
@@ -196,7 +300,7 @@ const runToolCall = async ({
     const content = errorPayload(error);
     logger.warn(`[agent] tool ${name} failed`, {
       conversationId: String(conversationId),
-      input,
+      input: args,
       error: messageOf(error),
     });
     await persist(content, false);
@@ -204,7 +308,7 @@ const runToolCall = async ({
     return {
       step: {
         tool: name,
-        input,
+        input: args,
         ok: false,
         error: messageOf(error),
         durationMs: Date.now() - startedAt,
@@ -245,7 +349,7 @@ export const runAgent = async (params: IAgentRunParams): Promise<IAgentRunResult
 };
 
 const execute = async (
-  { conversation, instruction, session }: IAgentRunParams,
+  { conversation, instruction, session, turnId }: IAgentRunParams,
   trace: IAgentTraceCollector
 ): Promise<IAgentRunResult> => {
   const deadline = Date.now() + RUN_DEADLINE_MS;
@@ -253,12 +357,18 @@ const execute = async (
   const views: AgentViewDto[] = [];
   let usage: AgentUsageDto = {};
 
-  const history = await conversationService.replayHistory(conversation._id as never);
+  // Read per run rather than carried on the session: the session is minted at
+  // login and would hand a user yesterday's preferences for as long as their
+  // token lives, including the whole conversation in which they just changed them.
+  const [history, preferences] = await Promise.all([
+    conversationService.replayHistory(conversation._id as never),
+    conversationService.accessibilityPreferencesOf(session.user._id as string),
+  ]);
 
   // Recorded on the trace so a bad answer is traceable to the exact instructions
   // that produced it. Only the base prompt's version is tracked: it carries the
   // substantive rules, while the role block is a short framing paragraph.
-  const systemPrompt = await buildSystemPrompt(session);
+  const systemPrompt = await buildSystemPrompt(session, preferences);
   trace.recordPrompt({ name: PROMPT_NAME.AGENT_SYSTEM_BASE, version: systemPrompt.version });
 
   const messages: ChatMessage[] = [
@@ -321,6 +431,7 @@ const execute = async (
         toolCall,
         session,
         conversationId: conversation._id,
+        turnId,
       });
       steps.push(stepResult);
 

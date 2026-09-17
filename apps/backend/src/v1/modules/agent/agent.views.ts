@@ -32,6 +32,36 @@ const VIEWS: Record<string, (result: Record<string, any>) => AgentViewDto | null
 };
 
 /**
+ * A proposed write, rendered from the preview rather than from the prose asking
+ * about it.
+ *
+ * Built outside `VIEWS` because it keys on the shape of the result, not on the
+ * tool: every mutating tool produces the same pending envelope, and listing them
+ * one by one here would mean a new write tool silently shipping without a
+ * confirmation card.
+ *
+ * `confirmationToken` is deliberately not carried through. It is an instruction
+ * to the model, and a client has no use for it — approval arrives as an ordinary
+ * reply, not as a token echoed back from the browser.
+ */
+const toPendingWriteView = (result: Record<string, any>): AgentViewDto | null => {
+  if (result.pending !== true || typeof result.summary !== "string") return null;
+
+  return {
+    type: AGENT_VIEW_TYPE.PENDING_WRITE,
+    title: result.summary,
+    returned: 1,
+    items: [
+      {
+        summary: result.summary,
+        details: result.details ?? {},
+        ...(Array.isArray(result.warnings) && result.warnings.length > 0 ? { warnings: result.warnings } : {}),
+      },
+    ],
+  };
+};
+
+/**
  * Second cap behind each tool's own `MAX_LIMIT`. The tools bound their own page
  * size today; this is what keeps that true if one of them is later loosened,
  * since the response size stops being anyone's explicit concern once views work.
@@ -76,10 +106,18 @@ const listView = (type: AGENT_VIEW_TYPE, rows: unknown, result: Record<string, a
  * table, not their answer.
  */
 export const toView = (toolName: string, result: unknown): AgentViewDto | null => {
-  const build = VIEWS[toolName];
-  if (!build || result == null || typeof result !== "object") return null;
+  if (result == null || typeof result !== "object") return null;
 
   try {
+    // Checked ahead of the whitelist so a pending write always renders, whatever
+    // the tool is called. A mutating tool's normal result may also be whitelisted
+    // below; this only intercepts the proposal.
+    const pending = toPendingWriteView(result as Record<string, any>);
+    if (pending) return pending;
+
+    const build = VIEWS[toolName];
+    if (!build) return null;
+
     return build(result as Record<string, any>);
   } catch (error) {
     logger.warn("[agent] could not build a view from a tool result", {

@@ -98,14 +98,19 @@ const ClaimAbility = PureAbility as AbilityClass<ClaimAbility>;
  * that stops one user reading another's conversation — `accessibleBy` turns the
  * same condition into the Mongo scoping query used by the list endpoint.
  *
- * All three account types are granted today. That is intentional: employers and
- * candidates both use the agent, and keeping it an explicit CASL rule means
- * turning the feature off for a role later is a one-line change here rather
- * than a change to the runtime.
+ * Every signed-in user is granted today, including one who has not yet chosen an
+ * account type. That last case is the point rather than an oversight: a user
+ * part-way through onboarding has `type === null`, and they are exactly the
+ * audience for the agent's setup guidance — gating on a type they have not
+ * picked yet would lock the assistant out of the one conversation it is most
+ * needed for. Keeping this an explicit CASL rule means turning the feature off
+ * for a role later is a one-line change here rather than a change to the runtime.
  *
  * This answers only "may you talk to the agent at all". What data the agent can
  * actually reach is decided per tool, by that tool rebuilding its own domain
- * ability from the same session.
+ * ability from the same session — and a user with no account type has no tenant
+ * and no job profile, so every data tool returns nothing for them regardless of
+ * what this grants.
  */
 export class AgentAbilityBuilder implements IAbilityBuilder {
   private abilityBuilder: AbilityBuilder<ClaimAbility>;
@@ -124,10 +129,10 @@ export class AgentAbilityBuilder implements IAbilityBuilder {
       builder.can(AbilityAction.Manage, AgentConversationAuthZEntity);
     }
 
-    if (
-      this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER ||
-      this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE
-    ) {
+    // Keyed on having a user id rather than on the account type, so a user who
+    // has not finished onboarding is included. `userId` is what every rule below
+    // is conditioned on, so without one there is nothing to grant anyway.
+    if (userId) {
       builder.can(AbilityAction.Create, AgentConversationAuthZEntity);
       builder.can(
         AbilityAction.Read,

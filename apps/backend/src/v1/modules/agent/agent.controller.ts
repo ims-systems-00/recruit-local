@@ -7,9 +7,12 @@ import {
   AgentTraceAbilityBuilder,
   AgentTraceAuthZEntity,
   ALL_AGENT_CONVERSATION_FIELDS,
+  UserAbilityBuilder,
+  UserAuthZEntity,
 } from "@rl/authz";
 import { AbilityAction, AGENT_MESSAGE_ROLE } from "@rl/types";
-import { sanitizeDocument, sanitizeDocuments } from "../../../common/helper/authz";
+import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
+import { User } from "../../../models";
 import { agentConversationListQuerySpec, agentConversationRoleScopedSecurityQuery } from "./agent.query";
 import { runCursorList } from "../../../common/query";
 import * as conversationService from "./conversation.service";
@@ -66,13 +69,21 @@ const runTurn = async ({
   const locked = await conversationService.claimRunLock(conversation._id as Types.ObjectId, session.user._id as string);
 
   try {
-    await conversationService.addMessage({
+    const userMessage = await conversationService.addMessage({
       conversationId: locked._id as Types.ObjectId,
       role: AGENT_MESSAGE_ROLE.USER,
       content: instruction,
     });
 
-    return await agentService.runAgent({ conversation: locked, instruction, session });
+    // This message's id identifies the turn, and confirmation tokens are bound
+    // to it: a mutating tool cannot be approved on the same turn that proposed
+    // it, so redeeming a token proves the user replied in between.
+    return await agentService.runAgent({
+      conversation: locked,
+      instruction,
+      session,
+      turnId: String(userMessage._id),
+    });
   } finally {
     await conversationService.releaseRunLock(locked._id as Types.ObjectId);
   }
@@ -239,5 +250,74 @@ export const softRemoveConversation = async ({ req }: ControllerParams) => {
     statusCode: StatusCodes.OK,
     data: { conversation: sanitizeConversation(conversation, ability), deleted },
     fieldName: "conversation",
+  });
+};
+
+/**
+ * The caller's own accessibility preferences.
+ *
+ * Mounted under `/agent` rather than on the user module because every field is
+ * about how the assistant communicates — wording, answer length, read-aloud
+ * voice and speed. A future preference about the interface itself (contrast,
+ * motion, font size) belongs on the user resource instead; these do not.
+ *
+ * No `sanitizeDocument` here. It projects an entity document against a field
+ * allowlist, and this payload is a fixed preferences object merged over
+ * documented defaults — there is no other user's data it could contain. The
+ * ability check below is the boundary, and it is the one that matters: the CASL
+ * rule granting these fields is conditioned on `_id`, so this can only ever read
+ * the caller's own.
+ */
+export const getPreferences = async ({ req }: ControllerParams) => {
+  const ability = new UserAbilityBuilder(req.session).getAbility();
+  const entity = new UserAuthZEntity({ _id: req.session.user._id, type: req.session.user.type as never });
+
+  if (!ability.can(AbilityAction.Read, entity, "accessibility")) {
+    throw new UnauthorizedException("You are not authorized to read these settings.");
+  }
+
+  const preferences = await conversationService.accessibilityPreferencesOf(req.session.user._id as string);
+
+  return new ApiResponse({
+    message: "Accessibility preferences retrieved.",
+    statusCode: StatusCodes.OK,
+    data: preferences,
+    fieldName: "preferences",
+  });
+};
+
+/**
+ * Updates the caller's own accessibility preferences.
+ *
+ * A PATCH, not a PUT: clients send the one setting the user just changed. The
+ * `$set` is built from dotted paths for the same reason the agent's tool does —
+ * assigning the whole subdocument would reset every preference the request did
+ * not mention.
+ */
+export const updatePreferences = async ({ req }: ControllerParams) => {
+  const ability = new UserAbilityBuilder(req.session).getAbility();
+  const entity = new UserAuthZEntity({ _id: req.session.user._id, type: req.session.user.type as never });
+
+  if (!ability.can(AbilityAction.Update, entity)) {
+    throw new UnauthorizedException("You are not authorized to change these settings.");
+  }
+
+  const changes = Object.fromEntries(
+    Object.entries(req.body as Record<string, unknown>).map(([key, value]) => [`accessibility.${key}`, value])
+  );
+
+  // Field-level check on the exact paths being written, so the rule that keeps
+  // these owner-only is enforced rather than assumed.
+  validateUpdatePayload(changes, ability, AbilityAction.Update, entity);
+
+  await User.updateOne({ _id: req.session.user._id }, { $set: changes }, { runValidators: true });
+
+  const preferences = await conversationService.accessibilityPreferencesOf(req.session.user._id as string);
+
+  return new ApiResponse({
+    message: "Accessibility preferences updated.",
+    statusCode: StatusCodes.OK,
+    data: preferences,
+    fieldName: "preferences",
   });
 };

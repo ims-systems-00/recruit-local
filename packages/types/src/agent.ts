@@ -30,6 +30,15 @@ export interface AgentStepDto {
   ok: boolean;
   error?: string;
   durationMs?: number;
+  /**
+   * True when a mutating tool returned a preview instead of writing, because it
+   * is waiting on the user to approve it. Nothing was changed by this step.
+   *
+   * Distinct from `ok: false`: the call did exactly what it was meant to. A
+   * client showing tool activity should read this as "proposed", not as a
+   * failure, and the matching `AgentViewDto` carries what is being proposed.
+   */
+  pending?: boolean;
 }
 
 /**
@@ -41,6 +50,16 @@ export enum AGENT_VIEW_TYPE {
   APPLICATION_LIST = 'application_list',
   APPLICATION_DETAIL = 'application_detail',
   JOB_LIST = 'job_list',
+  /**
+   * A write a mutating tool is waiting on the user to approve. Its `items` hold
+   * a single row: the field-by-field values that would be written.
+   *
+   * A client may render this as a confirmation card, but is not obliged to — the
+   * model asks for approval in prose as well, and the approval itself is an
+   * ordinary reply, not a button press. A client that ignores this view is still
+   * correct, just plainer.
+   */
+  PENDING_WRITE = 'pending_write',
 }
 
 /**

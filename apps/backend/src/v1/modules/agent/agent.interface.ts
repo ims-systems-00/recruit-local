@@ -25,6 +25,16 @@ export interface IAgentRunParams {
   conversation: IAgentConversationDoc;
   instruction: string;
   session: ISession;
+  /**
+   * The id of the persisted user message this run is answering.
+   *
+   * Supplied by the caller rather than derived here because the caller is what
+   * writes that message. It identifies the turn, which is what confirmation
+   * tokens are bound to: a token issued on this turn cannot be redeemed on it,
+   * so approving a write requires the user to have spoken again. See
+   * `confirmation.ts`.
+   */
+  turnId: string;
 }
 
 export interface IAgentRunResult {

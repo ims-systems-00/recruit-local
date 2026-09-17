@@ -30,4 +30,25 @@ const agentRateLimiter = rateLimit({
   },
 });
 
-export { globalRateLimiter, agentRateLimiter };
+/**
+ * Per-user limiter for text-to-speech.
+ *
+ * Looser than `agentRateLimiter` because the calls are not comparable: an agent
+ * run is one deliberate question, while read-aloud fires once per reply, again
+ * when someone replays a sentence they missed, and continuously for a user who
+ * has it switched on. Limiting it as tightly as a run would cut off exactly the
+ * person the feature exists for.
+ *
+ * Still limited, because it bills per character. The cache in `speech.service.ts`
+ * absorbs the repeats; this bounds the rest.
+ */
+const speechRateLimiter = rateLimit({
+  windowMs: parseInt(process.env.AGENT_SPEECH_RATE_LIMIT_WINDOW_MS || "60000"),
+  max: parseInt(process.env.AGENT_SPEECH_RATE_LIMIT_MAX || "60"),
+  keyGenerator: (req: Request) => req.session?.user?._id || req.ip,
+  handler: (req: Request, res: Response, next: NextFunction) => {
+    return next(new TooManyRequestsException("Too many read-aloud requests. Please wait a moment and try again."));
+  },
+});
+
+export { globalRateLimiter, agentRateLimiter, speechRateLimiter };

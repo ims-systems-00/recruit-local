@@ -37,8 +37,49 @@ export interface AgentTool<TInput = unknown> {
    */
   inputSchema: Joi.ObjectSchema;
 
-  /** Whether this tool writes. Used for logging today; gating later. */
+  /**
+   * Whether this tool writes.
+   *
+   * A tool marked `true` is gated: the loop will not execute it until the user
+   * has approved a preview of the exact values, and a tool that sets this
+   * without implementing `preview` is refused outright. See `confirmation.ts`.
+   */
   mutating: boolean;
+
+  /**
+   * Describes what `execute` would write, without writing it. Required on any
+   * tool where `mutating` is true, and never called otherwise.
+   *
+   * This is what the user actually approves, so it must reflect the values that
+   * will be stored — a date the tool parsed into a different year, or a field it
+   * intends to default, has to show up here. A preview that is prettier than the
+   * write is worse than no preview, because it buys a confirmation for something
+   * the user did not agree to.
+   *
+   * Runs under the same authorization as `execute`: it reads what it needs to
+   * resolve the preview and must gate those reads identically. Throwing is the
+   * right response to input that could never be written — the user finds out
+   * now rather than after saying yes.
+   */
+  preview?(input: TInput, ctx: AgentToolContext): Promise<IToolPreview>;
+
+  /**
+   * Set `false` to let a mutating tool write on its first call.
+   *
+   * A deliberate hole in the gate, and it stays narrow. The only writes that
+   * qualify are ones where the confirmation turn costs more than it protects:
+   * the change affects nobody but the caller, it is visible in the very next
+   * reply, and undoing it is one sentence. Accessibility preferences are the
+   * case this exists for — making someone who asked for one question at a time
+   * answer an extra confirmation prompt is a worse outcome than the write.
+   *
+   * Anything written to a profile employers read fails all three tests, so it
+   * does not qualify. Leave this unset and implement `preview` instead.
+   *
+   * `mutating` stays `true` regardless: the flag describes what the tool does,
+   * not how it is gated, and tracing and review both read it that way.
+   */
+  requiresConfirmation?: boolean;
 
   /**
    * Omit to offer the tool to every account type.
@@ -51,4 +92,30 @@ export interface AgentTool<TInput = unknown> {
   isAvailable?(session: ISession): boolean;
 
   execute(input: TInput, ctx: AgentToolContext): Promise<unknown>;
+}
+
+/**
+ * What a mutating tool proposes, and what the user is actually agreeing to when
+ * they say yes.
+ *
+ * The confirmation token is signed over the tool's *arguments*, not over this
+ * shape, so the two only stay in step if `preview` derives everything here from
+ * those same arguments. A preview that reaches for a value the arguments do not
+ * carry can show one thing and write another.
+ */
+export interface IToolPreview {
+  /** One line, in plain language: "Add Staff Nurse at St Mary's, Mar 2019 – Jun 2022". */
+  summary: string;
+
+  /**
+   * The field-by-field values that will be written, for a client that renders a
+   * confirmation card rather than relying on the model's prose.
+   */
+  details: Record<string, unknown>;
+
+  /**
+   * Anything the user should know before agreeing — a defaulted field, a date
+   * that was interpreted from vague wording, an existing record this duplicates.
+   */
+  warnings?: string[];
 }
