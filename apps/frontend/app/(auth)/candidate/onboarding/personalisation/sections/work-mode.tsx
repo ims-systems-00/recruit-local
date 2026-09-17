@@ -68,6 +68,19 @@ export default function WorkModeSection({
     setSavedWorkModes(existingWorkModes);
   }, [existingWorkModes]);
 
+  // `defaultValues` is only read on mount. When the saved selection changes
+  // underneath the form — Alice saving it from the chat — push it into the form
+  // so the checkboxes match. Keyed on the ids so an unchanged selection is a no-op.
+  const existingWorkModeIds =
+    existingWorkModes?.map((workMode) => workMode._id).join(',') ?? '';
+  useEffect(() => {
+    setValue(
+      'workMode',
+      existingWorkModeIds ? existingWorkModeIds.split(',') : [],
+      { shouldDirty: false },
+    );
+  }, [existingWorkModeIds, setValue]);
+
   const [search, setSearch] = useState('');
 
   const debouncedSearch = useDebounce(search, 500);

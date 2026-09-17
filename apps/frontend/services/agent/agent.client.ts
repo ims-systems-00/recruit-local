@@ -127,6 +127,9 @@ const STALE_KEYS_BY_TOOL: Record<string, readonly (readonly string[])[]> = {
   add_education: [educationKeys.all, jobProfileKeys.all],
   add_skills: [skillKeys.all, jobProfileKeys.all],
   update_my_profile: [jobProfileKeys.all],
+  // Refetching the job profile is what lets an open onboarding step show the
+  // selection Alice just saved.
+  set_profile_catalog: [jobProfileKeys.all],
 };
 
 export function useInvalidateAfterAgentRun() {

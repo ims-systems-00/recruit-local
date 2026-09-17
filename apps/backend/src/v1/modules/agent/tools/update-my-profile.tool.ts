@@ -89,8 +89,8 @@ export const updateMyProfileTool: AgentTool<UpdateProfileInput> = {
     "Send only the fields the user actually asked to change — anything you omit is left alone. " +
     "Nothing is saved on the first call: you get back a preview to show them, and you call this again with the " +
     "returned confirmationToken once they have agreed. " +
-    "This cannot change job titles, industries, work mode, experience level or values — those are chosen from set lists " +
-    "on the user's profile page, so direct them there instead.",
+    "This cannot change job titles, industries, work mode or experience level — use search_catalog and " +
+    "set_profile_catalog for those. It cannot change values either; direct the user to their profile page for that.",
 
   parameters: {
     type: "object",

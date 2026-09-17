@@ -71,6 +71,20 @@ export default function JobTitleSection({
     },
   });
 
+  // `defaultValues` is only read on mount. When the saved selection changes
+  // underneath the form — Alice saving it from the chat — push it into the form
+  // so the checkboxes match. Keyed on the ids rather than the array so a
+  // re-render with the same selection is a no-op.
+  const existingJobTitleIds =
+    existingJobTitles?.map((jobTitle) => jobTitle._id).join(',') ?? '';
+  useEffect(() => {
+    setValue(
+      'jobTitle',
+      existingJobTitleIds ? existingJobTitleIds.split(',') : [],
+      { shouldDirty: false },
+    );
+  }, [existingJobTitleIds, setValue]);
+
   const selectedJobTitles = watch('jobTitle');
 
   const [search, setSearch] = useState('');

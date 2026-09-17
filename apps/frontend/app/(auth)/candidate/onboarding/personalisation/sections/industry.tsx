@@ -68,6 +68,19 @@ export default function IndustrySection({
     setSavedIndustries(existingIndustries);
   }, [existingIndustries]);
 
+  // `defaultValues` is only read on mount. When the saved selection changes
+  // underneath the form — Alice saving it from the chat — push it into the form
+  // so the checkboxes match. Keyed on the ids so an unchanged selection is a no-op.
+  const existingIndustryIds =
+    existingIndustries?.map((industry) => industry._id).join(',') ?? '';
+  useEffect(() => {
+    setValue(
+      'industry',
+      existingIndustryIds ? existingIndustryIds.split(',') : [],
+      { shouldDirty: false },
+    );
+  }, [existingIndustryIds, setValue]);
+
   const [search, setSearch] = useState('');
 
   const debouncedSearch = useDebounce(search, 500);

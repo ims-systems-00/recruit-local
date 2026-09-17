@@ -223,8 +223,20 @@ it in for you.`,
     title: "Building your profile by chatting with me",
     topic: HELP_ARTICLE_TOPIC.PROFILE,
     audience: HELP_ARTICLE_AUDIENCE.CANDIDATE,
-    summary: "You can add experience, education and skills conversationally instead of using forms.",
-    keywords: ["alice", "chat", "conversational", "add experience", "voice", "without forms", "assistant"],
+    summary:
+      "You can add experience, education and skills, and choose your job titles, industries, experience level and work mode, by chatting instead of using forms.",
+    keywords: [
+      "alice",
+      "chat",
+      "conversational",
+      "add experience",
+      "voice",
+      "without forms",
+      "assistant",
+      "job title step",
+      "choose industry",
+      "setup with ai",
+    ],
     body: `You do not have to use forms to build your profile. Tell me about a job you have had —
 "I was a staff nurse at St Mary's from 2019 to 2022" — and I will turn it into a profile
 entry.
@@ -235,6 +247,12 @@ before saving rather than after. Nothing reaches your profile on my guess alone.
 
 This works for your work experience, your education, your skills, and the basic details
 on your profile such as your professional summary and contact number.
+
+**Choosing job titles, industries, experience level and work mode.** These setup steps
+use fixed lists, so tell me what you are after — "nursing or care work", "remote" — and I
+will show you the matching options from the list and let you pick. You can choose up to
+three job titles, industries and work modes, and one experience level. Once you confirm,
+your choices appear ticked on the setup page and you can press Next to carry on.
 
 If you would rather go back to filling things in directly, everything I add is an
 ordinary profile entry and can be edited or deleted on your profile like any other.`,

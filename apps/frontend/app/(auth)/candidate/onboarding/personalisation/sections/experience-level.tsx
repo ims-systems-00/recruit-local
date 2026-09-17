@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { ONBOARDING_STEP_ENUMS } from '@rl/types';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import MultiCheckboxSkeleton from './multi-checkbox-skeleton';
 import { useQueryClient } from '@tanstack/react-query';
@@ -49,6 +49,16 @@ export default function ExperienceLevelSection({
       experienceLevel: existingExperienceLevels || undefined,
     },
   });
+
+  // `defaultValues` is only read on mount. When the saved level changes
+  // underneath the form — Alice saving it from the chat — push it into the form
+  // so the selected radio matches.
+  useEffect(() => {
+    if (!existingExperienceLevels) return;
+    setValue('experienceLevel', existingExperienceLevels, {
+      shouldDirty: false,
+    });
+  }, [existingExperienceLevels, setValue]);
 
   const selectedExperienceLevels = watch('experienceLevel');
 
