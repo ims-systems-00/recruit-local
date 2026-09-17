@@ -7,8 +7,11 @@ import {
   AgentStepDto,
   AgentUsageDto,
   AgentViewDto,
+  AgentClientActionDto,
+  AgentPageContextDto,
   PROMPT_NAME,
 } from "@rl/types";
+import { findPageAction, pageActionTools, pageContextMessage, queuePageAction } from "./page-context";
 import { logger } from "../../../common/helper";
 import { validate } from "../../../common/helper/validate";
 import { llm, AGENT_MODEL } from "./llm/client";
@@ -204,12 +207,17 @@ const runToolCall = async ({
   session,
   conversationId,
   turnId,
+  pageContext,
+  queuedActions,
 }: {
   toolCall: ToolCall;
   session: IAgentRunParams["session"];
   conversationId: IAgentRunParams["conversation"]["_id"];
   turnId: string;
-}): Promise<{ step: AgentStepDto; content: string; result?: unknown }> => {
+  pageContext?: AgentPageContextDto;
+  /** How many page actions this run has already queued. */
+  queuedActions: number;
+}): Promise<{ step: AgentStepDto; content: string; result?: unknown; clientAction?: AgentClientActionDto }> => {
   const startedAt = Date.now();
   const name = toolCall.function.name;
   let input: Record<string, unknown> | undefined;
@@ -234,6 +242,22 @@ const runToolCall = async ({
       content,
     };
   };
+
+  // Page actions are checked before server tools. They cannot collide — every
+  // page action is prefixed `page_` and no server tool is — and they never
+  // execute here: the call is queued for the browser. See `page-context.ts`.
+  const pageAction = findPageAction(pageContext, name);
+  if (pageAction) {
+    const queued = queuePageAction(pageAction, toolCall.function.arguments, queuedActions);
+    if (!queued.ok) return fail(queued.error);
+
+    await persist(queued.content, true);
+    return {
+      step: { tool: name, input: queued.action.args, ok: true, durationMs: Date.now() - startedAt },
+      content: queued.content,
+      clientAction: queued.action,
+    };
+  }
 
   const tool = findTool(session, name);
   if (!tool) {
@@ -349,12 +373,13 @@ export const runAgent = async (params: IAgentRunParams): Promise<IAgentRunResult
 };
 
 const execute = async (
-  { conversation, instruction, session, turnId }: IAgentRunParams,
+  { conversation, instruction, session, turnId, pageContext }: IAgentRunParams,
   trace: IAgentTraceCollector
 ): Promise<IAgentRunResult> => {
   const deadline = Date.now() + RUN_DEADLINE_MS;
   const steps: AgentStepDto[] = [];
   const views: AgentViewDto[] = [];
+  const clientActions: AgentClientActionDto[] = [];
   let usage: AgentUsageDto = {};
 
   // Read per run rather than carried on the session: the session is minted at
@@ -371,19 +396,24 @@ const execute = async (
   const systemPrompt = await buildSystemPrompt(session, preferences);
   trace.recordPrompt({ name: PROMPT_NAME.AGENT_SYSTEM_BASE, version: systemPrompt.version });
 
+  // Placed after the history and right before the instruction, so the model
+  // reads "where the user is now" immediately before "what they asked".
+  const pageMessage = pageContextMessage(pageContext);
+
   const messages: ChatMessage[] = [
     { role: "system", content: systemPrompt.content },
     ...history,
+    ...(pageMessage ? [pageMessage] : []),
     // The instruction is a user message. It is never interpolated into the
     // system prompt, so it cannot rewrite the agent's framing.
     { role: "user", content: instruction },
   ];
 
-  const tools = toolDefinitionsFor(session);
+  const tools = [...toolDefinitionsFor(session), ...pageActionTools(pageContext)];
 
   for (let step = 0; step < MAX_STEPS; step++) {
     if (Date.now() > deadline) {
-      return finish(conversation, messages, steps, views, usage, AGENT_STOPPED_REASON.DEADLINE, trace);
+      return finish(conversation, messages, steps, views, clientActions, usage, AGENT_STOPPED_REASON.DEADLINE, trace);
     }
 
     const completion = await callLlm(trace, AGENT_LLM_CALL_PURPOSE.STEP, {
@@ -406,7 +436,14 @@ const execute = async (
         content: answer,
         usage,
       });
-      return { answer, stoppedReason: AGENT_STOPPED_REASON.COMPLETED, steps, views: lastViews(views), usage };
+      return {
+        answer,
+        stoppedReason: AGENT_STOPPED_REASON.COMPLETED,
+        steps,
+        views: lastViews(views),
+        clientActions,
+        usage,
+      };
     }
 
     messages.push({
@@ -427,13 +464,20 @@ const execute = async (
         step: stepResult,
         content,
         result,
+        clientAction,
       } = await runToolCall({
         toolCall,
         session,
         conversationId: conversation._id,
         turnId,
+        pageContext,
+        queuedActions: clientActions.length,
       });
       steps.push(stepResult);
+
+      // Kept in call order, all of them: unlike views, a later action does not
+      // supersede an earlier one — filling two fields is two actions.
+      if (clientAction) clientActions.push(clientAction);
 
       // Built from the tool's own return value, not from the answer the model
       // writes about it later. Only whitelisted tools produce one; the rest
@@ -460,7 +504,7 @@ const execute = async (
     }
   }
 
-  return finish(conversation, messages, steps, views, usage, AGENT_STOPPED_REASON.MAX_STEPS, trace);
+  return finish(conversation, messages, steps, views, clientActions, usage, AGENT_STOPPED_REASON.MAX_STEPS, trace);
 };
 
 /**
@@ -479,13 +523,15 @@ const lastViews = (views: AgentViewDto[]): AgentViewDto[] => views.slice(-MAX_VI
  *
  * Views are carried through here too: a run that ran out of steps still fetched
  * real rows, and showing them is most of the value of an answer that had to
- * apologise for being incomplete.
+ * apologise for being incomplete. Client actions likewise — the model already
+ * told itself they were queued, so dropping them would contradict the summary.
  */
 const finish = async (
   conversation: IAgentRunParams["conversation"],
   messages: ChatMessage[],
   steps: AgentStepDto[],
   views: AgentViewDto[],
+  clientActions: AgentClientActionDto[],
   usage: AgentUsageDto,
   stoppedReason: AGENT_STOPPED_REASON,
   trace: IAgentTraceCollector
@@ -528,5 +574,5 @@ const finish = async (
     steps: steps.length,
   });
 
-  return { answer, stoppedReason, steps, views: lastViews(views), usage };
+  return { answer, stoppedReason, steps, views: lastViews(views), clientActions, usage };
 };

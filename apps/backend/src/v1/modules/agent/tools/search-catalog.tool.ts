@@ -25,8 +25,10 @@ export const searchCatalogTool: AgentTool<{ kind: CatalogKind; query?: string; l
     "Search the lists a candidate picks from when setting up their profile: job titles, industries, experience levels " +
     "and work modes. Returns the matching options with their ids. " +
     "Use this before set_profile_catalog, every time — never pass an id you did not get from here. " +
-    "If more than one option could match what the user said, show them the options by name and ask which they mean; " +
-    "do not choose for them. If nothing matches, say so and suggest a broader word rather than picking the nearest option. " +
+    "If more than one option could match what the user said, show them the options by name and ask which they mean — " +
+    "unless they explicitly asked you to choose for them, in which case pick the best fits and say why. " +
+    "If nothing matches (catalog names are general roles, so a technology like 'MERN' will not appear), " +
+    "search again with a broader word such as 'developer' before asking the user. " +
     "Omit `query` to list everything, which is sensible for short lists like work modes and experience levels.",
 
   parameters: {

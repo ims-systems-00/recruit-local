@@ -19,6 +19,7 @@ import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 import { MAX_EXPERIENCE_LEVELS_STEP_SELECTION } from '@/services/experience-level/experience-level.validation';
 import { useInfiniteExperienceLevels } from '@/services/experience-level/experience-level.client';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useCatalogStepAgent } from './use-catalog-step-agent';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -85,6 +86,27 @@ export default function ExperienceLevelSection({
 
   const experienceLevels =
     data?.pages.flatMap((page) => page.experienceLevels) ?? [];
+
+  const selectedLevel = experienceLevels.find(
+    (level) => level._id === selectedExperienceLevels,
+  );
+
+  // Lets Alice see this step and choose a level on it. Saving is still Next.
+  useCatalogStepAgent({
+    kind: 'experience_level',
+    label: 'experience levels',
+    question: 'What is your experience level?',
+    max: 1,
+    selected: selectedLevel
+      ? [{ _id: selectedLevel._id, name: selectedLevel.name }]
+      : [],
+    apply: ([option]) => {
+      setValue('experienceLevel', option._id, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    },
+  });
 
   const onSubmit = async (data: JobProfileUpdateInput) => {
     const payload = {

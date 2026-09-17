@@ -30,8 +30,10 @@ import {
   type PendingWriteItem,
 } from '@/services/agent/agent.type';
 import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
 import PendingWriteCard from './pending-write-card';
 import AiChatSettings from './ai-chat-settings';
+import { useAgentPage } from './page-context';
 
 type Message = {
   id: number;
@@ -112,6 +114,7 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
   const invalidateAfterRun = useInvalidateAfterAgentRun();
   const { preferences } = useAccessibilityPreferences(isLoggedIn);
   const { speak, stop, playingId, loadingId } = useReadAloud();
+  const { getPageContext, runClientActions } = useAgentPage();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -132,11 +135,27 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  /** Adds Alice's reply, refreshes anything she saved, and speaks it if asked. */
-  const receive = (data: AgentData) => {
+  /**
+   * Adds Alice's reply, refreshes anything she saved, applies any form changes
+   * she made to the current page, and speaks the reply if asked.
+   */
+  const receive = async (data: AgentData) => {
     const reply = toAliceMessage(data);
     setMessages((current) => [...current, reply]);
     invalidateAfterRun(data);
+
+    if (data.clientActions?.length) {
+      const report = await runClientActions(data.clientActions);
+
+      if (report.applied.length) {
+        // Visible outside the chat panel, next to the form that changed, and
+        // announced by screen readers via the toast's live region.
+        toast.success('Alice filled in the form', {
+          description: `${report.applied.join(' ')} Check it, then use the page's button to save.`,
+        });
+      }
+      report.failed.forEach((failure) => toast.error(failure.message));
+    }
 
     if (preferences?.autoReadAloud && reply.text) {
       speak(reply.id, reply.text, String(preferences.speechRate));
@@ -164,10 +183,14 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
     setDraft('');
     setEditingId(null);
 
+    // Read at send time, so it describes the page as it is now.
+    const pageContext = getPageContext();
+
     if (!conversationId) {
       await createAgentConversation({
         payload: {
           instruction: text,
+          ...(pageContext ? { pageContext } : {}),
         },
         onSuccessCallback: (data) => {
           setConversationId(data.conversationId);
@@ -182,6 +205,7 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
       conversationId,
       payload: {
         instruction: text,
+        ...(pageContext ? { pageContext } : {}),
       },
       onSuccessCallback: receive,
     });

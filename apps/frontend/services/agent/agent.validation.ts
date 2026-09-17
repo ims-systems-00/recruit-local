@@ -3,6 +3,9 @@ import { ANSWER_LENGTH, SPEECH_RATE_MAX, SPEECH_RATE_MIN } from '@rl/types';
 
 export const agentConversationCreateSchema = yup.object({
   instruction: yup.string().required('Instruction is required'),
+  // Built by the page registry, not typed by the user; the backend validates
+  // its shape and size. Passed through untouched here.
+  pageContext: yup.mixed().optional(),
 });
 
 /** Mirrors the backend's 4,000-character cap so an overlong read fails here. */

@@ -1,5 +1,7 @@
 import type {
   AccessibilityPreferences,
+  AgentClientActionDto,
+  AgentPageContextDto,
   AgentStepDto,
   AgentUsageDto,
   AgentViewDto,
@@ -8,6 +10,8 @@ import type {
 export { AGENT_VIEW_TYPE, ANSWER_LENGTH } from '@rl/types';
 export type {
   AccessibilityPreferences,
+  AgentClientActionDto,
+  AgentPageContextDto,
   AgentStepDto,
   AgentViewDto,
 } from '@rl/types';
@@ -32,11 +36,15 @@ export interface AgentData {
    * change and is waiting for the user to approve it; nothing is saved yet.
    */
   views?: AgentViewDto[];
+  /** Page actions to run on the current page. Nothing has been saved. */
+  clientActions?: AgentClientActionDto[];
   usage?: AgentUsageDto;
 }
 
 export interface AgentConversationInput {
   instruction: string;
+  /** The page the user is on, and what Alice may do to it. */
+  pageContext?: AgentPageContextDto;
 }
 
 /** One row of a `pending_write` view. */

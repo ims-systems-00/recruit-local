@@ -29,6 +29,7 @@ import {
 } from '@/services/job-profile/job-profile.type';
 import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 import { MAX_WORK_MODES_STEP_SELECTION } from '@/services/work-mode/work-mode.validation';
+import { useCatalogStepAgent } from './use-catalog-step-agent';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -80,6 +81,29 @@ export default function WorkModeSection({
       { shouldDirty: false },
     );
   }, [existingWorkModeIds, setValue]);
+
+  // Lets Alice see this step and tick work modes on it. Saving is still Next.
+  useCatalogStepAgent({
+    kind: 'work_mode',
+    label: 'work modes',
+    question: 'What is your preferred work mode?',
+    max: MAX_WORK_MODES_STEP_SELECTION,
+    selected: savedWorkModes,
+    apply: (options) => {
+      setValue(
+        'workMode',
+        options.map((option) => option._id),
+        { shouldDirty: true, shouldValidate: true },
+      );
+      setSavedWorkModes(
+        options.map((option) => ({
+          ...option,
+          description: '',
+          isActive: true,
+        })),
+      );
+    },
+  });
 
   const [search, setSearch] = useState('');
 

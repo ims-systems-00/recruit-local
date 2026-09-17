@@ -8,6 +8,8 @@ import {
   AgentToolTraceDto,
   AgentUsageDto,
   AgentViewDto,
+  AgentClientActionDto,
+  AgentPageContextDto,
 } from "@rl/types";
 import { IServiceListParams, IServiceGetParams } from "../../../common/interface/service.interface";
 import { AgentConversationInput, IAgentConversationDoc } from "../../../models/agent-conversation.model";
@@ -35,6 +37,8 @@ export interface IAgentRunParams {
    * `confirmation.ts`.
    */
   turnId: string;
+  /** Browser-reported page and its actions. Untrusted; see `page-context.ts`. */
+  pageContext?: AgentPageContextDto;
 }
 
 export interface IAgentRunResult {
@@ -42,6 +46,7 @@ export interface IAgentRunResult {
   stoppedReason: AGENT_STOPPED_REASON;
   steps: AgentStepDto[];
   views: AgentViewDto[];
+  clientActions: AgentClientActionDto[];
   usage?: AgentUsageDto;
 }
 

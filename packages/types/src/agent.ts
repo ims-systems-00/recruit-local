@@ -108,7 +108,57 @@ export interface AgentRunResultDto {
    * normal case for a question no listing tool served.
    */
   views: AgentViewDto[];
+  /**
+   * Page actions the model asked the client to perform, in call order. The
+   * server has executed nothing — these fill fields on the user's current page,
+   * and the user saves through the page as usual. Empty when the page offered
+   * no actions or the model used none.
+   */
+  clientActions: AgentClientActionDto[];
   usage?: AgentUsageDto;
+}
+
+/* ------------------------------------------------------------------------- *
+ * Page awareness
+ *
+ * The client describes the page the user is on and the actions that page
+ * exposes; the model may call those actions, and the calls come back in
+ * `clientActions` for the page to carry out.
+ *
+ * Everything here is reported by the browser, so it is treated as untrusted on
+ * the server: validated for shape and size, framed to the model as a
+ * description rather than an instruction, and never used for authorization.
+ * That is safe because a page action has no server-side effect — the worst a
+ * tampered description achieves is confusing the tamperer's own assistant.
+ * Anything that persists still goes through the server tools and their CASL
+ * checks.
+ * ------------------------------------------------------------------------- */
+
+/** One thing the current page lets the assistant do. */
+export interface AgentPageActionDefDto {
+  /** snake_case, unique on the page. Offered to the model as `page_<name>`. */
+  name: string;
+  /** Written for the model: what the action does and when to use it. */
+  description: string;
+  /** JSON Schema for the arguments, as the model should send them. */
+  parameters: Record<string, unknown>;
+}
+
+export interface AgentPageContextDto {
+  /** Stable dotted id, e.g. `candidate.onboarding.job_title`. */
+  page: string;
+  /** What the page is for, in a sentence. */
+  summary?: string;
+  /** Small, current view state worth knowing — e.g. what is already selected. */
+  state?: Record<string, unknown>;
+  actions?: AgentPageActionDefDto[];
+}
+
+/** A page action the model called, to be run by the client. */
+export interface AgentClientActionDto {
+  /** The page action's own name, without the `page_` prefix. */
+  name: string;
+  args: Record<string, unknown>;
 }
 
 /**

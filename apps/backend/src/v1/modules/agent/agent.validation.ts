@@ -5,6 +5,51 @@ import { SPEECH_MAX_CHARS, SPEECH_VOICES } from "./speech.service";
 
 const instruction = Joi.string().trim().min(1).max(4000).label("Instruction");
 
+/** Size caps for browser-reported page data. Bounds cost, not just shape. */
+export const PAGE_STATE_MAX_CHARS = 2_000;
+export const PAGE_ACTION_PARAMETERS_MAX_CHARS = 2_000;
+export const PAGE_ACTIONS_MAX = 10;
+
+/** Rejects a JSON value whose serialized form exceeds `max` characters. */
+const maxSerialized = (max: number, label: string) => (value: unknown, helpers: Joi.CustomHelpers) =>
+  JSON.stringify(value).length > max ? helpers.message({ custom: `${label} is too large.` }) : value;
+
+/**
+ * The page the user is on, as the browser reports it. See `AgentPageContextDto`.
+ *
+ * Deliberately strict on shape and size and deliberately loose on meaning: no
+ * allowlist of pages, because any page may register actions and the whole point
+ * is that adding one needs no backend change. That looseness is acceptable only
+ * because nothing here authorizes anything — see `page-context.ts`.
+ */
+const pageContextSchema = Joi.object({
+  page: Joi.string()
+    .pattern(/^[a-z0-9]+(?:[._-][a-z0-9]+)*$/)
+    .max(100)
+    .required()
+    .label("Page"),
+  summary: Joi.string().trim().max(300).label("Page summary"),
+  state: Joi.object().unknown(true).custom(maxSerialized(PAGE_STATE_MAX_CHARS, "Page state")).label("Page state"),
+  actions: Joi.array()
+    .items(
+      Joi.object({
+        name: Joi.string()
+          .pattern(/^[a-z][a-z0-9_]{2,40}$/)
+          .required()
+          .label("Action name"),
+        description: Joi.string().trim().min(1).max(500).required().label("Action description"),
+        parameters: Joi.object({ type: Joi.string().valid("object").required() })
+          .unknown(true)
+          .custom(maxSerialized(PAGE_ACTION_PARAMETERS_MAX_CHARS, "Action parameters"))
+          .required()
+          .label("Action parameters"),
+      })
+    )
+    .max(PAGE_ACTIONS_MAX)
+    .unique("name")
+    .label("Page actions"),
+}).label("Page context");
+
 /**
  * `instruction` is optional here: POST /conversations with no instruction just
  * opens an empty conversation, while including one runs the first turn
@@ -12,10 +57,12 @@ const instruction = Joi.string().trim().min(1).max(4000).label("Instruction");
  */
 export const createConversationBodySchema = Joi.object({
   instruction: instruction.optional(),
+  pageContext: pageContextSchema.optional(),
 });
 
 export const sendMessageBodySchema = Joi.object({
   instruction: instruction.required(),
+  pageContext: pageContextSchema.optional(),
 });
 
 export const idParamsSchema = Joi.object({

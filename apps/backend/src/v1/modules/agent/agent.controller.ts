@@ -10,7 +10,7 @@ import {
   UserAbilityBuilder,
   UserAuthZEntity,
 } from "@rl/authz";
-import { AbilityAction, AGENT_MESSAGE_ROLE } from "@rl/types";
+import { AbilityAction, AGENT_MESSAGE_ROLE, AgentPageContextDto } from "@rl/types";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { User } from "../../../models";
 import { agentConversationListQuerySpec, agentConversationRoleScopedSecurityQuery } from "./agent.query";
@@ -59,10 +59,12 @@ const runTurn = async ({
   conversation,
   instruction,
   session,
+  pageContext,
 }: {
   conversation: IAgentConversationDoc;
   instruction: string;
   session: ControllerParams["req"]["session"];
+  pageContext?: AgentPageContextDto;
 }) => {
   conversationService.assertFingerprintMatches(conversation, session);
 
@@ -83,6 +85,7 @@ const runTurn = async ({
       instruction,
       session,
       turnId: String(userMessage._id),
+      pageContext,
     });
   } finally {
     await conversationService.releaseRunLock(locked._id as Types.ObjectId);
@@ -113,7 +116,12 @@ export const createConversation = async ({ req }: ControllerParams) => {
     });
   }
 
-  const result = await runTurn({ conversation, instruction, session: req.session });
+  const result = await runTurn({
+    conversation,
+    instruction,
+    session: req.session,
+    pageContext: req.body.pageContext,
+  });
 
   return new ApiResponse({
     message: "Agent run complete.",
@@ -131,7 +139,12 @@ export const sendMessage = async ({ req }: ControllerParams) => {
   }
 
   const conversation = await loadOwnedConversation(req.params.id, ability);
-  const result = await runTurn({ conversation, instruction: req.body.instruction, session: req.session });
+  const result = await runTurn({
+    conversation,
+    instruction: req.body.instruction,
+    session: req.session,
+    pageContext: req.body.pageContext,
+  });
 
   return new ApiResponse({
     message: "Agent run complete.",
