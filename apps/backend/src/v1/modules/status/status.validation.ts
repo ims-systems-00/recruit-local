@@ -6,7 +6,8 @@ export const createStatusBodySchema = Joi.object({
   collectionName: Joi.string().trim().max(100).required().label("Collection Name"),
   collectionId: objectId.optional().label("Collection ID"),
   label: Joi.string().trim().max(100).required().label("Status Label"),
-  weight: Joi.number().integer().min(0).default(0).label("Status Weight"),
+  // Omit to append the status after the last one on its board.
+  weight: Joi.number().integer().min(0).optional().label("Status Weight"),
   default: Joi.boolean().default(false).label("Is Default Status"),
   backgroundColor: Joi.string()
     .trim()
@@ -31,6 +32,16 @@ export const updateStatusBodySchema = Joi.object({
 });
 
 /**
+ * Validation for reordering a board's statuses. `statusIds` is the complete new
+ * order, first to last — every live status on the board, each exactly once.
+ */
+export const reorderStatusBodySchema = Joi.object({
+  collectionName: Joi.string().trim().max(100).required().label("Collection Name"),
+  collectionId: objectId.optional().label("Collection ID"),
+  statusIds: Joi.array().items(objectId.required()).min(1).unique().required().label("Status IDs"),
+});
+
+/**
  * The contract for `GET /statuses`.
  *
  * The old schema declared `sortBy`/`sortOrder`, which `MongoQuery` ignored, while
@@ -39,9 +50,9 @@ export const updateStatusBodySchema = Joi.object({
  */
 export const statusListQuerySchema = Joi.object({
   cursor: Joi.string().trim().max(512),
-  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
-  // cursor page.
-  page: Joi.number().integer().min(1),
+  // Removed: paging is by cursor. Accepted and dropped rather than 400'ing a
+  // caller that still sends it.
+  page: Joi.any().strip(),
   limit: Joi.number().integer().min(1).max(100).default(10),
   // "asc"/"desc" were this key's old values. They are not sort tokens, so the
   // builder ignores them and falls back to the default — which is what happened

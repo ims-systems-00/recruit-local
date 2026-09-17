@@ -1,3 +1,4 @@
+import type { HTMLAttributes } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Calendar, Clock, EllipsisVertical, Grip } from 'lucide-react';
@@ -40,17 +41,34 @@ export function ApplicantCard({ applicant, index }: Props) {
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="bg-bg-gray-soft-primary p-spacing-2xl flex flex-col gap-spacing-4xl rounded-2xl border border-border-gray-secondary shadow-xs"
-    >
+    <div ref={setNodeRef} style={style}>
+      <ApplicantCardContent
+        applicant={applicant}
+        handleProps={{ ...attributes, ...listeners }}
+      />
+    </div>
+  );
+}
+
+/**
+ * The card's markup with no dnd-kit hooks, for drag overlays. Rendering the
+ * sortable `ApplicantCard` there would register a second draggable under the
+ * same id as the real card.
+ */
+export function ApplicantCardContent({
+  applicant,
+  handleProps,
+}: {
+  applicant: Application;
+  handleProps?: HTMLAttributes<HTMLSpanElement>;
+}) {
+  return (
+    <div className="bg-bg-gray-soft-primary p-spacing-2xl flex flex-col gap-spacing-4xl rounded-2xl border border-border-gray-secondary shadow-xs">
       {/* Top row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-spacing-sm">
           <span
-            {...attributes}
-            {...listeners}
+            {...handleProps}
             className="cursor-grab active:cursor-grabbing touch-none text-fg-gray-secondary"
           >
             <Grip size={20} />

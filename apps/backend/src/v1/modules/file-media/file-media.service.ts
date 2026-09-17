@@ -57,10 +57,6 @@ export const list = async ({ query = {}, options, offset = 0 }: IFileMediaListPa
   return toCursorPage(await aggregate, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const count = ({ query = {} }: IFileMediaListParams) =>
-  FileMedia.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
-
 export const listSoftDeleted = async ({ query = {} }: Partial<IFileMediaGetParams> = {}) => {
   const sanitizedQuery = sanitizeQueryIds(query);
   const fileMedias = await FileMedia.aggregate([

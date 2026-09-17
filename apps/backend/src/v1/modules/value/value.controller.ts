@@ -18,7 +18,6 @@ export const list = async ({ req }: ControllerParams) => {
     // Catalog list: gated by the ability check above, then narrowed to active rows.
     extraConditions: [{ isActive: true }],
     fetch: ({ query, options, offset }) => valueService.list({ query, options, offset }),
-    count: ({ query }) => valueService.count({ query }),
   });
 
   return new ApiResponse({

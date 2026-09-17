@@ -1,5 +1,4 @@
 export interface IOptions {
-  page?: number;
   limit?: number;
   sort?: Record<string, 1 | -1 | 'asc' | 'desc'> | string;
 }

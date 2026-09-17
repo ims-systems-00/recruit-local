@@ -18,10 +18,6 @@ export const listForm = async ({ query = {}, options, offset = 0 }: IListFormPar
   return toCursorPage(docs, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const countForm = ({ query = {} }: IListFormParams) =>
-  Form.countDocuments({ $and: [query, { "deleteMarker.status": { $ne: true } }] });
-
 export const getForm = async (id: string) => {
   const form = await Form.findOneWithExcludeDeleted({ _id: id });
   if (!form) throw new NotFoundException("Form not found.");

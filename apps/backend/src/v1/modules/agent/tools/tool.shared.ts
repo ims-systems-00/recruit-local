@@ -123,7 +123,7 @@ export const readJobsById = async (jobIds: string[], session: ISession): Promise
 
   const results = await jobService.list({
     query: { $and: [{ _id: { $in: ids } }, jobRoleScopedSecurityQuery(ability)] },
-    options: { page: 1, limit: ids.length, sort: { createdAt: -1 } },
+    options: { limit: ids.length, sort: { createdAt: -1 } },
     tenantId: session.tenantId,
     jobProfileId: session.jobProfileId,
   });

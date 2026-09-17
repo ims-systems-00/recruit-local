@@ -47,12 +47,6 @@ export interface BuiltListQuery {
   search?: string;
   /** Opaque forward cursor, decoded by the controller against its own guard. */
   cursor?: string;
-  /**
-   * Legacy offset paging, set only when the caller sent `?page=`. Present so the
-   * frontend can migrate to cursors module by module instead of all at once —
-   * see `runCursorList`. Remove once no caller sends it.
-   */
-  page?: number;
 }
 
 const DEFAULT_LIMIT = 10;
@@ -267,7 +261,6 @@ export const buildListQuery = (query: Record<string, unknown>, spec: ListQuerySp
 
   const search = spec.searchKey ? String(query[spec.searchKey] ?? "").trim() || undefined : undefined;
   const cursor = typeof query.cursor === "string" && query.cursor ? query.cursor : undefined;
-  const page = Number(query.page) > 0 ? Number(query.page) : undefined;
 
   // Only when the module asked for regex search. A spec that leaves `searchFields`
   // unset still gets `search` back and decides for itself (job -> Atlas).
@@ -282,6 +275,5 @@ export const buildListQuery = (query: Record<string, unknown>, spec: ListQuerySp
     options: { limit: Math.min(requested, MAX_LIMIT), sort: normalizeSort(query.sort, spec) },
     search,
     cursor,
-    page,
   };
 };

@@ -104,10 +104,6 @@ export const list = async ({ query = {}, options, allowedFields, offset = 0 }: I
   return toCursorPage(docs, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const count = ({ query = {} }: IListJobProfileParams) =>
-  JobProfile.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
-
 export const getOne = async ({ query = {}, allowedFields }: IJobProfileGetParams) => {
   const jobProfiles = await JobProfile.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
@@ -126,11 +122,17 @@ export const getOne = async ({ query = {}, allowedFields }: IJobProfileGetParams
   return jobProfiles[0];
 };
 
-export const listSoftDeleted = async ({ query = {}, options, allowedFields }: IListJobProfileParams) => {
-  return JobProfile.aggregatePaginate(
-    [...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...jobProfileProjectQuery(allowedFields)],
-    options
-  );
+export const listSoftDeleted = async ({ query = {}, options, allowedFields, offset = 0 }: IListJobProfileParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await JobProfile.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...onlyDeletedQuery(),
+    ...jobProfileProjectQuery(allowedFields),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
 
 export const getOneSoftDeleted = async ({ query = {}, allowedFields }: IJobProfileGetParams) => {

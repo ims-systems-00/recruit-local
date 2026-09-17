@@ -1,10 +1,11 @@
 import React from 'react';
 import Kanban from './kanban/kanban';
-import { useStatuses } from '@/services/status/status.client';
+import { useAllStatuses } from '@/services/status/status.client';
 import { KanbanSkeleton } from './kanban/kanban-skeleton';
 
 export default function ApplicantKanbanView({ jobId }: { jobId: string }) {
-  const { statuses, isLoading } = useStatuses({
+  // Every status is a column, so load all of them — not just the first page.
+  const { statuses, isLoading } = useAllStatuses({
     collectionName: 'jobs',
     collectionId: jobId,
   });

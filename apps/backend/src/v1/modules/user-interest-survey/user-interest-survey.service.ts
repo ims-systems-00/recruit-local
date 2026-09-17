@@ -28,10 +28,6 @@ export const list = async ({ query = {}, options, offset = 0 }: IListSurveyParam
   return toCursorPage(docs, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const count = ({ query = {} }: IListSurveyParams) =>
-  UserInterestSurvey.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
-
 export const getOne = async ({ query = {} }: IListSurveyParams) => {
   const surveys = await UserInterestSurvey.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),

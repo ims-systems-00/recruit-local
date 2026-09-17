@@ -28,7 +28,6 @@ export const list = async ({ req }: ControllerParams) => {
     spec: kycListQuerySpec,
     securityQuery: kycRoleScopedSecurityQuery(ability),
     fetch: ({ query, options, offset }) => kycService.list({ query, options, offset }),
-    count: ({ query }) => kycService.count({ query }),
   });
 
   // After the cursor is built: field stripping can drop the field it keys on.

@@ -34,7 +34,6 @@ export async function getCvs(
   try {
     const res = await axiosServer.get(API_ENDPOINT, {
       params: {
-        page: params?.page,
         cursor: params?.cursor,
         limit: params?.limit || 10,
         clientSearch: params?.clientSearch,

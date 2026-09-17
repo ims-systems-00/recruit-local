@@ -12,7 +12,6 @@ export const listNotification = async ({ req }: ControllerParams) => {
     query: req.query,
     spec: notificationListQuerySpec,
     fetch: ({ query, options, offset }) => notificationService.listNotification({ query, options, offset }),
-    count: ({ query }) => notificationService.countNotification({ query }),
   });
 
   return new ApiResponse({

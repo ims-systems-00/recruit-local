@@ -21,7 +21,6 @@ export const list = async ({ req }: ControllerParams) => {
     // this lists every action. Unchanged by the migration, but worth knowing.
     spec: actionListQuerySpec,
     fetch: ({ query, options, offset }) => actionService.list({ query, options, offset }),
-    count: ({ query }) => actionService.count({ query }),
   });
 
   return new ApiResponse({

@@ -91,7 +91,7 @@ export default function CreateEditStatusForm({
         payload: {
           label: cleanPayload.label as string,
           collectionName: 'jobs',
-          weight: 0,
+          // No weight: the backend puts a new status after the last column.
           default: false,
           backgroundColor: '#FFFFFF',
           collectionId: uid as string,

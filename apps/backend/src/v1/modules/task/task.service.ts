@@ -1,4 +1,5 @@
 import { BadRequestException, NotFoundException } from "../../../common/helper";
+import { cursorSortStage, toCursorPage } from "../../../common/query";
 import { IListTaskParams } from "./task.interface";
 import { Task, TaskInput, ITaskDoc } from "../../../models";
 import { TASK_STATUS_ENUMS } from "../../../models/constants";
@@ -64,8 +65,20 @@ const isTaskCompleted = (status: string) => {
   }
 };
 
-export const listTask = ({ query = {}, options }: IListTaskParams) => {
-  return Task.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 }, populate: populates });
+export const listTask = async ({ query = {}, options, offset = 0 }: IListTaskParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+  const sort = options?.sort ? String(options.sort) : "-createdAt";
+
+  // `find` rather than the paginate helper: one extra document is the whole
+  // `hasNextPage` answer, so there is no $count branch to run.
+  const docs = await Task.find({ $and: [query, { "deleteMarker.status": { $ne: true } }] })
+    .populate(populates)
+    .sort(cursorSortStage(sort))
+    .skip(offset)
+    .limit(limit + 1)
+    .lean();
+
+  return toCursorPage(docs, limit);
 };
 
 export const getTask = async (id: string) => {

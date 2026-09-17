@@ -47,7 +47,7 @@ export const list = async ({ query = {}, options, session, offset = 0 }: IListAp
   return toCursorPage(await aggregate, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
+/** How many match, ignoring paging. Used by the agent tools to report `totalMatching`. */
 export const count = ({ query = {} }: IListApplicationParams) =>
   Application.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
 
@@ -69,18 +69,21 @@ export const getOne = async ({ query = {}, session }: IApplicationGetParams) => 
   return applications[0];
 };
 
-export const listSoftDeleted = async ({ query = {}, options, session }: IListApplicationParams) => {
+export const listSoftDeleted = async ({ query = {}, options, session, offset = 0 }: IListApplicationParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Application.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...populateJobProfileQuery(),
     ...populateStatusQuery(),
     ...applicationProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Application.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
 
 export const getOneSoftDeleted = async ({ query = {}, session }: IApplicationGetParams) => {

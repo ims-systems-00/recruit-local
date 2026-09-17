@@ -19,7 +19,6 @@ export const list = async ({ req }: ControllerParams) => {
     spec: surveyListQuerySpec,
     securityQuery: surveyRoleScopedSecurityQuery(ability),
     fetch: ({ query, options, offset }) => surveyService.list({ query, options, offset }),
-    count: ({ query }) => surveyService.count({ query }),
   });
 
   return new ApiResponse({

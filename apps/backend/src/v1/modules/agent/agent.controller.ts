@@ -142,7 +142,6 @@ export const listConversations = async ({ req }: ControllerParams) => {
     spec: agentConversationListQuerySpec,
     securityQuery: agentConversationRoleScopedSecurityQuery(ability),
     fetch: ({ query, options, offset }) => conversationService.list({ query, options, offset }),
-    count: ({ query }) => conversationService.count({ query }),
   });
 
   // After the cursor is built: field stripping can drop the field it keys on.

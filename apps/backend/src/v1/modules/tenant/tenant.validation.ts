@@ -90,9 +90,9 @@ export const logoUpdateBodySchema = Joi.object({
  */
 export const listQuerySchema = Joi.object({
   cursor: Joi.string().trim().max(512),
-  // Deprecated. Sending it returns the legacy offset block; omitting it returns a
-  // cursor page. Kept because the frontend still sends `page: … || 1`.
-  page: Joi.number().integer().min(1),
+  // Removed: paging is by cursor. Accepted and dropped rather than 400'ing a
+  // caller that still sends it.
+  page: Joi.any().strip(),
   limit: Joi.number().integer().min(1).max(100).default(10),
   sort: Joi.string().valid("-createdAt", "createdAt", "name", "-name").default("-createdAt"),
 

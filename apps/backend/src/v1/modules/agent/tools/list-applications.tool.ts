@@ -47,7 +47,7 @@ const statusIdsForStage = async (stage: string): Promise<string[]> => {
     label: { $regex: `^${escapeRegex(stage.trim())}$`, $options: "i" },
   };
 
-  const results = await statusService.list({ query, options: { page: 1, limit: MAX_STAGE_MATCHES } });
+  const results = await statusService.list({ query, options: { limit: MAX_STAGE_MATCHES } });
 
   return (results.docs as { _id: unknown }[]).map((status) => String(status._id));
 };

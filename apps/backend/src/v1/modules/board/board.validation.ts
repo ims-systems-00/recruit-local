@@ -33,14 +33,21 @@ export const updateBoardBodySchema = Joi.object({
  * Validation for querying/listing Boards
  */
 export const boardListQuerySchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
+  // Forward-only cursor from the previous response's `pagination.nextCursor`.
+  cursor: Joi.string().trim().max(512),
   limit: Joi.number().integer().min(1).max(100).default(10),
 
   // Search and Filter fields
   search: Joi.string().trim().optional(),
   isTemplate: Joi.boolean().optional(),
+  collectionName: Joi.string().trim().optional().label("Filter by Collection Name"),
+  collectionId: objectId.optional().label("Filter by Collection ID"),
 
-  // Sorting
-  sortBy: Joi.string().valid("title", "createdAt", "updatedAt").default("createdAt"),
-  sortOrder: Joi.string().valid("asc", "desc").default("desc"),
+  sort: Joi.string()
+    .valid("title", "-title", "createdAt", "-createdAt", "updatedAt", "-updatedAt")
+    .default("-createdAt"),
+
+  // Never actually applied by MongoQuery. Accept and drop.
+  sortBy: Joi.any().strip(),
+  sortOrder: Joi.any().strip(),
 });

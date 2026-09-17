@@ -3,9 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   getStatuses,
+  getAllStatuses,
   getStatusById,
   createStatus,
   updateStatus,
+  reorderStatuses,
   softDeleteStatus,
   hardDeleteStatus,
   restoreStatus,
@@ -16,6 +18,7 @@ import type {
   StatusData,
   StatusListResponse,
   StatusListFilters,
+  StatusReorderInput,
 } from './status.type';
 
 // Query keys
@@ -26,6 +29,9 @@ export const statusKeys = {
     [...statusKeys.lists(), filters] as const,
   details: () => [...statusKeys.all, 'detail'] as const,
   detail: (id: string) => [...statusKeys.details(), id] as const,
+  // Under `lists()` so the mutations' `statusKeys.all` invalidation refetches it.
+  allList: (filters: StatusListFilters) =>
+    [...statusKeys.lists(), 'all', filters] as const,
 };
 
 // Hook to fetch list of statuses
@@ -44,6 +50,31 @@ export function useStatuses(filters: StatusListFilters = {}) {
   return {
     statuses: query.data?.docs || [],
     pagination: query.data?.pagination,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+    isFetching: query.isFetching,
+  };
+}
+
+// Hook to fetch every status matching the filters, across all cursor pages
+export function useAllStatuses(
+  filters: Omit<StatusListFilters, 'cursor' | 'limit'> = {},
+) {
+  const query = useQuery<StatusListResponse, Error>({
+    queryKey: statusKeys.allList(filters),
+    queryFn: async () => {
+      const response = await getAllStatuses(filters);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+  });
+
+  return {
+    statuses: query.data?.docs || [],
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,
@@ -138,6 +169,42 @@ export function useUpdateStatus() {
     updateStatus: mutation.mutateAsync,
     isPending: mutation.isPending,
     error: mutation.error,
+  };
+}
+
+// Hook to save a new column order for a board
+export function useReorderStatuses() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (payload: StatusReorderInput) => reorderStatuses(payload),
+  });
+
+  const reorderStatusesAsync = async ({
+    payload,
+    onErrorCallback,
+  }: {
+    payload: StatusReorderInput;
+    onErrorCallback?: () => void;
+  }) => {
+    try {
+      const response = await mutation.mutateAsync(payload);
+      if (!response.success) {
+        toast.error(response.message);
+        onErrorCallback?.();
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to reorder statuses');
+      onErrorCallback?.();
+    } finally {
+      // Success or not, resync with the server's order.
+      queryClient.invalidateQueries({ queryKey: statusKeys.all });
+    }
+  };
+
+  return {
+    reorderStatuses: reorderStatusesAsync,
+    isPending: mutation.isPending,
   };
 }
 

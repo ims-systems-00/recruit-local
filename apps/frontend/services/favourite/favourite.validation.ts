@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { paginationSchema } from '../shared';
+import { cursorPaginationSchema } from '../shared';
 
 export const favouriteCreateSchema = yup.object({
   itemId: yup.string().required('Item ID is required'),
@@ -34,7 +34,7 @@ export const favouriteSchema = yup.object({
 
 export const favouriteListResponseSchema = yup.object({
   favourites: yup.array().of(favouriteSchema).required(),
-  pagination: paginationSchema.optional(),
+  pagination: cursorPaginationSchema.optional(),
   message: yup.string().optional(),
 });
 

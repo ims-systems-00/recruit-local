@@ -57,12 +57,6 @@ export const list = async ({ query = {}, options, offset = 0 }: IListAgentConver
   return toCursorPage(docs, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const count = ({ query = {} }: IListAgentConversationParams) =>
-  AgentConversation.countDocuments({
-    $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }],
-  });
-
 export const getOne = async ({ query = {} }: IAgentConversationGetParams): Promise<IAgentConversationDoc> => {
   const conversation = await AgentConversation.findOneWithExcludeDeleted(sanitizeQueryIds(query));
   if (!conversation) throw new NotFoundException("Conversation not found.");

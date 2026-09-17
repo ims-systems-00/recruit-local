@@ -1,16 +1,10 @@
 import { StatusCodes } from "http-status-codes";
 import * as userService from "./user.service";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  NotFoundException,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
 import { UserAbilityBuilder, UserAuthZEntity, ALL_USER_FIELDS } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import { roleScopedSecurityQuery, userListQuerySpec } from "./user.query";
-import { buildListQuery, runCursorList } from "../../../common/query";
+import { runCursorList } from "../../../common/query";
 import { toUserResponse, toUserResponseList } from "./user.dto";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 
@@ -40,7 +34,6 @@ export const list = async ({ req }: ControllerParams) => {
     spec: userListQuerySpec,
     securityQuery: roleScopedSecurityQuery(ability),
     fetch: ({ query, options, offset }) => userService.list({ query, options, offset }),
-    count: ({ query }) => userService.count({ query }),
   });
 
   // After the cursor is built: field stripping can drop the field it keys on.
@@ -88,23 +81,15 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException(`User is not authorized to read deleted users.`);
   }
 
-  // Trash still pages by offset — only the filter building moves off MongoQuery.
-  const { filter, options, page } = buildListQuery(req.query, userListQuerySpec);
-
-  const results = await userService.listSoftDeleted({
-    query: { $and: [filter, roleScopedSecurityQuery(ability)] },
-    options: { ...options, page: page ?? 1 },
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: userListQuerySpec,
+    securityQuery: roleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => userService.listSoftDeleted({ query, options, offset }),
   });
 
-  const sanitizedDocs = sanitizeDocuments<UserAuthZEntity>(
-    results.docs,
-    ability,
-    AbilityAction.Read,
-    UserAuthZEntity,
-    caslFieldOptions
-  );
-
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
+  // After the cursor is built: field stripping can drop the field it keys on.
+  const data = sanitizeDocuments<UserAuthZEntity>(docs, ability, AbilityAction.Read, UserAuthZEntity, caslFieldOptions);
 
   return new ApiResponse({
     message: "Soft deleted users retrieved",

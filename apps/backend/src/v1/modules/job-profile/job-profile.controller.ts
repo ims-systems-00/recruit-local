@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { ApiResponse, ControllerParams, formatListResponse, UnauthorizedException } from "../../../common/helper";
+import { ApiResponse, ControllerParams, UnauthorizedException } from "../../../common/helper";
 import * as jobProfileService from "./job-profile.service";
 import { recomputeProfileCompletion } from "./profile-completion.service";
 import * as applicationService from "../application/application.service";
@@ -21,7 +21,7 @@ import {
   jobProfileListQuerySpec,
   jobProfileRoleScopedSecurityQuery,
 } from "./job-profile.query";
-import { buildListQuery, runCursorList } from "../../../common/query";
+import { runCursorList } from "../../../common/query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { toValueResponseList } from "../value/value.dto";
 import { toNamedRefResponse, toNamedRefResponseList } from "./job-profile.dto";
@@ -94,7 +94,6 @@ export const list = async ({ req }: ControllerParams) => {
     spec: jobProfileListQuerySpec,
     securityQuery: jobProfileRoleScopedSecurityQuery(ability),
     fetch: ({ query, options, offset }) => jobProfileService.list({ query, options, offset }),
-    count: ({ query }) => jobProfileService.count({ query }),
   });
 
   // After the cursor is built: field stripping can drop the field it keys on.
@@ -192,7 +191,6 @@ export const getAppliedJobs = async ({ req }: ControllerParams) => {
     spec: appliedJobsListQuerySpec,
     extraConditions: [{ jobProfileId: req.params.id }],
     fetch: ({ query, options, offset }) => applicationService.list({ query, options, offset }),
-    count: ({ query }) => applicationService.count({ query }),
   });
 
   // Extract unique job IDs from applications
@@ -253,23 +251,23 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("You are not authorized to read deleted job profiles.");
   }
 
-  // Trash still pages by offset — only the filter building moves off MongoQuery.
-  const { filter, options, page } = buildListQuery(req.query, jobProfileListQuerySpec);
-
-  const results = await jobProfileService.listSoftDeleted({
-    query: { $and: [filter, jobProfileRoleScopedSecurityQuery(ability)] },
-    options: { ...options, page: page ?? 1 },
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: jobProfileListQuerySpec,
+    securityQuery: jobProfileRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => jobProfileService.listSoftDeleted({ query, options, offset }),
   });
 
+  // After the cursor is built: field stripping can drop the field it keys on.
   const sanitizedDocs = sanitizeDocuments<JobProfileAuthZEntity>(
-    results.docs,
+    docs,
     ability,
     AbilityAction.Read,
     JobProfileAuthZEntity,
     caslFieldOptions
   );
 
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs.map(finalizeJobProfile) });
+  const data = sanitizedDocs.map(finalizeJobProfile);
 
   return new ApiResponse({
     message: "Soft deleted job profiles retrieved",

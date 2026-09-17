@@ -130,17 +130,20 @@ export const getOne = async ({ query = {}, session, tenantId, jobProfileId }: IJ
   return jobs[0];
 };
 
-export const listSoftDeleted = ({ query = {}, options, session }: IJobListParams) => {
+export const listSoftDeleted = async ({ query = {}, options, session, offset = 0 }: IJobListParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Job.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...jobProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   const mongoSession = getMongoSession(session);
   if (mongoSession) aggregate.session(mongoSession);
 
-  return Job.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
 
 export const getOneSoftDeleted = async ({ query = {}, session }: IJobGetParams) => {
@@ -209,6 +212,7 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
       {
         collectionName: modelNames.JOB,
         collectionId: job._id as Types.ObjectId,
+        tenantId: job.tenantId,
         label: "New Applicants",
         default: true,
         weight: 0,
@@ -216,6 +220,7 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
       {
         collectionName: modelNames.JOB,
         collectionId: job._id as Types.ObjectId,
+        tenantId: job.tenantId,
         label: "Interview",
         default: false,
         weight: 1,
@@ -223,6 +228,7 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
       {
         collectionName: modelNames.JOB,
         collectionId: job._id as Types.ObjectId,
+        tenantId: job.tenantId,
         label: "Hire",
         default: false,
         weight: 2,

@@ -37,7 +37,6 @@ export const list = async ({ req }: ControllerParams) => {
     spec: interestListQuerySpec,
     securityQuery: interestRoleScopedSecurityQuery(ability),
     fetch: ({ query, options, offset }) => interestService.list({ query, options, offset }),
-    count: ({ query }) => interestService.count({ query }),
   });
 
   // After the cursor is built: field stripping can drop the field it keys on.

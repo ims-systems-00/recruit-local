@@ -1,4 +1,5 @@
 import { NotFoundException } from "../../../common/helper";
+import { cursorSortStage, toCursorPage } from "../../../common/query";
 import { IListCommentActivityParams } from "./comment-activity.interface";
 import { CommentActivity, CommentActivityInput } from "../../../models";
 
@@ -14,8 +15,20 @@ const populates = [
   { path: "collectionDocument" },
 ];
 
-export const listCommentActivity = ({ query = {}, options }: IListCommentActivityParams) => {
-  return CommentActivity.paginateAndExcludeDeleted(query, { ...options, sort: { createdAt: -1 }, populate: populates });
+export const listCommentActivity = async ({ query = {}, options, offset = 0 }: IListCommentActivityParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+  const sort = options?.sort ? String(options.sort) : "-createdAt";
+
+  // `find` rather than the paginate helper: one extra document is the whole
+  // `hasNextPage` answer, so there is no $count branch to run.
+  const docs = await CommentActivity.find({ $and: [query, { "deleteMarker.status": { $ne: true } }] })
+    .populate(populates)
+    .sort(cursorSortStage(sort))
+    .skip(offset)
+    .limit(limit + 1)
+    .lean();
+
+  return toCursorPage(docs, limit);
 };
 
 export const getCommentActivity = async (id: string) => {

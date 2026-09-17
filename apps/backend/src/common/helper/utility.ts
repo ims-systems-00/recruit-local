@@ -2,39 +2,6 @@ import NodeGeocoder, { Options } from "node-geocoder";
 import { pick } from "./pick";
 import { logger } from "./logger";
 
-interface IResults {
-  docs: any[];
-  totalDocs: number;
-  limit: number;
-  totalPages: number;
-  page?: number;
-  pagingCounter: number;
-  hasPrevPage: boolean;
-  hasNextPage: boolean;
-  prevPage?: number | null;
-  nextPage?: number | null;
-}
-
-export const formatListResponse = (results: IResults) => {
-  const { docs: data, ...paginationOption } = results;
-  const pagination = pick(paginationOption, [
-    "totalDocs",
-    "limit",
-    "totalPages",
-    "page",
-    "pagingCounter",
-    "hasPrevPage",
-    "hasNextPage",
-    "prevPage",
-    "nextPage",
-  ]);
-
-  return {
-    data,
-    pagination,
-  };
-};
-
 interface ICursorResults {
   docs: any[];
   limit: number;
@@ -43,9 +10,8 @@ interface ICursorResults {
 }
 
 /**
- * Cursor-paged sibling of `formatListResponse`. Separate because that one picks
- * from a fixed allowlist, so `nextCursor` would be dropped on the floor — and
- * because there is no `totalDocs` here: skipping the `$count` branch is the point.
+ * Shapes a cursor page into the `{ data, pagination }` envelope. There is no
+ * `totalDocs`: skipping the `$count` branch is the point of paging this way.
  */
 export const formatCursorListResponse = (results: ICursorResults) => {
   const { docs: data, ...paginationOption } = results;
@@ -58,22 +24,18 @@ export const formatCursorListResponse = (results: ICursorResults) => {
 };
 
 type QueryData = {
-  page?: string | number;
   limit?: string | number;
   [key: string]: any;
 };
 
+/**
+ * Normalizes `"null"` / `"undefined"` string literals to real values, recursively.
+ *
+ * It used to clamp `page` and `limit` and write them back onto the query. Paging
+ * is by cursor now, and `buildListQuery` already clamps `limit` against the
+ * module's own bounds, so this only does the deep trim.
+ */
 export const trimQuery = (queryData: QueryData): QueryData => {
-  let { page, limit } = queryData;
-
-  const pageNumber = parseInt(String(page));
-  const pageSize = parseInt(String(limit));
-
-  page = !pageNumber || pageNumber < 1 ? 1 : pageNumber;
-  if (!pageSize) limit = 30;
-  if (pageSize < 1) limit = 1;
-  if (pageSize > 100) limit = 100;
-
   const isObject = (object: any): boolean => object !== null && typeof object === "object";
 
   function deepTrim(obj: any): any {
@@ -87,10 +49,6 @@ export const trimQuery = (queryData: QueryData): QueryData => {
       }
     }
     return obj;
-  }
-
-  if (queryData.page && queryData.limit) {
-    return { ...deepTrim(queryData), page, limit };
   }
 
   return { ...deepTrim(queryData) };

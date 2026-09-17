@@ -13,7 +13,6 @@ export const list = async ({ req }: ControllerParams) => {
     // Public catalog: no CASL scoping, but only the active entries are listed.
     extraConditions: [{ isActive: true }],
     fetch: ({ query, options, offset }) => experienceLevelService.list({ query, options, offset }),
-    count: ({ query }) => experienceLevelService.count({ query }),
   });
 
   return new ApiResponse({

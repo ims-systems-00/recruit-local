@@ -1,6 +1,12 @@
 import { Location, ILocationDoc } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
-import { matchQuery, excludeDeletedQuery, onlyDeletedQuery } from "../../../common/query";
+import {
+  matchQuery,
+  excludeDeletedQuery,
+  onlyDeletedQuery,
+  cursorPageStages,
+  toCursorPage,
+} from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { locationProjectQuery } from "./location.query";
 import {
@@ -13,16 +19,19 @@ import {
 /**
  * List active locations with pagination
  */
-export const list = ({ query = {}, options, session }: IListLocationParams) => {
+export const list = async ({ query = {}, options, session, offset = 0 }: IListLocationParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Location.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
     ...locationProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Location.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
 
 /**
@@ -46,16 +55,19 @@ export const getOne = async ({ query = {}, session }: ILocationGetParams): Promi
 /**
  * List soft-deleted locations with pagination
  */
-export const listSoftDeleted = ({ query = {}, options, session }: IListLocationParams) => {
+export const listSoftDeleted = async ({ query = {}, options, session, offset = 0 }: IListLocationParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Location.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...locationProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Location.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
 
 /**

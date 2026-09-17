@@ -1,12 +1,13 @@
 import * as yup from 'yup';
-import { paginationSchema } from '../shared';
+import { cursorPaginationSchema } from '../shared';
 
 // Yup schemas for validation
 export const statusCreateSchema = yup.object({
   collectionName: yup.string().required('Collection Name is required'),
   collectionId: yup.string().optional().nullable(),
   label: yup.string().required('Label is required'),
-  weight: yup.number().integer().min(0).default(0),
+  // Omit to let the backend append the status after the last one on its board.
+  weight: yup.number().integer().min(0).optional(),
   default: yup.boolean().default(false),
   backgroundColor: yup
     .string()
@@ -45,7 +46,7 @@ export const statusSchema = yup.object({
 
 export const statusListResponseSchema = yup.object({
   statuses: yup.array().of(statusSchema).required(),
-  pagination: paginationSchema.required(),
+  pagination: cursorPaginationSchema.required(),
   message: yup.string().optional(),
 });
 

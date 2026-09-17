@@ -57,7 +57,6 @@ export const list = async ({ req }: ControllerParams) => {
     spec: reactionListQuerySpec,
     securityQuery: reactionRoleScopedSecurityQuery(ability),
     fetch: ({ query, options, offset }) => reactionService.list({ query, options, offset }),
-    count: ({ query }) => reactionService.count({ query }),
   });
 
   // After the cursor is built: field stripping can drop the field it keys on.

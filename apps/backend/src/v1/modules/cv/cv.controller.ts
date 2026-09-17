@@ -35,7 +35,6 @@ export const list = async ({ req }: ControllerParams) => {
     securityQuery: cvRoleScopedSecurityQuery(ability),
     extraConditions: scopedProfileId ? [{ jobProfileId: scopedProfileId }] : [],
     fetch: ({ query, options, offset }) => cvService.list({ query, options, offset }),
-    count: ({ query }) => cvService.count({ query }),
   });
 
   return new ApiResponse({

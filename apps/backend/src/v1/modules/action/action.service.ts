@@ -40,10 +40,6 @@ export const list = async ({ query = {}, options, session, offset = 0 }: IAction
   return toCursorPage(await aggregate, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const count = ({ query = {} }: IActionListParams) =>
-  Action.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
-
 /**
  * Get a single active action
  */
@@ -65,16 +61,19 @@ export const getOne = async ({ query = {}, session }: IActionGetParams) => {
 /**
  * List soft-deleted actions with pagination
  */
-export const listSoftDeleted = async ({ query = {}, options, session }: IActionListParams) => {
+export const listSoftDeleted = async ({ query = {}, options, session, offset = 0 }: IActionListParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
   const aggregate = Action.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
     ...actionProjectionQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
   ]);
 
   if (session) aggregate.session(session);
 
-  return Action.aggregatePaginate(aggregate, options);
+  return toCursorPage(await aggregate, limit);
 };
 
 /**

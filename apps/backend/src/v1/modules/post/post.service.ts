@@ -109,10 +109,6 @@ export const list = async ({ query = {}, options, tenantId, jobProfileId, offset
   return toCursorPage(docs, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const count = ({ query = {} }: IListPostParams) =>
-  Post.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
-
 export const getOne = async ({ query = {}, tenantId, jobProfileId }: IPostGetParams) => {
   const posts = await Post.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
@@ -128,17 +124,20 @@ export const getOne = async ({ query = {}, tenantId, jobProfileId }: IPostGetPar
   return posts[0];
 };
 
-export const listSoftDeleted = async ({ query = {}, options }: IListPostParams) => {
-  return Post.aggregatePaginate(
-    [
-      ...matchQuery(sanitizeQueryIds(query)),
-      ...onlyDeletedQuery(),
-      ...populatePostMediaQuery(),
-      ...populatePostCreatorQuery(),
-      ...postProjectQuery(),
-    ],
-    options
-  );
+export const listSoftDeleted = async ({ query = {}, options, offset = 0 }: IListPostParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await Post.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...onlyDeletedQuery(),
+    ...populatePostMediaQuery(),
+    ...populatePostCreatorQuery(),
+    ...postProjectQuery(),
+    ,
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
 
 export const getOneSoftDeleted = async ({ query = {} }: IPostGetParams) => {

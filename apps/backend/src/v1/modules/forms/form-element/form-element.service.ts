@@ -1,10 +1,13 @@
 import { Schema } from "mongoose";
 import { BadRequestException, NotFoundException } from "../../../../common/helper";
 import { FormElement, FormElementInput, IFormElementDoc } from "../../../../models";
+import { cursorPageStages, toCursorPage } from "../../../../common/query";
 import { IListFormElementParams } from "./form-element.interface";
 
-export const listFormElement = async ({ query = {}, options }: IListFormElementParams) => {
-  const aggregate = FormElement.aggregate([
+export const listFormElement = async ({ query = {}, options, offset = 0 }: IListFormElementParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await FormElement.aggregate([
     {
       $match: {
         ...query,
@@ -44,9 +47,12 @@ export const listFormElement = async ({ query = {}, options }: IListFormElementP
         tenantId: "$formSequence.tenantId",
       },
     },
+    // No sort token: the `$sort` on the recursion depth above is the order, and
+    // re-sorting here would scramble the sequence the caller asked for.
+    ...cursorPageStages(undefined, offset, limit),
   ]);
 
-  return FormElement.aggregatePaginate(aggregate, options);
+  return toCursorPage(docs, limit);
 };
 
 export const getFormElement = async (id: string | Schema.Types.ObjectId) => {

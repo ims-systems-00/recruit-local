@@ -186,11 +186,10 @@ export const listQuerySchema = Joi.object({
   // Opaque — decoded in the controller, which also rejects one issued for a
   // different sort/filter combination.
   cursor: Joi.string().trim().max(512),
-  // Deprecated, and still accepted: every frontend service sends `page: … || 1`
-  // unconditionally, so forbidding it 400s the whole list. Sending it selects the
-  // legacy offset response (totalDocs/totalPages); omitting it returns a cursor
-  // page. Flip this to `Joi.any().forbidden()` once no caller sends it.
-  page: Joi.number().integer().min(1),
+  // Removed: paging is by cursor. Still accepted and dropped, because several
+  // frontend services send `page: … || 1` unconditionally and forbidding it
+  // would 400 the whole list. Flip to `Joi.any().forbidden()` once none do.
+  page: Joi.any().strip(),
   limit: Joi.number().integer().min(1).max(100).default(10),
   sort: Joi.string()
     .valid("-createdAt", "createdAt", "-updatedAt", "updatedAt", "-salary", "salary", "-endDate", "endDate")

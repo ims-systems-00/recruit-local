@@ -1,6 +1,6 @@
 import * as yup from 'yup';
 import { ReactionType } from '@rl/types';
-import { paginationSchema } from '../shared';
+import { cursorPaginationSchema } from '../shared';
 
 export const reactionCreateSchema = yup.object({
   collectionName: yup.string().required('Collection Name is required'),
@@ -45,7 +45,7 @@ export const reactionSchema = yup.object({
 
 export const reactionListResponseSchema = yup.object({
   reactions: yup.array().of(reactionSchema).required(),
-  pagination: paginationSchema.optional(),
+  pagination: cursorPaginationSchema.optional(),
   message: yup.string().optional(),
 });
 

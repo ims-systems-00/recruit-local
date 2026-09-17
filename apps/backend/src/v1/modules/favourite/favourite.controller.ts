@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { StatusCodes } from "http-status-codes";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatListResponse,
-  NotFoundException,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
 import * as favouriteService from "./favourite.service";
 import { modelNames } from "../../../models/constants";
 import { sanitizeFavouriteItem } from "./favourite.helper";
@@ -14,7 +8,7 @@ import * as jobService from "../job/job.service";
 import { AbilityAction, ACCOUNT_TYPE_ENUMS } from "@rl/types";
 import { ALL_FAVOURITE_FIELDS, FavouriteAbilityBuilder, FavouriteAuthZEntity } from "@rl/authz";
 import { favouriteListQuerySpec, favouriteRoleScopedSecurityQuery } from "./favourite.query";
-import { buildListQuery, runCursorList } from "../../../common/query";
+import { runCursorList } from "../../../common/query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 
 const caslFieldOptions = {
@@ -44,7 +38,6 @@ export const list = async ({ req }: ControllerParams) => {
     spec: favouriteListQuerySpec,
     securityQuery: favouriteRoleScopedSecurityQuery(ability),
     fetch: ({ query, options, offset }) => favouriteService.list({ query, options, offset }),
-    count: ({ query }) => favouriteService.count({ query }),
   });
 
   const groupedIds = favoritesResult.docs.reduce<Record<string, string[]>>((acc, fav: any) => {
@@ -144,23 +137,21 @@ export const listSoftDeleted = async ({ req }: ControllerParams) => {
   const abilityBuilder = new FavouriteAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
-  // Trash still pages by offset — only the filter building moves off MongoQuery.
-  const { filter, options, page } = buildListQuery(req.query, favouriteListQuerySpec);
-
-  const results = await favouriteService.listSoftDeleted({
-    query: { $and: [filter, favouriteRoleScopedSecurityQuery(ability)] },
-    options: { ...options, page: page ?? 1 },
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: favouriteListQuerySpec,
+    securityQuery: favouriteRoleScopedSecurityQuery(ability),
+    fetch: ({ query, options, offset }) => favouriteService.listSoftDeleted({ query, options, offset }),
   });
 
-  const sanitizedDocs = sanitizeDocuments<FavouriteAuthZEntity>(
-    results.docs,
+  // After the cursor is built: field stripping can drop the field it keys on.
+  const data = sanitizeDocuments<FavouriteAuthZEntity>(
+    docs,
     ability,
     AbilityAction.Read,
     FavouriteAuthZEntity,
     caslFieldOptions
   );
-
-  const { data, pagination } = formatListResponse({ ...results, docs: sanitizedDocs });
 
   return new ApiResponse({
     message: "Soft deleted favourites retrieved",

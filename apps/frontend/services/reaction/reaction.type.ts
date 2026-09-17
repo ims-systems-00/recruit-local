@@ -5,7 +5,7 @@ import {
   reactionUpdateSchema,
 } from './reaction.validation';
 import { ReactionType } from '@rl/types';
-import { Pagination } from '@/types/api';
+import { CursorPagination } from '@/types/api';
 
 // TypeScript types
 export type ReactionCreateInput = yup.InferType<typeof reactionCreateSchema>;
@@ -38,7 +38,7 @@ export type ReactionData = {
 export type ReactionListBackendResponse = {
   success: boolean;
   reactions: ReactionData[];
-  pagination?: Pagination;
+  pagination?: CursorPagination;
   message?: string;
 };
 
@@ -50,5 +50,5 @@ export type ReactionItemBackendResponse = {
 
 export type ReactionListResponse = {
   docs: ReactionData[];
-  pagination?: Pagination;
+  pagination?: CursorPagination;
 };

@@ -1,16 +1,16 @@
 import * as yup from 'yup';
-import type { Pagination, PaginatedResponse, ApiResponse } from '@/types/api';
+import type {
+  CursorPagination,
+  CursorPaginatedResponse,
+  ApiResponse,
+} from '@/types/api';
 import {
-
   createBodySchema,
   updateBodySchema,
   idParamsSchema,
   fileMediaSchema,
 } from './validation';
-import {
-  deleteMarkerSchema,
-  storageInformationSchema,
-} from "../shared"
+import { deleteMarkerSchema, storageInformationSchema } from '../shared';
 
 // --- INFERRED TYPES FROM SCHEMAS ---
 export type StorageInformation = yup.InferType<typeof storageInformationSchema>;
@@ -23,7 +23,6 @@ export type FileMedia = yup.InferType<typeof fileMediaSchema>;
 
 // --- QUERY FILTERS ---
 export type FileMediaListFilters = {
-  page?: number;
   limit?: number;
   search?: string;
   collectionName?: string;
@@ -35,7 +34,7 @@ export type FileMediaListBackendResponse = {
   message: string;
   statusCode: number;
   fileMedias: FileMedia[];
-  pagination: Pagination;
+  pagination: CursorPagination;
 };
 
 export type FileMediaItemBackendResponse = {
@@ -45,5 +44,5 @@ export type FileMediaItemBackendResponse = {
 };
 
 // --- FRONTEND RESPONSE TYPES (Standardized for React Query/UI) ---
-export type FileMediaListResponse = PaginatedResponse<FileMedia>;
+export type FileMediaListResponse = CursorPaginatedResponse<FileMedia>;
 export type FileMediaApiResponse<T> = ApiResponse<T>;

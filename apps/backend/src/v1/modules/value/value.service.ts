@@ -28,10 +28,6 @@ export const list = async ({ query = {}, options, offset = 0 }: IListValueParams
   return toCursorPage(docs, limit);
 };
 
-/** How many match, ignoring paging. Only the legacy `?page=` branch needs this. */
-export const count = ({ query = {} }: IListValueParams) =>
-  Value.countDocuments({ $and: [sanitizeQueryIds(query), { "deleteMarker.status": { $ne: true } }] });
-
 export const getOne = async ({ query = {} }: IListValueParams) => {
   const results = await Value.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
@@ -42,11 +38,17 @@ export const getOne = async ({ query = {} }: IListValueParams) => {
   return results[0];
 };
 
-export const listSoftDeleted = ({ query = {}, options }: IListValueParams) => {
-  return Value.aggregatePaginate(
-    Value.aggregate([...matchQuery(sanitizeQueryIds(query)), ...onlyDeletedQuery(), ...valueProjectQuery()]),
-    options
-  );
+export const listSoftDeleted = async ({ query = {}, options, offset = 0 }: IListValueParams) => {
+  const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+
+  const docs = await Value.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...onlyDeletedQuery(),
+    ...valueProjectQuery(),
+    ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+  ]);
+
+  return toCursorPage(docs, limit);
 };
 
 export const getOneSoftDeleted = async ({ query = {} }: IListValueParams) => {

@@ -196,8 +196,8 @@ console.log("\nbuildListQuery, continued");
 check("undeclared sort falls back", buildListQuery({ sort: "-secret" }, spec).options.sort, "-createdAt");
 check("declared sort is kept", buildListQuery({ sort: "name" }, spec).options.sort, "name");
 check("limit is capped at 100", buildListQuery({ limit: 5000 }, spec).options.limit, 100);
-check("page is read when sent", buildListQuery({ page: 3 }, spec).page, 3);
-check("page is undefined when absent", buildListQuery({}, spec).page, undefined);
+// `?page=` is gone. The route schemas strip it, and nothing downstream reads it.
+check("page is not part of the built query", "page" in buildListQuery({ page: 3 }, spec), false);
 
 // A page of fake documents, newest first, so keyset cursors have a real field.
 //
@@ -282,10 +282,7 @@ const fakeFetch = async ({
 
   return toCursorPage(matched.slice(offset, offset + limit + 1), limit);
 };
-const fakeCount = async ({ query }: { query: Record<string, unknown> }) =>
-  rows.filter((row) => matches(row, query)).length;
-
-const run = (query: Record<string, unknown>) => runCursorList({ query, spec, fetch: fakeFetch, count: fakeCount });
+const run = (query: Record<string, unknown>) => runCursorList({ query, spec, fetch: fakeFetch });
 
 (async () => {
   console.log("\nrunCursorList — cursor mode");
@@ -330,7 +327,7 @@ const run = (query: Record<string, unknown>) => runCursorList({ query, spec, fet
   // A multi-token sort has no single field to key on, so it must fall back to an
   // offset cursor. Keyset-walking it would duplicate and skip rows.
   const multiSpec: ListQuerySpec = { ...spec, sortable: ["name"], defaultSort: "name -createdAt" };
-  const multi = await runCursorList({ query: { limit: 10 }, spec: multiSpec, fetch: fakeFetch, count: fakeCount });
+  const multi = await runCursorList({ query: { limit: 10 }, spec: multiSpec, fetch: fakeFetch });
   const multiCursor = (multi.pagination as { nextCursor: string }).nextCursor;
   check(
     "multi-token sort issues an offset cursor, not a keyset one",
@@ -338,22 +335,13 @@ const run = (query: Record<string, unknown>) => runCursorList({ query, spec, fet
     "o"
   );
 
-  console.log("\nrunCursorList — legacy ?page= mode");
+  console.log("\nrunCursorList — ?page= is inert");
 
-  const legacy = await run({ page: 2, limit: 10 });
-  const block = legacy.pagination as unknown as Record<string, unknown>;
-  check("second page skips the first", legacy.docs[0]._id, rows[10]._id);
-  check("totalDocs is reported", block.totalDocs, 25);
-  check("totalPages is reported", block.totalPages, 3);
-  check("page echoes back", block.page, 2);
-  check("pagingCounter is 1-based", block.pagingCounter, 11);
-  check("hasPrevPage on page 2", block.hasPrevPage, true);
-  check("prevPage/nextPage", [block.prevPage, block.nextPage], [1, 3]);
-  check("legacy block still carries nextCursor", typeof block.nextCursor, "string");
-
-  const lastPage = await run({ page: 3, limit: 10 });
-  check("last page has no next", (lastPage.pagination as { hasNextPage: boolean }).hasNextPage, false);
-  check("last page nextCursor is null", (lastPage.pagination as { nextCursor: unknown }).nextCursor, null);
+  // A caller still sending `?page=2` gets the first cursor page, not an offset
+  // one. The block it gets back carries no totals to page by.
+  const stale = await run({ page: 2, limit: 10 });
+  check("page= does not skip", stale.docs[0]._id, rows[0]._id);
+  check("page= yields a cursor block", Object.keys(stale.pagination).sort(), ["hasNextPage", "limit", "nextCursor"]);
 
   console.log("\ncursor guard");
 
@@ -388,7 +376,6 @@ const run = (query: Record<string, unknown>) => runCursorList({ query, spec, fet
     securityQuery: { tenantId: "t1" },
     extraConditions: [{ isActive: true }],
     fetch: fakeFetch,
-    count: fakeCount,
   });
   check("security query and extras join the $and", composed.finalQuery, {
     $and: [{ status: "open" }, { tenantId: "t1" }, { isActive: true }],

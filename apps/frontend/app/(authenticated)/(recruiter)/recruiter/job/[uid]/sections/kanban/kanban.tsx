@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import {
+  CollisionDetection,
   DndContext,
   DragEndEvent,
   DragOverEvent,
@@ -10,9 +11,17 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  closestCenter,
   closestCorners,
+  defaultDropAnimationSideEffects,
+  DropAnimation,
 } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
+import { InfiniteData, useQueryClient } from '@tanstack/react-query';
+import {
+  arrayMove,
+  horizontalListSortingStrategy,
+  SortableContext,
+} from '@dnd-kit/sortable';
 import {
   Dialog,
   DialogContent,
@@ -24,11 +33,47 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { Column } from './data';
-import { KanbanColumn } from './kanban-column';
-import { ApplicantCard } from './applicant-card';
+import {
+  columnSortableId,
+  KanbanColumn,
+  KanbanColumnPreview,
+  mergeColumnApplications,
+} from './kanban-column';
+import { ApplicantCardContent } from './applicant-card';
 import { StatusData } from '@/services/status/status.type';
-import { Application } from '@/services/application/application.type';
-import { useMoveApplicationToColumn } from '@/services/application/application.client';
+import {
+  Application,
+  ApplicationListResponse,
+} from '@/services/application/application.type';
+import {
+  applicationKeys,
+  useMoveApplicationToColumn,
+} from '@/services/application/application.client';
+import { useReorderStatuses } from '@/services/status/status.client';
+
+const isColumnDrag = (data: Record<string, unknown> | undefined) =>
+  data?.type === 'column';
+
+// A column is both a sortable (dragged by its header grip) and a card drop zone.
+// Only let each kind of drag land on its own kind of target, or a dragged card
+// could resolve to a whole column's sortable and a column to a card.
+const collisionDetection: CollisionDetection = (args) => {
+  const draggingColumn = isColumnDrag(args.active.data.current);
+  const droppableContainers = args.droppableContainers.filter(
+    (container) => isColumnDrag(container.data.current) === draggingColumn,
+  );
+  const detect = draggingColumn ? closestCenter : closestCorners;
+  return detect({ ...args, droppableContainers });
+};
+
+// Settle the lifted item into its slot instead of snapping.
+const dropAnimation: DropAnimation = {
+  duration: 220,
+  easing: 'cubic-bezier(0.2, 0, 0, 1)',
+  sideEffects: defaultDropAnimationSideEffects({
+    styles: { active: { opacity: '0' } },
+  }),
+};
 
 function Kanban({
   statuses,
@@ -45,10 +90,13 @@ function Kanban({
 
   const { moveApplicationToColumn, isPending: isMovingApplicationToColumn } =
     useMoveApplicationToColumn();
+  const { reorderStatuses } = useReorderStatuses();
 
   const [activeApplicant, setActiveApplicant] = useState<Application | null>(
     null,
   );
+  const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setColumns(
@@ -119,8 +167,13 @@ function Kanban({
 
   // --- Drag handlers ---
   const handleDragStart = ({ active }: DragStartEvent) => {
-    console.log('active', active);
     setActiveId(active.id as string);
+    if (isColumnDrag(active.data.current)) {
+      setActiveApplicant(null);
+      setActiveColumnId(active.data.current?.statusId as string);
+      return;
+    }
+    setActiveColumnId(null);
     setActiveApplicant(active.data.current?.applicant as Application);
   };
   // const handleDragOver = ({ active, over }: DragOverEvent) => {
@@ -163,10 +216,13 @@ function Kanban({
   // };
   const handleDragEnd = async ({ active, over }: DragEndEvent) => {
     setActiveId(null);
+    setActiveColumnId(null);
     if (!over) return;
 
-    console.log('active end', active);
-    console.log('over end', over);
+    if (isColumnDrag(active.data.current)) {
+      await handleColumnDragEnd(active.id, over.id);
+      return;
+    }
 
     const activeApp = active.data.current?.applicant as Application;
     const overIndex = over.data.current?.index as number;
@@ -229,6 +285,47 @@ function Kanban({
     });
   };
 
+  const handleColumnDragEnd = async (
+    draggedId: string | number,
+    overId: string | number,
+  ) => {
+    if (draggedId === overId) return;
+
+    const from = columns.findIndex((c) => columnSortableId(c.id) === draggedId);
+    const to = columns.findIndex((c) => columnSortableId(c.id) === overId);
+    if (from === -1 || to === -1) return;
+
+    const previous = columns;
+    const next = arrayMove(columns, from, to);
+    setColumns(next);
+
+    await reorderStatuses({
+      payload: {
+        collectionName: 'jobs',
+        collectionId: jobId,
+        statusIds: next.map((c) => c.id),
+      },
+      onErrorCallback: () => setColumns(previous),
+    });
+  };
+
+  const handleDragCancel = () => {
+    setActiveId(null);
+    setActiveColumnId(null);
+    setActiveApplicant(null);
+  };
+
+  // The lifted column's cards, straight from the cache its column already filled —
+  // reading through the hook would mount a second observer and refetch.
+  const activeColumn = columns.find((c) => c.id === activeColumnId);
+  const activeColumnApplications = activeColumn
+    ? (
+        queryClient.getQueryData<InfiniteData<ApplicationListResponse>>(
+          applicationKeys.list({ jobId, statusId: activeColumn.id }),
+        )?.pages ?? []
+      ).flatMap((page) => page.docs)
+    : [];
+
   const handleRenameColumn = (columnId: string, newTitle: string) => {
     setColumns((prev) =>
       prev.map((c) => (c.id === columnId ? { ...c, title: newTitle } : c)),
@@ -245,34 +342,50 @@ function Kanban({
       <div>
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCorners}
+          collisionDetection={collisionDetection}
           onDragStart={handleDragStart}
           // onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
           <div className="flex gap-spacing-4xl overflow-x-auto pb-2 items-start">
-            {columns.map((col) => (
-              <KanbanColumn
-                key={col.id}
-                id={col.id}
-                title={col.title}
-                // applicants={getColumnApplicants(col.id)}
-                // onAddClick={handleAddClick}
-                // onEdit={handleEdit}
-                // onDelete={handleDelete}
-                onRenameColumn={handleRenameColumn}
-                onDeleteColumn={handleDeleteColumn}
-                jobId={jobId}
-                optimisticItems={optimisticMap[col.id] || []}
-                removedIds={removedIds}
-              />
-            ))}
+            <SortableContext
+              items={columns.map((col) => columnSortableId(col.id))}
+              strategy={horizontalListSortingStrategy}
+            >
+              {columns.map((col) => (
+                <KanbanColumn
+                  key={col.id}
+                  id={col.id}
+                  title={col.title}
+                  // applicants={getColumnApplicants(col.id)}
+                  // onAddClick={handleAddClick}
+                  // onEdit={handleEdit}
+                  // onDelete={handleDelete}
+                  onRenameColumn={handleRenameColumn}
+                  onDeleteColumn={handleDeleteColumn}
+                  jobId={jobId}
+                  optimisticItems={optimisticMap[col.id] || []}
+                  removedIds={removedIds}
+                />
+              ))}
+            </SortableContext>
           </div>
 
-          <DragOverlay>
-            {activeApplicant ? (
+          <DragOverlay dropAnimation={dropAnimation}>
+            {activeColumn ? (
+              <KanbanColumnPreview
+                title={activeColumn.title}
+                count={activeColumnApplications.length}
+                applications={mergeColumnApplications(
+                  activeColumnApplications,
+                  optimisticMap[activeColumn.id] || [],
+                  removedIds,
+                )}
+              />
+            ) : activeApplicant ? (
               <div className="rotate-1 shadow-xl opacity-95">
-                <ApplicantCard applicant={activeApplicant} index={0} />
+                <ApplicantCardContent applicant={activeApplicant} />
               </div>
             ) : null}
           </DragOverlay>

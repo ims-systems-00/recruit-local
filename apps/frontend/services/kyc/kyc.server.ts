@@ -22,7 +22,6 @@ export async function getKycList(
   try {
     const res = await axiosServer.get<KycListBackendResponse>(API_ENDPOINT, {
       params: {
-        page: params?.page || 1,
         limit: params?.limit || 10,
         clientSearch: params?.clientSearch,
       },

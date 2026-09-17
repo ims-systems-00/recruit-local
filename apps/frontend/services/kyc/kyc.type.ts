@@ -1,5 +1,5 @@
 import { KYC_DOCUMENT_TYPE } from '@rl/types';
-import { ApiResponse, Pagination } from '@/types/api';
+import { ApiResponse, CursorPagination } from '@/types/api';
 
 export type AwsStorageType = {
   Name: string;
@@ -25,14 +25,13 @@ export interface KycCreateInput {
 }
 
 export type KycListFilters = {
-  page?: number;
   limit?: number;
   clientSearch?: string;
 };
 
 export type KycListResponse = {
   kyc: KycData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
 };
 
 export type KycData = {
@@ -64,6 +63,6 @@ export type KycData = {
 export type KycListBackendResponse = {
   success: boolean;
   kycs: KycData[];
-  pagination: Pagination;
+  pagination: CursorPagination;
   message?: string;
 };

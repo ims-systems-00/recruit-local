@@ -2,9 +2,12 @@ import { Schema, model, Model, PaginateModel, AggregatePaginateModel, Types } fr
 import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
+import { tenantDataPlugin, TenantInput, ITenantDoc } from "./plugins/tenant-data.plugin";
 import { modelNames, ModelNames } from "./constants";
 
-export interface IStatusInput {
+// `tenantId` is the owning tenant of the parent (the job), copied on create so
+// CASL can scope statuses without a lookup. Null for statuses with no tenant.
+export interface IStatusInput extends TenantInput {
   collectionName: ModelNames;
   collectionId?: Types.ObjectId;
   label: string;
@@ -13,10 +16,11 @@ export interface IStatusInput {
   backgroundColor?: string;
 }
 
-export interface IStatusDoc extends IStatusInput, ISoftDeleteDoc {}
+export interface IStatusDoc extends IStatusInput, ISoftDeleteDoc, ITenantDoc {}
 
 interface IStatusModel
-  extends Model<IStatusDoc>,
+  extends
+    Model<IStatusDoc>,
     ISoftDeleteModel<IStatusDoc>,
     PaginateModel<IStatusDoc>,
     AggregatePaginateModel<IStatusDoc> {}
@@ -43,6 +47,10 @@ statusSchema.index(
 );
 
 statusSchema.plugin(softDeletePlugin);
+statusSchema.plugin(tenantDataPlugin);
+
+// The board query: an employer's statuses for one job.
+statusSchema.index({ tenantId: 1, collectionName: 1, collectionId: 1 });
 statusSchema.plugin(mongoosePaginate);
 statusSchema.plugin(aggregatePaginate);
 

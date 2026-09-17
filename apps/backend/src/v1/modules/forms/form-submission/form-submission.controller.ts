@@ -12,7 +12,6 @@ export const listFormSubmission = async ({ req }: ControllerParams) => {
     // The route param is the scope, not a caller-supplied filter.
     extraConditions: [{ formId: req.params.formId }],
     fetch: ({ query, options, offset }) => formSubmissionService.listFormSubmission({ query, options, offset }),
-    count: ({ query }) => formSubmissionService.countFormSubmission({ query }),
   });
 
   return new ApiResponse({

@@ -1,24 +1,21 @@
 import { StatusCodes } from "http-status-codes";
-import { MongoQuery } from "@ims-systems-00/ims-query-builder";
 import * as commentActivityService from "./comment-activity.service";
-import { ApiResponse, ControllerParams, formatListResponse } from "../../../common/helper";
+import { ApiResponse, ControllerParams } from "../../../common/helper";
+import { runCursorList } from "../../../common/query";
+import { commentActivityListQuerySpec } from "./comment-activity.query";
 import { COMMENT_ACTIVITY_TYPE_ENUMS } from "../../../models/constants";
 
 export const listCommentActivity = async ({ req }: ControllerParams) => {
-  const filter = new MongoQuery(req.query, {
-    searchFields: ["title"],
-  }).build();
-
-  const query = filter.getFilterQuery();
-  const options = filter.getQueryOptions();
-
-  const results = await commentActivityService.listCommentActivity({ query, options });
-  const { data, pagination } = formatListResponse(results);
+  const { docs, pagination } = await runCursorList({
+    query: req.query,
+    spec: commentActivityListQuerySpec,
+    fetch: ({ query, options, offset }) => commentActivityService.listCommentActivity({ query, options, offset }),
+  });
 
   return new ApiResponse({
     message: "Comment and activities retrieved.",
     statusCode: StatusCodes.OK,
-    data,
+    data: docs,
     fieldName: "commentActivities",
     pagination,
   });
