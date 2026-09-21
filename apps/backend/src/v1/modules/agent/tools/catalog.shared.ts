@@ -167,11 +167,19 @@ const searchableModel = (kind: SearchableKind): Model<any> => (kind === "value" 
 /** Values call their display text `label`; the other catalogs call it `name`. */
 const displayField = (kind: SearchableKind) => (kind === "value" ? "label" : "name");
 
-/** Options matching `query` (or all, when omitted), as `{ id, name }`. */
+/**
+ * Options matching `query` (or all, when omitted), as `{ id, name }`, with the
+ * number that matched in total.
+ *
+ * `total` is what makes the cap visible. Results are alphabetical, so a capped
+ * search hands back a block of adjacent names — exactly the situation in which
+ * a model picks from what it can see instead of narrowing the query, and the
+ * rows it is choosing between are most alike.
+ */
 export const searchOptions = async (
   kind: SearchableKind,
   { query, limit, valueType }: { query?: string; limit: number; valueType?: string }
-): Promise<{ id: string; name: string; description?: string }[]> => {
+): Promise<{ options: { id: string; name: string; description?: string }[]; total: number }> => {
   const field = displayField(kind);
   const text = query?.trim();
 
@@ -182,24 +190,34 @@ export const searchOptions = async (
       }
     : searchableFilter(kind, valueType);
 
-  const docs = (await searchableModel(kind)
-    .find(match)
-    .select(`${field} description`)
-    .sort({ [field]: 1 })
-    .limit(limit)
-    .lean()) as unknown as Record<string, unknown>[];
+  const [docs, total] = await Promise.all([
+    searchableModel(kind)
+      .find(match)
+      .select(`${field} description`)
+      .sort({ [field]: 1 })
+      .limit(limit)
+      .lean() as unknown as Promise<Record<string, unknown>[]>,
+    searchableModel(kind).countDocuments(match),
+  ]);
 
-  return docs.map((doc) => ({
-    id: String(doc._id),
-    name: String(doc[field]),
-    ...(doc.description ? { description: String(doc.description) } : {}),
-  }));
+  return {
+    options: docs.map((doc) => ({
+      id: String(doc._id),
+      name: String(doc[field]),
+      ...(doc.description ? { description: String(doc.description) } : {}),
+    })),
+    total,
+  };
 };
 
 /**
  * Resolves ids to their real, selectable rows — the check that stops an
- * invented id reaching a page. Names come from the database, so a correct id
- * paired with a wrong name is corrected rather than trusted.
+ * invented id reaching a page.
+ *
+ * Reports the database's own name for each id. Whether a caller-supplied name
+ * that disagrees with it is a harmless relabelling or the sign of a mis-copied
+ * id is the caller's call to make: see `verifyCatalogSelections` in
+ * `page-context.ts`, which treats it as the latter.
  */
 export const resolveSelectable = async (
   kind: SearchableKind,
