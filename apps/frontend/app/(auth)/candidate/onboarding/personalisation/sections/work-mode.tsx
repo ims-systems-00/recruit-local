@@ -31,6 +31,8 @@ import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 import { MAX_WORK_MODES_STEP_SELECTION } from '@/services/work-mode/work-mode.validation';
 import { useCatalogStepAgent } from './use-catalog-step-agent';
 import { RemovableChip } from '@/components/removable-chip';
+import { AnimatePresence, motion } from 'framer-motion';
+import { easeOut } from '@/lib/motion';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -241,22 +243,33 @@ export default function WorkModeSection({
           </p>
         </div>
         <div className=" space-y-spacing-lg">
-          {Boolean(savedWorkModes?.length) && !isInitialLoading && (
-            <div className=" flex flex-wrap items-center gap-spacing-2xl">
-              <span className=" whitespace-nowrap text-body-sm text-text-gray-secondary">
-                Selected:{' '}
-              </span>
-              <div className=" flex items-center gap-spacing-2xs flex-wrap">
-                {savedWorkModes?.map((item) => (
-                  <RemovableChip
-                    key={item._id}
-                    label={item.name}
-                    onRemove={() => handleToggle(item, false)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          <AnimatePresence initial={false}>
+            {Boolean(savedWorkModes?.length) && !isInitialLoading && (
+              <motion.div
+                key="selected-row"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: easeOut }}
+                className=" overflow-hidden flex flex-wrap items-center gap-spacing-2xl"
+              >
+                <span className=" whitespace-nowrap text-body-sm text-text-gray-secondary">
+                  Selected:{' '}
+                </span>
+                <div className=" flex items-center gap-spacing-2xs flex-wrap">
+                  <AnimatePresence initial={false}>
+                    {savedWorkModes?.map((item) => (
+                      <RemovableChip
+                        key={item._id}
+                        label={item.name}
+                        onRemove={() => handleToggle(item, false)}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div
             onScroll={handleScroll}
             className=" max-h-[500px] overflow-y-auto space-y-spacing-lg"
@@ -275,7 +288,7 @@ export default function WorkModeSection({
                     <div
                       key={item._id}
                       className={cn(
-                        ' flex items-center gap-spacing-lg p-spacing-2xl rounded-2xl border border-border-gray-secondary min-h-14',
+                        ' flex items-center gap-spacing-lg p-spacing-2xl rounded-2xl border border-border-gray-secondary min-h-14 transition-opacity duration-200',
                         isDisabled && 'opacity-50 cursor-not-allowed',
                       )}
                     >

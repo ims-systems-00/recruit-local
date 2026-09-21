@@ -1,5 +1,8 @@
+'use client';
+import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 
+import { chipMotion } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
 type RemovableChipProps = {
@@ -14,7 +17,9 @@ export function RemovableChip({
   className,
 }: RemovableChipProps) {
   return (
-    <span
+    <motion.span
+      layout
+      {...chipMotion}
       data-slot="removable-chip"
       className={cn(
         ' whitespace-nowrap inline-flex items-center justify-center gap-spacing-2xs min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-body-xs text-others-gray-dark border border-border-gray-primary',
@@ -30,6 +35,6 @@ export function RemovableChip({
       >
         <X className=" pointer-events-none size-3" />
       </button>
-    </span>
+    </motion.span>
   );
 }

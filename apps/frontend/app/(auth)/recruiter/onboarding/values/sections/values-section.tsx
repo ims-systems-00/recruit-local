@@ -33,6 +33,7 @@ import {
 } from '@/services/tenants/tenants.validation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RemovableChip } from '@/components/removable-chip';
+import { AnimatePresence } from 'framer-motion';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -248,13 +249,15 @@ export default function ValuesSection({
               Selected:{' '}
             </span>
             <div className=" flex flex-wrap items-center gap-spacing-2xs">
-              {savedValues?.map((item) => (
-                <RemovableChip
-                  key={item._id}
-                  label={item.label}
-                  onRemove={() => handleToggle(item, false)}
-                />
-              ))}
+              <AnimatePresence initial={false}>
+                {savedValues?.map((item) => (
+                  <RemovableChip
+                    key={item._id}
+                    label={item.label}
+                    onRemove={() => handleToggle(item, false)}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
           </div>
           {errors.values?.message && (
@@ -280,7 +283,7 @@ export default function ValuesSection({
                     <div
                       key={item._id}
                       className={cn(
-                        ' flex items-center gap-spacing-lg p-spacing-2xl rounded-2xl border border-border-gray-secondary min-h-14',
+                        ' flex items-center gap-spacing-lg p-spacing-2xl rounded-2xl border border-border-gray-secondary min-h-14 transition-opacity duration-200',
                         isDisabled && 'opacity-50 cursor-not-allowed',
                       )}
                     >

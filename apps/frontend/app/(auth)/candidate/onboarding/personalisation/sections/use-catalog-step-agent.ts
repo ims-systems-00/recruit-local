@@ -3,6 +3,7 @@ import {
   usePageAction,
   usePageContext,
 } from '@/components/ai-chat/page-context';
+import { AGENT_STAGGER_MS, prefersReducedMotion, wait } from '@/lib/motion';
 import type { AgentCatalogKind } from '@rl/types';
 
 /**
@@ -175,9 +176,23 @@ export function useCatalogStepAgent({
       },
       required: ['selections'],
     },
-    handler: (args) => {
+    handler: async (args) => {
       const options = parseSelections(args, max, label, knownIds);
-      apply(options);
+
+      if (options.length <= 1 || prefersReducedMotion()) {
+        apply(options);
+      } else {
+        // Reveal one at a time, so the step visibly fills in instead of
+        // snapping from empty to full in a single render. Every slice is a
+        // complete selection, so `apply` needs no special handling — and it
+        // only ever sets whole arrays, so holding this render's closure across
+        // the awaits is safe.
+        for (let count = 1; count <= options.length; count += 1) {
+          apply(options.slice(0, count));
+          if (count < options.length) await wait(AGENT_STAGGER_MS);
+        }
+      }
+
       return `Selected ${options.map((option) => option.name).join(', ')}.`;
     },
   });
