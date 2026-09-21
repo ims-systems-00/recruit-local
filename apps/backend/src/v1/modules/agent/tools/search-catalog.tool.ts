@@ -38,8 +38,9 @@ export const searchCatalogTool: AgentTool<{
     "one wrong character silently selects a different option. " +
     "Results are alphabetical and capped, so compare `returned` with `total` — when more matched than came back, " +
     "narrow the query rather than choosing from what is shown. " +
-    "If more than one option could match what the user said, show them the options by name and ask which they mean — " +
-    "unless they explicitly asked you to choose for them, in which case pick the best fits and say why. " +
+    "Searching is not selecting. When the user asked you to find, suggest or recommend options, report the names " +
+    "here and offer to select them — do not go on to select anything until they ask you to. " +
+    "If more than one option could match what the user said, show them the options by name and ask which they mean. " +
     "If nothing matches (catalog names are general roles, so a technology like 'MERN' will not appear), " +
     "search again with a broader word such as 'developer' before asking the user. " +
     "Omit `query` to list everything, which suits short lists like work modes and experience levels. " +
