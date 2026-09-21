@@ -31,6 +31,7 @@ import { MAX_JOB_TITLES_STEP_SELECTION } from '@/services/job-title/job-title.va
 import { useInfiniteJobTitles } from '@/services/job-title/job-title.client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCatalogStepAgent } from './use-catalog-step-agent';
+import { RemovableChip } from '@/components/removable-chip';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -249,12 +250,11 @@ export default function JobTitleSection({
               </span>
               <div className=" flex items-center gap-spacing-2xs flex-wrap">
                 {savedJobTitles?.map((item) => (
-                  <span
+                  <RemovableChip
                     key={item._id}
-                    className=" cursor-pointer whitespace-nowrap inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-body-xs text-others-gray-dark border border-border-gray-primary"
-                  >
-                    {item.name}
-                  </span>
+                    label={item.name}
+                    onRemove={() => handleToggle(item, false)}
+                  />
                 ))}
               </div>
             </div>

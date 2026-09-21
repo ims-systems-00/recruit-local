@@ -33,6 +33,7 @@ import {
 } from '@/services/job-profile/job-profile.validation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCatalogStepAgent } from '../../personalisation/sections/use-catalog-step-agent';
+import { RemovableChip } from '@/components/removable-chip';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -277,12 +278,11 @@ export default function ValuesSection({
             </span>
             <div className=" flex flex-wrap items-center gap-spacing-2xs">
               {savedValues?.map((item) => (
-                <span
+                <RemovableChip
                   key={item._id}
-                  className=" cursor-pointer whitespace-nowrap inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-body-xs text-others-gray-dark border border-border-gray-primary"
-                >
-                  {item.label}
-                </span>
+                  label={item.label}
+                  onRemove={() => handleToggle(item, false)}
+                />
               ))}
             </div>
           </div>
