@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { ONBOARDING_STEP_ENUMS } from '@rl/types';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import MultiCheckboxSkeleton from './multi-checkbox-skeleton';
 import { useQueryClient } from '@tanstack/react-query';
@@ -19,6 +19,7 @@ import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 import { MAX_EXPERIENCE_LEVELS_STEP_SELECTION } from '@/services/experience-level/experience-level.validation';
 import { useInfiniteExperienceLevels } from '@/services/experience-level/experience-level.client';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useCatalogStepAgent } from './use-catalog-step-agent';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -50,6 +51,16 @@ export default function ExperienceLevelSection({
     },
   });
 
+  // `defaultValues` is only read on mount. When the saved level changes
+  // underneath the form — Alice saving it from the chat — push it into the form
+  // so the selected radio matches.
+  useEffect(() => {
+    if (!existingExperienceLevels) return;
+    setValue('experienceLevel', existingExperienceLevels, {
+      shouldDirty: false,
+    });
+  }, [existingExperienceLevels, setValue]);
+
   const selectedExperienceLevels = watch('experienceLevel');
 
   const [search, setSearch] = useState('');
@@ -75,6 +86,38 @@ export default function ExperienceLevelSection({
 
   const experienceLevels =
     data?.pages.flatMap((page) => page.experienceLevels) ?? [];
+
+  const selectedLevel = experienceLevels.find(
+    (level) => level._id === selectedExperienceLevels,
+  );
+
+  const levelsFullyLoaded = !isLoading && !hasNextPage;
+
+  // Lets Alice see this step and choose a level on it. Saving is still Continue.
+  useCatalogStepAgent({
+    kind: 'experience_level',
+    label: 'experience levels',
+    question: 'What is your experience level?',
+    max: 1,
+    selected: selectedLevel
+      ? [{ _id: selectedLevel._id, name: selectedLevel.name }]
+      : [],
+    ...(levelsFullyLoaded
+      ? {
+          knownIds: experienceLevels.map((level) => level._id),
+          visibleOptions: experienceLevels.map((level) => ({
+            _id: level._id,
+            name: level.name,
+          })),
+        }
+      : {}),
+    apply: ([option]) => {
+      setValue('experienceLevel', option._id, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    },
+  });
 
   const onSubmit = async (data: JobProfileUpdateInput) => {
     const payload = {

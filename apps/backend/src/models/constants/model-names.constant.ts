@@ -47,6 +47,7 @@ export const modelNames = {
   AGENT_MESSAGE: "agentmessages",
   AGENT_TRACE: "agenttraces",
   PROMPT: "prompts",
+  HELP_ARTICLE: "helparticles",
 };
 
 export type ModelNames = (typeof modelNames)[keyof typeof modelNames];

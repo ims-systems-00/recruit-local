@@ -35,3 +35,5 @@ export * from './tenant';
 export * from './completion';
 export * from './agent';
 export * from './prompt';
+export * from './help-article';
+export * from './accessibility';

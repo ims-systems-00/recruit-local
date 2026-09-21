@@ -6,24 +6,61 @@ import {
   Bot,
   Check,
   Copy,
+  Loader2,
   Pencil,
   RefreshCw,
   Search,
   Send,
+  Settings2,
+  Square,
+  Volume2,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
+  useAccessibilityPreferences,
   useCreateAgentConversation,
   useCreateAgentConversationMessage,
+  useInvalidateAfterAgentRun,
+  useReadAloud,
 } from '@/services/agent/agent.client';
+import {
+  AGENT_VIEW_TYPE,
+  type AgentData,
+  type PendingWriteItem,
+} from '@/services/agent/agent.type';
 import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
+import PendingWriteCard from './pending-write-card';
+import AiChatSettings from './ai-chat-settings';
+import { useAgentPage } from './page-context';
 
 type Message = {
   id: number;
   text: string;
   sender: 'alice' | 'user';
   time: string;
+  /** A change Alice proposed on this turn and is waiting for approval on. */
+  pendingWrite?: PendingWriteItem;
+};
+
+/** The approval sent by the card's button. Any affirmative reply works too. */
+const CONFIRM_REPLY = 'Yes, save it.';
+
+const toAliceMessage = (data: AgentData): Message => {
+  const pending = data.views?.find(
+    (view) => view.type === AGENT_VIEW_TYPE.PENDING_WRITE,
+  );
+
+  return {
+    id: Date.now() + 1,
+    sender: 'alice',
+    text: data.answer,
+    time: now(),
+    ...(pending?.items?.[0]
+      ? { pendingWrite: pending.items[0] as unknown as PendingWriteItem }
+      : {}),
+  };
 };
 
 const initialMessages: Message[] = [
@@ -74,6 +111,13 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
 
   const isTyping = isCreatingConversation || isSendingMessage;
 
+  const invalidateAfterRun = useInvalidateAfterAgentRun();
+  const { preferences } = useAccessibilityPreferences(isLoggedIn);
+  const { speak, stop, playingId, loadingId } = useReadAloud();
+  const { getPageContext, runClientActions } = useAgentPage();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const [draft, setDraft] = useState('');
   const [attachment, setAttachment] = useState<string | null>('file name.pdf');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -91,10 +135,40 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const sendMessage = async (event?: FormEvent<HTMLFormElement>) => {
+  /**
+   * Adds Alice's reply, refreshes anything she saved, applies any form changes
+   * she made to the current page, and speaks the reply if asked.
+   */
+  const receive = async (data: AgentData) => {
+    const reply = toAliceMessage(data);
+    setMessages((current) => [...current, reply]);
+    invalidateAfterRun(data);
+
+    if (data.clientActions?.length) {
+      const report = await runClientActions(data.clientActions);
+
+      if (report.applied.length) {
+        // Visible outside the chat panel, next to the form that changed, and
+        // announced by screen readers via the toast's live region.
+        toast.success('Alice filled in the form', {
+          description: `${report.applied.join(' ')} Check it, then use the page's button to save.`,
+        });
+      }
+      report.failed.forEach((failure) => toast.error(failure.message));
+    }
+
+    if (preferences?.autoReadAloud && reply.text) {
+      speak(reply.id, reply.text, String(preferences.speechRate));
+    }
+  };
+
+  const sendMessage = async (
+    event?: FormEvent<HTMLFormElement>,
+    override?: string,
+  ) => {
     event?.preventDefault();
 
-    const text = draft.trim();
+    const text = (override ?? draft).trim();
 
     if (!text || isTyping) return;
 
@@ -109,23 +183,18 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
     setDraft('');
     setEditingId(null);
 
+    // Read at send time, so it describes the page as it is now.
+    const pageContext = getPageContext();
+
     if (!conversationId) {
       await createAgentConversation({
         payload: {
           instruction: text,
+          ...(pageContext ? { pageContext } : {}),
         },
         onSuccessCallback: (data) => {
           setConversationId(data.conversationId);
-
-          setMessages((current) => [
-            ...current,
-            {
-              id: Date.now() + 1,
-              sender: 'alice',
-              text: data.answer,
-              time: now(),
-            },
-          ]);
+          receive(data);
         },
       });
 
@@ -136,20 +205,20 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
       conversationId,
       payload: {
         instruction: text,
+        ...(pageContext ? { pageContext } : {}),
       },
-      onSuccessCallback: (data) => {
-        setMessages((current) => [
-          ...current,
-          {
-            id: Date.now() + 1,
-            sender: 'alice',
-            text: data.answer,
-            time: now(),
-          },
-        ]);
-      },
+      onSuccessCallback: receive,
     });
   };
+  const handleConfirmWrite = () => sendMessage(undefined, CONFIRM_REPLY);
+
+  const handleChangeWrite = () => {
+    setDraft('Please change ');
+    inputRef.current?.focus();
+  };
+
+  const lastMessageId = messages[messages.length - 1]?.id;
+
   const handleCopy = (message: Message) => {
     navigator.clipboard.writeText(message.text).then(() => {
       setCopiedId(message.id);
@@ -202,6 +271,16 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
             </div>
           </div>
           <div className="flex gap-2">
+            {isLoggedIn && (
+              <button
+                className={`w-9 h-9 grid place-items-center text-[#101b2c] border-0 rounded-full bg-[#fafbfc] transition hover:bg-[#edf0f4] hover:-translate-y-[1px] max-sm:w-8 max-sm:h-8 ${settingsOpen ? 'bg-[#edf0f4]' : ''}`}
+                onClick={() => setSettingsOpen((v) => !v)}
+                aria-label="Assistant settings"
+                aria-expanded={settingsOpen}
+              >
+                <Settings2 size={18} />
+              </button>
+            )}
             <button
               className={`w-9 h-9 grid place-items-center text-[#101b2c] border-0 rounded-full bg-[#fafbfc] transition hover:bg-[#edf0f4] hover:-translate-y-[1px] max-sm:w-8 max-sm:h-8 ${searchOpen ? 'bg-[#edf0f4]' : ''}`}
               onClick={() => setSearchOpen((v) => !v)}
@@ -211,7 +290,10 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
             </button>
             <button
               className="w-9 h-9 grid place-items-center text-[#101b2c] border-0 rounded-full bg-[#fafbfc] transition hover:bg-[#edf0f4] hover:-translate-y-[1px] max-sm:w-8 max-sm:h-8"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                stop();
+                setIsOpen(false);
+              }}
               aria-label="Close chat"
             >
               <X size={18} />
@@ -231,6 +313,8 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
           </div>
         )}
 
+        {settingsOpen && isLoggedIn && <AiChatSettings />}
+
         {/* Messages */}
         <div
           className="flex-1 overflow-y-auto px-[18px] pt-[22px] pb-[16px] scrollbar-thin max-sm:px-3 max-sm:py-4"
@@ -240,6 +324,8 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
           {messages.map((message) => {
             const isUser = message.sender === 'user';
             const isCopied = copiedId === message.id;
+            const isPlaying = playingId === message.id;
+            const isLoadingAudio = loadingId === message.id;
             return (
               <article
                 className={`flex items-end gap-2.5 mb-[18px] max-sm:gap-2 max-sm:mb-[14px] ${isUser ? 'justify-end ml-[30px]' : ''}`}
@@ -310,6 +396,16 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
                         {message.text}
                       </ReactMarkdown>
 
+                      {message.pendingWrite && (
+                        <PendingWriteCard
+                          item={message.pendingWrite}
+                          superseded={message.id !== lastMessageId}
+                          disabled={isTyping}
+                          onConfirm={handleConfirmWrite}
+                          onChange={handleChangeWrite}
+                        />
+                      )}
+
                       <time className="block mt-spacing-sm text-right text-label-xs font-label-xs-strong! text-text-gray-quaternary">
                         {message.time}
                       </time>
@@ -322,6 +418,31 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
                     >
                       <Share2 size={15} />
                     </button> */}
+                    {!isUser && isLoggedIn && message.text && (
+                      <button
+                        className="grid place-items-center p-0 border-0 bg-transparent transition hover:text-brand hover:-translate-y-[1px] disabled:opacity-50"
+                        aria-label={
+                          isPlaying ? 'Stop reading aloud' : 'Read aloud'
+                        }
+                        aria-pressed={isPlaying}
+                        disabled={isLoadingAudio}
+                        onClick={() =>
+                          speak(
+                            message.id,
+                            message.text,
+                            String(preferences?.speechRate ?? 1),
+                          )
+                        }
+                      >
+                        {isLoadingAudio ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : isPlaying ? (
+                          <Square size={13} />
+                        ) : (
+                          <Volume2 size={14} />
+                        )}
+                      </button>
+                    )}
                     <button
                       className="grid place-items-center p-0 border-0 bg-transparent transition hover:text-brand hover:-translate-y-[1px]"
                       aria-label="Copy message"
@@ -403,6 +524,7 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
               </div>
             )} */}
             <input
+              ref={inputRef}
               className="w-full py-[5px] border-0 outline-none text-[#19253a] text-sm placeholder:text-[#758096]"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}

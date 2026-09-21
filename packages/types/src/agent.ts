@@ -30,6 +30,15 @@ export interface AgentStepDto {
   ok: boolean;
   error?: string;
   durationMs?: number;
+  /**
+   * True when a mutating tool returned a preview instead of writing, because it
+   * is waiting on the user to approve it. Nothing was changed by this step.
+   *
+   * Distinct from `ok: false`: the call did exactly what it was meant to. A
+   * client showing tool activity should read this as "proposed", not as a
+   * failure, and the matching `AgentViewDto` carries what is being proposed.
+   */
+  pending?: boolean;
 }
 
 /**
@@ -41,6 +50,16 @@ export enum AGENT_VIEW_TYPE {
   APPLICATION_LIST = 'application_list',
   APPLICATION_DETAIL = 'application_detail',
   JOB_LIST = 'job_list',
+  /**
+   * A write a mutating tool is waiting on the user to approve. Its `items` hold
+   * a single row: the field-by-field values that would be written.
+   *
+   * A client may render this as a confirmation card, but is not obliged to — the
+   * model asks for approval in prose as well, and the approval itself is an
+   * ordinary reply, not a button press. A client that ignores this view is still
+   * correct, just plainer.
+   */
+  PENDING_WRITE = 'pending_write',
 }
 
 /**
@@ -89,7 +108,78 @@ export interface AgentRunResultDto {
    * normal case for a question no listing tool served.
    */
   views: AgentViewDto[];
+  /**
+   * Page actions the model asked the client to perform, in call order. The
+   * server has executed nothing — these fill fields on the user's current page,
+   * and the user saves through the page as usual. Empty when the page offered
+   * no actions or the model used none.
+   */
+  clientActions: AgentClientActionDto[];
   usage?: AgentUsageDto;
+}
+
+/* ------------------------------------------------------------------------- *
+ * Page awareness
+ *
+ * The client describes the page the user is on and the actions that page
+ * exposes; the model may call those actions, and the calls come back in
+ * `clientActions` for the page to carry out.
+ *
+ * Everything here is reported by the browser, so it is treated as untrusted on
+ * the server: validated for shape and size, framed to the model as a
+ * description rather than an instruction, and never used for authorization.
+ * That is safe because a page action has no server-side effect — the worst a
+ * tampered description achieves is confusing the tamperer's own assistant.
+ * Anything that persists still goes through the server tools and their CASL
+ * checks.
+ * ------------------------------------------------------------------------- */
+
+/** One thing the current page lets the assistant do. */
+export interface AgentPageActionDefDto {
+  /** snake_case, unique on the page. Offered to the model as `page_<name>`. */
+  name: string;
+  /** Written for the model: what the action does and when to use it. */
+  description: string;
+  /** JSON Schema for the arguments, as the model should send them. */
+  parameters: Record<string, unknown>;
+  /**
+   * Declares that this action selects catalog options, sent as
+   * `selections: [{ id, name }]`. The server then checks every id against that
+   * catalog before the action reaches the page, so an id the model invented is
+   * rejected back to the model (which corrects itself) instead of being ticked
+   * on nothing and saved. Never shown to the model.
+   */
+  catalog?: AgentPageActionCatalogDto;
+}
+
+export type AgentCatalogKind =
+  | 'job_title'
+  | 'industry'
+  | 'experience_level'
+  | 'work_mode'
+  | 'value';
+
+export interface AgentPageActionCatalogDto {
+  kind: AgentCatalogKind;
+  /** Required for `value`: the value type of the round on screen. */
+  valueType?: string;
+}
+
+export interface AgentPageContextDto {
+  /** Stable dotted id, e.g. `candidate.onboarding.job_title`. */
+  page: string;
+  /** What the page is for, in a sentence. */
+  summary?: string;
+  /** Small, current view state worth knowing — e.g. what is already selected. */
+  state?: Record<string, unknown>;
+  actions?: AgentPageActionDefDto[];
+}
+
+/** A page action the model called, to be run by the client. */
+export interface AgentClientActionDto {
+  /** The page action's own name, without the `page_` prefix. */
+  name: string;
+  args: Record<string, unknown>;
 }
 
 /**

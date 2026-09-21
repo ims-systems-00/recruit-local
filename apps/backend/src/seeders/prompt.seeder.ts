@@ -10,6 +10,20 @@ import { DEFAULT_CV_EXTRACT_SYSTEM_PROMPT } from "../v1/modules/cv/cv.constants"
 import { extractPromptVariables } from "../v1/modules/prompt/prompt.render";
 
 /**
+ * Every prompt the runtime resolves, paired with its in-code default.
+ *
+ * Shared by this seeder and `scripts/publish-prompts.ts` so that "what gets
+ * seeded" and "what gets published" are one list: a prompt added here is picked
+ * up by both, and neither can ship a default the other has never heard of.
+ */
+export const PROMPT_DEFAULTS = [
+  { name: PROMPT_NAME.AGENT_SYSTEM_BASE, content: DEFAULT_BASE_PROMPT },
+  { name: PROMPT_NAME.AGENT_SYSTEM_EMPLOYER, content: DEFAULT_EMPLOYER_PROMPT },
+  { name: PROMPT_NAME.AGENT_SYSTEM_CANDIDATE, content: DEFAULT_CANDIDATE_PROMPT },
+  { name: PROMPT_NAME.CV_EXTRACT_SYSTEM, content: DEFAULT_CV_EXTRACT_SYSTEM_PROMPT },
+];
+
+/**
  * Seeds v1 of every prompt the runtime resolves, from the same constants the
  * code falls back to. That equivalence is the point: on a fresh database the
  * agent behaves identically whether it reads from the registry or from code, so
@@ -17,20 +31,14 @@ import { extractPromptVariables } from "../v1/modules/prompt/prompt.render";
  * a new version.
  *
  * Idempotent by name — an existing prompt is left alone rather than reset,
- * since seeding must never clobber a version someone published.
+ * since seeding must never clobber a version someone published. Moving an
+ * existing database onto newer defaults is `prompts:publish`, not this.
  */
 export const promptSeeder = async () => {
   try {
-    const prompts = [
-      { name: PROMPT_NAME.AGENT_SYSTEM_BASE, content: DEFAULT_BASE_PROMPT },
-      { name: PROMPT_NAME.AGENT_SYSTEM_EMPLOYER, content: DEFAULT_EMPLOYER_PROMPT },
-      { name: PROMPT_NAME.AGENT_SYSTEM_CANDIDATE, content: DEFAULT_CANDIDATE_PROMPT },
-      { name: PROMPT_NAME.CV_EXTRACT_SYSTEM, content: DEFAULT_CV_EXTRACT_SYSTEM_PROMPT },
-    ];
-
     // Sequential rather than Promise.all: concurrent inserts would race on the
     // unique {name, labels} index for `latest`.
-    for (const { name, content } of prompts) {
+    for (const { name, content } of PROMPT_DEFAULTS) {
       const existing = await Prompt.findOne({ name });
       if (existing) continue;
 

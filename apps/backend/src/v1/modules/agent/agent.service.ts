@@ -7,12 +7,21 @@ import {
   AgentStepDto,
   AgentUsageDto,
   AgentViewDto,
+  AgentClientActionDto,
+  AgentPageContextDto,
   PROMPT_NAME,
 } from "@rl/types";
+import { findPageAction, pageActionTools, pageContextMessage, queuePageAction } from "./page-context";
 import { logger } from "../../../common/helper";
 import { validate } from "../../../common/helper/validate";
 import { llm, AGENT_MODEL } from "./llm/client";
-import { findTool, toolDefinitionsFor } from "./tools";
+import { findTool, toolDefinitionsFor, AgentTool } from "./tools";
+import {
+  isConfirmationGated,
+  issueConfirmationToken,
+  splitConfirmationToken,
+  verifyConfirmationToken,
+} from "./confirmation";
 import {
   buildSystemPrompt,
   CONTEXT_BUDGET_TOKENS,
@@ -121,6 +130,74 @@ const callLlm = async (
 };
 
 /**
+ * Decides whether a mutating tool may execute on this call.
+ *
+ * Three outcomes. `rejected` means the call must not run and the model is told
+ * why. `pending` means the tool proposed a write and is waiting on the user.
+ * `approved` means a valid token was presented and the caller should execute.
+ *
+ * The no-preview case is a rejection rather than a pass-through, which is the
+ * whole design in one branch: a tool that declares `mutating: true` and forgets
+ * `preview` fails closed. The alternative — writing unconfirmed because the
+ * safety mechanism was not implemented — inverts what the flag is for.
+ */
+const applyConfirmationGate = async ({
+  tool,
+  args,
+  confirmationToken,
+  session,
+  conversationId,
+  turnId,
+}: {
+  tool: AgentTool;
+  args: Record<string, unknown>;
+  confirmationToken: unknown;
+  session: IAgentRunParams["session"];
+  conversationId: string;
+  turnId: string;
+}): Promise<{ kind: "approved" } | { kind: "pending"; result: unknown } | { kind: "rejected"; reason: string }> => {
+  if (!tool.preview) {
+    logger.error("[agent] a mutating tool has no preview and cannot be run", { tool: tool.name });
+    return {
+      kind: "rejected",
+      reason: `The tool "${tool.name}" is not configured to be run safely. Tell the user this action is unavailable right now.`,
+    };
+  }
+
+  if (typeof confirmationToken === "string" && confirmationToken.length > 0) {
+    const verified = verifyConfirmationToken(confirmationToken, {
+      conversationId,
+      toolName: tool.name,
+      input: args,
+      currentTurnId: turnId,
+    });
+
+    if (verified.ok) return { kind: "approved" };
+    return { kind: "rejected", reason: verified.reason };
+  }
+
+  // No token: propose. `preview` runs under the caller's session and is allowed
+  // to throw — input that could never be written should fail here, before the
+  // user is asked to agree to it, rather than after.
+  const preview = await tool.preview(args, { session });
+
+  return {
+    kind: "pending",
+    result: {
+      pending: true,
+      summary: preview.summary,
+      details: preview.details,
+      ...(preview.warnings?.length ? { warnings: preview.warnings } : {}),
+      confirmationToken: issueConfirmationToken({ conversationId, toolName: tool.name, turnId, input: args }),
+      instruction:
+        "NOTHING HAS BEEN SAVED. Show the user these exact values, mention any warnings, and ask them to confirm. " +
+        "Do not call this tool again in this turn. When they reply approving it, call it again with identical arguments " +
+        "plus confirmationToken. If they want something changed, call it again without a token to propose the corrected version.",
+    },
+  };
+};
+
+/**
  * Runs one tool call: validate the model's arguments, execute under the
  * caller's session, persist the result. Always resolves — failures come back as
  * a serialized error for the model rather than as a throw.
@@ -134,11 +211,18 @@ const runToolCall = async ({
   toolCall,
   session,
   conversationId,
+  turnId,
+  pageContext,
+  queuedActions,
 }: {
   toolCall: ToolCall;
   session: IAgentRunParams["session"];
   conversationId: IAgentRunParams["conversation"]["_id"];
-}): Promise<{ step: AgentStepDto; content: string; result?: unknown }> => {
+  turnId: string;
+  pageContext?: AgentPageContextDto;
+  /** How many page actions this run has already queued. */
+  queuedActions: number;
+}): Promise<{ step: AgentStepDto; content: string; result?: unknown; clientAction?: AgentClientActionDto }> => {
   const startedAt = Date.now();
   const name = toolCall.function.name;
   let input: Record<string, unknown> | undefined;
@@ -164,6 +248,22 @@ const runToolCall = async ({
     };
   };
 
+  // Page actions are checked before server tools. They cannot collide — every
+  // page action is prefixed `page_` and no server tool is — and they never
+  // execute here: the call is queued for the browser. See `page-context.ts`.
+  const pageAction = findPageAction(pageContext, name);
+  if (pageAction) {
+    const queued = await queuePageAction(pageAction, toolCall.function.arguments, queuedActions);
+    if (!queued.ok) return fail(queued.error);
+
+    await persist(queued.content, true);
+    return {
+      step: { tool: name, input: queued.action.args, ok: true, durationMs: Date.now() - startedAt },
+      content: queued.content,
+      clientAction: queued.action,
+    };
+  }
+
   const tool = findTool(session, name);
   if (!tool) {
     // Either a hallucinated name or one the model was never offered.
@@ -176,19 +276,53 @@ const runToolCall = async ({
     return fail("Tool arguments were not valid JSON.");
   }
 
+  // The confirmation token is an envelope for the loop, not a tool argument, so
+  // it comes off BEFORE validation. Validating first rejected every confirmed
+  // write: the tools' schemas are strict and do not (and must not) list
+  // `confirmationToken`. It also must never reach a tool, or it ends up signed
+  // into the next preview and written to the database as if it were a field.
+  const { confirmationToken, args } = splitConfirmationToken(tool, input);
+
   // The model's output is untrusted input, whatever the JSON Schema advertised.
-  const errors = validate(tool.inputSchema, input);
+  const errors = validate(tool.inputSchema, args);
   if (errors) return fail(Object.values(errors).join(", "));
 
+  if (isConfirmationGated(tool)) {
+    const gated = await applyConfirmationGate({
+      tool,
+      args,
+      confirmationToken,
+      session,
+      conversationId: String(conversationId),
+      turnId,
+    });
+
+    if (gated.kind === "rejected") return fail(gated.reason);
+
+    if (gated.kind === "pending") {
+      // Serialized as a success, because it is one: the tool was asked to
+      // propose and it proposed. Reporting it as an error would push the model
+      // into retrying the call rather than relaying the preview.
+      const content = JSON.stringify({ ok: true, result: gated.result });
+      await persist(content, true);
+
+      return {
+        step: { tool: name, input: args, ok: true, pending: true, durationMs: Date.now() - startedAt },
+        content,
+        result: gated.result,
+      };
+    }
+  }
+
   try {
-    const result = await tool.execute(input, { session });
+    const result = await tool.execute(args, { session });
     const content = JSON.stringify({ ok: true, result });
 
-    logger.debug(`[agent] tool ${name} succeeded`, { conversationId: String(conversationId), input, result });
+    logger.debug(`[agent] tool ${name} succeeded`, { conversationId: String(conversationId), input: args, result });
     await persist(content, true);
 
     return {
-      step: { tool: name, input, ok: true, durationMs: Date.now() - startedAt },
+      step: { tool: name, input: args, ok: true, durationMs: Date.now() - startedAt },
       content,
       result,
     };
@@ -196,7 +330,7 @@ const runToolCall = async ({
     const content = errorPayload(error);
     logger.warn(`[agent] tool ${name} failed`, {
       conversationId: String(conversationId),
-      input,
+      input: args,
       error: messageOf(error),
     });
     await persist(content, false);
@@ -204,7 +338,7 @@ const runToolCall = async ({
     return {
       step: {
         tool: name,
-        input,
+        input: args,
         ok: false,
         error: messageOf(error),
         durationMs: Date.now() - startedAt,
@@ -245,35 +379,47 @@ export const runAgent = async (params: IAgentRunParams): Promise<IAgentRunResult
 };
 
 const execute = async (
-  { conversation, instruction, session }: IAgentRunParams,
+  { conversation, instruction, session, turnId, pageContext }: IAgentRunParams,
   trace: IAgentTraceCollector
 ): Promise<IAgentRunResult> => {
   const deadline = Date.now() + RUN_DEADLINE_MS;
   const steps: AgentStepDto[] = [];
   const views: AgentViewDto[] = [];
+  const clientActions: AgentClientActionDto[] = [];
   let usage: AgentUsageDto = {};
 
-  const history = await conversationService.replayHistory(conversation._id as never);
+  // Read per run rather than carried on the session: the session is minted at
+  // login and would hand a user yesterday's preferences for as long as their
+  // token lives, including the whole conversation in which they just changed them.
+  const [history, preferences] = await Promise.all([
+    conversationService.replayHistory(conversation._id as never),
+    conversationService.accessibilityPreferencesOf(session.user._id as string),
+  ]);
 
   // Recorded on the trace so a bad answer is traceable to the exact instructions
   // that produced it. Only the base prompt's version is tracked: it carries the
   // substantive rules, while the role block is a short framing paragraph.
-  const systemPrompt = await buildSystemPrompt(session);
+  const systemPrompt = await buildSystemPrompt(session, preferences);
   trace.recordPrompt({ name: PROMPT_NAME.AGENT_SYSTEM_BASE, version: systemPrompt.version });
+
+  // Placed after the history and right before the instruction, so the model
+  // reads "where the user is now" immediately before "what they asked".
+  const pageMessage = pageContextMessage(pageContext);
 
   const messages: ChatMessage[] = [
     { role: "system", content: systemPrompt.content },
     ...history,
+    ...(pageMessage ? [pageMessage] : []),
     // The instruction is a user message. It is never interpolated into the
     // system prompt, so it cannot rewrite the agent's framing.
     { role: "user", content: instruction },
   ];
 
-  const tools = toolDefinitionsFor(session);
+  const tools = [...toolDefinitionsFor(session), ...pageActionTools(pageContext)];
 
   for (let step = 0; step < MAX_STEPS; step++) {
     if (Date.now() > deadline) {
-      return finish(conversation, messages, steps, views, usage, AGENT_STOPPED_REASON.DEADLINE, trace);
+      return finish(conversation, messages, steps, views, clientActions, usage, AGENT_STOPPED_REASON.DEADLINE, trace);
     }
 
     const completion = await callLlm(trace, AGENT_LLM_CALL_PURPOSE.STEP, {
@@ -296,7 +442,14 @@ const execute = async (
         content: answer,
         usage,
       });
-      return { answer, stoppedReason: AGENT_STOPPED_REASON.COMPLETED, steps, views: lastViews(views), usage };
+      return {
+        answer,
+        stoppedReason: AGENT_STOPPED_REASON.COMPLETED,
+        steps,
+        views: lastViews(views),
+        clientActions,
+        usage,
+      };
     }
 
     messages.push({
@@ -317,12 +470,20 @@ const execute = async (
         step: stepResult,
         content,
         result,
+        clientAction,
       } = await runToolCall({
         toolCall,
         session,
         conversationId: conversation._id,
+        turnId,
+        pageContext,
+        queuedActions: clientActions.length,
       });
       steps.push(stepResult);
+
+      // Kept in call order, all of them: unlike views, a later action does not
+      // supersede an earlier one — filling two fields is two actions.
+      if (clientAction) clientActions.push(clientAction);
 
       // Built from the tool's own return value, not from the answer the model
       // writes about it later. Only whitelisted tools produce one; the rest
@@ -349,7 +510,7 @@ const execute = async (
     }
   }
 
-  return finish(conversation, messages, steps, views, usage, AGENT_STOPPED_REASON.MAX_STEPS, trace);
+  return finish(conversation, messages, steps, views, clientActions, usage, AGENT_STOPPED_REASON.MAX_STEPS, trace);
 };
 
 /**
@@ -368,13 +529,15 @@ const lastViews = (views: AgentViewDto[]): AgentViewDto[] => views.slice(-MAX_VI
  *
  * Views are carried through here too: a run that ran out of steps still fetched
  * real rows, and showing them is most of the value of an answer that had to
- * apologise for being incomplete.
+ * apologise for being incomplete. Client actions likewise — the model already
+ * told itself they were queued, so dropping them would contradict the summary.
  */
 const finish = async (
   conversation: IAgentRunParams["conversation"],
   messages: ChatMessage[],
   steps: AgentStepDto[],
   views: AgentViewDto[],
+  clientActions: AgentClientActionDto[],
   usage: AgentUsageDto,
   stoppedReason: AGENT_STOPPED_REASON,
   trace: IAgentTraceCollector
@@ -417,5 +580,5 @@ const finish = async (
     steps: steps.length,
   });
 
-  return { answer, stoppedReason, steps, views: lastViews(views), usage };
+  return { answer, stoppedReason, steps, views: lastViews(views), clientActions, usage };
 };

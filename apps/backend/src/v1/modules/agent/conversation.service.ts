@@ -1,9 +1,9 @@
 import { Types } from "mongoose";
 import OpenAI from "openai";
 import { AGENT_MESSAGE_ROLE } from "@rl/types";
-import { AgentConversation, AgentMessage, IAgentConversationDoc, AgentMessageInput } from "../../../models";
+import { AgentConversation, AgentMessage, IAgentConversationDoc, AgentMessageInput, User } from "../../../models";
 import { IAgentSessionFingerprint } from "../../../models/agent-conversation.model";
-import { NotFoundException, ConflictException } from "../../../common/helper";
+import { NotFoundException, ConflictException, logger } from "../../../common/helper";
 import { cursorSortStage, toCursorPage } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import { HISTORY_LIMIT, REPLAYED_TOOL_RESULT_MAX_CHARS, RUN_DEADLINE_MS, TITLE_MAX_CHARS } from "./agent.constants";
@@ -13,7 +13,7 @@ import {
   IListAgentConversationParams,
   IAgentConversationGetParams,
 } from "./agent.interface";
-import { ISession } from "@rl/types";
+import { ISession, AccessibilityPreferences, DEFAULT_ACCESSIBILITY_PREFERENCES } from "@rl/types";
 
 /**
  * The authorization-relevant slice of a session. Stored on the conversation and
@@ -207,4 +207,27 @@ export const replayHistory = async (
   }
 
   return messages;
+};
+
+/**
+ * The caller's accessibility preferences, merged over the documented defaults.
+ *
+ * Merged rather than returned raw so callers never have to reason about a
+ * partially-set subdocument: a user who set `plainLanguage` alone still gets a
+ * real `answerLength` and `speechRate` back.
+ *
+ * Never throws. These change how an answer is worded, not whether one can be
+ * given, so a read failure degrades to the defaults rather than failing the run.
+ */
+export const accessibilityPreferencesOf = async (userId: string): Promise<AccessibilityPreferences> => {
+  try {
+    const user = await User.findById(userId).select("accessibility").lean();
+    return { ...DEFAULT_ACCESSIBILITY_PREFERENCES, ...(user?.accessibility ?? {}) };
+  } catch (error) {
+    logger.warn("[agent] could not read accessibility preferences", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return DEFAULT_ACCESSIBILITY_PREFERENCES;
+  }
 };

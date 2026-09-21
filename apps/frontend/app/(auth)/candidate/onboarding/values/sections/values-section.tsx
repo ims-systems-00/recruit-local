@@ -32,6 +32,7 @@ import {
   CandidateValuesStepFormValues,
 } from '@/services/job-profile/job-profile.validation';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCatalogStepAgent } from '../../personalisation/sections/use-catalog-step-agent';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -117,6 +118,39 @@ export default function ValuesSection({
     useGetTopThreeValues(types[0]);
 
   const values = data?.pages.flatMap((page) => page.values) ?? [];
+
+  // Lets Alice see this round and tick values on it. Saving is still Continue.
+  // Each round is one value type; the list is paginated, so ids are checked on
+  // the server against this round's type rather than against what has loaded.
+  useCatalogStepAgent({
+    kind: 'value',
+    valueType: types[0],
+    pageId: onboardingStep,
+    label: 'workplace values',
+    question: title,
+    max: CANDIDATE_MAX_VALUES_STEP_SELECTION,
+    selected: savedValues.map((value) => ({
+      _id: value._id,
+      name: value.label,
+    })),
+    extraState: {
+      popularChoices: topThreeValues.map((value) => value.label),
+    },
+    apply: (options) => {
+      setValue(
+        'values',
+        options.map((option) => option._id),
+        { shouldDirty: true, shouldValidate: true },
+      );
+      setSavedValues(
+        options.map((option) => ({
+          _id: option._id,
+          label: option.name,
+          type: types[0],
+        })),
+      );
+    },
+  });
 
   const isMaxSelected =
     selectedValues.length >= CANDIDATE_MAX_VALUES_STEP_SELECTION;

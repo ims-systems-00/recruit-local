@@ -8,6 +8,8 @@ import {
   AgentToolTraceDto,
   AgentUsageDto,
   AgentViewDto,
+  AgentClientActionDto,
+  AgentPageContextDto,
 } from "@rl/types";
 import { IServiceListParams, IServiceGetParams } from "../../../common/interface/service.interface";
 import { AgentConversationInput, IAgentConversationDoc } from "../../../models/agent-conversation.model";
@@ -25,6 +27,18 @@ export interface IAgentRunParams {
   conversation: IAgentConversationDoc;
   instruction: string;
   session: ISession;
+  /**
+   * The id of the persisted user message this run is answering.
+   *
+   * Supplied by the caller rather than derived here because the caller is what
+   * writes that message. It identifies the turn, which is what confirmation
+   * tokens are bound to: a token issued on this turn cannot be redeemed on it,
+   * so approving a write requires the user to have spoken again. See
+   * `confirmation.ts`.
+   */
+  turnId: string;
+  /** Browser-reported page and its actions. Untrusted; see `page-context.ts`. */
+  pageContext?: AgentPageContextDto;
 }
 
 export interface IAgentRunResult {
@@ -32,6 +46,7 @@ export interface IAgentRunResult {
   stoppedReason: AGENT_STOPPED_REASON;
   steps: AgentStepDto[];
   views: AgentViewDto[];
+  clientActions: AgentClientActionDto[];
   usage?: AgentUsageDto;
 }
 

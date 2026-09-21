@@ -9,6 +9,15 @@ import { getApplicationTool } from "./get-application.tool";
 import { recommendJobsTool } from "./recommend-jobs.tool";
 import { analyzeMyProfileTool } from "./analyze-my-profile.tool";
 import { analyzeJobFitTool } from "./analyze-job-fit.tool";
+import { searchHelpTool } from "./search-help.tool";
+import { getSetupProgressTool } from "./get-setup-progress.tool";
+import { addExperienceTool } from "./add-experience.tool";
+import { addEducationTool } from "./add-education.tool";
+import { addSkillsTool } from "./add-skills.tool";
+import { updateMyProfileTool } from "./update-my-profile.tool";
+import { setAccessibilityTool } from "./set-accessibility.tool";
+import { searchCatalogTool } from "./search-catalog.tool";
+import { setProfileCatalogTool } from "./set-profile-catalog.tool";
 
 export * from "./tool.types";
 
@@ -24,6 +33,15 @@ const registry: AgentTool[] = [
   recommendJobsTool,
   analyzeMyProfileTool,
   analyzeJobFitTool,
+  searchHelpTool,
+  getSetupProgressTool,
+  addExperienceTool,
+  addEducationTool,
+  addSkillsTool,
+  updateMyProfileTool,
+  setAccessibilityTool,
+  searchCatalogTool,
+  setProfileCatalogTool,
 ];
 
 export const toolsFor = (session: ISession): AgentTool[] =>

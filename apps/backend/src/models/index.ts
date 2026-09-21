@@ -46,3 +46,4 @@ export * from "./agent-conversation.model";
 export * from "./agent-message.model";
 export * from "./agent-trace.model";
 export * from "./prompt.model";
+export * from "./help-article.model";

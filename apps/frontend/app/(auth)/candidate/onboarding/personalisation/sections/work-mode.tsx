@@ -29,6 +29,7 @@ import {
 } from '@/services/job-profile/job-profile.type';
 import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 import { MAX_WORK_MODES_STEP_SELECTION } from '@/services/work-mode/work-mode.validation';
+import { useCatalogStepAgent } from './use-catalog-step-agent';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -68,6 +69,19 @@ export default function WorkModeSection({
     setSavedWorkModes(existingWorkModes);
   }, [existingWorkModes]);
 
+  // `defaultValues` is only read on mount. When the saved selection changes
+  // underneath the form — Alice saving it from the chat — push it into the form
+  // so the checkboxes match. Keyed on the ids so an unchanged selection is a no-op.
+  const existingWorkModeIds =
+    existingWorkModes?.map((workMode) => workMode._id).join(',') ?? '';
+  useEffect(() => {
+    setValue(
+      'workMode',
+      existingWorkModeIds ? existingWorkModeIds.split(',') : [],
+      { shouldDirty: false },
+    );
+  }, [existingWorkModeIds, setValue]);
+
   const [search, setSearch] = useState('');
 
   const debouncedSearch = useDebounce(search, 500);
@@ -90,6 +104,42 @@ export default function WorkModeSection({
   } = useInfiniteWorkModes(listFilters);
 
   const workModes = data?.pages.flatMap((page) => page.workModes) ?? [];
+
+  // The whole list is a handful of rows, so once it has loaded Alice is given
+  // the real options directly and anything outside them is refused.
+  const workModesFullyLoaded = !isLoading && !hasNextPage;
+
+  // Lets Alice see this step and tick work modes on it. Saving is still Continue.
+  useCatalogStepAgent({
+    kind: 'work_mode',
+    label: 'work modes',
+    question: 'What is your preferred work mode?',
+    max: MAX_WORK_MODES_STEP_SELECTION,
+    selected: savedWorkModes,
+    ...(workModesFullyLoaded
+      ? {
+          knownIds: workModes.map((mode) => mode._id),
+          visibleOptions: workModes.map((mode) => ({
+            _id: mode._id,
+            name: mode.name,
+          })),
+        }
+      : {}),
+    apply: (options) => {
+      setValue(
+        'workMode',
+        options.map((option) => option._id),
+        { shouldDirty: true, shouldValidate: true },
+      );
+      setSavedWorkModes(
+        options.map((option) => ({
+          ...option,
+          description: '',
+          isActive: true,
+        })),
+      );
+    },
+  });
 
   const isMaxSelected =
     selectedWorkModes?.length &&

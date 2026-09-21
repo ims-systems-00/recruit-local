@@ -29,6 +29,7 @@ import {
   JobProfileUpdateInput,
 } from '@/services/job-profile/job-profile.type';
 import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
+import { useCatalogStepAgent } from './use-catalog-step-agent';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -67,6 +68,38 @@ export default function IndustrySection({
   useEffect(() => {
     setSavedIndustries(existingIndustries);
   }, [existingIndustries]);
+
+  // `defaultValues` is only read on mount. When the saved selection changes
+  // underneath the form — Alice saving it from the chat — push it into the form
+  // so the checkboxes match. Keyed on the ids so an unchanged selection is a no-op.
+  const existingIndustryIds =
+    existingIndustries?.map((industry) => industry._id).join(',') ?? '';
+  useEffect(() => {
+    setValue(
+      'industry',
+      existingIndustryIds ? existingIndustryIds.split(',') : [],
+      { shouldDirty: false },
+    );
+  }, [existingIndustryIds, setValue]);
+
+  // Lets Alice see this step and tick industries on it. Saving is still Next.
+  useCatalogStepAgent({
+    kind: 'industry',
+    label: 'industries',
+    question: 'What industry would you like to work in?',
+    max: MAX_INDUSTRIES_STEP_SELECTION,
+    selected: savedIndustries,
+    apply: (options) => {
+      setValue(
+        'industry',
+        options.map((option) => option._id),
+        { shouldDirty: true, shouldValidate: true },
+      );
+      setSavedIndustries(
+        options.map((option) => ({ ...option, isActive: true })),
+      );
+    },
+  });
 
   const [search, setSearch] = useState('');
 

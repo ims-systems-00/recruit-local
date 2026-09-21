@@ -30,6 +30,7 @@ import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 import { MAX_JOB_TITLES_STEP_SELECTION } from '@/services/job-title/job-title.validation';
 import { useInfiniteJobTitles } from '@/services/job-title/job-title.client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCatalogStepAgent } from './use-catalog-step-agent';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -71,7 +72,40 @@ export default function JobTitleSection({
     },
   });
 
+  // `defaultValues` is only read on mount. When the saved selection changes
+  // underneath the form — Alice saving it from the chat — push it into the form
+  // so the checkboxes match. Keyed on the ids rather than the array so a
+  // re-render with the same selection is a no-op.
+  const existingJobTitleIds =
+    existingJobTitles?.map((jobTitle) => jobTitle._id).join(',') ?? '';
+  useEffect(() => {
+    setValue(
+      'jobTitle',
+      existingJobTitleIds ? existingJobTitleIds.split(',') : [],
+      { shouldDirty: false },
+    );
+  }, [existingJobTitleIds, setValue]);
+
   const selectedJobTitles = watch('jobTitle');
+
+  // Lets Alice see this step and tick job titles on it. Saving is still Next.
+  useCatalogStepAgent({
+    kind: 'job_title',
+    label: 'job titles',
+    question: 'What type of job role are you looking for?',
+    max: MAX_JOB_TITLES_STEP_SELECTION,
+    selected: savedJobTitles,
+    apply: (options) => {
+      setValue(
+        'jobTitle',
+        options.map((option) => option._id),
+        { shouldDirty: true, shouldValidate: true },
+      );
+      setSavedJobTitles(
+        options.map((option) => ({ ...option, isActive: true })),
+      );
+    },
+  });
 
   const [search, setSearch] = useState('');
 

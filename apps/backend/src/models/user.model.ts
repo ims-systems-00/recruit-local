@@ -5,7 +5,16 @@ import { passwordHashPlugin, PasswordHashInput, IPasswordHashDoc } from "./plugi
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import { EMAIL_VERIFICATION_STATUS_ENUMS, modelNames } from "./constants";
-import { USER_ROLE_ENUMS, ACCOUNT_TYPE_ENUMS, KYC_STATUS } from "@rl/types";
+import {
+  USER_ROLE_ENUMS,
+  ACCOUNT_TYPE_ENUMS,
+  KYC_STATUS,
+  ANSWER_LENGTH,
+  AccessibilityPreferences,
+  DEFAULT_ACCESSIBILITY_PREFERENCES,
+  SPEECH_RATE_MIN,
+  SPEECH_RATE_MAX,
+} from "@rl/types";
 import { IJobProfileModel, JobProfileInput, IJobProfileDoc, jobProfilePlugin } from "./plugins/jobProfile.plugin";
 
 /*
@@ -27,13 +36,15 @@ export interface IUserDoc extends UserInput, IPasswordHashDoc, ITenantDoc, IJobP
   fullName: string;
   emailVerificationStatus: EMAIL_VERIFICATION_STATUS_ENUMS;
   kycStatus?: KYC_STATUS;
+  accessibility?: AccessibilityPreferences;
   createdAt: Date;
   updatedAt: Date;
 }
 
 // Define an interface for User model with static methods
 interface IUserModel
-  extends Model<IUserDoc>,
+  extends
+    Model<IUserDoc>,
     ISoftDeleteModel<IUserDoc>,
     PaginateModel<IUserDoc>,
     AggregatePaginateModel<IUserDoc>,
@@ -75,6 +86,32 @@ const userSchema = new Schema<IUserDoc>(
       type: String,
       enum: Object.values(KYC_STATUS),
       default: KYC_STATUS.UNVERIFIED,
+    },
+    /**
+     * How this person wants to be communicated with. See
+     * `packages/types/src/accessibility.ts` for what each field means.
+     *
+     * Defaults are declared per field rather than on the subdocument, so a user
+     * who has set one preference still gets the documented default for the
+     * others — Mongoose applies a subdocument default only when the whole object
+     * is absent, and a `$set` of one key would otherwise leave the rest undefined.
+     */
+    accessibility: {
+      plainLanguage: { type: Boolean, default: DEFAULT_ACCESSIBILITY_PREFERENCES.plainLanguage },
+      answerLength: {
+        type: String,
+        enum: Object.values(ANSWER_LENGTH),
+        default: DEFAULT_ACCESSIBILITY_PREFERENCES.answerLength,
+      },
+      oneQuestionAtATime: { type: Boolean, default: DEFAULT_ACCESSIBILITY_PREFERENCES.oneQuestionAtATime },
+      autoReadAloud: { type: Boolean, default: DEFAULT_ACCESSIBILITY_PREFERENCES.autoReadAloud },
+      voice: { type: String, default: DEFAULT_ACCESSIBILITY_PREFERENCES.voice },
+      speechRate: {
+        type: Number,
+        min: SPEECH_RATE_MIN,
+        max: SPEECH_RATE_MAX,
+        default: DEFAULT_ACCESSIBILITY_PREFERENCES.speechRate,
+      },
     },
   },
   {
