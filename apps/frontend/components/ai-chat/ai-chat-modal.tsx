@@ -6,6 +6,7 @@ import {
   Bot,
   Check,
   Copy,
+  History,
   Loader2,
   Pencil,
   RefreshCw,
@@ -22,17 +23,21 @@ import {
   useCreateAgentConversation,
   useCreateAgentConversationMessage,
   useInvalidateAfterAgentRun,
+  useLoadAgentConversation,
   useReadAloud,
 } from '@/services/agent/agent.client';
 import {
+  AGENT_MESSAGE_ROLE,
   AGENT_VIEW_TYPE,
   type AgentData,
+  type AgentMessageResponseDto,
   type PendingWriteItem,
 } from '@/services/agent/agent.type';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import PendingWriteCard from './pending-write-card';
 import AiChatSettings from './ai-chat-settings';
+import AiChatHistory from './ai-chat-history';
 import { useAgentPage } from './page-context';
 
 type Message = {
@@ -75,6 +80,32 @@ const initialMessages: Message[] = [
 const now = () =>
   new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+/**
+ * Rebuilds the visible chat from a stored transcript. Tool results, and
+ * assistant turns that only called a tool, carry no text for the user, so they
+ * are dropped. Pending-write cards are not restored: views are not stored with
+ * the transcript, so a proposal shows as its plain-text answer.
+ */
+const toHistoryMessages = (stored: AgentMessageResponseDto[]): Message[] =>
+  stored
+    .filter(
+      (message) =>
+        (message.role === AGENT_MESSAGE_ROLE.USER ||
+          message.role === AGENT_MESSAGE_ROLE.ASSISTANT) &&
+        message.content,
+    )
+    .map((message, index) => ({
+      id: index + 1,
+      sender: message.role === AGENT_MESSAGE_ROLE.USER ? 'user' : 'alice',
+      text: message.content as string,
+      time: message.createdAt
+        ? new Date(message.createdAt).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : '',
+    }));
+
 function BotAvatar({ variant = 'chat' }: { variant?: 'chat' | 'launcher' }) {
   const containerClasses =
     variant === 'launcher'
@@ -116,6 +147,9 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
   const { speak, stop, playingId, loadingId } = useReadAloud();
   const { getPageContext, runClientActions } = useAgentPage();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const { loadConversation, loadingId: loadingConversationId } =
+    useLoadAgentConversation();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [draft, setDraft] = useState('');
@@ -133,7 +167,9 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isTyping]);
+    // historyOpen: the log is hidden behind the panel, so it can only be
+    // scrolled once it is visible again.
+  }, [messages, isTyping, historyOpen]);
 
   /**
    * Adds Alice's reply, refreshes anything she saved, applies any form changes
@@ -183,6 +219,7 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
     setMessages((current) => [...current, userMessage]);
     setDraft('');
     setEditingId(null);
+    setHistoryOpen(false);
 
     // Read at send time, so it describes the page as it is now.
     const pageContext = getPageContext();
@@ -211,6 +248,39 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
       onSuccessCallback: receive,
     });
   };
+  const startNewChat = () => {
+    stop();
+    setConversationId(null);
+    setMessages(initialMessages);
+    setDraft('');
+    setEditingId(null);
+    setHistoryOpen(false);
+  };
+
+  const openConversation = async (id: string) => {
+    if (id === conversationId) {
+      setHistoryOpen(false);
+      return;
+    }
+    const conversation = await loadConversation(id);
+    if (!conversation) return;
+
+    stop();
+    const restored = toHistoryMessages(conversation.messages ?? []);
+    setConversationId(id);
+    setMessages(restored.length ? restored : initialMessages);
+    setDraft('');
+    setEditingId(null);
+    setHistoryOpen(false);
+  };
+
+  const handleConversationDeleted = (id: string) => {
+    if (id === conversationId) {
+      setConversationId(null);
+      setMessages(initialMessages);
+    }
+  };
+
   const handleConfirmWrite = () => sendMessage(undefined, CONFIRM_REPLY);
 
   const handleChangeWrite = () => {
@@ -274,6 +344,19 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
           <div className="flex gap-2">
             {isLoggedIn && (
               <button
+                className={`w-9 h-9 grid place-items-center text-[#101b2c] border-0 rounded-full bg-[#fafbfc] transition hover:bg-[#edf0f4] hover:-translate-y-[1px] max-sm:w-8 max-sm:h-8 ${historyOpen ? 'bg-[#edf0f4]' : ''}`}
+                onClick={() => {
+                  setHistoryOpen((v) => !v);
+                  setSearchOpen(false);
+                }}
+                aria-label="Conversation history"
+                aria-expanded={historyOpen}
+              >
+                <History size={18} />
+              </button>
+            )}
+            {isLoggedIn && (
+              <button
                 className={`w-9 h-9 grid place-items-center text-[#101b2c] border-0 rounded-full bg-[#fafbfc] transition hover:bg-[#edf0f4] hover:-translate-y-[1px] max-sm:w-8 max-sm:h-8 ${settingsOpen ? 'bg-[#edf0f4]' : ''}`}
                 onClick={() => setSettingsOpen((v) => !v)}
                 aria-label="Assistant settings"
@@ -303,7 +386,7 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
         </header>
 
         {/* Search bar */}
-        {searchOpen && (
+        {searchOpen && !historyOpen && (
           <div className="flex items-center gap-[7px] px-[18px] py-2 border-b border-[#e6e8ec] text-[#647085]">
             <Search size={14} />
             <input
@@ -316,9 +399,22 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
 
         {settingsOpen && isLoggedIn && <AiChatSettings />}
 
+        {historyOpen && isLoggedIn && (
+          <AiChatHistory
+            activeConversationId={conversationId}
+            loadingId={loadingConversationId}
+            onSelect={openConversation}
+            onNewChat={startNewChat}
+            onDeleted={handleConversationDeleted}
+          />
+        )}
+
         {/* Messages */}
         <div
-          className="flex-1 overflow-y-auto px-[18px] pt-[22px] pb-[16px] scrollbar-thin max-sm:px-3 max-sm:py-4"
+          className={cn(
+            'flex-1 overflow-y-auto px-[18px] pt-[22px] pb-[16px] scrollbar-thin max-sm:px-3 max-sm:py-4',
+            historyOpen && isLoggedIn && 'hidden',
+          )}
           role="log"
           ref={messagesRef}
         >

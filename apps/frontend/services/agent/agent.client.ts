@@ -1,18 +1,29 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  InfiniteData,
+  QueryKey,
+  useInfiniteQuery,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   AccessibilityPreferences,
   AccessibilityPreferencesInput,
   AgentConversationInput,
+  AgentConversationListResponse,
   AgentData,
   SpeechData,
 } from './agent.type';
 import {
   createAgentConversation,
   createAgentConversationMessage,
+  deleteAgentConversation,
   getAccessibilityPreferences,
+  getAgentConversation,
+  listAgentConversations,
   synthesizeSpeech,
   updateAccessibilityPreferences,
 } from './agent.server';
@@ -45,6 +56,9 @@ export function useCreateAgentConversation() {
         //   response.message || 'Agent conversation created successfully',
         // );
         // queryClient.invalidateQueries({ queryKey: experienceKeys.all });
+        queryClient.invalidateQueries({
+          queryKey: agentKeys.conversations(),
+        });
         onSuccessCallback?.(response.data as AgentData);
       } else {
         toast.error(response.message);
@@ -91,6 +105,10 @@ export function useCreateAgentConversationMessage() {
         //   response.message || 'Agent conversation message created successfully',
         // );
         // queryClient.invalidateQueries({ queryKey: experienceKeys.all });
+        // The list is ordered by last activity.
+        queryClient.invalidateQueries({
+          queryKey: agentKeys.conversations(),
+        });
         onSuccessCallback?.(response.data as AgentData);
       } else {
         toast.error(response.message);
@@ -112,7 +130,98 @@ export function useCreateAgentConversationMessage() {
 export const agentKeys = {
   all: ['agent'] as const,
   preferences: () => [...agentKeys.all, 'preferences'] as const,
+  conversations: () => [...agentKeys.all, 'conversations'] as const,
+  conversationList: (clientSearch: string) =>
+    [...agentKeys.conversations(), 'list', clientSearch] as const,
+  conversation: (id: string) =>
+    [...agentKeys.conversations(), 'detail', id] as const,
 };
+
+/** The caller's past conversations, a cursor page at a time. */
+export function useAgentConversations(clientSearch = '', enabled = true) {
+  return useInfiniteQuery<
+    AgentConversationListResponse,
+    Error,
+    InfiniteData<AgentConversationListResponse, string | undefined>,
+    QueryKey,
+    string | undefined
+  >({
+    queryKey: agentKeys.conversationList(clientSearch),
+    queryFn: async ({ pageParam }) => {
+      const response = await listAgentConversations({
+        cursor: pageParam,
+        clientSearch,
+      });
+      if (!response.success) throw new Error(response.message);
+      return response.data;
+    },
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.pagination?.hasNextPage
+        ? (lastPage.pagination.nextCursor ?? undefined)
+        : undefined,
+    enabled,
+  });
+}
+
+/**
+ * Fetches one conversation's transcript on demand. Imperative rather than a
+ * `useQuery`, because it is loaded once into the chat's local message state
+ * and the chat owns it from there.
+ */
+export function useLoadAgentConversation() {
+  const queryClient = useQueryClient();
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const load = async (id: string) => {
+    setLoadingId(id);
+    try {
+      const conversation = await queryClient.fetchQuery({
+        queryKey: agentKeys.conversation(id),
+        queryFn: async () => {
+          const response = await getAgentConversation(id);
+          if (!response.success) throw new Error(response.message);
+          return response.data;
+        },
+        // Always fresh: the transcript grows every time the user replies.
+        staleTime: 0,
+      });
+      return conversation;
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to load conversation',
+      );
+      return null;
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  return { loadConversation: load, loadingId };
+}
+
+export function useDeleteAgentConversation() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (id: string) => deleteAgentConversation(id),
+    onSuccess: (response) => {
+      if (!response.success) {
+        toast.error(response.message);
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: agentKeys.conversations() });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to delete conversation');
+    },
+  });
+
+  return {
+    deleteConversation: mutation.mutateAsync,
+    deletingId: mutation.isPending ? mutation.variables : null,
+  };
+}
 
 /**
  * Query caches a completed Alice write makes stale, by tool name.

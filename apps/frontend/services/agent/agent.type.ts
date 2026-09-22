@@ -1,20 +1,50 @@
 import type {
   AccessibilityPreferences,
   AgentClientActionDto,
+  AgentConversationResponseDto,
+  AgentConversationWithMessagesDto,
   AgentPageContextDto,
   AgentStepDto,
   AgentUsageDto,
   AgentViewDto,
 } from '@rl/types';
+import type { CursorPagination } from '@/types/api';
 
-export { AGENT_VIEW_TYPE, ANSWER_LENGTH } from '@rl/types';
+export { AGENT_MESSAGE_ROLE, AGENT_VIEW_TYPE, ANSWER_LENGTH } from '@rl/types';
 export type {
   AccessibilityPreferences,
   AgentClientActionDto,
+  AgentConversationResponseDto,
+  AgentConversationWithMessagesDto,
+  AgentMessageResponseDto,
   AgentPageContextDto,
   AgentStepDto,
   AgentViewDto,
 } from '@rl/types';
+
+export interface AgentConversationListFilters {
+  cursor?: string;
+  limit?: number;
+  clientSearch?: string;
+}
+
+export interface AgentConversationListBackendResponse {
+  message: string;
+  statusCode: number;
+  conversations: AgentConversationResponseDto[];
+  pagination: CursorPagination;
+}
+
+export interface AgentConversationListResponse {
+  docs: AgentConversationResponseDto[];
+  pagination: CursorPagination;
+}
+
+export interface AgentConversationBackendResponse {
+  message: string;
+  statusCode: number;
+  conversation: AgentConversationWithMessagesDto;
+}
 
 export interface AgentResponse {
   message: string;
