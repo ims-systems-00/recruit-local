@@ -29,7 +29,7 @@ import {
 } from '@/services/job-profile/job-profile.type';
 import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 import { MAX_WORK_MODES_STEP_SELECTION } from '@/services/work-mode/work-mode.validation';
-import { useCatalogStepAgent } from './use-catalog-step-agent';
+import { useCatalogPageAction } from '@/components/ai-chat/use-catalog-page-action';
 import { RemovableChip } from '@/components/removable-chip';
 import { AnimatePresence, motion } from 'framer-motion';
 import { easeOut } from '@/lib/motion';
@@ -113,7 +113,7 @@ export default function WorkModeSection({
   const workModesFullyLoaded = !isLoading && !hasNextPage;
 
   // Lets Alice see this step and tick work modes on it. Saving is still Continue.
-  useCatalogStepAgent({
+  useCatalogPageAction({
     kind: 'work_mode',
     label: 'work modes',
     question: 'What is your preferred work mode?',

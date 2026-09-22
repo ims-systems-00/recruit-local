@@ -1,19 +1,22 @@
 'use client';
-import {
-  usePageAction,
-  usePageContext,
-} from '@/components/ai-chat/page-context';
+import { usePageAction, usePageContext } from './page-context';
 import { AGENT_STAGGER_MS, prefersReducedMotion, wait } from '@/lib/motion';
 import type { AgentCatalogKind } from '@rl/types';
 
 /**
- * Makes a catalog-based setup step (job title, industry, experience level, work
+ * Makes a catalog-backed field (job title, industry, experience level, work
  * mode, or a workplace-values round) visible to Alice, and lets her tick options
  * on it.
  *
- * The action only changes form state. The user still presses the step's
- * Continue button, which runs the page's normal submit — so the save, the
- * onboarding step and the navigation all stay exactly as they are without Alice.
+ * Used by the onboarding steps, which show one such field per page, and by the
+ * profile editor, which shows four at once. The difference is only in what
+ * surrounds the field, which is why `registerContext` exists: a page holding
+ * several of these registers one context itself and turns the per-field ones
+ * off.
+ *
+ * The action only changes form state. The user still presses the page's own
+ * save button, which runs its normal submit — so the save, the onboarding step
+ * and the navigation all stay exactly as they are without Alice.
  *
  * Two guards stop an invented id reaching the form:
  * - The action declares its `catalog`, so the server checks every id against
@@ -36,10 +39,22 @@ interface Options {
   valueType?: string;
   /** Page id suffix; defaults to the kind. Values rounds pass their step. */
   pageId?: string;
+  /**
+   * Registers this field's own page context. Turn it off when the page
+   * registers one covering several fields — only the last context registered is
+   * sent, so competing ones would hide each other.
+   */
+  registerContext?: boolean;
+  /** Page id used when this field registers its own context. */
+  page?: string;
+  /** How the page describes itself, when it registers its own context. */
+  summary?: string;
+  /** The button that saves, named in prompts so Alice points at the right one. */
+  saveButton?: string;
   /** Plural label used in prompts and messages, e.g. "job titles". */
   label: string;
-  /** What the step asks, in a sentence. */
-  question: string;
+  /** What the step asks, in a sentence. Only used with `registerContext`. */
+  question?: string;
   /** Max selections; 1 means a single choice. */
   max: number;
   /** Currently selected options, for the page state Alice sees. */
@@ -105,10 +120,14 @@ const parseSelections = (
   return options;
 };
 
-export function useCatalogStepAgent({
+export function useCatalogPageAction({
   kind,
   valueType,
   pageId,
+  registerContext = true,
+  page,
+  summary,
+  saveButton = 'Continue',
   label,
   question,
   max,
@@ -124,28 +143,33 @@ export function useCatalogStepAgent({
       ? `search_catalog with kind "value" and valueType "${valueType}"`
       : `search_catalog with kind "${kind}"`;
 
-  usePageContext({
-    page: `candidate.onboarding.${pageId ?? kind}`,
-    // Question trimmed so the summary stays inside the server's size cap.
-    summary:
-      `Candidate setup step: "${question.slice(0, 120)}" The user ${single ? 'chooses one' : `chooses up to ${max}`} ` +
-      `${label}, then presses Continue to save.`,
-    state: {
-      selected: selected.map((option) => option.name),
-      limit: max,
-      searchWith: searchHint,
-      ...(valueType ? { valueType } : {}),
-      ...(visibleOptions?.length
-        ? {
-            options: visibleOptions.map((option) => ({
-              id: option._id,
-              name: option.name,
-            })),
-          }
-        : {}),
-      ...extraState,
-    },
-  });
+  usePageContext(
+    registerContext
+      ? {
+          page: page ?? `candidate.onboarding.${pageId ?? kind}`,
+          // Question trimmed so the summary stays inside the server's size cap.
+          summary:
+            summary ??
+            `Candidate setup step: "${(question ?? '').slice(0, 120)}" The user ${single ? 'chooses one' : `chooses up to ${max}`} ` +
+              `${label}, then presses ${saveButton} to save.`,
+          state: {
+            selected: selected.map((option) => option.name),
+            limit: max,
+            searchWith: searchHint,
+            ...(valueType ? { valueType } : {}),
+            ...(visibleOptions?.length
+              ? {
+                  options: visibleOptions.map((option) => ({
+                    id: option._id,
+                    name: option.name,
+                  })),
+                }
+              : {}),
+            ...extraState,
+          },
+        }
+      : null,
+  );
 
   usePageAction({
     name: `select_${kind}`,
@@ -154,7 +178,7 @@ export function useCatalogStepAgent({
       `Use ids from ${searchHint} (or the page's listed options) — never invent or reuse one. ` +
       'Pass options the user chose, or, if they explicitly asked you to choose, the best fits for what they told you. ' +
       (single ? 'Pass exactly one.' : `Pass at most ${max}.`) +
-      ' This does not save; the user presses Continue.',
+      ` This does not save; the user presses ${saveButton}.`,
     catalog: { kind, ...(valueType ? { valueType } : {}) },
     parameters: {
       type: 'object',

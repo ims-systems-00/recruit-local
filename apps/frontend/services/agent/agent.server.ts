@@ -13,7 +13,12 @@ import {
   AccessibilityPreferences,
   AccessibilityPreferencesInput,
   AccessibilityPreferencesResponse,
+  AgentConversationBackendResponse,
   AgentConversationInput,
+  AgentConversationListBackendResponse,
+  AgentConversationListFilters,
+  AgentConversationListResponse,
+  AgentConversationWithMessagesDto,
   AgentData,
   AgentResponse,
   SpeechData,
@@ -74,6 +79,68 @@ export async function createAgentConversationMessage(
     };
   } catch (error) {
     return handleServerError(error, 'Failed to create agent conversation');
+  }
+}
+
+/** The caller's own conversations, most recently active first. */
+export async function listAgentConversations(
+  params: AgentConversationListFilters = {},
+): Promise<ApiResponse<AgentConversationListResponse>> {
+  try {
+    const res = await axiosServer.get<AgentConversationListBackendResponse>(
+      API_ENDPOINT,
+      {
+        params: {
+          cursor: params.cursor,
+          limit: params.limit ?? 20,
+          clientSearch: params.clientSearch || undefined,
+        },
+      },
+    );
+
+    return {
+      success: true,
+      data: {
+        docs: res.data.conversations ?? [],
+        pagination: res.data.pagination,
+      },
+      message: res.data.message,
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to load conversations');
+  }
+}
+
+/** One conversation with its full transcript. */
+export async function getAgentConversation(
+  conversationId: string,
+): Promise<ApiResponse<AgentConversationWithMessagesDto>> {
+  try {
+    const res = await axiosServer.get<AgentConversationBackendResponse>(
+      `${API_ENDPOINT}/${encodeURIComponent(conversationId)}`,
+    );
+
+    return {
+      success: true,
+      data: res.data.conversation,
+      message: res.data.message,
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to load conversation');
+  }
+}
+
+export async function deleteAgentConversation(
+  conversationId: string,
+): Promise<ApiResponse<null>> {
+  try {
+    const res = await axiosServer.delete<{ message: string }>(
+      `${API_ENDPOINT}/${encodeURIComponent(conversationId)}/soft`,
+    );
+
+    return { success: true, data: null, message: res.data.message };
+  } catch (error) {
+    return handleServerError(error, 'Failed to delete conversation');
   }
 }
 

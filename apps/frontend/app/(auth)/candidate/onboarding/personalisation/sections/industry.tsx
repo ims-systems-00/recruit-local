@@ -29,7 +29,7 @@ import {
   JobProfileUpdateInput,
 } from '@/services/job-profile/job-profile.type';
 import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
-import { useCatalogStepAgent } from './use-catalog-step-agent';
+import { useCatalogPageAction } from '@/components/ai-chat/use-catalog-page-action';
 import { RemovableChip } from '@/components/removable-chip';
 import { AnimatePresence, motion } from 'framer-motion';
 import { easeOut } from '@/lib/motion';
@@ -86,7 +86,7 @@ export default function IndustrySection({
   }, [existingIndustryIds, setValue]);
 
   // Lets Alice see this step and tick industries on it. Saving is still Next.
-  useCatalogStepAgent({
+  useCatalogPageAction({
     kind: 'industry',
     label: 'industries',
     question: 'What industry would you like to work in?',

@@ -1,20 +1,26 @@
 import Joi from "joi";
 import { AgentTool } from "./tool.types";
 import { CATALOGS, SEARCHABLE_KINDS, SearchableKind, VALUE_TYPES, searchOptions } from "./catalog.shared";
-import { isCandidate } from "./profile-write.shared";
 
 /**
- * Looks up the options a candidate can pick during setup: job titles,
- * industries, experience levels, work modes and workplace values.
+ * Looks up the fixed lists this platform is picked from during setup: job
+ * titles, industries, experience levels, work modes and workplace values.
  *
  * Exists so nothing downstream ever has to guess an id. The model finds real
  * rows here, and both `set_profile_catalog` and catalog-backed page actions
  * re-check every id against the catalog before using it — a model that skips
  * this tool and invents an id is told so, and corrects itself.
  *
- * Catalog rows are shared reference data, identical for every candidate and
+ * Catalog rows are shared reference data, identical for every account and
  * already served unfiltered to the onboarding screens, so there is no per-user
  * scoping to apply — the same position as `search_help`.
+ *
+ * Offered to both audiences for that reason. Candidates pick from all five
+ * lists; employers walk the same five workplace-values rounds for their
+ * organisation, and searching a list neither one can act on wastes a turn but
+ * discloses nothing. What each may *write* is a separate question, answered by
+ * `set_profile_catalog` (candidates only) and by which page actions a page
+ * chooses to offer.
  */
 
 const MAX_LIMIT = 20;
@@ -30,8 +36,9 @@ export const searchCatalogTool: AgentTool<{
 }> = {
   name: "search_catalog",
   description:
-    "Search the lists a candidate picks from when setting up their profile: job titles, industries, experience levels, " +
-    "work modes, and workplace values. Returns the options with their ids. " +
+    "Search the platform's fixed option lists: job titles, industries, experience levels, work modes, and workplace " +
+    "values. Candidates pick from all of them when setting up their profile; employers choose workplace values for " +
+    "their organisation. Returns the options with their ids. " +
     "Call this before selecting or setting any option, every time, in this conversation — never pass an id you did not " +
     "get from this tool, and never guess an id from the pattern of other ids. " +
     "Copy each id character by character from the option you mean: ids differ only in their last few characters, and " +
@@ -84,8 +91,6 @@ export const searchCatalogTool: AgentTool<{
   }),
 
   mutating: false,
-
-  isAvailable: isCandidate,
 
   async execute(input) {
     const { options, total } = await searchOptions(input.kind, {

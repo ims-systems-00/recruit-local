@@ -38,6 +38,8 @@ export type PageActionHandler = (
 
 export interface PageActionRegistration extends AgentPageActionDefDto {
   handler: PageActionHandler;
+  /** Defaults to true. False registers nothing; see `usePageAction`. */
+  enabled?: boolean;
 }
 
 export interface ClientActionReport {
@@ -169,14 +171,20 @@ export function useAgentPage() {
  *
  * Re-registers only when the serialized context changes, so passing a fresh
  * object each render is fine.
+ *
+ * Pass `null` to register nothing. That is for a component that sometimes
+ * describes the page and sometimes does not — the hook still runs every render,
+ * which `if (condition) usePageContext(...)` would not.
  */
-export function usePageContext(context: Omit<AgentPageContextDto, 'actions'>) {
+export function usePageContext(
+  context: Omit<AgentPageContextDto, 'actions'> | null,
+) {
   const api = useContext(AgentPageContext);
   const key = useRef(Symbol('page-context')).current;
-  const serialized = JSON.stringify(context);
+  const serialized = context ? JSON.stringify(context) : null;
 
   useEffect(() => {
-    if (!api) return;
+    if (!api || !serialized) return;
     return api.registerContext(key, JSON.parse(serialized));
   }, [api, key, serialized]);
 }
@@ -185,15 +193,24 @@ export function usePageContext(context: Omit<AgentPageContextDto, 'actions'>) {
  * Let Alice perform one action on this page. The handler always sees the
  * latest render's closure, so it can use current form state without the
  * action being re-registered each render.
+ *
+ * `enabled: false` registers nothing — for an action a page offers only
+ * sometimes, such as one that edits what the viewer does not own. It is a guard
+ * against confusing Alice, not a security boundary: the handler is still the
+ * place that validates, and the save behind it is still authorized server-side.
  */
-export function usePageAction({ handler, ...def }: PageActionRegistration) {
+export function usePageAction({
+  handler,
+  enabled = true,
+  ...def
+}: PageActionRegistration) {
   const api = useContext(AgentPageContext);
   const handlerRef = useRef(handler);
   handlerRef.current = handler;
   const serialized = JSON.stringify(def);
 
   useEffect(() => {
-    if (!api) return;
+    if (!api || !enabled) return;
     return api.registerAction(JSON.parse(serialized), handlerRef);
-  }, [api, serialized]);
+  }, [api, enabled, serialized]);
 }

@@ -32,16 +32,27 @@ import {
 import Saves from './saves';
 import Activities from './activities';
 import { TenantData } from '@/services/tenants/tenants.type';
-import EditProfile from './edit-profile';
+import EditProfile, {
+  ORG_TYPE_OPTIONS,
+  TENANT_INDUSTRY_OPTIONS,
+} from './edit-profile';
 import { useUpdateTenant } from '@/services/tenants/tenants.client';
 import { useComboboxAnchor } from '@/components/ui/combobox';
-import { Resolver, useForm } from 'react-hook-form';
+import { Resolver, UseFormSetValue, useForm } from 'react-hook-form';
 import {
   TenantUpdateInput,
   tenantUpdateSchema,
 } from '@/services/tenants/tenants.validation';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { TENANT_TYPE } from '@rl/types';
+import { useSession } from 'next-auth/react';
+import { isValidPhoneNumber } from 'libphonenumber-js';
+import {
+  usePageAction,
+  usePageContext,
+} from '@/components/ai-chat/page-context';
+import { excerpt } from '@/components/ai-chat/page-state';
+import { AGENT_STAGGER_MS, prefersReducedMotion, wait } from '@/lib/motion';
 import Link from 'next/link';
 import EditServicesAndProducts from './edit-services-and-products';
 import Values from './values/values';
@@ -51,11 +62,184 @@ import FileUploader from '@/components/file-uploader';
 import { Switch } from '@/components/ui/switch';
 import { useRouter } from 'next/navigation';
 
+/**
+ * The dropdown values, read off the same arrays the selects render from, so the
+ * options Alice is offered cannot drift from the options on screen.
+ *
+ * These two lists are plain frontend constants, not rows in a catalog
+ * collection — unlike a candidate's job titles or industries, there is nothing
+ * for `search_catalog` to look up, so the allowed values are handed to Alice in
+ * the page state instead.
+ */
+const ORG_TYPE_VALUES = ORG_TYPE_OPTIONS.map((option) => option.value);
+const TENANT_INDUSTRY_VALUES = TENANT_INDUSTRY_OPTIONS.map(
+  (option) => option.value,
+);
+
+/**
+ * The free-text fields Alice may fill in on the organisation form, with the
+ * limits she must respect.
+ *
+ * The caps mirror the form's own yup schema where it has one (`name`) and are
+ * otherwise a sanity bound — the point is to reject a runaway value before it
+ * lands in an input the recruiter then has to clear by hand.
+ *
+ * Logos, the cover photo and the recruitment switch are deliberately absent:
+ * the first two are file uploads, and the switch takes every live job listing
+ * away from candidates and has its own confirmation dialog for that reason.
+ */
+const FILLABLE_TEXT_FIELDS = [
+  { key: 'name', label: 'organisation name', max: 50 },
+  { key: 'description', label: 'description', max: 2000 },
+  { key: 'email', label: 'contact email', max: 254 },
+  { key: 'officeAddress', label: 'office address', max: 200 },
+  { key: 'website', label: 'website', max: 300 },
+  { key: 'linkedIn', label: 'LinkedIn URL', max: 300 },
+] as const;
+
+const URL_PATTERN = /^https?:\/\/\S+$/i;
+const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
+
+/**
+ * Validates everything Alice sent, and returns one setter per accepted field.
+ *
+ * Nothing is written while validating: a bad fourth field would otherwise leave
+ * the first three already in the form, with Alice reporting an error for a
+ * change the recruiter can see on screen. Returning closures also keeps the
+ * order the form reads in, which is the order they are revealed.
+ *
+ * Throws rather than dropping a bad field — the message is shown to the user,
+ * and a silent drop would have Alice claiming she filled in something that
+ * never appeared.
+ */
+const buildFieldUpdates = (
+  args: Record<string, unknown>,
+  setValue: UseFormSetValue<TenantUpdateInput>,
+) => {
+  const text = (key: (typeof FILLABLE_TEXT_FIELDS)[number]['key']) => {
+    const field = FILLABLE_TEXT_FIELDS.find((item) => item.key === key)!;
+    const raw = args[key];
+    if (raw === undefined || raw === null) return null;
+
+    if (typeof raw !== 'string') {
+      throw new Error(
+        `Alice's ${field.label} wasn't usable. Ask her to try again.`,
+      );
+    }
+
+    const value = raw.trim();
+    if (!value) return null;
+
+    if (value.length > field.max) {
+      throw new Error(
+        `Alice's ${field.label} is too long — the limit is ${field.max} characters.`,
+      );
+    }
+
+    if ((key === 'website' || key === 'linkedIn') && !URL_PATTERN.test(value)) {
+      throw new Error(
+        `Alice's ${field.label} wasn't a full web address. Ask her to try again.`,
+      );
+    }
+
+    if (key === 'email' && !EMAIL_PATTERN.test(value)) {
+      throw new Error(
+        "Alice's contact email wasn't a valid address. Ask her to try again.",
+      );
+    }
+
+    return {
+      label: field.label,
+      apply: () =>
+        setValue(key, value, { shouldDirty: true, shouldTouch: true }),
+    };
+  };
+
+  // Built in the order the form reads down the page, so the reveal follows the
+  // fields the recruiter is looking at rather than the order Alice sent them.
+  const updates: { label: string; apply: () => void }[] = [];
+  const push = (update: { label: string; apply: () => void } | null) => {
+    if (update) updates.push(update);
+  };
+
+  push(text('name'));
+
+  if (args.type !== undefined && args.type !== null) {
+    const value = String(args.type).trim();
+    if (!ORG_TYPE_VALUES.includes(value as TENANT_TYPE)) {
+      throw new Error(
+        `"${value}" isn't an organisation type on this form. Ask Alice to try again.`,
+      );
+    }
+    updates.push({
+      label: 'organisation type',
+      apply: () =>
+        setValue('type', value as TENANT_TYPE, {
+          shouldDirty: true,
+          shouldTouch: true,
+        }),
+    });
+  }
+
+  if (args.size !== undefined && args.size !== null) {
+    const value = Number(args.size);
+    if (!Number.isInteger(value) || value < 1 || value > 1_000_000) {
+      throw new Error(
+        "Alice's number of employees wasn't a whole number. Ask her to try again.",
+      );
+    }
+    updates.push({
+      label: 'number of employees',
+      apply: () =>
+        setValue('size', value, { shouldDirty: true, shouldTouch: true }),
+    });
+  }
+
+  if (args.industry !== undefined && args.industry !== null) {
+    const value = String(args.industry).trim();
+    if (!TENANT_INDUSTRY_VALUES.includes(value as never)) {
+      throw new Error(
+        `"${value}" isn't an industry on this form. Ask Alice to try again.`,
+      );
+    }
+    updates.push({
+      label: 'industry',
+      apply: () =>
+        setValue('industry', value, { shouldDirty: true, shouldTouch: true }),
+    });
+  }
+
+  push(text('description'));
+  push(text('email'));
+
+  if (args.phone !== undefined && args.phone !== null) {
+    const value = String(args.phone).trim();
+    if (!isValidPhoneNumber(value)) {
+      throw new Error(
+        "Alice's contact number wasn't a valid phone number. Ask her for it in international format, e.g. +44 20 7946 0958.",
+      );
+    }
+    updates.push({
+      label: 'contact number',
+      apply: () =>
+        setValue('phone', value, { shouldDirty: true, shouldTouch: true }),
+    });
+  }
+
+  push(text('officeAddress'));
+  push(text('website'));
+  push(text('linkedIn'));
+
+  return updates;
+};
+
 export default function Profile({ tenantData }: { tenantData: TenantData }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
 
   const router = useRouter();
+
+  const { data: session } = useSession();
 
   const [tenantDetails, setTenantDetails] = useState(tenantData);
 
@@ -97,6 +281,8 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
     formState: { errors },
     handleSubmit,
     reset,
+    watch,
+    setValue,
   } = methods;
 
   useEffect(() => {
@@ -233,6 +419,171 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference * (1 - completionProgress / 100);
+
+  /**
+   * This route loads any tenant by id, so it renders other organisations'
+   * profiles as well as the viewer's own. Alice is told which she is looking at,
+   * and the actions below are registered only on the recruiter's own — offering
+   * to edit a competitor's profile would be a confusing thing to offer and a
+   * failed request if taken up.
+   *
+   * It decides what Alice is told, not what anyone may do: every save behind
+   * these fields is still authorized on the server.
+   */
+  const isOwnOrganisation = Boolean(
+    session?.user?.tenantId && session.user.tenantId === tenantDetails?._id,
+  );
+
+  /**
+   * One context covering both modes, because both live in this component.
+   *
+   * The text fields go in as excerpts, not in full: the server caps a page
+   * state at 2,000 serialized characters and rejects the whole request over it,
+   * and a filled-in description and office address together can pass that on
+   * their own. Knowing whether a field is filled and roughly what it says is
+   * what Alice needs it for, and `length` carries the rest.
+   */
+  usePageContext(
+    isEditMode
+      ? {
+          page: 'recruiter.profile.edit',
+          summary:
+            "The recruiter's own organisation profile, with the edit form open. They press " +
+            'Save to store any changes, or Cancel to discard them.',
+          state: {
+            editing: true,
+            name: excerpt(watch('name')),
+            type: watch('type') ?? null,
+            size: watch('size') ?? null,
+            industry: watch('industry') ?? null,
+            description: excerpt(watch('description')),
+            email: excerpt(watch('email')),
+            phone: excerpt(watch('phone')),
+            officeAddress: excerpt(watch('officeAddress')),
+            website: excerpt(watch('website')),
+            linkedIn: excerpt(watch('linkedIn')),
+            // No catalog backs these two, so the allowed values ship with the
+            // page rather than being searched for.
+            options: {
+              type: ORG_TYPE_VALUES,
+              industry: TENANT_INDUSTRY_VALUES,
+            },
+          },
+        }
+      : {
+          page: 'recruiter.profile',
+          summary: isOwnOrganisation
+            ? 'The recruiter\'s own organisation profile, in read mode. Pressing "Edit Profile" ' +
+              'opens a form covering its name, type, size, industry, description, contact email, ' +
+              'phone, office address, website and LinkedIn.'
+            : "Another organisation's profile, as the user is viewing it. They cannot change " +
+              'anything here.',
+          state: {
+            ownOrganisation: isOwnOrganisation,
+            editing: false,
+            organisation: tenantDetails?.name ?? null,
+            completion: completionProgress,
+          },
+        },
+  );
+
+  /**
+   * Opening the editor is a UI toggle, not a write: it renders the form Alice
+   * can then fill. Without it she can only tell the recruiter to press the
+   * button themselves, which is the same click with an extra step.
+   */
+  usePageAction({
+    enabled: isOwnOrganisation && !isEditMode,
+    name: 'open_profile_editor',
+    description:
+      "Open the edit form on the organisation's profile page, so its fields can be filled in. " +
+      'Call this when the user asks to change something about their organisation and the form ' +
+      'is not open yet. It only reveals the form; it changes and saves nothing.',
+    parameters: { type: 'object', properties: {} },
+    handler: () => {
+      handleEdit();
+      return 'Opened the organisation profile editor.';
+    },
+  });
+
+  usePageAction({
+    enabled: isOwnOrganisation && isEditMode,
+    name: 'fill_organisation_fields',
+    description:
+      'Fill in the fields on the open organisation profile form: name, type, number of ' +
+      'employees, industry, description, contact email, phone, office address, website or ' +
+      'LinkedIn. Pass only the fields being changed — anything left out keeps its current ' +
+      'value. Use what the user told you about their organisation; do not invent details ' +
+      'about it, and do not infer its industry or size from its name. This does not save; ' +
+      'the user presses Save.',
+    parameters: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: "The organisation's name, up to 50 characters.",
+        },
+        type: {
+          type: 'string',
+          enum: [...ORG_TYPE_VALUES],
+          description: 'Whether the organisation is private or public.',
+        },
+        size: {
+          type: 'number',
+          description: 'Number of employees, as a whole number.',
+        },
+        industry: {
+          type: 'string',
+          enum: [...TENANT_INDUSTRY_VALUES],
+          description: 'The industry the organisation operates in.',
+        },
+        description: {
+          type: 'string',
+          description:
+            "A description of the organisation, in the recruiter's words.",
+        },
+        email: {
+          type: 'string',
+          description: "The organisation's contact email address.",
+        },
+        phone: {
+          type: 'string',
+          description:
+            'Contact number in international format, e.g. +44 20 7946 0958.',
+        },
+        officeAddress: {
+          type: 'string',
+          description: 'The office address, or the city and country.',
+        },
+        website: {
+          type: 'string',
+          description: 'Full URL including https://.',
+        },
+        linkedIn: {
+          type: 'string',
+          description: 'Full LinkedIn company page URL including https://.',
+        },
+      },
+    },
+    handler: async (args) => {
+      const updates = buildFieldUpdates(args, setValue);
+
+      if (updates.length === 0) {
+        throw new Error(
+          "Alice didn't send anything to fill in. Try asking again.",
+        );
+      }
+
+      for (const [index, update] of updates.entries()) {
+        update.apply();
+        if (index < updates.length - 1 && !prefersReducedMotion()) {
+          await wait(AGENT_STAGGER_MS);
+        }
+      }
+
+      return `Filled in ${updates.map((update) => update.label).join(', ')}.`;
+    },
+  });
 
   return (
     <div>
