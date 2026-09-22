@@ -30,6 +30,9 @@ import {
 } from '@/services/job-profile/job-profile.type';
 import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 import { useCatalogStepAgent } from './use-catalog-step-agent';
+import { RemovableChip } from '@/components/removable-chip';
+import { AnimatePresence, motion } from 'framer-motion';
+import { easeOut } from '@/lib/motion';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -233,23 +236,33 @@ export default function IndustrySection({
           </InputGroup>
         </div>
         <div className=" space-y-spacing-lg">
-          {Boolean(savedIndustries?.length) && !isInitialLoading && (
-            <div className=" flex flex-wrap items-center gap-spacing-2xl">
-              <span className=" whitespace-nowrap text-body-sm text-text-gray-secondary">
-                Selected:{' '}
-              </span>
-              <div className=" flex items-center gap-spacing-2xs flex-wrap">
-                {savedIndustries?.map((item) => (
-                  <span
-                    key={item._id}
-                    className=" cursor-pointer whitespace-nowrap inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg bg-bg-gray-soft-primary text-body-xs text-others-gray-dark border border-border-gray-primary"
-                  >
-                    {item.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          <AnimatePresence initial={false}>
+            {Boolean(savedIndustries?.length) && !isInitialLoading && (
+              <motion.div
+                key="selected-row"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: easeOut }}
+                className=" overflow-hidden flex flex-wrap items-center gap-spacing-2xl"
+              >
+                <span className=" whitespace-nowrap text-body-sm text-text-gray-secondary">
+                  Selected:{' '}
+                </span>
+                <div className=" flex items-center gap-spacing-2xs flex-wrap">
+                  <AnimatePresence initial={false}>
+                    {savedIndustries?.map((item) => (
+                      <RemovableChip
+                        key={item._id}
+                        label={item.name}
+                        onRemove={() => handleToggle(item, false)}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div
             onScroll={handleScroll}
             className=" max-h-[500px] overflow-y-auto space-y-spacing-lg"
@@ -268,7 +281,7 @@ export default function IndustrySection({
                     <div
                       key={item._id}
                       className={cn(
-                        ' flex items-center gap-spacing-lg p-spacing-2xl rounded-2xl border border-border-gray-secondary min-h-14',
+                        ' flex items-center gap-spacing-lg p-spacing-2xl rounded-2xl border border-border-gray-secondary min-h-14 transition-opacity duration-200',
                         isDisabled && 'opacity-50 cursor-not-allowed',
                       )}
                     >

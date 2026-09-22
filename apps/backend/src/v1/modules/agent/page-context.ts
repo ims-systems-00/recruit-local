@@ -106,17 +106,28 @@ export interface PageActionOutcome {
 
 type CatalogResolver = typeof resolveSelectable;
 
+/** Compared loosely, so casing and stray whitespace are not a disagreement. */
+const normalizeName = (value: string): string => value.trim().toLowerCase().replace(/\s+/g, " ");
+
 /**
  * Checks a catalog-backed action's `selections` against the real catalog.
  *
- * This is the guard against invented ids. Models that have seen a few ObjectIds
- * will happily produce a plausible next one; unchecked, that id ticks nothing on
- * the page and is then saved to the profile when the user presses Continue.
+ * This is the guard against wrong ids, of which there are two kinds and both
+ * end up saved to the profile when the user presses Continue:
+ *
+ * - **Invented.** Models that have seen a few ObjectIds will happily produce a
+ *   plausible next one. It resolves to nothing, so `missing` catches it.
+ * - **Mis-copied.** The id of a different row in the same search — catalog ids
+ *   are seeded in one batch and differ only in their last few characters, so
+ *   the rows a model is choosing between look nearly identical. It resolves
+ *   perfectly well, just to the wrong thing, which is why the name the model
+ *   sent has to be compared rather than overwritten: a name it did not mean is
+ *   the only evidence that the id is not the one it meant.
  *
  * On failure the model gets a message it can act on in the same run — search,
  * then retry — which is why this is an error result and not a silent drop.
- * On success, names are replaced with the catalog's own, so the chips the page
- * shows can never disagree with the ids it saves.
+ * On success names are replaced with the catalog's own, which is now only
+ * canonicalisation: they have already been checked to agree.
  */
 const verifyCatalogSelections = async (
   action: AgentPageActionDefDto,
@@ -130,20 +141,44 @@ const verifyCatalogSelections = async (
     return { ok: false, error: "Pass `selections` as a non-empty array of { id, name } from search_catalog." };
   }
 
+  const search =
+    catalog.kind === "value"
+      ? `search_catalog with kind "value" and valueType "${catalog.valueType}"`
+      : `search_catalog with kind "${catalog.kind}"`;
+
   const ids = selections.map((item) => String((item as { id?: unknown })?.id ?? ""));
   const { rows, missing } = await resolve(catalog.kind, ids, catalog.valueType);
 
   if (missing.length > 0) {
-    const search =
-      catalog.kind === "value"
-        ? `search_catalog with kind "value" and valueType "${catalog.valueType}"`
-        : `search_catalog with kind "${catalog.kind}"`;
-
     return {
       ok: false,
       error:
         `These ids are not options on this page: ${missing.join(", ")}. Do not invent or reuse ids. ` +
         `Call ${search}, then call this action again with ids exactly as it returns them.`,
+    };
+  }
+
+  // Keyed rather than positional: a repeated id makes `rows` and `selections`
+  // different lengths.
+  const nameById = new Map(rows.map((row) => [row.id, row.name]));
+
+  const mismatched = selections.flatMap((item, index) => {
+    const claimed = (item as { name?: unknown })?.name;
+    // An omitted name cannot disagree with anything; the id was checked above.
+    if (typeof claimed !== "string" || !claimed.trim()) return [];
+
+    const actual = nameById.get(ids[index]) as string;
+    return normalizeName(claimed) === normalizeName(actual) ? [] : [{ id: ids[index], claimed, actual }];
+  });
+
+  if (mismatched.length > 0) {
+    return {
+      ok: false,
+      error:
+        mismatched.map((row) => `The id ${row.id} is "${row.actual}", not "${row.claimed}".`).join(" ") +
+        " Do not relabel an id. For each one: if you meant the name you wrote, call " +
+        `${search} to get its real id; if you meant the row the id points at, call this action again ` +
+        "with that exact name.",
     };
   }
 
@@ -197,6 +232,12 @@ export const queuePageAction = async (
     finalArgs = verified.args;
   }
 
+  // The catalog's own names, echoed back so the reply is written from what was
+  // actually queued rather than from the model's memory of what it chose.
+  const selected = action.catalog
+    ? (finalArgs.selections as { name: string }[]).map((selection) => selection.name)
+    : undefined;
+
   return {
     ok: true,
     action: { name: action.name, args: finalArgs },
@@ -204,9 +245,13 @@ export const queuePageAction = async (
       ok: true,
       result: {
         queued: true,
+        ...(selected ? { selected } : {}),
         note:
           "This will be applied to the form on the user's page once your reply arrives. It is NOT saved. " +
-          "Tell the user what you filled in, and that they should check it and use the page's own button to save and continue. " +
+          (selected
+            ? "Tell the user you filled in exactly these, naming them with these exact names and no others, "
+            : "Tell the user what you filled in, ") +
+          "and that they should check it and use the page's own button to save and continue. " +
           "You cannot see whether it applied until they reply.",
       },
     }),

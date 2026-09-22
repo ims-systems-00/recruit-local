@@ -118,8 +118,9 @@ export const setProfileCatalogTool: AgentTool<SetCatalogInput> = {
   name: "set_profile_catalog",
   description:
     "Set the current candidate's job titles, industries, experience level or work modes — the choices from the " +
-    "personalisation part of setup. Pass ids returned by search_catalog for options the user chose, or that you chose " +
-    "because they explicitly asked you to; this " +
+    "personalisation part of setup. Only call this when the user asked for their selection to change — they picked " +
+    "options, or asked you to set or choose some for them. A request to find, suggest or recommend options is " +
+    "answered from search_catalog alone. Pass ids returned by search_catalog; this " +
     "replaces their current selection for that list. Job titles, industries and work modes allow up to 3; experience " +
     "level takes exactly one. " +
     "Nothing is saved on the first call: you get back a preview to show them, and you call this again with the " +
@@ -134,7 +135,7 @@ export const setProfileCatalogTool: AgentTool<SetCatalogInput> = {
         type: "array",
         items: { type: "string" },
         description:
-          "Ids from search_catalog. Only options the user chose, or picked by you because they explicitly asked you to choose.",
+          "Ids from search_catalog. Only options the user chose, or picked by you because they asked you to select some for them.",
       },
     },
     required: ["kind", "ids"],

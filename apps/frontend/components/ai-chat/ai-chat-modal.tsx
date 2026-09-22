@@ -148,10 +148,11 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
       const report = await runClientActions(data.clientActions);
 
       if (report.applied.length) {
-        // Visible outside the chat panel, next to the form that changed, and
-        // announced by screen readers via the toast's live region.
+        // The form animates the change in view, so this only needs to name what
+        // Alice picked — which is also how a screen reader hears it, via the
+        // toast's live region. The page's own save button says the rest.
         toast.success('Alice filled in the form', {
-          description: `${report.applied.join(' ')} Check it, then use the page's button to save.`,
+          description: report.applied.join(' '),
         });
       }
       report.failed.forEach((failure) => toast.error(failure.message));

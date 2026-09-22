@@ -34,8 +34,13 @@ export const searchCatalogTool: AgentTool<{
     "work modes, and workplace values. Returns the options with their ids. " +
     "Call this before selecting or setting any option, every time, in this conversation — never pass an id you did not " +
     "get from this tool, and never guess an id from the pattern of other ids. " +
-    "If more than one option could match what the user said, show them the options by name and ask which they mean — " +
-    "unless they explicitly asked you to choose for them, in which case pick the best fits and say why. " +
+    "Copy each id character by character from the option you mean: ids differ only in their last few characters, and " +
+    "one wrong character silently selects a different option. " +
+    "Results are alphabetical and capped, so compare `returned` with `total` — when more matched than came back, " +
+    "narrow the query rather than choosing from what is shown. " +
+    "Searching is not selecting. When the user asked you to find, suggest or recommend options, report the names " +
+    "here and offer to select them — do not go on to select anything until they ask you to. " +
+    "If more than one option could match what the user said, show them the options by name and ask which they mean. " +
     "If nothing matches (catalog names are general roles, so a technology like 'MERN' will not appear), " +
     "search again with a broader word such as 'developer' before asking the user. " +
     "Omit `query` to list everything, which suits short lists like work modes and experience levels. " +
@@ -83,21 +88,32 @@ export const searchCatalogTool: AgentTool<{
   isAvailable: isCandidate,
 
   async execute(input) {
-    const options = await searchOptions(input.kind, {
+    const { options, total } = await searchOptions(input.kind, {
       query: input.query,
       limit: input.limit ?? DEFAULT_LIMIT,
       valueType: input.valueType,
     });
+
+    // A capped result is alphabetical, not "the best matches", so saying so is
+    // the difference between narrowing the search and picking from whichever
+    // names happen to sort first.
+    const truncatedNote =
+      `Showing ${options.length} of ${total} ${pluralOf(input.kind)}, in alphabetical order — these are not ` +
+      `the closest matches, only the first. Search again with a more specific word, or raise \`limit\` ` +
+      `(maximum ${MAX_LIMIT}), before choosing.`;
 
     return {
       kind: input.kind,
       ...(input.valueType ? { valueType: input.valueType } : {}),
       options,
       returned: options.length,
+      total,
       ...(input.kind === "value" ? {} : { selectionLimit: CATALOGS[input.kind].max }),
-      ...(options.length === 0
+      ...(total === 0
         ? { note: `No ${pluralOf(input.kind)} match that. Try a broader word, or omit the query to list them all.` }
-        : {}),
+        : total > options.length
+          ? { note: truncatedNote }
+          : {}),
     };
   },
 };
