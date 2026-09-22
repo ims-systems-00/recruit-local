@@ -32,7 +32,7 @@ import {
   CandidateValuesStepFormValues,
 } from '@/services/job-profile/job-profile.validation';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCatalogStepAgent } from '../../personalisation/sections/use-catalog-step-agent';
+import { useCatalogPageAction } from '@/components/ai-chat/use-catalog-page-action';
 import { RemovableChip } from '@/components/removable-chip';
 import { AnimatePresence } from 'framer-motion';
 
@@ -124,7 +124,7 @@ export default function ValuesSection({
   // Lets Alice see this round and tick values on it. Saving is still Continue.
   // Each round is one value type; the list is paginated, so ids are checked on
   // the server against this round's type rather than against what has loaded.
-  useCatalogStepAgent({
+  useCatalogPageAction({
     kind: 'value',
     valueType: types[0],
     pageId: onboardingStep,

@@ -17,6 +17,8 @@ import {
   Controller,
   FieldErrors,
   UseFormRegister,
+  UseFormSetValue,
+  UseFormWatch,
 } from 'react-hook-form';
 import { cn } from '@/lib/utils';
 import { INDUSTRY_ENUMS, TENANT_TYPE } from '@rl/types';
@@ -48,6 +50,12 @@ import { useWorkModes } from '@/services/work-mode/work-mode.client';
 import { MAX_INDUSTRIES_STEP_SELECTION } from '@/services/industry/industry.validation';
 import { MAX_WORK_MODES_STEP_SELECTION } from '@/services/work-mode/work-mode.validation';
 import { useExperienceLevels } from '@/services/experience-level';
+import {
+  usePageAction,
+  usePageContext,
+} from '@/components/ai-chat/page-context';
+import { useCatalogPageAction } from '@/components/ai-chat/use-catalog-page-action';
+import { AGENT_STAGGER_MS, prefersReducedMotion, wait } from '@/lib/motion';
 import { SelectItem, SelectValue } from '@/components/ui/select';
 import {
   Select,
@@ -74,6 +82,88 @@ export const TENANT_INDUSTRY_OPTIONS = [
   { label: 'Energy', value: INDUSTRY_ENUMS.ENERGY },
 ];
 
+/**
+ * The written fields Alice may fill in, and the limits she must respect.
+ *
+ * `email` and `visibility` are deliberately absent, for the reasons given on
+ * `update_my_profile` in the backend: email is an identity field, and who can
+ * see the profile is not a thing to change as a side effect of a chat.
+ *
+ * The caps mirror the form's own yup schema where it has one (`name`) and are
+ * otherwise a sanity bound — the point is to reject a runaway value before it
+ * lands in an input the user then has to clear by hand.
+ */
+const FILLABLE_FIELDS = [
+  { key: 'name', label: 'display name', max: 50 },
+  { key: 'summary', label: 'summary', max: 2000 },
+  { key: 'address', label: 'location', max: 200 },
+  { key: 'contactNumber', label: 'contact number', max: 30 },
+  { key: 'portfolioUrl', label: 'portfolio URL', max: 300 },
+  { key: 'skills', label: 'skills', max: 1000 },
+  { key: 'interests', label: 'interests', max: 1000 },
+] as const;
+
+type FillableKey = (typeof FILLABLE_FIELDS)[number]['key'];
+
+/** Longest a single field may be in the page state. See `usePageContext` below. */
+const STATE_EXCERPT_CHARS = 100;
+
+/**
+ * A field as Alice is shown it: null when empty, the text itself when short,
+ * and a cut-off opening with the real length when not.
+ */
+const excerpt = (value?: string | null) => {
+  const text = value?.trim();
+  if (!text) return null;
+  if (text.length <= STATE_EXCERPT_CHARS) return text;
+
+  return {
+    startsWith: `${text.slice(0, STATE_EXCERPT_CHARS)}…`,
+    length: text.length,
+  };
+};
+
+/**
+ * Validates what Alice sent before any of it reaches the form.
+ *
+ * Throws rather than dropping a bad field: the message is shown to the user, and
+ * a silent drop would leave Alice reporting that she filled in something the
+ * user cannot see.
+ */
+const parseProfileFields = (args: Record<string, unknown>) => {
+  const filled: { key: FillableKey; label: string; value: string }[] = [];
+
+  for (const field of FILLABLE_FIELDS) {
+    const raw = args[field.key];
+    if (raw === undefined || raw === null) continue;
+
+    if (typeof raw !== 'string') {
+      throw new Error(
+        `Alice's ${field.label} wasn't usable. Ask her to try again.`,
+      );
+    }
+
+    const value = raw.trim();
+    if (!value) continue;
+
+    if (value.length > field.max) {
+      throw new Error(
+        `Alice's ${field.label} is too long — the limit is ${field.max} characters.`,
+      );
+    }
+
+    if (field.key === 'portfolioUrl' && !/^https?:\/\/\S+$/i.test(value)) {
+      throw new Error(
+        "Alice's portfolio URL wasn't a full web address. Ask her to try again.",
+      );
+    }
+
+    filled.push({ key: field.key, label: field.label, value });
+  }
+
+  return filled;
+};
+
 type EditProfileProps = {
   register: UseFormRegister<JobProfileUpdateInput>;
   control: Control<JobProfileUpdateInput>;
@@ -81,6 +171,8 @@ type EditProfileProps = {
   existingJobTitles?: JobTitleData[];
   existingIndustries?: IndustryData[];
   existingWorkModes?: WorkModeData[];
+  setValue: UseFormSetValue<JobProfileUpdateInput>;
+  watch: UseFormWatch<JobProfileUpdateInput>;
 };
 
 export default function EditProfile({
@@ -90,6 +182,8 @@ export default function EditProfile({
   existingJobTitles = [],
   existingIndustries = [],
   existingWorkModes = [],
+  setValue,
+  watch,
 }: EditProfileProps) {
   const jobTitleAnchor = useComboboxAnchor();
   const industryAnchor = useComboboxAnchor();
@@ -149,6 +243,188 @@ export default function EditProfile({
     isFetching: isFetchingExperienceLevels,
   } = useExperienceLevels({
     limit: 20,
+  });
+
+  const selectedExperienceLevel = watch('experienceLevel');
+
+  /**
+   * Alice's view of this form, and what she may fill in on it.
+   *
+   * The four catalog fields reuse the onboarding hook, so an id she passes is
+   * checked against the real catalog on the server before it ever reaches the
+   * browser. They pass `registerContext: false` because all four are on this one
+   * page: the context below covers the whole form instead, and only the last
+   * context registered is sent.
+   *
+   * Nothing here saves. Every action sets form state and stops; the user reads
+   * the form and presses Save, which runs the same authorized update as always.
+   *
+   * The text fields go in as excerpts, not in full. The server caps a page state
+   * at 2,000 serialized characters and rejects the whole request over it, and a
+   * filled-in summary, skills and interests together run past that on their own.
+   * An excerpt is enough for what Alice needs it for — knowing whether a field
+   * is filled and roughly what it says — and `length` carries the rest.
+   */
+  usePageContext({
+    page: 'candidate.profile.edit',
+    summary:
+      "The user's own candidate profile, with the edit form open. They press Save to store " +
+      'any changes, or Cancel to discard them.',
+    state: {
+      editing: true,
+      name: excerpt(watch('name')),
+      summary: excerpt(watch('summary')),
+      address: excerpt(watch('address')),
+      contactNumber: excerpt(watch('contactNumber')),
+      portfolioUrl: excerpt(watch('portfolioUrl')),
+      skills: excerpt(watch('skills')),
+      interests: excerpt(watch('interests')),
+      jobTitles: savedJobTitles.map((option) => option.name),
+      industries: savedIndustries.map((option) => option.name),
+      workModes: savedWorkModes.map((option) => option.name),
+      experienceLevel:
+        experienceLevels.find((level) => level._id === selectedExperienceLevel)
+          ?.name ?? null,
+      limits: {
+        jobTitles: MAX_JOB_TITLES_STEP_SELECTION,
+        industries: MAX_INDUSTRIES_STEP_SELECTION,
+        workModes: MAX_WORK_MODES_STEP_SELECTION,
+      },
+    },
+  });
+
+  useCatalogPageAction({
+    kind: 'job_title',
+    registerContext: false,
+    saveButton: 'Save',
+    label: 'job titles',
+    max: MAX_JOB_TITLES_STEP_SELECTION,
+    selected: savedJobTitles,
+    apply: (options) => {
+      setValue(
+        'jobTitle',
+        options.map((option) => option._id),
+        { shouldDirty: true, shouldTouch: true },
+      );
+      setSavedJobTitles(
+        options.map((option) => ({ _id: option._id, name: option.name })),
+      );
+    },
+  });
+
+  useCatalogPageAction({
+    kind: 'industry',
+    registerContext: false,
+    saveButton: 'Save',
+    label: 'industries',
+    max: MAX_INDUSTRIES_STEP_SELECTION,
+    selected: savedIndustries,
+    apply: (options) => {
+      setValue(
+        'industry',
+        options.map((option) => option._id),
+        { shouldDirty: true, shouldTouch: true },
+      );
+      setSavedIndustries(
+        options.map((option) => ({ _id: option._id, name: option.name })),
+      );
+    },
+  });
+
+  useCatalogPageAction({
+    kind: 'work_mode',
+    registerContext: false,
+    saveButton: 'Save',
+    label: 'work modes',
+    max: MAX_WORK_MODES_STEP_SELECTION,
+    selected: savedWorkModes,
+    apply: (options) => {
+      setValue(
+        'workMode',
+        options.map((option) => option._id),
+        { shouldDirty: true, shouldTouch: true },
+      );
+      setSavedWorkModes(
+        options.map((option) => ({ _id: option._id, name: option.name })),
+      );
+    },
+  });
+
+  useCatalogPageAction({
+    kind: 'experience_level',
+    registerContext: false,
+    saveButton: 'Save',
+    label: 'experience levels',
+    max: 1,
+    // The whole list is loaded for the dropdown, so an id outside it is
+    // rejected here as well as on the server.
+    knownIds: experienceLevels.map((level) => level._id),
+    selected: experienceLevels.filter(
+      (level) => level._id === selectedExperienceLevel,
+    ),
+    apply: (options) => {
+      setValue('experienceLevel', options[0]._id, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    },
+  });
+
+  usePageAction({
+    name: 'fill_profile_fields',
+    description:
+      "Fill in the written fields on the user's open profile form: display name, summary, " +
+      'location, contact number, portfolio URL, skills or interests. Pass only the fields being ' +
+      'changed — anything left out keeps its current value. Use what the user told you; do not ' +
+      'invent details about them. This does not save; the user presses Save.',
+    parameters: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'Display name, up to 50 characters.',
+        },
+        summary: {
+          type: 'string',
+          description: 'A short professional summary, written in their voice.',
+        },
+        address: {
+          type: 'string',
+          description: 'City and country, or state and country.',
+        },
+        contactNumber: { type: 'string', description: 'Phone number.' },
+        portfolioUrl: {
+          type: 'string',
+          description: 'Full URL including https://.',
+        },
+        skills: { type: 'string', description: 'Their skills, as prose.' },
+        interests: {
+          type: 'string',
+          description: 'Their interests, as prose.',
+        },
+      },
+    },
+    handler: async (args) => {
+      const filled = parseProfileFields(args);
+
+      if (filled.length === 0) {
+        throw new Error(
+          "Alice didn't send anything to fill in. Try asking again.",
+        );
+      }
+
+      for (const [index, field] of filled.entries()) {
+        setValue(field.key, field.value, {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+        if (index < filled.length - 1 && !prefersReducedMotion()) {
+          await wait(AGENT_STAGGER_MS);
+        }
+      }
+
+      return `Filled in ${filled.map((field) => field.label).join(', ')}.`;
+    },
   });
 
   return (

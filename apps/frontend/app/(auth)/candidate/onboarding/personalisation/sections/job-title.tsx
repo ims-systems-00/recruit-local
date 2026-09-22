@@ -30,7 +30,7 @@ import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 import { MAX_JOB_TITLES_STEP_SELECTION } from '@/services/job-title/job-title.validation';
 import { useInfiniteJobTitles } from '@/services/job-title/job-title.client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCatalogStepAgent } from './use-catalog-step-agent';
+import { useCatalogPageAction } from '@/components/ai-chat/use-catalog-page-action';
 import { RemovableChip } from '@/components/removable-chip';
 import { AnimatePresence, motion } from 'framer-motion';
 import { easeOut } from '@/lib/motion';
@@ -92,7 +92,7 @@ export default function JobTitleSection({
   const selectedJobTitles = watch('jobTitle');
 
   // Lets Alice see this step and tick job titles on it. Saving is still Next.
-  useCatalogStepAgent({
+  useCatalogPageAction({
     kind: 'job_title',
     label: 'job titles',
     question: 'What type of job role are you looking for?',

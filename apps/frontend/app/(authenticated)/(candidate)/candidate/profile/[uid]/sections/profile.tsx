@@ -41,6 +41,10 @@ import { Switch } from '@/components/ui/switch';
 import Saves from './saved/saves';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import {
+  usePageAction,
+  usePageContext,
+} from '@/components/ai-chat/page-context';
 
 export default function Profile({
   jobProfileData,
@@ -63,10 +67,24 @@ export default function Profile({
   const [showProgreesInfo, setShowProgreesInfo] = useState(true);
   const [showOpenToWorkAlert, setShowOpenToWorkAlert] = useState(false);
 
-  // const existingJobTitles = useMemo(
-  //   () => (jobProfileDetails?.jobTitle as unknown as JobTitle[]) ?? [],
-  //   [jobProfileDetails?.jobTitle],
-  // );
+  /**
+   * Stable identities, because `EditProfile` resets its chip state whenever one
+   * of these changes. A bare `?? []` is a new array on every render of this
+   * component, which would throw away a selection Alice had just filled in
+   * while the user was still looking at it.
+   */
+  const existingJobTitles = useMemo(
+    () => jobProfileDetails?.jobTitle ?? [],
+    [jobProfileDetails?.jobTitle],
+  );
+  const existingIndustries = useMemo(
+    () => jobProfileDetails?.industry ?? [],
+    [jobProfileDetails?.industry],
+  );
+  const existingWorkModes = useMemo(
+    () => jobProfileDetails?.workMode ?? [],
+    [jobProfileDetails?.workMode],
+  );
 
   const { updateJobProfile, isPending } = useUpdateJobProfile();
   const methods = useForm<JobProfileUpdateInput>({
@@ -104,6 +122,8 @@ export default function Profile({
     formState: { errors },
     handleSubmit,
     reset,
+    setValue,
+    watch,
   } = methods;
 
   const onSubmit = async (data: JobProfileUpdateInput) => {
@@ -230,6 +250,52 @@ export default function Profile({
     setIsEditMode(true);
     setActiveTab('about');
   }, []);
+
+  /**
+   * What Alice sees when the profile is being read rather than edited.
+   *
+   * `EditProfile` registers its own context while the form is open, and this
+   * one goes quiet — only the last context registered is sent, so two live at
+   * once would hide each other. Nothing here is a permission check: it decides
+   * what Alice is told, and the save behind every field is still authorized on
+   * the server.
+   */
+  usePageContext(
+    isEditMode
+      ? null
+      : {
+          page: 'candidate.profile',
+          summary: isAnotherUser
+            ? "Another candidate's profile, as the user is viewing it. They cannot change anything here."
+            : 'The user\'s own candidate profile, in read mode. Pressing "Edit Profile" opens a form ' +
+              'covering their name, job titles, summary, location, contact number, industries, ' +
+              'experience level, work modes, portfolio, skills and interests.',
+          state: {
+            ownProfile: !isAnotherUser,
+            editing: false,
+            completion: jobProfileDetails?.completion?.percentage ?? 0,
+          },
+        },
+  );
+
+  /**
+   * Opening the editor is a UI toggle, not a write: it renders the form Alice
+   * can then fill. Without it she can only tell the user to press the button
+   * themselves, which is the same click with an extra step.
+   */
+  usePageAction({
+    enabled: !isAnotherUser && !isEditMode,
+    name: 'open_profile_editor',
+    description:
+      "Open the edit form on the user's profile page, so its fields can be filled in. " +
+      'Call this when they ask to change something on their profile and the form is not open yet. ' +
+      'It only reveals the form; it changes and saves nothing.',
+    parameters: { type: 'object', properties: {} },
+    handler: () => {
+      handleEdit();
+      return 'Opened the profile editor.';
+    },
+  });
 
   const handleCancelEdit = useCallback(() => {
     setIsEditMode(false);
@@ -555,12 +621,14 @@ export default function Profile({
       <div className="px-spacing-4xl pb-spacing-4xl">
         {isEditMode ? (
           <EditProfile
-            existingIndustries={jobProfileDetails?.industry ?? []}
-            existingWorkModes={jobProfileDetails?.workMode ?? []}
+            existingIndustries={existingIndustries}
+            existingWorkModes={existingWorkModes}
             register={register}
             control={control}
             errors={errors}
-            existingJobTitles={jobProfileDetails?.jobTitle ?? []}
+            existingJobTitles={existingJobTitles}
+            setValue={setValue}
+            watch={watch}
           />
         ) : (
           <Tabs

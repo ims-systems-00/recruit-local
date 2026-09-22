@@ -19,7 +19,7 @@ import { jobProfileKeys, useUpdateJobProfile } from '@/services/job-profile';
 import { MAX_EXPERIENCE_LEVELS_STEP_SELECTION } from '@/services/experience-level/experience-level.validation';
 import { useInfiniteExperienceLevels } from '@/services/experience-level/experience-level.client';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useCatalogStepAgent } from './use-catalog-step-agent';
+import { useCatalogPageAction } from '@/components/ai-chat/use-catalog-page-action';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -94,7 +94,7 @@ export default function ExperienceLevelSection({
   const levelsFullyLoaded = !isLoading && !hasNextPage;
 
   // Lets Alice see this step and choose a level on it. Saving is still Continue.
-  useCatalogStepAgent({
+  useCatalogPageAction({
     kind: 'experience_level',
     label: 'experience levels',
     question: 'What is your experience level?',
