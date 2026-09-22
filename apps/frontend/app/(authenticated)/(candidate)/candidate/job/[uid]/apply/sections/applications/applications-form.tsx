@@ -23,6 +23,28 @@ import { useState } from 'react';
 import CvUploadModal from './cv-upload-modal';
 import AttachmentForm, { UploadedFile } from '@/components/attachment-form';
 import AttachmentItem from '@/components/attachment-item';
+import { usePageContext } from '@/components/ai-chat/page-context';
+import { excerpt } from '@/components/ai-chat/page-state';
+
+/** How much of an unanswered question's text identifies it in the page state. */
+const QUESTION_LABEL_CHARS = 60;
+
+/**
+ * Job titles have no length limit on the server, and this one goes into the page
+ * summary, which the server caps at 300 characters and rejects the request over.
+ */
+const TITLE_CHARS = 80;
+
+/** Most unanswered questions named at once, so the state stays inside its cap. */
+const MAX_LISTED_QUESTIONS = 5;
+
+/** An answer is present when it is a non-empty string or a non-empty selection. */
+const isAnswered = (answer: unknown): boolean => {
+  if (Array.isArray(answer)) return answer.length > 0;
+  if (typeof answer === 'string') return answer.trim().length > 0;
+
+  return answer !== undefined && answer !== null;
+};
 
 export default function ApplicationsForm({ job }: { job: JobData }) {
   const { data: session } = useSession();
@@ -80,6 +102,65 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
       shouldValidate: true,
     });
   };
+
+  const queries = job?.additionalQueries ?? [];
+  const answers = watch('answers') ?? [];
+  const shortTitle = job?.title?.slice(0, TITLE_CHARS);
+
+  // Paired by position: `answers` is built from `additionalQueries` in the same
+  // order, in `defaultValues` above.
+  const unansweredRequired = queries.filter(
+    (query, index) => query.isRequired && !isAnswered(answers[index]?.answer),
+  );
+
+  /**
+   * What Alice can see of this form — and deliberately nothing she can do to it.
+   *
+   * **This page registers no actions, and that is the design, not an omission.**
+   * The onboarding steps and the profile editor let her fill fields because they
+   * hold facts the user already has, picked from catalogs whose ids the server
+   * verifies. An application is different in kind: it is new, unverifiable
+   * claims, and the screening answers are graded against the `expectedAnswer`
+   * the recruiter keyed on each question, feeding the match score that orders
+   * applicants. An assistant filling those in would make that ranking measure
+   * her instead of the candidate.
+   *
+   * So she reads the form and coaches — what is still blank, what a question is
+   * getting at — and the candidate writes every word of it and presses Apply.
+   *
+   * The questions themselves are not repeated here. `get_job` already returns
+   * them with their text, type, options and `isRequired`, and the page state is
+   * capped at 2,000 serialized characters; this carries only what the tool
+   * cannot know, which is how far the user has got.
+   */
+  usePageContext({
+    page: 'candidate.job.apply',
+    summary:
+      `The user's own application to "${shortTitle ?? 'this job'}", not yet submitted. ` +
+      'They fill this form in themselves and press Apply to send it.',
+    state: {
+      jobId: job?._id,
+      jobTitle: shortTitle,
+      // Deduped because the API validates each entry against the enum but caps
+      // neither the array's length nor its repeats, and this goes into a state
+      // the server rejects wholesale when it is too large.
+      requires: [...new Set(job?.requiredDocuments ?? [])],
+      coverLetter: excerpt(watch('coverLetter')),
+      portfolioUrl: excerpt(watch('portfolioUrl')),
+      resumeAttached: Boolean(resumeStorage?.Key),
+      currentSalary: watch('currentSalary') ?? null,
+      expectedSalary: watch('expectedSalary') ?? null,
+      questions: {
+        total: queries.length,
+        answered: queries.filter((_, index) =>
+          isAnswered(answers[index]?.answer),
+        ).length,
+        unansweredRequired: unansweredRequired
+          .slice(0, MAX_LISTED_QUESTIONS)
+          .map((query) => query.question?.slice(0, QUESTION_LABEL_CHARS)),
+      },
+    },
+  });
 
   return (
     <div className=" space-y-spacing-4xl">

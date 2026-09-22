@@ -55,6 +55,7 @@ import {
   usePageContext,
 } from '@/components/ai-chat/page-context';
 import { useCatalogPageAction } from '@/components/ai-chat/use-catalog-page-action';
+import { excerpt } from '@/components/ai-chat/page-state';
 import { AGENT_STAGGER_MS, prefersReducedMotion, wait } from '@/lib/motion';
 import { SelectItem, SelectValue } from '@/components/ui/select';
 import {
@@ -104,24 +105,6 @@ const FILLABLE_FIELDS = [
 ] as const;
 
 type FillableKey = (typeof FILLABLE_FIELDS)[number]['key'];
-
-/** Longest a single field may be in the page state. See `usePageContext` below. */
-const STATE_EXCERPT_CHARS = 100;
-
-/**
- * A field as Alice is shown it: null when empty, the text itself when short,
- * and a cut-off opening with the real length when not.
- */
-const excerpt = (value?: string | null) => {
-  const text = value?.trim();
-  if (!text) return null;
-  if (text.length <= STATE_EXCERPT_CHARS) return text;
-
-  return {
-    startsWith: `${text.slice(0, STATE_EXCERPT_CHARS)}…`,
-    length: text.length,
-  };
-};
 
 /**
  * Validates what Alice sent before any of it reaches the form.

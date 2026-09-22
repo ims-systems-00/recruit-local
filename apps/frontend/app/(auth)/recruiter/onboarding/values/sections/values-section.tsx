@@ -32,6 +32,7 @@ import {
   valuesStepSchema,
 } from '@/services/tenants/tenants.validation';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCatalogPageAction } from '@/components/ai-chat/use-catalog-page-action';
 import { RemovableChip } from '@/components/removable-chip';
 import { AnimatePresence } from 'framer-motion';
 
@@ -124,6 +125,49 @@ export default function ValuesSection({
   useEffect(() => {
     setSavedValues(getStepValues(existingValues, types));
   }, [existingValues]);
+
+  // Lets Alice see this round and tick values on it. Saving is still Continue.
+  // Each round is one value type; the list is paginated, so ids are checked on
+  // the server against this round's type rather than against what has loaded.
+  //
+  // `page` and `summary` are spelled out rather than defaulted: the hook's own
+  // defaults describe a candidate setting up their own profile, and these values
+  // belong to the organisation, not to the recruiter filling them in. That
+  // distinction is worth the words — applicants are ranked partly by comparing
+  // their values against these.
+  useCatalogPageAction({
+    kind: 'value',
+    valueType: types[0],
+    page: `recruiter.onboarding.${onboardingStep}`,
+    summary:
+      `Employer setup step: "${title.slice(0, 120)}" The recruiter chooses up to ` +
+      `${MAX_VALUES_STEP_SELECTION} workplace values for their organisation, not for ` +
+      'themselves, then presses Continue to save.',
+    label: 'workplace values',
+    max: MAX_VALUES_STEP_SELECTION,
+    selected: savedValues.map((value) => ({
+      _id: value._id,
+      name: value.label,
+    })),
+    extraState: {
+      organisation: tenantName,
+      popularChoices: topThreeValues.map((value) => value.label),
+    },
+    apply: (options) => {
+      setValue(
+        'values',
+        options.map((option) => option._id),
+        { shouldDirty: true, shouldValidate: true },
+      );
+      setSavedValues(
+        options.map((option) => ({
+          _id: option._id,
+          label: option.name,
+          type: types[0],
+        })),
+      );
+    },
+  });
 
   const isMaxSelected = selectedValues.length >= MAX_VALUES_STEP_SELECTION;
 
