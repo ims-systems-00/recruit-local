@@ -28,14 +28,18 @@ export const listPipelineStagesTool: AgentTool<ListPipelineStagesInput> = {
     "List the hiring pipeline stages (board columns) for one job, in board order, with the number of applications " +
     "in each. Use it whenever the user asks what stages a job has, where candidates are in the process, or before " +
     "moving anyone: stage names are set per job, so the ids here are the only valid input to move_applications. " +
-    "Call it again before creating a stage, to check the job does not already have one that fits.",
+    "Call it again before creating a stage, to check the job does not already have one that fits. " +
+    "The jobId must be the job the user's page says they are on, or one they named themselves — never a job you " +
+    "picked from list_jobs, because every board has similar stage names and the wrong one looks right.",
 
   parameters: {
     type: "object",
     properties: {
       jobId: {
         type: "string",
-        description: "The job whose board to read. The `_id` from list_jobs, not a title.",
+        description:
+          "The job whose board to read — the one the user is looking at or named. An `_id`, not a title. " +
+          "If you do not know which job they mean, ask them rather than choosing one.",
       },
     },
     required: ["jobId"],

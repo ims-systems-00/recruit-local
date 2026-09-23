@@ -50,8 +50,13 @@ const resolve = async (input: CreatePipelineStageInput, ctx: AgentToolContext): 
   const existing = board.stages.find((stage) => sameLabel(stage.label, label));
 
   if (existing) {
+    // Names the job. A refusal that says only "this job" reads as settled when
+    // the jobId was wrong in the first place, and the user is told their board
+    // already has a stage that is in fact on somebody else's.
     throw new BadRequestException(
-      `This job already has a stage called "${existing.label}". Use that one rather than adding a second stage with the same name.`
+      `"${board.job?.title ?? "That job"}" already has a stage called "${existing.label}". ` +
+        "Say which job you checked. If that is the one they meant, use the existing stage rather than adding a " +
+        "second with the same name; if it is not, ask them which job they meant."
     );
   }
 
@@ -93,7 +98,9 @@ export const createPipelineStageTool: AgentTool<CreatePipelineStageInput> = {
     properties: {
       jobId: {
         type: "string",
-        description: "The job whose board gains the stage. The `_id` from list_jobs.",
+        description:
+          "The job whose board gains the stage — the one the user is looking at or named, never one you chose. " +
+          "If you do not know which job they mean, ask them before calling this.",
       },
       label: {
         type: "string",
