@@ -39,6 +39,10 @@ import PendingWriteCard from './pending-write-card';
 import AiChatSettings from './ai-chat-settings';
 import AiChatHistory from './ai-chat-history';
 import { useAgentPage } from './page-context';
+import Image from 'next/image';
+
+import aiBotLogo from '@/public/images/Alice_Logo.svg';
+import aiBot from '@/public/images/alice_icon.svg';
 
 type Message = {
   id: number;
@@ -110,19 +114,19 @@ function BotAvatar({ variant = 'chat' }: { variant?: 'chat' | 'launcher' }) {
   const containerClasses =
     variant === 'launcher'
       ? 'w-14 h-14 border-[3px] border-white bg-bot-cyan'
-      : 'w-[38px] h-[38px] border border-gray-200 bg-white max-sm:w-8 max-sm:h-8';
+      : 'w-[38px] h-[38px] bg-bg-gray-solid-secondary max-sm:w-8 max-sm:h-8';
   return (
     <div
       className={`relative grid place-items-center shrink-0 rounded-full text-bot-dark ${containerClasses}`}
       aria-hidden="true"
     >
-      <Bot
-        size={18}
-        strokeWidth={1.8}
-        className="relative z-10 w-6 h-6 p-[3px] rounded-md text-[#122136] bg-bot-cyan max-sm:w-5 max-sm:h-5"
+      <Image
+        className=" max-w-4.5 max-h-4.5"
+        src={aiBot}
+        width={18}
+        height={18}
+        alt="AI Bot"
       />
-      <span className="absolute top-[5px] left-[18px] w-[2px] h-[5px] bg-bot-dark" />
-      <span className="absolute top-[2px] left-[16px] w-1 h-1 rounded-full bg-bot-dark" />
     </div>
   );
 }
@@ -330,7 +334,7 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
         {/* Header */}
         <header className="min-h-[64px] flex items-center justify-between px-[18px] py-[14px] border-b border-gray-200 shrink-0 max-sm:min-h-[56px] max-sm:py-3 max-sm:px-[14px]">
           <div className="flex items-center gap-[11px]">
-            <BotAvatar />
+            {/* <BotAvatar />
             <div>
               <h2 className="mb-[2px] text-base tracking-[0.03em] leading-[1.1]">
                 ALICE
@@ -339,7 +343,14 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
                 <span className="inline-block w-[7px] h-[7px] mr-[5px] rounded-full bg-green-500" />{' '}
                 Active now
               </p>
-            </div>
+            </div> */}
+            <Image
+              className=" max-w-[110px] max-h-10"
+              src={aiBotLogo}
+              width={80}
+              height={32}
+              alt="AI Bot Logo"
+            />
           </div>
           <div className="flex gap-2">
             {isLoggedIn && (
