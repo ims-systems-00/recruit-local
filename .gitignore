@@ -13,5 +13,4 @@ TESTABLE-FEATURES.md
 .env
 .env.*
 !.env.example
-analysis.md
-design-pattern-analysis.md
+/audit
