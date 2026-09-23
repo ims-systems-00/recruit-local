@@ -6,6 +6,7 @@ import { CustomJwtPayload } from "../token";
 import { IUserDoc } from "../../../models";
 import { BadRequestException, logger, NotFoundException, SessionExpiredException } from "../../../common/helper";
 import { VERIFICATION_TOKEN_TYPE_ENUMS, EMAIL_VERIFICATION_STATUS_ENUMS } from "../../../models/constants";
+import { ACCOUNT_TYPE_ENUMS } from "@rl/types";
 import {
   GenerateSendAndStoreRegistrationTokenInput,
   VerifyRecoveryInput,
@@ -14,6 +15,16 @@ import {
   LogoutInput,
   UserPayload,
 } from "./auth.interface";
+import { isSelfRegisterableAccountType } from "./auth.constants";
+
+/**
+ * Registration may only ever produce an account type a visitor is allowed to
+ * create for themselves. Platform admins come from the seeder, so no request to
+ * this endpoint — invited or not — may set that type.
+ */
+const assertSelfRegisterableType = (type?: ACCOUNT_TYPE_ENUMS): void => {
+  if (!isSelfRegisterableAccountType(type)) throw new BadRequestException("Invalid account type.");
+};
 
 export const _generateSendAndStoreRegistrationToken = async ({
   userId,
@@ -43,6 +54,10 @@ const handleInvitationRegistration = async (payload: UserPayload): Promise<IUser
   const decoded = (await tokenService.verifyToken(payload.invitationToken!)) as CustomJwtPayload;
   payload.email = decoded.email!;
   payload.type = decoded.type;
+
+  // An invitation cannot mint a platform admin either — those are seeded only.
+  assertSelfRegisterableType(payload.type);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload.tenantId = decoded.tenantId as any;
   payload.role = decoded.role;
@@ -63,6 +78,8 @@ const handleInvitationRegistration = async (payload: UserPayload): Promise<IUser
 };
 
 const handleDirectRegistration = async (payload: UserPayload): Promise<IUserDoc> => {
+  assertSelfRegisterableType(payload.type);
+
   const isExists = await userService.getUserByEmail(payload.email);
   if (isExists) throw new BadRequestException("Email already exists.");
 
@@ -73,7 +90,6 @@ const handleDirectRegistration = async (payload: UserPayload): Promise<IUserDoc>
 };
 
 export const register = async (payload: UserPayload): Promise<IUserDoc> => {
-  // todo: if role is system-admin, need to do some checking.
   if (!payload.invitationToken) return handleDirectRegistration(payload);
 
   return handleInvitationRegistration(payload);
