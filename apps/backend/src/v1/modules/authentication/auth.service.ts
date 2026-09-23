@@ -171,7 +171,8 @@ export const verifyRecovery = async ({
   accessToken,
   refreshToken,
 }: VerifyRecoveryInput): Promise<IUserDoc> => {
-  // Remove the previous tokens if the user is logged in
+  // Removes only the caller's own pair, and only if they sent one. The full
+  // revocation happens after the password is saved — see below.
   await tokenService.removeTokensPair({ accessToken, refreshToken });
 
   const isExists = await verificationTokenService.findOne({
@@ -186,6 +187,21 @@ export const verifyRecovery = async ({
   user.password = password;
   await user.save();
   await verificationTokenService.remove({ _id: isExists._id!.toString() });
+
+  // A reset has to end every *other* session, not just the browser doing the
+  // reset — which in the forgot-password flow is usually logged out anyway, so
+  // the `removeTokensPair` above clears nothing. Someone resetting because their
+  // account is compromised would otherwise leave the intruder signed in.
+  //
+  // Dropping the stored pairs is also what revokes the refresh tokens: a leaked
+  // one then misses in `findRefreshToken` during `refreshAccessToken`, so it
+  // cannot be traded for a fresh access token. Without this, the password change
+  // alone does not stop it — `passwordChangeAt` is only consulted by
+  // `deserializeUser`, and a refreshed token carries a new `iat` that passes.
+  //
+  // Runs before the caller mints its replacement pair, so the session that did
+  // the reset stays signed in.
+  await tokenService.removeAllTokenPairs(user._id.toString());
 
   return user;
 };

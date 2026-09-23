@@ -161,15 +161,18 @@ export const verifyRecovery = async ({ req }: ControllerParams): Promise<ApiResp
     statusCode: StatusCodes.OK,
     data: responseData,
     fieldName: "user",
+    // The freshly minted pair, not the request's own tokens: those are the
+    // pre-reset ones, and `verifyRecovery` has just revoked them along with
+    // every other session.
     cookies: [
       {
         name: "__imsat__",
-        value: accessToken,
+        value: accessTokenRes,
         options: cookieOptions,
       },
       {
         name: "__imsrt__",
-        value: refreshToken,
+        value: refreshTokenRes,
         options: cookieOptions,
       },
     ],
