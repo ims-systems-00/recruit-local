@@ -1,11 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import {
-  ApiResponse,
-  ControllerParams,
-  formatCursorListResponse,
-  NotFoundException,
-  UnauthorizedException,
-} from "../../../common/helper";
+import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
 import * as jobService from "./job.service";
 import { getProfileKeywords } from "./keyword.service";
 import { JobAbilityBuilder, JobAuthZEntity, ALL_JOB_FIELDS } from "@rl/authz";
@@ -21,7 +15,6 @@ import { salaryUpdateQueue } from "../../../queue/salaryUpdateQueue";
 import { enqueueProfileFeedRebuild } from "../../../queue/profileFeedRebuildQueue";
 import { enqueueJobCleanup } from "../../../queue/jobCleanupQueue";
 import { readFeedIds } from "./feed.service";
-import { list as listApplications } from "../application/application.service";
 import pick from "lodash/pick";
 
 const PUBLIC_JOB_FIELDS = [
@@ -396,39 +389,5 @@ export const publicGet = async ({ req }: ControllerParams) => {
     statusCode: StatusCodes.OK,
     data: toJobResponse(pick(job, PUBLIC_JOB_DETAIL_FIELDS)),
     fieldName: "job",
-  });
-};
-
-export const allApplicationsForJob = async ({ req }: ControllerParams) => {
-  const abilityBuilder = new JobAbilityBuilder(req.session);
-  const ability = abilityBuilder.getAbility();
-
-  const job = await jobService.getOne({
-    query: { _id: req.params.id },
-  });
-
-  if (!job || !ability.can(AbilityAction.Read, new JobAuthZEntity(job))) {
-    throw new UnauthorizedException("You do not have permission to view applications for this job.");
-  }
-
-  const results = await listApplications({
-    query: { jobId: req.params.id },
-    options: {
-      sort: { createdAt: -1 },
-    },
-  });
-
-  // todo: sanitize applications based on their own permissions
-
-  // The application list is cursor-paged now, so there is no totals block to
-  // format — pass the cursor shape straight through.
-  const { data, pagination } = formatCursorListResponse({ ...results, nextCursor: null });
-
-  return new ApiResponse({
-    message: "Applications retrieved for the job.",
-    statusCode: StatusCodes.OK,
-    data: data,
-    fieldName: "applications",
-    pagination,
   });
 };
