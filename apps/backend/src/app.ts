@@ -5,7 +5,13 @@ import morgan from "morgan";
 import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
 import hpp from "hpp";
-import { globalRateLimiter, customQueryParser } from "./common/middlewares";
+import {
+  globalRateLimiter,
+  customQueryParser,
+  bullBoardRateLimiter,
+  deserializeUser,
+  platformAdminOnly,
+} from "./common/middlewares";
 import { globalErrorHandler, NotFoundException } from "./common/helper";
 import { CORS_ORIGIN } from "./common/constants";
 import { setupApiRoutes } from "./v1/routes/api-routes";
@@ -51,8 +57,14 @@ app.use(hpp());
 // Custom query parser
 app.use(customQueryParser);
 
-const bullBoard = initBullBoard(); // protect later
-app.use(bullBoard.path, bullBoard.router);
+// The board reads and mutates every queue, so it is gated on a platform-admin
+// session. It is mounted outside `setupApiRoutes`, which means the app-wide
+// `deserializeUser` never reaches it — the chain below is the only thing
+// standing in front of it, and the order matters: limit, identify, authorize.
+const bullBoard = initBullBoard();
+if (bullBoard) {
+  app.use(bullBoard.path, bullBoardRateLimiter, deserializeUser, platformAdminOnly, bullBoard.router);
+}
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Active" });

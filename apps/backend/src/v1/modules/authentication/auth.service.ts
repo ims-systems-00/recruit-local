@@ -1,11 +1,13 @@
+import bcrypt from "bcryptjs";
 import * as tokenService from "../token";
 import * as userService from "../user";
 import * as verificationTokenService from "../verification-token";
 import { AccountRecoveryEmail, AccountVerificationEmail } from "../email";
 import { CustomJwtPayload } from "../token";
 import { IUserDoc } from "../../../models";
-import { BadRequestException, logger, NotFoundException, SessionExpiredException } from "../../../common/helper";
+import { BadRequestException, logger, SessionExpiredException } from "../../../common/helper";
 import { VERIFICATION_TOKEN_TYPE_ENUMS, EMAIL_VERIFICATION_STATUS_ENUMS } from "../../../models/constants";
+import { ACCOUNT_TYPE_ENUMS } from "@rl/types";
 import {
   GenerateSendAndStoreRegistrationTokenInput,
   VerifyRecoveryInput,
@@ -14,6 +16,31 @@ import {
   LogoutInput,
   UserPayload,
 } from "./auth.interface";
+import { isSelfRegisterableAccountType } from "./auth.constants";
+
+/**
+ * The single answer `/auth/login` gives for both a missing account and a wrong
+ * password. Telling the two apart turns the endpoint into an oracle for which
+ * email addresses are registered.
+ */
+const INVALID_CREDENTIALS_MESSAGE = "Invalid email or password.";
+
+/**
+ * Compared against when no user matches, so the miss costs roughly what a real
+ * bcrypt check costs. Without it the "no such account" path returns noticeably
+ * faster and the timing alone answers the same question. It is a real cost-12
+ * hash of a throwaway string — nothing can match it.
+ */
+const DUMMY_PASSWORD_HASH = "$2a$12$bmx0O0vqtINeJ4uqf8.1Z.ScH3Urk1gxJvI/mbC8rSVl71HStvrKm";
+
+/**
+ * Registration may only ever produce an account type a visitor is allowed to
+ * create for themselves. Platform admins come from the seeder, so no request to
+ * this endpoint — invited or not — may set that type.
+ */
+const assertSelfRegisterableType = (type?: ACCOUNT_TYPE_ENUMS): void => {
+  if (!isSelfRegisterableAccountType(type)) throw new BadRequestException("Invalid account type.");
+};
 
 export const _generateSendAndStoreRegistrationToken = async ({
   userId,
@@ -43,6 +70,10 @@ const handleInvitationRegistration = async (payload: UserPayload): Promise<IUser
   const decoded = (await tokenService.verifyToken(payload.invitationToken!)) as CustomJwtPayload;
   payload.email = decoded.email!;
   payload.type = decoded.type;
+
+  // An invitation cannot mint a platform admin either — those are seeded only.
+  assertSelfRegisterableType(payload.type);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload.tenantId = decoded.tenantId as any;
   payload.role = decoded.role;
@@ -63,6 +94,8 @@ const handleInvitationRegistration = async (payload: UserPayload): Promise<IUser
 };
 
 const handleDirectRegistration = async (payload: UserPayload): Promise<IUserDoc> => {
+  assertSelfRegisterableType(payload.type);
+
   const isExists = await userService.getUserByEmail(payload.email);
   if (isExists) throw new BadRequestException("Email already exists.");
 
@@ -73,7 +106,6 @@ const handleDirectRegistration = async (payload: UserPayload): Promise<IUserDoc>
 };
 
 export const register = async (payload: UserPayload): Promise<IUserDoc> => {
-  // todo: if role is system-admin, need to do some checking.
   if (!payload.invitationToken) return handleDirectRegistration(payload);
 
   return handleInvitationRegistration(payload);
@@ -84,10 +116,14 @@ export const login = async ({ email, password, accessToken, refreshToken }: Logi
   await tokenService.removeTokensPair({ accessToken, refreshToken });
 
   const user = await userService.getUserByEmail(email).select("+password");
-  if (!user) throw new BadRequestException("User not found.");
+  if (!user) {
+    // Burn the same time a real check would, then fail with the same message.
+    await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
+    throw new BadRequestException(INVALID_CREDENTIALS_MESSAGE);
+  }
 
   const isMatch = await user.correctPassword(password);
-  if (!isMatch) throw new BadRequestException("Invalid email or password.");
+  if (!isMatch) throw new BadRequestException(INVALID_CREDENTIALS_MESSAGE);
 
   return user;
 };
@@ -117,22 +153,30 @@ export const verifyRegistration = async (token: string): Promise<IUserDoc> => {
   return user;
 };
 
-export const resendVerification = async (email: string): Promise<IUserDoc> => {
+/**
+ * Returns nothing, and returns it the same way whether or not the address has an
+ * account. The caller is unauthenticated and supplies only an email, so a 404
+ * for "no such user" — or a distinct "already verified" error — would let anyone
+ * test addresses, and the old `IUserDoc` return handed back that user's type,
+ * role, tenant and KYC status on top.
+ */
+export const resendVerification = async (email: string): Promise<void> => {
   const user = await userService.getUserByEmail(email);
-  if (!user) throw new NotFoundException("User not found.");
+  if (!user) return;
 
-  if (user.emailVerificationStatus === EMAIL_VERIFICATION_STATUS_ENUMS.VERIFIED) {
-    throw new BadRequestException("Email is already verified.");
-  }
+  if (user.emailVerificationStatus === EMAIL_VERIFICATION_STATUS_ENUMS.VERIFIED) return;
 
   await _generateSendAndStoreRegistrationToken({ userId: user._id!.toString(), receiver: user.email });
-
-  return user;
 };
 
-export const recoverAccount = async (email: string): Promise<IUserDoc> => {
+/**
+ * Silent on unknown addresses: the controller answers "recovery link sent"
+ * either way. A 404 here would make this the easiest endpoint on the API for
+ * harvesting which emails hold accounts.
+ */
+export const recoverAccount = async (email: string): Promise<void> => {
   const user = await userService.getUserByEmail(email);
-  if (!user) throw new NotFoundException("User not found.");
+  if (!user) return;
 
   const recoveryToken = tokenService.generateToken({
     payload: { id: user._id!.toString() },
@@ -145,8 +189,6 @@ export const recoverAccount = async (email: string): Promise<IUserDoc> => {
   emailObj.to(email).send();
 
   await verificationTokenService.create({ token: recoveryToken, type: VERIFICATION_TOKEN_TYPE_ENUMS.FORGOT_PASS });
-
-  return user;
 };
 
 export const verifyRecovery = async ({
@@ -155,7 +197,8 @@ export const verifyRecovery = async ({
   accessToken,
   refreshToken,
 }: VerifyRecoveryInput): Promise<IUserDoc> => {
-  // Remove the previous tokens if the user is logged in
+  // Removes only the caller's own pair, and only if they sent one. The full
+  // revocation happens after the password is saved — see below.
   await tokenService.removeTokensPair({ accessToken, refreshToken });
 
   const isExists = await verificationTokenService.findOne({
@@ -170,6 +213,21 @@ export const verifyRecovery = async ({
   user.password = password;
   await user.save();
   await verificationTokenService.remove({ _id: isExists._id!.toString() });
+
+  // A reset has to end every *other* session, not just the browser doing the
+  // reset — which in the forgot-password flow is usually logged out anyway, so
+  // the `removeTokensPair` above clears nothing. Someone resetting because their
+  // account is compromised would otherwise leave the intruder signed in.
+  //
+  // Dropping the stored pairs is also what revokes the refresh tokens: a leaked
+  // one then misses in `findRefreshToken` during `refreshAccessToken`, so it
+  // cannot be traded for a fresh access token. Without this, the password change
+  // alone does not stop it — `passwordChangeAt` is only consulted by
+  // `deserializeUser`, and a refreshed token carries a new `iat` that passes.
+  //
+  // Runs before the caller mints its replacement pair, so the session that did
+  // the reset stays signed in.
+  await tokenService.removeAllTokenPairs(user._id.toString());
 
   return user;
 };

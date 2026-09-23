@@ -5,6 +5,7 @@ mongodb-replica.yml
 .github
 .test-scripts/
 CLAUDE.md
+.claude/skills/
 todo/
 TESTABLE-FEATURES.md
 
@@ -12,3 +13,4 @@ TESTABLE-FEATURES.md
 .env
 .env.*
 !.env.example
+/audit

@@ -115,13 +115,14 @@ export const verifyRegistration = async ({ req }: ControllerParams): Promise<Api
 export const resendVerification = async ({ req }: ControllerParams): Promise<ApiResponse> => {
   const { email } = req.body;
 
-  const user = await authService.resendVerification(email as string);
+  await authService.resendVerification(email as string);
 
+  // No user in the response: the caller is unauthenticated and proved only that
+  // they can type an email address. The message is the same whether or not that
+  // address has an account.
   return new ApiResponse({
     message: "Account verification link sent to your email.",
     statusCode: StatusCodes.OK,
-    data: toAuthUserResponse(user),
-    fieldName: "user",
   });
 };
 
@@ -161,15 +162,18 @@ export const verifyRecovery = async ({ req }: ControllerParams): Promise<ApiResp
     statusCode: StatusCodes.OK,
     data: responseData,
     fieldName: "user",
+    // The freshly minted pair, not the request's own tokens: those are the
+    // pre-reset ones, and `verifyRecovery` has just revoked them along with
+    // every other session.
     cookies: [
       {
         name: "__imsat__",
-        value: accessToken,
+        value: accessTokenRes,
         options: cookieOptions,
       },
       {
         name: "__imsrt__",
-        value: refreshToken,
+        value: refreshTokenRes,
         options: cookieOptions,
       },
     ],

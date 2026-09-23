@@ -51,4 +51,20 @@ const speechRateLimiter = rateLimit({
   },
 });
 
-export { globalRateLimiter, agentRateLimiter, speechRateLimiter };
+/**
+ * Limiter for the BullMQ dashboard.
+ *
+ * Keyed on the IP, not the user: it fronts `deserializeUser`, so the requests
+ * worth limiting here are the unauthenticated ones probing for an open board.
+ * Tight, because a legitimate admin loads the UI a handful of times, and the
+ * board's own polling is well inside this.
+ */
+const bullBoardRateLimiter = rateLimit({
+  windowMs: parseInt(process.env.BULL_BOARD_RATE_LIMIT_WINDOW_MS || "60000"),
+  max: parseInt(process.env.BULL_BOARD_RATE_LIMIT_MAX || "120"),
+  handler: (req: Request, res: Response, next: NextFunction) => {
+    return next(new TooManyRequestsException());
+  },
+});
+
+export { globalRateLimiter, agentRateLimiter, speechRateLimiter, bullBoardRateLimiter };

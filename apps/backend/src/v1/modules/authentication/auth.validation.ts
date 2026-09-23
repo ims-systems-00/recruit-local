@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { ACCOUNT_TYPE_ENUMS } from "@rl/types";
+import { SELF_REGISTERABLE_ACCOUNT_TYPES } from "./auth.constants";
 
 export const registerBodySchema = Joi.object({
   firstName: Joi.string().max(20).required().label("First Name"),
@@ -7,7 +7,7 @@ export const registerBodySchema = Joi.object({
   email: Joi.string().max(50).email().required().label("Email"),
   password: Joi.string().min(8).max(50).required().label("Password"),
   type: Joi.string()
-    .valid(...Object.values(ACCOUNT_TYPE_ENUMS))
+    .valid(...SELF_REGISTERABLE_ACCOUNT_TYPES)
     .required()
     .label("Type"),
   invitationToken: Joi.string().optional().label("Invitation Token"),
