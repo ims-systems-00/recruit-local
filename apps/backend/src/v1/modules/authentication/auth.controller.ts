@@ -115,13 +115,14 @@ export const verifyRegistration = async ({ req }: ControllerParams): Promise<Api
 export const resendVerification = async ({ req }: ControllerParams): Promise<ApiResponse> => {
   const { email } = req.body;
 
-  const user = await authService.resendVerification(email as string);
+  await authService.resendVerification(email as string);
 
+  // No user in the response: the caller is unauthenticated and proved only that
+  // they can type an email address. The message is the same whether or not that
+  // address has an account.
   return new ApiResponse({
     message: "Account verification link sent to your email.",
     statusCode: StatusCodes.OK,
-    data: toAuthUserResponse(user),
-    fieldName: "user",
   });
 };
 
