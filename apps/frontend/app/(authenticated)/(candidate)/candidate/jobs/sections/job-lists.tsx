@@ -17,7 +17,7 @@ export default function JobLists({ filters }: { filters: JobListFilters }) {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useInfiniteJobs({ ...filters, matched: true });
+  } = useInfiniteJobs(filters);
 
   const jobs = data?.pages.flatMap((page) => page.docs) ?? [];
 

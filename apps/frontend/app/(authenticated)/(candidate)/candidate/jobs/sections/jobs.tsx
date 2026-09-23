@@ -45,7 +45,7 @@ export default function Jobs() {
     {
       value: 'for',
       label: 'For you',
-      component: <JobLists filters={filters} />,
+      component: <JobLists filters={{ ...filters, matched: true }} />,
     },
     {
       value: 'applied',
