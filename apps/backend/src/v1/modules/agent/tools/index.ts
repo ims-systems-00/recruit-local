@@ -18,6 +18,9 @@ import { updateMyProfileTool } from "./update-my-profile.tool";
 import { setAccessibilityTool } from "./set-accessibility.tool";
 import { searchCatalogTool } from "./search-catalog.tool";
 import { setProfileCatalogTool } from "./set-profile-catalog.tool";
+import { listPipelineStagesTool } from "./list-pipeline-stages.tool";
+import { moveApplicationsTool } from "./move-applications.tool";
+import { createPipelineStageTool } from "./create-pipeline-stage.tool";
 
 export * from "./tool.types";
 
@@ -42,6 +45,9 @@ const registry: AgentTool[] = [
   setAccessibilityTool,
   searchCatalogTool,
   setProfileCatalogTool,
+  listPipelineStagesTool,
+  moveApplicationsTool,
+  createPipelineStageTool,
 ];
 
 export const toolsFor = (session: ISession): AgentTool[] =>
