@@ -13,6 +13,8 @@ import {
   signupSchema,
 } from '@/app/(auth)/sign-up/signup.schema';
 import {
+  changePassword,
+  forgotPassword,
   registerUser,
   registrationVerificationToken,
   resendVerificationLink,
@@ -236,6 +238,58 @@ export function useRegistrationVerificationToken() {
 
   return {
     verify: mutation.mutate,
+    isLoading: mutation.isPending,
+  };
+}
+
+export function useForgotPassword() {
+  const mutation = useMutation({
+    mutationFn: async (email: string) => {
+      const res = await forgotPassword(email);
+      if (!res.success) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success(res.data.message);
+    },
+    onError: (err) => {
+      toast.error('Failed to send recovery link. Please try again.');
+    },
+  });
+
+  return {
+    forgotPassword: mutation.mutate,
+    isLoading: mutation.isPending,
+  };
+}
+
+export function useChangePassword() {
+  const router = useRouter();
+  const mutation = useMutation({
+    mutationFn: async ({
+      password,
+      recovery_token,
+    }: {
+      password: string;
+      recovery_token: string;
+    }) => {
+      const res = await changePassword(password, recovery_token);
+      if (!res.success) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success(res.data.message);
+      router.push('/login');
+    },
+    onError: (err) => {
+      toast.error('Failed to change password. Please try again.');
+    },
+  });
+
+  return {
+    changePassword: mutation.mutate,
     isLoading: mutation.isPending,
   };
 }
