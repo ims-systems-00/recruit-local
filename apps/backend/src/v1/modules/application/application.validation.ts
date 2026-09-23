@@ -59,6 +59,15 @@ export const statusUpdateBodySchema = Joi.object({
   statusId: Joi.string().custom(objectIdValidation).required().label("Status"),
 });
 
+/**
+ * The drag-and-drop move. `targetIndex` is the position within the target
+ * column, counted from the top, so 0 is the card the recruiter sees first.
+ */
+export const moveBoardItemBodySchema = Joi.object({
+  targetStatusId: Joi.string().custom(objectIdValidation).required().label("Target Status"),
+  targetIndex: Joi.number().integer().min(0).required().label("Target Index"),
+});
+
 export const idParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("Application ID"),
 });

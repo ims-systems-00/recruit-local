@@ -18,6 +18,7 @@ import {
   updateBodySchema,
   idParamsSchema,
   statusUpdateBodySchema,
+  moveBoardItemBodySchema,
   listQuerySchema,
 } from "./application.validation";
 
@@ -25,7 +26,12 @@ const router = express.Router();
 const validateBody = validate("body");
 const validateParams = validate("params");
 
-router.post("/board/move/:id", handleController(moveItemOnBoard));
+router.post(
+  "/board/move/:id",
+  validateParams(idParamsSchema),
+  validateBody(moveBoardItemBodySchema),
+  handleController(moveItemOnBoard)
+);
 
 // application routes
 router.get("/", validateQuery(listQuerySchema), handleController(list));

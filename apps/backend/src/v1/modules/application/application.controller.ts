@@ -263,12 +263,14 @@ export const statusUpdate = async ({ req }: ControllerParams) => {
     throw new UnauthorizedException("User is not authorized to update this application's status.");
   }
 
-  // Validate the status field specifically
-  validateUpdatePayload({ status: req.body.status }, ability, AbilityAction.Update, authZEntity);
+  // Validate the status field specifically. `statusId` is what the route
+  // validates and what CASL grants an employer — `status` is the populated
+  // column on the response, and asking to update it was always a 403.
+  validateUpdatePayload({ statusId: req.body.statusId }, ability, AbilityAction.Update, authZEntity);
 
   const application = await applicationService.statusUpdate({
     query: { _id: req.params.id },
-    status: req.body.status,
+    statusId: req.body.statusId,
   });
 
   return new ApiResponse({
@@ -286,9 +288,15 @@ export const moveItemOnBoard = async ({ req }: ControllerParams) => {
   const existingApplication = await applicationService.getOne({ query: { _id: req.params.id } });
   if (!existingApplication) throw new NotFoundException("Application not found");
 
-  if (!ability.can(AbilityAction.Update, new ApplicationAuthZEntity(existingApplication))) {
+  const authZEntity = new ApplicationAuthZEntity(existingApplication);
+
+  if (!ability.can(AbilityAction.Update, authZEntity)) {
     throw new UnauthorizedException("User is not authorized to move this application on the board.");
   }
+
+  // A move writes `statusId` and `rank`, so it is gated on those fields like any
+  // other update rather than on the row alone.
+  validateUpdatePayload({ statusId: req.body.targetStatusId }, ability, AbilityAction.Update, authZEntity);
 
   const application = await applicationService.moveItemOnBoard({
     itemId: req.params.id,
