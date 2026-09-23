@@ -15,6 +15,7 @@ import InterviewSchedule from './sections/interview-schedule';
 import { getJobById } from '@/services/jobs/jobs.server';
 import { formatDate } from '@/lib/utils';
 import JobDescription from './sections/job-description/job-description';
+import JobPageContext from './sections/job-page-context';
 import Link from 'next/link';
 
 type PageProps = {
@@ -46,7 +47,7 @@ export default async function JobDetailsPage({ params }: PageProps) {
     {
       value: 'applicants',
       label: 'Applicants',
-      component: <Applicants jobId={jobData._id} />,
+      component: <Applicants jobId={jobData._id} jobTitle={jobData.title} />,
     },
 
     {
@@ -58,6 +59,11 @@ export default async function JobDetailsPage({ params }: PageProps) {
 
   return (
     <div>
+      <JobPageContext
+        jobId={jobData._id}
+        jobTitle={jobData.title}
+        reference={jobData.reference}
+      />
       <div className=" py-spacing-lg px-spacing-4xl border-b border-border-gray-secondary">
         <Breadcrumb className=" min-h-10 flex items-center">
           <BreadcrumbList>

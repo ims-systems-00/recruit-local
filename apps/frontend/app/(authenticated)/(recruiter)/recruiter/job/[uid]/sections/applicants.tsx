@@ -12,10 +12,40 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import CreateEditStatusForm from './create-edit-status-form';
+import { usePageContext } from '@/components/ai-chat/page-context';
 
-export default function Applicants({ jobId }: { jobId: string }) {
+/** Job titles have no length limit on the server; the page summary is capped at 300. */
+const TITLE_CHARS = 80;
+
+export default function Applicants({
+  jobId,
+  jobTitle,
+}: {
+  jobId: string;
+  jobTitle?: string;
+}) {
   const [isListView, setIsListView] = useState(true);
   const [open, setOpen] = useState(false);
+
+  // Registered on top of the page's own context while this tab is open, so
+  // "this board" and "these applicants" mean this job's pipeline. Mounted only
+  // when the tab is active, which is what makes it the more specific one.
+  const shortTitle = jobTitle?.slice(0, TITLE_CHARS);
+
+  usePageContext({
+    page: 'recruiter.job.applicants',
+    // Kept well inside the server's 300-character cap, which rejects the whole
+    // request rather than trimming: an 80-character title must still fit.
+    summary:
+      `The applicants board for "${shortTitle ?? 'this job'}", the recruiter's own job. ` +
+      'The stages here are this job\'s own board columns, and "this job" or "this board" means this one.',
+    state: {
+      jobId,
+      jobTitle: shortTitle ?? null,
+      view: isListView ? 'list' : 'kanban',
+      addStatusFormOpen: open,
+    },
+  });
 
   return (
     <>
