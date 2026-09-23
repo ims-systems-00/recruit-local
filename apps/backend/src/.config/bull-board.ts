@@ -18,7 +18,17 @@ import { applicationRankingQueue } from "../queue/applicationRankingQueue";
 import { jobCleanupQueue } from "../queue/jobCleanupQueue";
 import { emailQueue } from "../v1/modules/email/core/email.queue";
 
+/**
+ * Builds the BullMQ dashboard, or returns `null` when it is switched off.
+ *
+ * Opt-in rather than opt-out: the board exposes every queue's payloads and can
+ * retry, remove and drain jobs, so the surface should not exist at all unless
+ * someone deliberately turned it on for that environment. Callers must still
+ * authenticate the router they get back — see how `app.ts` mounts it.
+ */
 export const initBullBoard = () => {
+  if (process.env.BULL_BOARD_ENABLED !== "true") return null;
+
   const serverAdapter = new ExpressAdapter();
   const BOARD_PATH = "/admin/queues";
 
