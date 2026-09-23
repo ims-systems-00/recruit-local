@@ -1,5 +1,7 @@
 import { Bot } from 'lucide-react';
+import Image from 'next/image';
 import React from 'react';
+import aiBot from '@/public/images/alice_icon.svg';
 
 export default function AiChatButton({
   setIsOpen,
@@ -13,10 +15,16 @@ export default function AiChatButton({
       aria-label="Open Alice chat"
     >
       <div
-        className=" w-12 h-12 rounded-full bg-bg-gray-soft-primary flex items-center justify-center cursor-pointer border border-border-gray-primary "
+        className=" w-12 h-12 rounded-full bg-bg-gray-solid-secondary flex items-center shadow-md justify-center cursor-pointer"
         aria-hidden="true"
       >
-        <Bot size={24} strokeWidth={1.8} className="text-text-brand-primary" />
+        <Image
+          className=" max-w-6 max-h-6"
+          src={aiBot}
+          width={24}
+          height={24}
+          alt="AI Bot"
+        />
       </div>
     </button>
   );
