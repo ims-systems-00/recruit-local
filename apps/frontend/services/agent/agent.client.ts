@@ -31,6 +31,8 @@ import { experienceKeys } from '../experience/experience.client';
 import { educationKeys } from '../education/education.client';
 import { skillKeys } from '../skill/skill.client';
 import { jobProfileKeys } from '../job-profile/job-profile.client';
+import { applicationKeys } from '../application/application.client';
+import { statusKeys } from '../status/status.client';
 // Hook to create a new experience
 
 export function useCreateAgentConversation() {
@@ -239,6 +241,12 @@ const STALE_KEYS_BY_TOOL: Record<string, readonly (readonly string[])[]> = {
   // Refetching the job profile is what lets an open onboarding step show the
   // selection Alice just saved.
   set_profile_catalog: [jobProfileKeys.all],
+  // The board's columns are unchanged by a move — only which one each card sits
+  // in, and the per-column counts, both of which come from the application
+  // lists the kanban and list views read.
+  move_applications: [applicationKeys.all],
+  // A new column starts empty, so no application query is stale.
+  create_pipeline_stage: [statusKeys.all],
 };
 
 export function useInvalidateAfterAgentRun() {
