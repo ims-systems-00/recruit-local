@@ -80,3 +80,38 @@ export async function registrationVerificationToken(
     return handleServerError(error, 'Failed to resend verification email');
   }
 }
+
+export async function forgotPassword(email: string): Promise<ApiResponse> {
+  try {
+    const res = await axiosServer.post('/auth/recovery', { email });
+
+    return {
+      success: true,
+      data: res.data,
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to send recovery link');
+  }
+}
+
+export async function changePassword(
+  password: string,
+  recovery_token: string,
+): Promise<ApiResponse> {
+  try {
+    const res = await axiosServer.post(
+      '/auth/recovery/verification',
+      { password },
+      {
+        params: { recovery_token },
+      },
+    );
+
+    return {
+      success: true,
+      data: res.data,
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to change password');
+  }
+}
