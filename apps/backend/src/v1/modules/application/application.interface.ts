@@ -1,3 +1,4 @@
+import { ClientSession } from "mongoose";
 import {
   IServiceListParams,
   IServiceGetParams,
@@ -23,7 +24,21 @@ export type IApplicationQueryParams = Partial<ApplicationInput & { _id: string }
 
 export interface IApplicationStatusUpdateParams {
   query: IApplicationQueryParams;
-  status: string;
+  /**
+   * The board column to move into. Was `status` — a name that never matched the
+   * `statusId` the route validates, so the write landed on a field nothing reads.
+   */
+  statusId: string;
+}
+
+/**
+ * One target column, one or more applications, all on the same job's board.
+ * The board is per-job, so a batch spanning two jobs has no single valid target.
+ */
+export interface IApplicationMoveToStageParams {
+  applicationIds: string[];
+  statusId: string;
+  session?: ClientSession;
 }
 
 export interface IMoveBoardItemParams {

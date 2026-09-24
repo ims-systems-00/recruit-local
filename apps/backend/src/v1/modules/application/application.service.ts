@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClientSession, Types } from "mongoose";
 import { VISIBILITY_ENUM } from "@rl/types";
-import { NotFoundException } from "../../../common/helper";
-import { Application } from "../../../models";
+import { BadRequestException, NotFoundException } from "../../../common/helper";
+import { Application, Status } from "../../../models";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import {
   matchQuery,
@@ -26,6 +26,7 @@ import {
   IApplicationCreateParams,
   IApplicationUpdateParams,
   IApplicationStatusUpdateParams,
+  IApplicationMoveToStageParams,
   IMoveBoardItemParams,
 } from "./application.interface";
 import * as statusService from "../status/status.service";
@@ -350,32 +351,119 @@ export const restore = async ({ query, session }: IApplicationGetParams) => {
   return application;
 };
 
+/**
+ * The guard every board move goes through, whoever asks for it.
+ *
+ * `moveToPosition` only checks that the target status exists — not that it is a
+ * column on *this* application's board. Without the check below, a status id
+ * from another job, or another tenant's job, is a perfectly valid move, and the
+ * application lands on a board nobody expected it on. The check lives here
+ * rather than in a controller because three callers need it: the status route,
+ * the drag-and-drop route, and the agent's move tool.
+ *
+ * Returns the applications as loaded, so a caller that has already paid for the
+ * read does not pay again.
+ */
+export const assertStageOnBoard = async ({
+  applicationIds,
+  statusId,
+  session,
+}: IApplicationMoveToStageParams): Promise<{ applications: any[]; jobId: string }> => {
+  const ids = [...new Set(applicationIds.map(String))];
+
+  if (ids.length === 0) throw new BadRequestException("No applications were given to move.");
+
+  const invalid = ids.filter((id) => !Types.ObjectId.isValid(id));
+  if (invalid.length > 0) throw new BadRequestException(`Not an application id: ${invalid.join(", ")}.`);
+
+  if (!Types.ObjectId.isValid(String(statusId))) throw new BadRequestException(`Not a status id: ${String(statusId)}.`);
+
+  const applications = await Application.find({
+    _id: { $in: ids.map((id) => new Types.ObjectId(id)) },
+    "deleteMarker.status": { $ne: true },
+  })
+    .select("_id jobId statusId rank")
+    .session(session ?? null);
+
+  if (applications.length !== ids.length) {
+    const found = new Set(applications.map((application) => String(application._id)));
+    throw new NotFoundException(`Application not found: ${ids.filter((id) => !found.has(id)).join(", ")}.`);
+  }
+
+  // One move, one board. Applications to different jobs sit on different boards
+  // with different columns, so a single target status cannot be right for both.
+  const jobIds = [...new Set(applications.map((application) => String(application.jobId)))];
+  if (jobIds.length > 1) {
+    throw new BadRequestException(
+      "These applications are to different jobs, and each job has its own board. Move the ones on each job separately."
+    );
+  }
+
+  const jobId = jobIds[0];
+
+  const status = await Status.findOne({
+    _id: new Types.ObjectId(String(statusId)),
+    collectionName: modelNames.JOB,
+    collectionId: new Types.ObjectId(jobId),
+    "deleteMarker.status": { $ne: true },
+  })
+    .select("_id label")
+    .session(session ?? null);
+
+  if (!status) {
+    throw new BadRequestException("That status is not a column on this job's board.");
+  }
+
+  return { applications, jobId };
+};
+
+/**
+ * Moves applications into a column, at the top of it.
+ *
+ * Each application is moved by `moveToPosition`, which runs its own transaction,
+ * so the batch is not atomic as a whole — but every reason a move could be
+ * refused has already been checked by `assertStageOnBoard` above, so a partial
+ * batch means the database went away mid-loop rather than an input being wrong.
+ * Index 0 is the top of the column, which is where a card dropped by hand lands.
+ */
+export const moveToStage = async ({ applicationIds, statusId, session }: IApplicationMoveToStageParams) => {
+  const { applications } = await assertStageOnBoard({ applicationIds, statusId, session });
+
+  for (const application of applications) {
+    try {
+      await Application.moveToPosition(String(application._id), String(statusId), 0);
+    } catch (error) {
+      // The plugin throws bare `Error`s — a board locked to a non-rank sort
+      // order is the one a caller can act on, and a 500 does not say so.
+      throw new BadRequestException(error instanceof Error ? error.message : "The application could not be moved.");
+    }
+  }
+
+  return Promise.all(applications.map((application) => getOne({ query: { _id: String(application._id) } as any })));
+};
+
 // Custom Action: Status Update
 export const statusUpdate = async ({
   query,
-  status,
+  statusId,
   session,
 }: IApplicationStatusUpdateParams & { session?: ClientSession }) => {
   const sanitizedQuery = sanitizeQueryIds(query);
   const application = await getOne({ query: sanitizedQuery, session });
 
-  const updatedApplication = await Application.findOneAndUpdate(
-    { _id: application._id },
-    { $set: { status } },
-    {
-      new: true,
-      session,
-    }
-  );
+  const [moved] = await moveToStage({
+    applicationIds: [String(application._id)],
+    statusId,
+    session,
+  });
 
-  if (!updatedApplication) throw new NotFoundException("Application not found.");
-  return updatedApplication;
+  return moved;
 };
 
 // Custom Action: Move Item on Board
-export const moveItemOnBoard = async (
-  { itemId, targetStatusId, targetIndex }: IMoveBoardItemParams
-  // session?: ClientSession
-) => {
+export const moveItemOnBoard = async ({ itemId, targetStatusId, targetIndex }: IMoveBoardItemParams) => {
+  // Scoped first: the plugin would otherwise accept a column from another board.
+  await assertStageOnBoard({ applicationIds: [itemId], statusId: targetStatusId });
+
   return Application.moveToPosition(itemId, targetStatusId, targetIndex);
 };
