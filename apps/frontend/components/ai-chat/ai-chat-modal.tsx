@@ -8,6 +8,7 @@ import {
   Copy,
   History,
   Loader2,
+  Minus,
   Pencil,
   RefreshCw,
   Search,
@@ -131,7 +132,15 @@ function BotAvatar({ variant = 'chat' }: { variant?: 'chat' | 'launcher' }) {
   );
 }
 
-function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
+function AiChatModal({
+  hidden = false,
+  onClose,
+  onMinimize,
+}: {
+  hidden?: boolean;
+  onClose: () => void;
+  onMinimize: () => void;
+}) {
   const { data: session } = useSession();
   const isLoggedIn = session?.user?.email ? true : false;
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -172,8 +181,8 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
   useEffect(() => {
     scrollToBottom();
     // historyOpen: the log is hidden behind the panel, so it can only be
-    // scrolled once it is visible again.
-  }, [messages, isTyping, historyOpen]);
+    // scrolled once it is visible again. Likewise when un-minimized.
+  }, [messages, isTyping, historyOpen, hidden]);
 
   /**
    * Adds Alice's reply, refreshes anything she saved, applies any form changes
@@ -328,8 +337,13 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
   return (
     <>
       <section
-        className="w-[min(380px,calc(100vw-32px))] h-[min(540px,calc(100vh-32px))] min-h-[420px] fixed right-spacing-md bottom-spacing-md z-30 flex flex-col overflow-hidden bg-white border border-gray-200 rounded-[18px] shadow-[0_18px_50px_rgba(28,42,61,0.22)] animate-rise max-sm:inset-0 max-sm:w-full max-sm:h-full max-sm:min-h-0 max-sm:rounded-none max-sm:border-0"
+        className={cn(
+          'w-[min(380px,calc(100vw-32px))] h-[min(540px,calc(100vh-32px))] min-h-[420px] fixed right-spacing-md bottom-spacing-md z-30 flex flex-col overflow-hidden bg-white border border-gray-200 rounded-[18px] shadow-[0_18px_50px_rgba(28,42,61,0.22)] animate-rise max-sm:inset-0 max-sm:w-full max-sm:h-full max-sm:min-h-0 max-sm:rounded-none max-sm:border-0',
+          // Hidden rather than unmounted, so the conversation survives.
+          hidden && 'hidden',
+        )}
         aria-label="Alice recruitment assistant"
+        aria-hidden={hidden}
       >
         {/* Header */}
         <header className="min-h-[64px] flex items-center justify-between px-[18px] py-[14px] border-b border-gray-200 shrink-0 max-sm:min-h-[56px] max-sm:py-3 max-sm:px-[14px]">
@@ -387,7 +401,17 @@ function AiChatModal({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
               className="w-9 h-9 grid place-items-center text-[#101b2c] border-0 rounded-full bg-[#fafbfc] transition hover:bg-[#edf0f4] hover:-translate-y-[1px] max-sm:w-8 max-sm:h-8"
               onClick={() => {
                 stop();
-                setIsOpen(false);
+                onMinimize();
+              }}
+              aria-label="Minimize chat"
+            >
+              <Minus size={18} />
+            </button>
+            <button
+              className="w-9 h-9 grid place-items-center text-[#101b2c] border-0 rounded-full bg-[#fafbfc] transition hover:bg-[#edf0f4] hover:-translate-y-[1px] max-sm:w-8 max-sm:h-8"
+              onClick={() => {
+                stop();
+                onClose();
               }}
               aria-label="Close chat"
             >
