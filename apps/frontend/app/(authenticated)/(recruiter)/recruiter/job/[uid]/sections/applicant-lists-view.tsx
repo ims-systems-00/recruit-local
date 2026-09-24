@@ -8,6 +8,13 @@ import React, { useCallback } from 'react';
 import { TableSkeleton } from './table-skeleton';
 import EmptyBox from '@/components/empty-box';
 import Link from 'next/link';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { EllipsisVertical } from 'lucide-react';
 
 const SCROLL_THRESHOLD = 80;
 
@@ -60,15 +67,35 @@ export const userColumns: ColumnDef<Application>[] = [
       return <span>{value || 'N/A'}</span>;
     },
   },
+  {
+    accessorKey: 'action',
+    header: '',
+    cell: ({ row }) => {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="text-fg-gray-secondary flex items-center justify-center cursor-pointer">
+              <EllipsisVertical size={16} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-32 bg-white">
+            <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
+              <Link
+                href={`/recruiter/job/${row?.original?.jobId}/applicants/${row?.original?._id}`}
+                className=" w-full"
+              >
+                View Details
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
+  },
 ];
 export default function ApplicantListsView({ jobId }: { jobId: string }) {
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useInfiniteApplications({ jobId });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useInfiniteApplications({ jobId });
 
   const applications = data?.pages.flatMap((page) => page.docs) ?? [];
 
