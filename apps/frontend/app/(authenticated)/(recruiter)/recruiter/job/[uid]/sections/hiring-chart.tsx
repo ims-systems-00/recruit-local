@@ -23,30 +23,30 @@ const data = [
 
 export default function HiringChart() {
   return (
-    <div className="w-full">
-      <div className=" flex justify-end items-center gap-spacing-lg">
+    <div className="w-full space-y-spacing-lg">
+      <div className="flex flex-wrap justify-start sm:justify-end items-center gap-spacing-lg">
         <div className="flex items-center gap-spacing-sm">
-          <div className=" w-2 h-2 rounded-full bg-[#C6005C]"></div>
+          <div className="w-2 h-2 rounded-full bg-[#C6005C]"></div>
           <p className="text-body-sm text-text-gray-tertiary">Interviewed</p>
         </div>
         <div className="flex items-center gap-spacing-sm">
-          <div className=" w-2 h-2 rounded-full bg-[#F6339A]"></div>
+          <div className="w-2 h-2 rounded-full bg-[#F6339A]"></div>
           <p className="text-body-sm text-text-gray-tertiary">Hired</p>
         </div>
         <div className="flex items-center gap-spacing-sm">
-          <div className=" w-2 h-2 rounded-full bg-[#FCCEE8]"></div>
+          <div className="w-2 h-2 rounded-full bg-[#FCCEE8]"></div>
           <p className="text-body-sm text-text-gray-tertiary">Rejected</p>
         </div>
       </div>
-      <div className=" w-full h-60 relative">
-        <div className=" absolute top-1/2 -translate-y-1/2 left-0">
-          <p className=" text-body-xs text-text-gray-primary [writing-mode:vertical-rl] rotate-180">
+      <div className="w-full h-52 sm:h-60 relative pl-spacing-2xs sm:pl-spacing-2xl">
+        <div className="absolute top-1/2 -translate-y-1/2 left-0 hidden xs:block">
+          <p className="text-body-xs text-text-gray-primary [writing-mode:vertical-rl] rotate-180">
             Active Candidates
           </p>
         </div>
 
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} barCategoryGap={20} barSize={32}>
+          <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
             {/* Grid */}
             <CartesianGrid
               stroke="#e5e7eb"
@@ -82,16 +82,12 @@ export default function HiringChart() {
               dataKey="interviewed"
               stackId="a"
               fill="#C6005C"
-              // radius={[6, 6, 0, 0]}
-              // shape={<CustomBar />}
             />
 
             <Bar
               dataKey="hired"
               stackId="a"
               fill="#F6339A"
-              // radius={[6, 6, 0, 0]}
-              // shape={<CustomBar />}
             />
 
             <Bar
@@ -99,13 +95,12 @@ export default function HiringChart() {
               stackId="a"
               fill="#FCCEE8"
               radius={[6, 6, 0, 0]}
-              // shape={<CustomBar />}
             />
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <div className=" flex items-center justify-center">
-        <p className=" text-body-xs text-text-gray-primary">Timeline</p>
+      <div className="flex items-center justify-center">
+        <p className="text-body-xs text-text-gray-primary">Timeline</p>
       </div>
     </div>
   );

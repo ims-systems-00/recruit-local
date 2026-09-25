@@ -24,28 +24,28 @@ const data = [
 
 export default function ApplicantsChart() {
   return (
-    <div className="w-full">
-      <div className=" flex justify-end items-center gap-spacing-lg">
+    <div className="w-full space-y-spacing-lg">
+      <div className="flex flex-wrap justify-start sm:justify-end items-center gap-spacing-lg">
         <div className="flex items-center gap-spacing-sm">
-          <div className=" w-2 h-2 rounded-full bg-[#C6005C]"></div>
+          <div className="w-2 h-2 rounded-full bg-[#C6005C]"></div>
           <p className="text-body-sm text-text-gray-tertiary">
             Total Applicants
           </p>
         </div>
         <div className="flex items-center gap-spacing-sm">
-          <div className=" w-2 h-2 rounded-full bg-[#F6339A]"></div>
+          <div className="w-2 h-2 rounded-full bg-[#F6339A]"></div>
           <p className="text-body-sm text-text-gray-tertiary">New Applicants</p>
         </div>
       </div>
-      <div className=" w-full h-60 relative">
-        <div className=" absolute top-1/2 -translate-y-1/2 left-0">
-          <p className=" text-body-xs text-text-gray-primary [writing-mode:vertical-rl] rotate-180">
+      <div className="w-full h-52 sm:h-60 relative pl-spacing-2xs sm:pl-spacing-2xl">
+        <div className="absolute top-1/2 -translate-y-1/2 left-0 hidden xs:block">
+          <p className="text-body-xs text-text-gray-primary [writing-mode:vertical-rl] rotate-180">
             Applicants
           </p>
         </div>
 
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data}>
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
             {/* Gradient */}
             <defs>
               <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
@@ -69,9 +69,6 @@ export default function ApplicantsChart() {
             {/* Tooltip */}
             <Tooltip />
 
-            {/* Legend */}
-            {/* <Legend /> */}
-
             {/* Area (background fill) */}
             <Area
               type="monotone"
@@ -91,8 +88,8 @@ export default function ApplicantsChart() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <div className=" flex items-center justify-center">
-        <p className=" text-body-xs text-text-gray-primary">Week</p>
+      <div className="flex items-center justify-center">
+        <p className="text-body-xs text-text-gray-primary">Week</p>
       </div>
     </div>
   );
