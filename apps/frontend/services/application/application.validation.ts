@@ -2,12 +2,21 @@ import * as yup from 'yup';
 
 import { objectIdSchema, cursorPaginationSchema } from '@/services/shared';
 import { JobData } from '../jobs/job.type';
-import { REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
+import { QUERY_TYPE_ENUMS, REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
 
 export const awsStorageSchema = yup.object({
   Name: yup.string().required('Name is required'),
   Bucket: yup.string().required('Bucket is required'),
   Key: yup.string().required('Key is required'),
+});
+
+// Populated file media (resume / case study) on an application read.
+const applicationFileSchema = yup.object({
+  _id: objectIdSchema.required(),
+  storageInformation: awsStorageSchema.required(),
+  visibility: yup.string().required(),
+  thumbnail: awsStorageSchema.required(),
+  src: yup.string().nullable().optional(),
 });
 
 // --- CORE DATA MODEL ---
@@ -24,6 +33,12 @@ export const applicationSchema = yup.object({
       yup.object({
         queryId: objectIdSchema.required('Query ID is required'),
         answer: yup.mixed().required('Answer is required'),
+        // Merged in from the job's query on single-application reads.
+        question: yup.string().optional(),
+        type: yup.mixed<QUERY_TYPE_ENUMS>().optional(),
+        options: yup.array().of(yup.string().required()).optional(),
+        isRequired: yup.boolean().optional(),
+        expectedAnswer: yup.string().optional(),
       }),
     )
     .nullable()
@@ -45,13 +60,8 @@ export const applicationSchema = yup.object({
   rank: yup.number().nullable().optional(),
   statusId: objectIdSchema.required(),
   reference: yup.string().nullable().optional(),
-  resume: yup.object({
-    _id: objectIdSchema.required(),
-    storageInformation: awsStorageSchema.required(),
-    visibility: yup.string().required(),
-    thumbnail: awsStorageSchema.required(),
-    src: yup.string().nullable().optional(),
-  }),
+  resume: applicationFileSchema,
+  caseStudies: yup.array().of(applicationFileSchema).optional(),
 });
 
 // --- INPUT SCHEMAS (Matches Backend Joi) ---
