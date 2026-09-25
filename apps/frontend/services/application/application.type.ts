@@ -1,8 +1,6 @@
 import * as yup from 'yup';
-import type {
-  CursorPaginatedResponse,
-  ApiResponse,
-} from '@/types/api';
+import type { JobOverviewRange as JobOverviewRangeValue } from '@rl/types';
+import type { CursorPaginatedResponse, ApiResponse } from '@/types/api';
 import {
   createApplicationSchema,
   updateApplicationSchema,
@@ -35,3 +33,18 @@ export type ApplicationListFilters = {
 // --- FRONTEND RESPONSE TYPES ---
 export type ApplicationListResponse = CursorPaginatedResponse<Application>;
 export type ApplicationApiResponse<T> = ApiResponse<T>;
+
+// --- JOB OVERVIEW ---
+export type {
+  JobOverviewRange,
+  JobOverviewDailyDto as JobOverviewDaily,
+  JobOverviewStageDto as JobOverviewStage,
+  JobOverviewMatchScoreDto as JobOverviewMatchScore,
+  JobOverviewResponseDto as JobOverview,
+} from '@rl/types';
+
+export type JobOverviewFilters = {
+  jobId: string;
+  range: JobOverviewRangeValue;
+  tz?: string;
+};

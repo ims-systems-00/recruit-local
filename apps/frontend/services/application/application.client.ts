@@ -18,6 +18,7 @@ import {
   hardDeleteApplication,
   restoreApplication,
   moveApplicationToColumn,
+  getJobOverview,
 } from './application.server';
 import type {
   ApplicationCreateInput,
@@ -26,6 +27,8 @@ import type {
   ApplicationListResponse,
   ApplicationListFilters,
   MoveApplicationToColumnInput,
+  JobOverview,
+  JobOverviewRange,
 } from './application.type';
 import { useRouter } from 'next/navigation';
 
@@ -37,6 +40,9 @@ export const applicationKeys = {
     [...applicationKeys.lists(), filters] as const,
   details: () => [...applicationKeys.all, 'detail'] as const,
   detail: (id: string) => [...applicationKeys.details(), id] as const,
+  // Under `all`, so every application mutation's invalidation refreshes it too.
+  overview: (jobId: string, range: JobOverviewRange) =>
+    [...applicationKeys.all, 'overview', jobId, range] as const,
 };
 
 export function useApplications(filters: ApplicationListFilters = {}) {
@@ -60,9 +66,32 @@ export function useApplications(filters: ApplicationListFilters = {}) {
   };
 }
 
-export function useInfiniteApplications(
-  filters: ApplicationListFilters = {},
-) {
+export function useJobOverview(jobId: string, range: JobOverviewRange) {
+  const query = useQuery<JobOverview, Error>({
+    queryKey: applicationKeys.overview(jobId, range),
+    queryFn: async () => {
+      const response = await getJobOverview({
+        jobId,
+        range,
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+      if (!response.success) throw new Error(response.message);
+      return response.data as JobOverview;
+    },
+    enabled: !!jobId,
+  });
+
+  return {
+    overview: query.data,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+    isFetching: query.isFetching,
+  };
+}
+
+export function useInfiniteApplications(filters: ApplicationListFilters = {}) {
   return useInfiniteQuery<
     ApplicationListResponse,
     Error,

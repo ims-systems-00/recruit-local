@@ -6,13 +6,20 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from "../../../common/helper";
-import { ApplicationAbilityBuilder, ApplicationAuthZEntity, ALL_APPLICATION_FIELDS } from "@rl/authz";
-import { AbilityAction } from "@rl/types";
+import {
+  ApplicationAbilityBuilder,
+  ApplicationAuthZEntity,
+  ALL_APPLICATION_FIELDS,
+  StatusAbilityBuilder,
+  StatusAuthZEntity,
+} from "@rl/authz";
+import { AbilityAction, JobOverviewRange } from "@rl/types";
 import * as applicationService from "./application.service";
 import * as jobService from "../job/job.service";
 import { withTransaction } from "../../../common/helper/database-transaction";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { applicationListQuerySpec, applicationRoleScopedSecurityQuery } from "./application.query";
+import { statusRoleScopedSecurityQuery } from "../status/status.query";
 import { runCursorList } from "../../../common/query";
 import { toApplicationResponse, toApplicationResponseList } from "./application.dto";
 import { enqueueApplicationRanking } from "../../../queue/applicationRankingQueue";
@@ -309,5 +316,42 @@ export const moveItemOnBoard = async ({ req }: ControllerParams) => {
     statusCode: StatusCodes.OK,
     data: toApplicationResponse(getSanitizedAppResponse(application, ability)),
     fieldName: "application",
+  });
+};
+
+/**
+ * Aggregates for the recruiter's job overview tab. Counts are taken over the
+ * applications this caller may read, so a job they don't own reads as empty.
+ * Board columns and match-score bands are each left out (null) when the caller
+ * can't read the field they are built from.
+ */
+export const overview = async ({ req }: ControllerParams) => {
+  const ability = new ApplicationAbilityBuilder(req.session).getAbility();
+
+  if (!ability.can(AbilityAction.Read, ApplicationAuthZEntity)) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read applications.`);
+  }
+
+  const { jobId, range, tz } = req.query as { jobId: string; range: JobOverviewRange; tz: string };
+
+  const statusAbility = new StatusAbilityBuilder(req.session).getAbility();
+  const canReadStages =
+    ability.can(AbilityAction.Read, ApplicationAuthZEntity, "statusId") &&
+    statusAbility.can(AbilityAction.Read, StatusAuthZEntity);
+
+  const data = await applicationService.getOverview({
+    query: { $and: [{ jobId }, applicationRoleScopedSecurityQuery(ability)] },
+    jobId,
+    range,
+    tz,
+    statusQuery: canReadStages ? statusRoleScopedSecurityQuery(statusAbility) : null,
+    includeMatchScore: ability.can(AbilityAction.Read, ApplicationAuthZEntity, "matchScore"),
+  });
+
+  return new ApiResponse({
+    message: "Job overview retrieved",
+    statusCode: StatusCodes.OK,
+    data,
+    fieldName: "overview",
   });
 };
