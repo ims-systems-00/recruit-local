@@ -12,6 +12,7 @@ import { Application } from '@/services/application/application.type';
 import { Avatar } from '@/components/ui/avatar';
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import moment from 'moment';
+import Link from 'next/link';
 
 interface Props {
   applicant: Application;
@@ -84,6 +85,16 @@ export function ApplicantCardContent({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32 bg-white">
+            <DropdownMenuItem
+              asChild
+              className=" text-label-sm font-label-sm-strong! text-text-gray-secondary"
+            >
+              <Link
+                href={`/recruiter/job/${applicant.jobId}/applicants/${applicant._id}`}
+              >
+                View Details
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem>Edit</DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"

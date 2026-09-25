@@ -1,9 +1,20 @@
 import { VISIBILITY_ENUM } from './file-media';
+import { QUERY_TYPE_ENUMS } from './job';
 
 /** Public HTTP shape of a single answer to a job's additional query. */
 export interface ApplicationAnswerResponseDto {
   queryId: string;
   answer: string | string[] | number | boolean;
+  /**
+   * Merged in from the job's matching additional query on single-application
+   * reads. Absent when that query has since been removed from the job.
+   */
+  question?: string;
+  type?: QUERY_TYPE_ENUMS;
+  options?: string[];
+  isRequired?: boolean;
+  /** Employers only — stripped for candidates. */
+  expectedAnswer?: string;
 }
 
 /** Populated job profile summary attached to an application response. */

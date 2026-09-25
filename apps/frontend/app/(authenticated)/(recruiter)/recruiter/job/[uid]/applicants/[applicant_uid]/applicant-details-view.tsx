@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { formatDate } from '@/lib/utils';
 import { Application } from '@/services/application/application.type';
 import { JobData } from '@/services/jobs/job.type';
+import { QUERY_TYPE_ENUMS } from '@rl/types';
 
 type ApplicantDetailsViewProps = {
   jobId: string;
@@ -63,9 +64,9 @@ export default function ApplicantDetailsView({
     ? '100KB'
     : 'N/A';
 
-  const caseStudiesList = applicationData?.caseStudyStorage?.length
-    ? applicationData.caseStudyStorage.map((item) => ({
-        name: item.Name,
+  const caseStudiesList = applicationData?.caseStudies?.length
+    ? applicationData.caseStudies.map((item) => ({
+        name: item.storageInformation.Name,
         size: '100KB',
       }))
     : [];
@@ -331,17 +332,28 @@ export default function ApplicantDetailsView({
 
             <div className="space-y-spacing-2xl">
               {applicationData?.answers?.map((answer, idx) => (
-                <div className="space-y-spacing-xs">
+                <div key={answer.queryId ?? idx} className="space-y-spacing-xs">
                   <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
-                    Queries Label{' '}
-                    <span className="text-text-error-primary">*</span>
+                    {answer.question || `Query ${idx + 1}`}
+                    {answer.isRequired && (
+                      <span className="text-text-error-primary">*</span>
+                    )}
                   </label>
-                  <textarea
-                    readOnly
-                    value={`${answer?.answer || 'N/A'}`}
-                    placeholder="N/A"
-                    className="w-full min-h-32 p-spacing-xl rounded-xl border border-border-gray-primary bg-white text-text-gray-primary placeholder:text-text-gray-quaternary text-label-md font-label-md-base focus:outline-none resize-y"
-                  />
+                  {answer.type === QUERY_TYPE_ENUMS.PARAGRAPH ? (
+                    <textarea
+                      readOnly
+                      value={formatAnswer(answer.answer)}
+                      placeholder="N/A"
+                      className="w-full min-h-32 p-spacing-xl rounded-xl border border-border-gray-primary bg-white text-text-gray-primary placeholder:text-text-gray-quaternary text-label-md font-label-md-base focus:outline-none resize-y"
+                    />
+                  ) : (
+                    <ShowInputValue value={formatAnswer(answer.answer)} />
+                  )}
+                  {answer.expectedAnswer && (
+                    <p className="text-label-xs text-text-gray-tertiary">
+                      Expected answer: {answer.expectedAnswer}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -391,6 +403,14 @@ export default function ApplicantDetailsView({
     </div>
   );
 }
+
+// Choice answers arrive as arrays; everything else as a scalar.
+const formatAnswer = (value: unknown): string => {
+  if (Array.isArray(value)) return value.length ? value.join(', ') : 'N/A';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (value === null || value === undefined || value === '') return 'N/A';
+  return String(value);
+};
 
 const ShowInputValue = ({
   value,

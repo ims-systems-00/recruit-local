@@ -164,6 +164,65 @@ export const populateStatusQuery = (): PipelineStage[] => [
 ];
 
 /**
+ * Answers only store `queryId`; the question itself lives on the job's
+ * `additionalQueries`. Merge each answer with its query so a reader gets the
+ * question, type and options alongside the answer. An answer whose query was
+ * since removed from the job keeps just `queryId` and `answer`.
+ *
+ * `expectedAnswer` rides along here and is stripped for candidates by the
+ * application field rules, the same way the job rules hide it.
+ */
+export const populateAnswerQueriesQuery = (): PipelineStage[] => [
+  {
+    $lookup: {
+      from: modelNames.JOB,
+      localField: "jobId",
+      foreignField: "_id",
+      pipeline: [{ $project: { additionalQueries: 1 } }],
+      as: "answerJob",
+    },
+  },
+  {
+    $addFields: {
+      answers: {
+        $map: {
+          input: { $ifNull: ["$answers", []] },
+          as: "a",
+          in: {
+            $let: {
+              vars: {
+                q: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: { $ifNull: [{ $arrayElemAt: ["$answerJob.additionalQueries", 0] }, []] },
+                        as: "q",
+                        cond: { $eq: ["$$q._id", "$$a.queryId"] },
+                      },
+                    },
+                    0,
+                  ],
+                },
+              },
+              in: {
+                queryId: "$$a.queryId",
+                answer: "$$a.answer",
+                question: "$$q.question",
+                type: "$$q.type",
+                options: "$$q.options",
+                isRequired: "$$q.isRequired",
+                expectedAnswer: "$$q.expectedAnswer",
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  { $project: { answerJob: 0 } },
+];
+
+/**
  * `applicationRoleScopedSecurityQuery` is the boundary — an employer's grant is
  * scoped to `{ tenantId }`, so the `tenantId` filter here only narrows within what
  * they may already see. Anything not listed here never reaches `$match`.
