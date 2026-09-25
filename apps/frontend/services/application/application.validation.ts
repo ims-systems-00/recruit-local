@@ -44,6 +44,14 @@ export const applicationSchema = yup.object({
   }),
   rank: yup.number().nullable().optional(),
   statusId: objectIdSchema.required(),
+  reference: yup.string().nullable().optional(),
+  resume: yup.object({
+    _id: objectIdSchema.required(),
+    storageInformation: awsStorageSchema.required(),
+    visibility: yup.string().required(),
+    thumbnail: awsStorageSchema.required(),
+    src: yup.string().nullable().optional(),
+  }),
 });
 
 // --- INPUT SCHEMAS (Matches Backend Joi) ---
