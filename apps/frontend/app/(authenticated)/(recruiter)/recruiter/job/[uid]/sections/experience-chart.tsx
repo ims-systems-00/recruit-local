@@ -16,19 +16,19 @@ const data = [
 
 export default function ExperienceChart() {
   return (
-    <div className="w-full">
-      <div className=" flex justify-end items-center gap-spacing-lg">
+    <div className="w-full space-y-spacing-lg">
+      <div className="flex flex-wrap justify-start sm:justify-end items-center gap-spacing-lg">
         <div className="flex items-center gap-spacing-sm">
-          <div className=" w-2 h-2 rounded-full bg-[#C6005C]"></div>
+          <div className="w-2 h-2 rounded-full bg-[#C6005C]"></div>
           <p className="text-body-sm text-text-gray-tertiary">Fantastic</p>
         </div>
 
         <div className="flex items-center gap-spacing-sm">
-          <div className=" w-2 h-2 rounded-full bg-[#F3F4F6]"></div>
+          <div className="w-2 h-2 rounded-full bg-[#F3F4F6]"></div>
           <p className="text-body-sm text-text-gray-tertiary">Not Good</p>
         </div>
       </div>
-      <div className=" w-full h-60 relative">
+      <div className="w-full h-52 sm:h-60 relative">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
