@@ -147,12 +147,20 @@ export default function ApplicantDetailsView({
                 {statusLabel}
               </span>
             </div>
-            <p className="capitalize text-label-sm text-text-gray-tertiary">
-              {appliedDateText} {jobReference}
-            </p>
+            <div className=" flex items-center gap-spacing-sm">
+              <p className="capitalize text-label-sm text-text-gray-tertiary">
+                {appliedDateText}
+              </p>
+
+              <div className=" w-1.5 h-1.5 bg-fg-gray-tertiary rounded-full"></div>
+
+              <p className="capitalize text-label-sm text-text-gray-tertiary">
+                {jobReference}
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-spacing-md shrink-0">
+          {/* <div className="flex items-center gap-spacing-md shrink-0">
             <Button
               type="button"
               onClick={() => toast.success('Interview invitation sent!')}
@@ -178,7 +186,7 @@ export default function ApplicantDetailsView({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+          </div> */}
         </div>
 
         {/* Cover Letter Section */}
@@ -362,7 +370,7 @@ export default function ApplicantDetailsView({
               </label>
               <ShowInputValue value={applicationData?.expectedSalary} />
             </div>
-            <div className="space-y-spacing-xs">
+            {/* <div className="space-y-spacing-xs">
               <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
                 Working Days <span className="text-text-error-primary">*</span>
               </label>
@@ -376,7 +384,7 @@ export default function ApplicantDetailsView({
               </label>
 
               <ShowInputValue value={workingHoursText} />
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
