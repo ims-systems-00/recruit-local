@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClientSession, Types } from "mongoose";
-import { VISIBILITY_ENUM } from "@rl/types";
+import {
+  JobOverviewMatchScoreDto,
+  JobOverviewRange,
+  JobOverviewResponseDto,
+  JobOverviewStageDto,
+  VISIBILITY_ENUM,
+} from "@rl/types";
 import { BadRequestException, NotFoundException } from "../../../common/helper";
 import { Application, Status } from "../../../models";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
@@ -29,6 +35,7 @@ import {
   IApplicationStatusUpdateParams,
   IApplicationMoveToStageParams,
   IMoveBoardItemParams,
+  IApplicationOverviewParams,
 } from "./application.interface";
 import * as statusService from "../status/status.service";
 
@@ -469,4 +476,165 @@ export const moveItemOnBoard = async ({ itemId, targetStatusId, targetIndex }: I
   await assertStageOnBoard({ applicationIds: [itemId], statusId: targetStatusId });
 
   return Application.moveToPosition(itemId, targetStatusId, targetIndex);
+};
+
+const OVERVIEW_RANGE_DAYS: Record<JobOverviewRange, number> = { week: 7, month: 30 };
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** `matchScore` band floors on the 0–RANKING_SCALE (1000) scale. */
+const MATCH_SCORE_STRONG = 700;
+const MATCH_SCORE_GOOD = 400;
+
+/** `YYYY-MM-DD` of `date` as seen in `tz` — the same key `$dateToString` produces. */
+const dayKeyInTz = (date: Date, tz: string) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+
+/** How far `tz` is ahead of UTC at `date`, in ms. */
+const tzOffsetMs = (date: Date, tz: string) => {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+  }).formatToParts(date);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return asUtc - Math.floor(date.getTime() / 1000) * 1000;
+};
+
+/** The instant local midnight starts on the day containing `date`, in `tz`. */
+const startOfDayInTz = (date: Date, tz: string) => {
+  const [y, m, d] = dayKeyInTz(date, tz).split("-").map(Number);
+  const midnightAsUtc = Date.UTC(y, m - 1, d);
+  // Re-read the offset at the candidate instant so a DST switch that day lands right.
+  const guess = midnightAsUtc - tzOffsetMs(new Date(midnightAsUtc), tz);
+  return new Date(midnightAsUtc - tzOffsetMs(new Date(guess), tz));
+};
+
+const changePct = (current: number, previous: number) =>
+  previous === 0 ? null : Math.round(((current - previous) / previous) * 1000) / 10;
+
+/**
+ * Aggregates for the recruiter's job overview tab: totals against the previous
+ * period, a daily trend, the count in each board column and a match-score split.
+ *
+ * The period is rolling — the last 7 or 30 days including today — and days are
+ * cut at midnight in `tz`. An application's day is its `appliedAt`, falling back
+ * to `createdAt` for any document written before `appliedAt` had a default.
+ */
+export const getOverview = async ({
+  query,
+  jobId,
+  range,
+  tz,
+  statusQuery,
+  includeMatchScore,
+}: IApplicationOverviewParams): Promise<JobOverviewResponseDto> => {
+  const days = OVERVIEW_RANGE_DAYS[range];
+  const now = new Date();
+  const periodStart = startOfDayInTz(new Date(now.getTime() - (days - 1) * DAY_MS), tz);
+  const previousStart = startOfDayInTz(new Date(periodStart.getTime() - days * DAY_MS + DAY_MS / 2), tz);
+
+  const countStage = [{ $count: "n" }];
+  const [facets] = await Application.aggregate([
+    ...matchQuery(sanitizeQueryIds(query)),
+    ...excludeDeletedQuery(),
+    { $addFields: { _at: { $ifNull: ["$appliedAt", "$createdAt"] } } },
+    {
+      $facet: {
+        total: countStage,
+        beforePeriod: [{ $match: { _at: { $lt: periodStart } } }, ...countStage],
+        current: [{ $match: { _at: { $gte: periodStart } } }, ...countStage],
+        previous: [{ $match: { _at: { $gte: previousStart, $lt: periodStart } } }, ...countStage],
+        daily: [
+          { $match: { _at: { $gte: periodStart } } },
+          { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$_at", timezone: tz } }, n: { $sum: 1 } } },
+        ],
+        byStatus: statusQuery ? [{ $group: { _id: "$statusId", n: { $sum: 1 } } }] : [{ $limit: 0 }],
+        matchBands: includeMatchScore
+          ? [
+              {
+                $group: {
+                  _id: {
+                    $switch: {
+                      branches: [
+                        { case: { $gte: ["$matchScore", MATCH_SCORE_STRONG] }, then: "strong" },
+                        { case: { $gte: ["$matchScore", MATCH_SCORE_GOOD] }, then: "good" },
+                      ],
+                      default: "weak",
+                    },
+                  },
+                  n: { $sum: 1 },
+                },
+              },
+            ]
+          : [{ $limit: 0 }],
+      },
+    },
+  ]);
+
+  const count = (facet: { n: number }[]) => facet[0]?.n ?? 0;
+  const total = count(facets.total);
+  const beforePeriod = count(facets.beforePeriod);
+  const current = count(facets.current);
+  const previous = count(facets.previous);
+
+  const perDay = new Map<string, number>(facets.daily.map((d: { _id: string; n: number }) => [d._id, d.n]));
+  let running = beforePeriod;
+  const daily = Array.from({ length: days }, (_, i) => {
+    // Noon of each day, so a 23- or 25-hour DST day still maps to its own key.
+    const date = dayKeyInTz(new Date(periodStart.getTime() + i * DAY_MS + DAY_MS / 2), tz);
+    const added = perDay.get(date) ?? 0;
+    running += added;
+    return { date, total: running, new: added };
+  });
+
+  let stages: JobOverviewStageDto[] | null = null;
+  if (statusQuery) {
+    const statuses = await Status.find({
+      $and: [
+        sanitizeQueryIds({ collectionName: modelNames.JOB, collectionId: jobId }),
+        { "deleteMarker.status": { $ne: true } },
+        statusQuery,
+      ],
+    })
+      .select("_id label backgroundColor weight")
+      .sort({ weight: 1, createdAt: 1 })
+      .lean();
+    const perStatus = new Map<string, number>(
+      facets.byStatus.map((s: { _id: Types.ObjectId; n: number }) => [String(s._id), s.n])
+    );
+    stages = statuses.map((s) => ({
+      statusId: String(s._id),
+      label: s.label,
+      backgroundColor: s.backgroundColor ?? "#FFFFFF",
+      count: perStatus.get(String(s._id)) ?? 0,
+    }));
+  }
+
+  let matchScore: JobOverviewMatchScoreDto | null = null;
+  if (includeMatchScore) {
+    matchScore = { strong: 0, good: 0, weak: 0 };
+    for (const band of facets.matchBands as { _id: keyof JobOverviewMatchScoreDto; n: number }[]) {
+      matchScore[band._id] = band.n;
+    }
+  }
+
+  return {
+    range,
+    periodStart: periodStart.toISOString(),
+    periodEnd: now.toISOString(),
+    totals: {
+      total,
+      totalChangePct: changePct(total, beforePeriod),
+      newApplicants: current,
+      newChangePct: changePct(current, previous),
+    },
+    daily,
+    stages,
+    matchScore,
+  };
 };

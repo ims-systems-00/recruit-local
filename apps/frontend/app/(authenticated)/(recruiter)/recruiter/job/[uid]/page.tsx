@@ -37,7 +37,7 @@ export default async function JobDetailsPage({ params }: PageProps) {
     {
       value: 'overview',
       label: 'Overview',
-      component: <Overview />,
+      component: <Overview jobId={jobData._id} />,
     },
     {
       value: 'job-description',

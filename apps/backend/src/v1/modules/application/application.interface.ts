@@ -1,4 +1,5 @@
 import { ClientSession } from "mongoose";
+import { JobOverviewRange } from "@rl/types";
 import {
   IServiceListParams,
   IServiceGetParams,
@@ -45,4 +46,15 @@ export interface IMoveBoardItemParams {
   itemId: string;
   targetStatusId: string;
   targetIndex: number;
+}
+
+export interface IApplicationOverviewParams {
+  /** Already security-scoped; must pin a single job. */
+  query: Record<string, unknown>;
+  jobId: string;
+  range: JobOverviewRange;
+  tz: string;
+  /** Security scope for the job's board columns; `null` leaves `stages` out. */
+  statusQuery: Record<string, unknown> | null;
+  includeMatchScore: boolean;
 }

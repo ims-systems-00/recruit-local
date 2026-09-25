@@ -85,3 +85,47 @@ export interface ApplicationResponseDto {
   resume?: ApplicationFileDto;
   caseStudies?: ApplicationFileDto[];
 }
+
+export type JobOverviewRange = 'week' | 'month';
+
+/** One day of the overview trend: `new` applied that day, `total` is cumulative up to it. */
+export interface JobOverviewDailyDto {
+  date: string; // YYYY-MM-DD in the requested timezone
+  total: number;
+  new: number;
+}
+
+/** One board column of the job and how many applications currently sit in it. */
+export interface JobOverviewStageDto {
+  statusId: string;
+  label: string;
+  backgroundColor: string;
+  count: number;
+}
+
+/** Applications bucketed by `matchScore` (out of 1000): strong >= 700, good 400-699, weak < 400. */
+export interface JobOverviewMatchScoreDto {
+  strong: number;
+  good: number;
+  weak: number;
+}
+
+/**
+ * Public HTTP shape of `GET /applications/overview` — the recruiter's job
+ * overview tab. `stages` / `matchScore` are null when the caller may not read
+ * `statusId` / `matchScore`. A `*ChangePct` is null when the previous period is 0.
+ */
+export interface JobOverviewResponseDto {
+  range: JobOverviewRange;
+  periodStart: string; // ISO
+  periodEnd: string; // ISO
+  totals: {
+    total: number;
+    totalChangePct: number | null;
+    newApplicants: number;
+    newChangePct: number | null;
+  };
+  daily: JobOverviewDailyDto[];
+  stages: JobOverviewStageDto[] | null;
+  matchScore: JobOverviewMatchScoreDto | null;
+}

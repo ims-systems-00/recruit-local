@@ -10,6 +10,7 @@ import {
   restore,
   statusUpdate,
   moveItemOnBoard,
+  overview,
 } from "./application.controller";
 import { handleController } from "../../../common/helper";
 import { validate, validateQuery } from "../../../common/middlewares";
@@ -20,6 +21,7 @@ import {
   statusUpdateBodySchema,
   moveBoardItemBodySchema,
   listQuerySchema,
+  overviewQuerySchema,
 } from "./application.validation";
 
 const router = express.Router();
@@ -35,6 +37,8 @@ router.post(
 
 // application routes
 router.get("/", validateQuery(listQuerySchema), handleController(list));
+// Before "/:id", or "overview" is taken for an application id.
+router.get("/overview", validateQuery(overviewQuerySchema), handleController(overview));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
 router.post("/", validateBody(createBodySchema), handleController(create));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));
