@@ -24,7 +24,7 @@ export default function Applicants({
   jobId: string;
   jobTitle?: string;
 }) {
-  const [isListView, setIsListView] = useState(true);
+  const [isListView, setIsListView] = useState(false);
   const [open, setOpen] = useState(false);
 
   // Registered on top of the page's own context while this tab is open, so

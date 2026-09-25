@@ -43,6 +43,13 @@ export const ALL_APPLICATION_FIELDS = [
   'resumeId',
   'caseStudyId',
   'answers',
+  'answers.queryId',
+  'answers.answer',
+  'answers.question',
+  'answers.type',
+  'answers.options',
+  'answers.isRequired',
+  'answers.expectedAnswer',
   'portfolioUrl',
   'currentSalary',
   'expectedSalary',
@@ -77,11 +84,15 @@ const CANDIDATE_CREATE_FIELDS = [
   'expectedSalary',
 ];
 
+// The bare 'answers' key would grant every subfield, so candidates get the
+// per-subfield keys instead — which is what hides `expectedAnswer` from them.
 const CANDIDATE_READ_FIELDS = omitFields([
   'isDeleted',
   'deletedAt',
   'rank',
   'matchScore',
+  'answers',
+  'answers.expectedAnswer',
 ]);
 
 const EMPLOYER_UPDATE_FIELDS = ['statusId'];

@@ -16,6 +16,7 @@ import {
   populateJobProfileQuery,
   populateFilesQuery,
   populateStatusQuery,
+  populateAnswerQueriesQuery,
 } from "./application.query";
 import * as jobService from "../job/job.service";
 import * as FileMediaService from "../file-media/file-media.service";
@@ -59,6 +60,7 @@ export const getOne = async ({ query = {}, session }: IApplicationGetParams) => 
     ...populateJobProfileQuery(),
     ...populateFilesQuery(),
     ...populateStatusQuery(),
+    ...populateAnswerQueriesQuery(),
     ...applicationProjectionQuery(),
   ]);
 
@@ -94,6 +96,7 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IApplicationGet
     ...populateJobProfileQuery(),
     ...populateStatusQuery(),
     ...populateFilesQuery(),
+    ...populateAnswerQueriesQuery(),
     ...applicationProjectionQuery(),
   ]);
 
