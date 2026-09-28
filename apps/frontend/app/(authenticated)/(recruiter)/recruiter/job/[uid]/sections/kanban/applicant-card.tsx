@@ -74,9 +74,6 @@ export function ApplicantCardContent({
           >
             <Grip size={20} />
           </span>
-          <span className=" text-label-sm text-text-gray-tertiary">
-            {applicant.rank || 0}
-          </span>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -106,7 +103,7 @@ export function ApplicantCardContent({
         </DropdownMenu>
       </div>
 
-      {/* Avatar + name + status */}
+      {/* Avatar + name — status is the column the card sits in */}
       <div className="flex items-center gap-spacing-lg">
         <Avatar className=" size-12 border border-border-gray-primary items-center justify-center">
           {/* <AvatarImage src={row.original.jobProfile.profileImageSrc} /> */}
@@ -115,16 +112,9 @@ export function ApplicantCardContent({
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 space-y-spacing-3xs">
-          <div className="flex items-center gap-spacing-sm flex-wrap">
-            <span className="text-label-lg font-label-lg-strong! text-text-gray-primary truncate">
-              {applicant.jobProfile?.name}
-            </span>
-            <span
-              className={`  text-label-xs font-label-xs-strong! px-spacing-sm py-spacing-3xs rounded-full whitespace-nowrap border text-others-brand-dark bg-others-brand-brand-zero border-others-brand-light`}
-            >
-              {applicant.status?.label}
-            </span>
-          </div>
+          <p className="text-label-lg font-label-lg-strong! text-text-gray-primary truncate">
+            {applicant.jobProfile?.name}
+          </p>
           <p className="text-label-sm text-text-gray-tertiary truncate">
             {applicant.jobProfile?.email}
           </p>
