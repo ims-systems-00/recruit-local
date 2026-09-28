@@ -234,7 +234,7 @@ export function useMoveApplicationToColumn() {
         toast.success(
           response.message || 'Application moved to column successfully',
         );
-        queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+        await queryClient.invalidateQueries({ queryKey: applicationKeys.all });
         // queryClient.invalidateQueries({ queryKey: ['statuses'] });
         onSuccessCallback?.(response.data as Application);
       } else {

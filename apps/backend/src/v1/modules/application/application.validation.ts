@@ -84,9 +84,15 @@ export const listQuerySchema = Joi.object({
   // caller that still sends it.
   page: Joi.any().strip(),
   limit: Joi.number().integer().min(1).max(100).default(10),
+  // A board column (`statusId` given) is read in the order drag-and-drop writes:
+  // `rank`, highest first. Everything else stays newest first.
   sort: Joi.string()
-    .valid("-createdAt", "createdAt", "-matchScore", "matchScore", "-updatedAt", "updatedAt")
-    .default("-createdAt"),
+    .valid("-createdAt", "createdAt", "-matchScore", "matchScore", "-updatedAt", "updatedAt", "-rank", "rank")
+    .when("statusId", {
+      is: Joi.exist(),
+      then: Joi.string().default("-rank"),
+      otherwise: Joi.string().default("-createdAt"),
+    }),
 
   clientSearch: Joi.string().trim().max(200).allow(""),
 

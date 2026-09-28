@@ -175,8 +175,11 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>, opti
   //     });
   //   }
   // );
+  // Column order everywhere is `{ rank: -1, _id: -1 }` — what the list endpoint's
+  // `-rank` sort resolves to (`cursorSortStage` tie-breaks on `_id`). This walks
+  // the exact reverse, so equal ranks keep their on-screen order.
   schema.static("rebalanceColumn", async function (statusId: Types.ObjectId, session: ClientSession) {
-    const items = await this.find({ statusId }).sort({ rank: 1, createdAt: -1 }).session(session);
+    const items = await this.find({ statusId }).sort({ rank: 1, _id: 1 }).session(session);
 
     const SPACE_MULTIPLIER = 1000;
     let currentRank = BOARD_CONFIG.REBALANCE_BASE_GAP * SPACE_MULTIPLIER;
@@ -228,7 +231,7 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>, opti
           [options.foreignKey]: parentId,
         })
           .select("_id rank")
-          .sort({ rank: -1, createdAt: 1 })
+          .sort({ rank: -1, _id: -1 })
           .session(session);
 
         const existingItems = columnItems.filter((i: any) => i._id.toString() !== item._id.toString());
@@ -253,6 +256,8 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>, opti
             const nextRank = existingItems[targetIndex].rank;
             newRank = (prevRank + nextRank) / 2;
 
+            // Includes equal neighbours (ranks are seeded from `matchScore`, so
+            // ties are common): no midpoint separates them.
             if ((prevRank - nextRank) / 2 < BOARD_CONFIG.MIN_RANK_GAP) {
               rebalanced = true;
             }
@@ -260,12 +265,27 @@ export const boardablePlugin = <T extends IBoardableDoc>(schema: Schema<T>, opti
         }
 
         item.statusId = targetStatusObjectId;
-        item.rank = newRank;
-        await item.save({ session });
 
         if (rebalanced) {
+          // Re-rank the whole column with the item already at `targetIndex`.
+          // Saving a midpoint and then re-sorting would place it by tie-break,
+          // not where it was dropped.
           logger.info(`Rebalancing column for statusId: ${targetStatusObjectId.toString()}`);
-          await this.rebalanceColumn(targetStatusObjectId, session);
+          const ordered = [...existingItems];
+          ordered.splice(targetIndex, 0, item);
+
+          const gap = BOARD_CONFIG.REBALANCE_BASE_GAP * 1000;
+          const bulkOps = ordered.map((doc: any, index: number) => ({
+            updateOne: { filter: { _id: doc._id }, update: { rank: (ordered.length - index) * gap } },
+          }));
+
+          newRank = (ordered.length - targetIndex) * gap;
+          item.rank = newRank;
+          await item.save({ session });
+          await this.bulkWrite(bulkOps, { session });
+        } else {
+          item.rank = newRank;
+          await item.save({ session });
         }
 
         return { success: true, rank: newRank, rebalanced };
