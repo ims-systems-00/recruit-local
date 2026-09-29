@@ -236,7 +236,7 @@ export const applicationListQuerySpec: ListQuerySpec = {
     reference: eq("reference"),
     matchScore: range("matchScore"),
   },
-  sortable: ["createdAt", "updatedAt", "matchScore"],
+  sortable: ["createdAt", "updatedAt", "matchScore", "rank"],
   defaultSort: "-createdAt",
   // Kept from the old MongoQuery contract so no frontend call site has to change.
   searchKey: "clientSearch",

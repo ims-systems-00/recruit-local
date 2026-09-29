@@ -34,18 +34,32 @@ export const columnSortableId = (statusId: string) => `column:${statusId}`;
 const COLUMN_CLASS =
   'relative flex flex-col gap-spacing-2xl flex-1 min-w-[363px] max-w-[363px] bg-bg-gray-soft-secondary p-spacing-sm rounded-3xl border border-border-gray-secondary';
 
-/** Server cards with in-flight moves applied: moved-in first, moved-out dropped. */
+/** A card moved into a column, and the slot it was dropped on. */
+export type OptimisticItem = { app: Application; index: number };
+
+/**
+ * Server cards with in-flight moves applied: moved-out dropped, moved-in spliced
+ * in at the index they were dropped on. The backend places a move the same way
+ * — the column without the card, then insert at `targetIndex` — so the preview
+ * matches the order the refetch brings back.
+ */
 export const mergeColumnApplications = (
   applications: Application[],
-  optimisticItems: Application[],
+  optimisticItems: OptimisticItem[],
   removedIds: Set<string>,
-) => [
-  ...optimisticItems,
-  ...applications.filter(
+) => {
+  const merged = applications.filter(
     (a) =>
-      !optimisticItems.some((o) => o._id === a._id) && !removedIds.has(a._id),
-  ),
-];
+      !optimisticItems.some((o) => o.app._id === a._id) &&
+      !removedIds.has(a._id),
+  );
+  [...optimisticItems]
+    .sort((a, b) => a.index - b.index)
+    .forEach(({ app, index }) =>
+      merged.splice(Math.min(index, merged.length), 0, app),
+    );
+  return merged;
+};
 
 function ColumnHeader({
   title,
@@ -132,7 +146,7 @@ interface Props {
   onRenameColumn: (columnId: string, newTitle: string) => void;
   onDeleteColumn: (columnId: string) => void;
   jobId: string;
-  optimisticItems: Application[];
+  optimisticItems: OptimisticItem[];
   removedIds: Set<string>;
 }
 

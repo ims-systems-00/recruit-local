@@ -84,9 +84,15 @@ export const listQuerySchema = Joi.object({
   // caller that still sends it.
   page: Joi.any().strip(),
   limit: Joi.number().integer().min(1).max(100).default(10),
+  // A board column (`statusId` given) is read in the order drag-and-drop writes:
+  // `rank`, highest first. Everything else stays newest first.
   sort: Joi.string()
-    .valid("-createdAt", "createdAt", "-matchScore", "matchScore", "-updatedAt", "updatedAt")
-    .default("-createdAt"),
+    .valid("-createdAt", "createdAt", "-matchScore", "matchScore", "-updatedAt", "updatedAt", "-rank", "rank")
+    .when("statusId", {
+      is: Joi.exist(),
+      then: Joi.string().default("-rank"),
+      otherwise: Joi.string().default("-createdAt"),
+    }),
 
   clientSearch: Joi.string().trim().max(200).allow(""),
 
@@ -96,4 +102,23 @@ export const listQuerySchema = Joi.object({
   statusId: Joi.string().custom(objectIdValidation),
   reference: Joi.string().trim().max(200),
   matchScore: Joi.object({ gte: Joi.number(), lte: Joi.number() }),
+});
+
+const isValidTimeZone = (value: string, helpers: Joi.CustomHelpers) => {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    return value;
+  } catch {
+    return helpers.error("any.invalid");
+  }
+};
+
+/**
+ * The contract for `GET /applications/overview`. `tz` is the viewer's IANA
+ * timezone, so "today" and the daily buckets match the recruiter's calendar.
+ */
+export const overviewQuerySchema = Joi.object({
+  jobId: Joi.string().custom(objectIdValidation).required().label("Job ID"),
+  range: Joi.string().valid("week", "month").default("week").label("Range"),
+  tz: Joi.string().trim().max(64).custom(isValidTimeZone).default("UTC").label("Timezone"),
 });

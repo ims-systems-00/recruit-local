@@ -18,6 +18,8 @@ import type {
   ApplicationCreateInput,
   ApplicationUpdateInput,
   MoveApplicationToColumnInput,
+  JobOverview,
+  JobOverviewFilters,
 } from './application.type';
 
 const API_ENDPOINT = '/applications';
@@ -263,5 +265,32 @@ export async function moveApplicationToColumn(
     };
   } catch (error) {
     return handleServerError(error, 'Failed to move application to column');
+  }
+}
+
+/**
+ * GET JOB OVERVIEW (recruiter job page, Overview tab)
+ */
+export async function getJobOverview(
+  params: JobOverviewFilters,
+): Promise<ApplicationApiResponse<JobOverview>> {
+  try {
+    await idParamsSchema.validate({ id: params.jobId });
+
+    const res = await axiosServer.get(`${API_ENDPOINT}/overview`, {
+      params: {
+        jobId: params.jobId,
+        range: params.range,
+        tz: params.tz,
+      },
+    });
+
+    return {
+      success: true,
+      data: res.data.overview,
+      message: res.data.message || 'Job overview fetched successfully',
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to fetch job overview');
   }
 }

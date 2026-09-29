@@ -38,6 +38,7 @@ import {
   KanbanColumn,
   KanbanColumnPreview,
   mergeColumnApplications,
+  type OptimisticItem,
 } from './kanban-column';
 import { ApplicantCardContent } from './applicant-card';
 import { StatusData } from '@/services/status/status.type';
@@ -85,7 +86,7 @@ function Kanban({
   const [columns, setColumns] = useState<Column[]>([]);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
   const [optimisticMap, setOptimisticMap] = useState<{
-    [statusId: string]: Application[];
+    [statusId: string]: OptimisticItem[];
   }>({});
 
   const { moveApplicationToColumn, isPending: isMovingApplicationToColumn } =
@@ -125,42 +126,39 @@ function Kanban({
       setRemovedIds((prevIds) => new Set(prevIds).add(app._id));
       // remove from source
       next[fromStatus] = (next[fromStatus] || []).filter(
-        (a) => a._id !== app._id,
+        (o) => o.app._id !== app._id,
       );
 
-      // insert into target
-      const targetList = next[toStatus] || [];
-      const newTarget = [...targetList];
-      newTarget.splice(toIndex, 0, {
-        ...app,
-        status: { ...app.status, _id: toStatus, label: toStatusLabel },
-      });
-
-      next[toStatus] = newTarget;
+      // insert into target at the slot it was dropped on
+      next[toStatus] = [
+        ...(next[toStatus] || []).filter((o) => o.app._id !== app._id),
+        {
+          app: {
+            ...app,
+            status: { ...app.status, _id: toStatus, label: toStatusLabel },
+          },
+          index: toIndex,
+        },
+      ];
 
       return next;
     });
   };
 
-  const rollbackMove = (
-    app: Application,
-    fromStatus: string,
-    toStatus: string,
-  ) => {
+  // Drops the optimistic copy. On success it runs after the columns have
+  // refetched, so the server's rank order takes over; on failure the server
+  // copy, still in its original slot, simply reappears.
+  const clearOptimistic = (appId: string) => {
     setOptimisticMap((prev) => {
-      const next = { ...prev };
-
-      // remove from wrong column
-      next[toStatus] = (next[toStatus] || []).filter((a) => a._id !== app._id);
-
-      // restore to original
-      next[fromStatus] = [...(next[fromStatus] || []), app];
-
+      const next: typeof prev = {};
+      for (const [statusId, items] of Object.entries(prev)) {
+        next[statusId] = items.filter((o) => o.app._id !== appId);
+      }
       return next;
     });
     setRemovedIds((prev) => {
       const next = new Set(prev);
-      next.delete(app._id); // ✅ restore original
+      next.delete(appId);
       return next;
     });
   };
@@ -265,9 +263,8 @@ function Kanban({
           targetStatusId: over.id as string,
           targetIndex: 0,
         },
-        onErrorCallback: () => {
-          rollbackMove(activeApp, fromStatus, toStatus);
-        },
+        onSuccessCallback: () => clearOptimistic(activeApp._id),
+        onErrorCallback: () => clearOptimistic(activeApp._id),
       });
 
       return;
@@ -279,9 +276,8 @@ function Kanban({
         targetStatusId: overApp.status._id,
         targetIndex: overIndex || 0,
       },
-      onErrorCallback: () => {
-        rollbackMove(activeApp, fromStatus, toStatus);
-      },
+      onSuccessCallback: () => clearOptimistic(activeApp._id),
+      onErrorCallback: () => clearOptimistic(activeApp._id),
     });
   };
 
