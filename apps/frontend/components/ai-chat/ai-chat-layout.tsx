@@ -7,8 +7,11 @@ import AiChatModal from './ai-chat-modal';
 import AliceIntroBubble from './alice-intro-bubble';
 import {
   findPageIntro,
+  introDue,
   introViewerOf,
   LOGIN_WELCOME,
+  markIntroSeen,
+  quietAlice,
   takeLoginWelcome,
 } from './page-intros';
 
@@ -42,22 +45,23 @@ export default function AiChatLayout() {
   }, [pathname, status]);
 
   const viewer = introViewerOf(status, session);
-  const pageIntro = findPageIntro(pathname);
+  const pageIntro = findPageIntro(pathname, viewer, session);
   const welcome = welcomePath === pathname && viewer !== 'visitor';
   const introId = welcome ? LOGIN_WELCOME.id : pageIntro?.id;
   const introMessage = welcome
     ? LOGIN_WELCOME.message[viewer]
     : pageIntro?.message[viewer];
 
-  // Nothing is remembered, so she speaks up on every visit to a page that has
-  // an intro. Leaving the page takes its intro with it.
+  // Each intro pops up once per session, and none after she has been met; the
+  // welcome is once per login already. Leaving the page takes its intro with it.
   useEffect(() => {
     if (!introId) return;
+    if (introId !== LOGIN_WELCOME.id && !introDue(introId)) return;
 
-    introTimer.current = setTimeout(
-      () => setShownIntroId(introId),
-      INTRO_DELAY_MS,
-    );
+    introTimer.current = setTimeout(() => {
+      markIntroSeen(introId);
+      setShownIntroId(introId);
+    }, INTRO_DELAY_MS);
     return () => {
       clearTimeout(introTimer.current);
       setShownIntroId(null);
@@ -65,9 +69,11 @@ export default function AiChatLayout() {
   }, [introId]);
 
   // Also cancels a pending intro, so one dismissed early never appears later.
+  // Dismissing counts as meeting her, so she stays quiet for the session.
   const dismissIntro = () => {
     clearTimeout(introTimer.current);
     setShownIntroId(null);
+    quietAlice();
   };
 
   // Opening the chat, from the card or the launcher, counts as meeting her.
