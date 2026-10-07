@@ -33,6 +33,8 @@ const contentLine = {
 };
 
 interface IntroContent {
+  /** Her opening line, before the wave. */
+  heading?: string;
   /** What she says about this page — see `page-intros.ts`. */
   message: string;
   /** The link line under it. */
@@ -68,7 +70,13 @@ export default function AliceIntroBubble({
 }
 
 /** Typing dots, then the message. Mounted fresh each time the intro opens. */
-function IntroSequence({ message, cta, onOpenChat, onDismiss }: IntroContent) {
+function IntroSequence({
+  heading = "Hi, I'm Alice",
+  message,
+  cta,
+  onOpenChat,
+  onDismiss,
+}: IntroContent) {
   const reduceMotion = useReducedMotion();
   const [typing, setTyping] = useState(!reduceMotion);
 
@@ -144,7 +152,7 @@ function IntroSequence({ message, cta, onOpenChat, onDismiss }: IntroContent) {
                   className="block text-label-sm font-label-sm-strong! text-text-gray-primary"
                   variants={contentLine}
                 >
-                  Hi, I&apos;m Alice{' '}
+                  {heading}{' '}
                   <motion.span
                     className="inline-block origin-[70%_70%]"
                     animate={

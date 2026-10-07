@@ -5,7 +5,12 @@ import { useSession } from 'next-auth/react';
 import AiChatButton from './ai-chat-button';
 import AiChatModal from './ai-chat-modal';
 import AliceIntroBubble from './alice-intro-bubble';
-import { findPageIntro, introViewerOf } from './page-intros';
+import {
+  findPageIntro,
+  introViewerOf,
+  LOGIN_WELCOME,
+  takeLoginWelcome,
+} from './page-intros';
 
 /**
  * Closing unmounts the chat, so the next open starts fresh. Minimizing only
@@ -22,12 +27,27 @@ export default function AiChatLayout() {
   const [chatState, setChatState] = useState<ChatState>('closed');
   /** The intro on screen, by page id; null when none is. */
   const [shownIntroId, setShownIntroId] = useState<string | null>(null);
+  /** The first page after login, welcomed in place of its intro until left. */
+  const [welcomePath, setWelcomePath] = useState<string | null>(null);
   const introTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
 
-  const intro = findPageIntro(pathname);
-  const introId = intro?.id;
+  // Waits for the session, so the login mark is read only once she knows
+  // who she is welcoming.
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    const welcome = takeLoginWelcome(pathname);
+    if (welcome !== undefined) setWelcomePath(welcome ? pathname : null);
+  }, [pathname, status]);
+
+  const viewer = introViewerOf(status, session);
+  const pageIntro = findPageIntro(pathname);
+  const welcome = welcomePath === pathname && viewer !== 'visitor';
+  const introId = welcome ? LOGIN_WELCOME.id : pageIntro?.id;
+  const introMessage = welcome
+    ? LOGIN_WELCOME.message[viewer]
+    : pageIntro?.message[viewer];
 
   // Nothing is remembered, so she speaks up on every visit to a page that has
   // an intro. Leaving the page takes its intro with it.
@@ -57,15 +77,17 @@ export default function AiChatLayout() {
   };
 
   const introOpen =
-    !!intro && shownIntroId === intro.id && chatState === 'closed';
-  const viewer = introViewerOf(status, session);
+    !!introId && shownIntroId === introId && chatState === 'closed';
 
   return (
     <div>
       <AiChatButton setIsOpen={openChat} attention={introOpen} />
       <AliceIntroBubble
         open={introOpen}
-        message={intro?.message[viewer] ?? ''}
+        heading={
+          welcome ? LOGIN_WELCOME.heading(session?.user?.firstName) : undefined
+        }
+        message={introMessage ?? ''}
         cta={viewer === 'visitor' ? 'See what I can do' : 'Chat with me'}
         onOpenChat={openChat}
         onDismiss={dismissIntro}
@@ -74,9 +96,7 @@ export default function AiChatLayout() {
         <AiChatModal
           hidden={chatState === 'minimized'}
           // Signed-out viewers get the sign-in pitch instead.
-          pageMessage={
-            viewer === 'visitor' ? undefined : intro?.message[viewer]
-          }
+          pageMessage={viewer === 'visitor' ? undefined : introMessage}
           onClose={() => setChatState('closed')}
           onMinimize={() => setChatState('minimized')}
         />

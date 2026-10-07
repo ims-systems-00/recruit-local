@@ -66,6 +66,70 @@ export const PAGE_INTROS: PageIntro[] = [
 export const findPageIntro = (pathname: string) =>
   PAGE_INTROS.find((intro) => intro.match(pathname));
 
+/**
+ * Her welcome on the first page after login, in place of that page's intro.
+ * Only someone who has just signed in sees it, so there is no visitor line.
+ */
+export const LOGIN_WELCOME = {
+  id: 'welcome',
+  heading: (firstName?: string) =>
+    firstName ? `Welcome back, ${firstName}` : 'Welcome back',
+  message: {
+    candidate:
+      'Good to see you again. Want me to find jobs that fit you, or check how a role matches your profile?',
+    other: 'Good to see you again. What can I help you with today?',
+  },
+} as const;
+
+/** Login passes through these on its way to the user's first page. */
+const LOGIN_TRANSIT_PATHS = new Set(['/login', '/system-preparation']);
+
+/** Still setting up, where "welcome back" reads oddly: the welcome is dropped. */
+const isSetupPath = (pathname: string) =>
+  pathname.startsWith('/accounts/') ||
+  /^\/(candidate|recruiter)\/onboarding(\/|$)/.test(pathname);
+
+/** Set at login, read by the first page after it. Per tab, so per login. */
+const LOGIN_WELCOME_KEY = 'rl:alice-welcome';
+
+// Storage can be blocked (private windows, site data off); she then just
+// skips the welcome.
+
+export const markLoginWelcome = () => {
+  try {
+    sessionStorage.setItem(LOGIN_WELCOME_KEY, '1');
+  } catch {
+    // Skipped, see above.
+  }
+};
+
+/**
+ * The page this login's welcome went to. Asking again from that page gets the
+ * same answer: React runs effects twice in dev (Strict Mode), and the second
+ * run finds the mark already cleared.
+ */
+let welcomedPath: string | null = null;
+
+/**
+ * Whether `pathname` is the first page after login and should be welcomed.
+ * Clears the mark on that page either way, so she welcomes once per login.
+ * Returns undefined while the login is still in transit.
+ */
+export const takeLoginWelcome = (pathname: string): boolean | undefined => {
+  if (LOGIN_TRANSIT_PATHS.has(pathname)) return undefined;
+  try {
+    if (sessionStorage.getItem(LOGIN_WELCOME_KEY) !== null) {
+      sessionStorage.removeItem(LOGIN_WELCOME_KEY);
+      welcomedPath = isSetupPath(pathname) ? null : pathname;
+    }
+  } catch {
+    // Skipped, see above.
+  }
+  // Once she has left that page, the welcome is over.
+  if (welcomedPath !== pathname) welcomedPath = null;
+  return welcomedPath === pathname;
+};
+
 export const introViewerOf = (
   status: 'authenticated' | 'loading' | 'unauthenticated',
   session: Session | null,
