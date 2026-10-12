@@ -22,6 +22,16 @@ const STEPS: Step[] = [
   },
   {
     number: 3,
+    title: 'Skills & Requirements',
+    subtitle: 'Structured Skills and Candidates are match on',
+  },
+  {
+    number: 4,
+    title: 'Values and Potentials',
+    subtitle: 'The Values in this role are ranked by priroty',
+  },
+  {
+    number: 5,
     title: 'Additional Queries',
     subtitle: 'Crafting Impactful Value-Based Interview Questions',
   },

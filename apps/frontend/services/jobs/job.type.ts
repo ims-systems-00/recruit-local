@@ -27,6 +27,35 @@ export type StorageInformation = {
   Bucket: string;
 };
 
+export type SkillLevel =
+  | 'Willing to Learn'
+  | 'Beginner'
+  | 'Intermediate'
+  | 'Advance';
+
+export type SkillRequirement = 'Required' | 'Preferred';
+
+export interface JobSkillItem {
+  id: string;
+  name: string;
+  level: SkillLevel;
+  requirement: SkillRequirement;
+}
+
+export type ValuePriorityRank =
+  | 'Essentials'
+  | 'Highly Important'
+  | 'Important'
+  | 'Desirable';
+
+export interface JobValueItem {
+  id: string;
+  category: string;
+  name: string;
+  rank: ValuePriorityRank;
+  weight: number;
+}
+
 export type AdditionalQuery = {
   _id?: string;
   question: string;
@@ -111,6 +140,9 @@ export interface JobData {
     src: string;
   }[];
   additionalQueries?: AdditionalQuery[];
+  skills?: JobSkillItem[];
+  values?: JobValueItem[];
+  saveSkillsForFuture?: boolean;
   createdAt: string;
   updatedAt: string;
   alreadySaved?: boolean;

@@ -6,6 +6,8 @@ import JobDescriptionForm from './steps/job-description-form';
 import Preview from './preview/preview';
 import { StepsSidebar } from './steps-sidebar';
 import AdditionalQueries from './steps/additional-queries';
+import SkillsRequirementsStep from './steps/skills-requirements-step';
+import ValuesPotentialsStep from './steps/values-potentials-step';
 import { JobData } from '@/services/jobs/job.type';
 
 export default function EditForm({
@@ -42,7 +44,7 @@ export default function EditForm({
           />
         )}
         {step === 3 && (
-          <AdditionalQueries
+          <SkillsRequirementsStep
             prev={(data) => {
               setFormData((prev) => ({ ...prev, ...data }));
               setStep(2);
@@ -55,10 +57,36 @@ export default function EditForm({
           />
         )}
         {step === 4 && (
-          <Preview prev={() => setStep(3)} defaultValues={formData} />
+          <ValuesPotentialsStep
+            prev={(data) => {
+              setFormData((prev) => ({ ...prev, ...data }));
+              setStep(3);
+            }}
+            next={(data) => {
+              setFormData((prev) => ({ ...prev, ...data }));
+              setStep(5);
+            }}
+            defaultValues={formData}
+          />
+        )}
+        {step === 5 && (
+          <AdditionalQueries
+            prev={(data) => {
+              setFormData((prev) => ({ ...prev, ...data }));
+              setStep(4);
+            }}
+            next={(data) => {
+              setFormData((prev) => ({ ...prev, ...data }));
+              setStep(6);
+            }}
+            defaultValues={formData}
+          />
+        )}
+        {step === 6 && (
+          <Preview prev={() => setStep(5)} defaultValues={formData} />
         )}
       </div>
-      {step !== 4 && <StepsSidebar currentStep={step} />}
+      {step !== 6 && <StepsSidebar currentStep={step} />}
     </div>
   );
 }

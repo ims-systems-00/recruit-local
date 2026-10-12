@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { JobData } from '@/services/jobs/job.type';
+import { JobData, JobSkillItem } from '@/services/jobs/job.type';
 import {
   Building2,
   Calendar,
@@ -15,14 +15,143 @@ import {
   Mailbox,
   PhoneCall,
   Globe,
+  Lock,
+  Target,
 } from 'lucide-react';
 import moment from 'moment';
 import React, { useState } from 'react';
 import InfoCard from './info-card';
 import { JOBS_STATUS_ENUMS, REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 import RelatedAttachmentDefault from '@/public/images/related_attachment_default.png';
+
+const PREVIEW_VALUE_CATEGORIES = [
+  {
+    id: 'culture-and-behavior',
+    name: 'Culture & Behavior',
+    icon: (
+      <svg
+        className="size-5 text-fg-gray-secondary"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="m19 20-7-14-7 14h14Z" />
+        <path d="M12 6v14" />
+      </svg>
+    ),
+    defaultValues: [
+      { name: 'Empathy' },
+      { name: 'Integrity' },
+      { name: 'Respect' },
+      { name: 'Transparency' },
+    ],
+  },
+  {
+    id: 'mindset',
+    name: 'Mindset',
+    icon: (
+      <svg
+        className="size-5 text-fg-gray-secondary"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 4v16" />
+        <path d="M12 12c-2.5-4-7-4-7 0s4 4.5 7 1" />
+        <path d="M12 13c-3.5 3-5 7-2 7s5-3.5 2-7" />
+        <path d="M12 12c2.5-4 7-4 7 0s-4 4.5-7 1" />
+        <path d="M12 13c3.5 3 5 7 2 7s-5-3.5-2-7" />
+      </svg>
+    ),
+    defaultValues: [
+      { name: 'Growth-oriented' },
+      { name: 'Entrepreneurial' },
+      { name: 'Proactive' },
+      { name: 'Resilient' },
+      { name: 'Problem solve' },
+    ],
+  },
+  {
+    id: 'working-style',
+    name: 'Working Style',
+    icon: (
+      <svg
+        className="size-5 text-fg-gray-secondary"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="5" r="2" />
+        <path d="m9 20 3-6 3 2 2 4" />
+        <path d="m6 16 3-4 3 1" />
+        <path d="m14 10 3-2" />
+      </svg>
+    ),
+    defaultValues: [
+      { name: 'Ownership mentality' },
+      { name: 'Collaborative' },
+      { name: 'independent' },
+    ],
+  },
+  {
+    id: 'leadership',
+    name: 'Leadership & Team Dynamics',
+    icon: (
+      <svg
+        className="size-5 text-fg-gray-secondary"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="10" cy="8" r="4" />
+        <path d="M4 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+        <path d="M18 8a6 6 0 0 1 0 8" />
+        <path d="M20 6a9 9 0 0 1 0 12" />
+      </svg>
+    ),
+    defaultValues: [
+      { name: 'Mentorship' },
+      { name: 'Coaching culture' },
+      { name: 'Empowerment' },
+    ],
+  },
+  {
+    id: 'motivation',
+    name: 'Purpose & Motivation',
+    icon: <Target className="size-5 text-fg-gray-secondary" />,
+    defaultValues: [{ name: 'Career progression' }],
+  },
+];
+
+const DEFAULT_PREVIEW_SKILLS: JobSkillItem[] = [
+  {
+    id: '1',
+    name: 'Medication Administration',
+    level: 'Intermediate',
+    requirement: 'Required',
+  },
+  {
+    id: '2',
+    name: 'Manual handling',
+    level: 'Beginner',
+    requirement: 'Preferred',
+  },
+];
 import MapByAddress from '@/components/map-by-address';
 import { useUpdateJob } from '@/services/jobs/jobs.client';
 import { useRouter } from 'next/navigation';
@@ -79,6 +208,31 @@ export default function Preview({
     ? defaultValues.weekends.join(' and ')
     : null;
 
+  // Values computation
+  const hasCustomValues = Boolean(
+    defaultValues?.values && defaultValues.values.length > 0,
+  );
+  const categoriesToRender = PREVIEW_VALUE_CATEGORIES.map((cat) => {
+    const matched =
+      defaultValues?.values?.filter(
+        (v) =>
+          v.category === cat.id ||
+          v.category?.toLowerCase() === cat.name.toLowerCase(),
+      ) || [];
+    return {
+      ...cat,
+      values: hasCustomValues ? matched : cat.defaultValues,
+    };
+  }).filter((cat) => cat.values.length > 0);
+
+  // Skills computation
+  const hasCustomSkills = Boolean(
+    defaultValues?.skills && defaultValues.skills.length > 0,
+  );
+  const skillsToRender = hasCustomSkills
+    ? defaultValues.skills!
+    : DEFAULT_PREVIEW_SKILLS;
+
   const onUpdateJob = async () => {
     await updateJob({
       id: defaultValues._id,
@@ -110,7 +264,7 @@ export default function Preview({
             <Button
               type="button"
               variant="outline"
-              onClick={() => prev(3)}
+              onClick={() => prev(5)}
               disabled={isPending}
               className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
             >
@@ -224,11 +378,102 @@ export default function Preview({
           </p>
           <DraftViewer content={defaultValues?.description} />
         </div>
+
+        {/* Values and Potentials (bottom of About the Role) */}
+        <div className="space-y-spacing-2xl">
+          <div className="flex items-center gap-spacing-sm">
+            <p className="text-label-lg font-label-lg-strong! text-text-gray-primary">
+              Values and Potentials
+            </p>
+            <span className="inline-flex items-center gap-1 px-spacing-sm py-0.5 rounded-full text-label-xs font-label-xs-strong! bg-pink-50 text-pink-600 border border-pink-200">
+              <Lock className="size-3 text-pink-600" />
+              Recruiters only
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-2xl">
+            {categoriesToRender.map((cat) => (
+              <div
+                key={cat.id}
+                className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-4xl space-y-spacing-4xl"
+              >
+                <div className="flex items-center gap-spacing-2xl">
+                  <div className="flex size-10 items-center justify-center rounded-lg border border-others-gray-light bg-others-gray-gray-zero">
+                    {cat.icon}
+                  </div>
+                  <p className="text-label-md font-label-md-strong! text-text-gray-primary">
+                    {cat.name}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-spacing-sm">
+                  {cat.values.map((v, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center rounded-lg border border-border-gray-secondary bg-white px-spacing-md py-spacing-xs text-label-xs font-label-xs-strong! text-text-gray-secondary"
+                    >
+                      {v.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="space-y-spacing-2xl">
           <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
             Key Responsibilities
           </p>
           <DraftViewer content={defaultValues?.responsibility} />
+        </div>
+
+        {/* Skills & Requirements (bottom of Key Responsibilities) */}
+        <div className="space-y-spacing-2xl">
+          <p className="text-label-lg font-label-lg-strong! text-text-gray-primary">
+            Skills &amp; Requirements
+          </p>
+
+          <div className="border border-border-gray-secondary rounded-2xl overflow-hidden bg-white">
+            <div className="bg-bg-gray-soft-primary px-spacing-4xl py-spacing-md flex items-center text-label-xs font-label-xs-strong! text-text-gray-tertiary">
+              <span className="w-16">Sl</span>
+              <span className="flex-1">Skills</span>
+              <span className="w-48">Required Level</span>
+              <span className="w-40">Requirements</span>
+            </div>
+            <div className="divide-y divide-border-gray-secondary">
+              {skillsToRender.map((skill, index) => {
+                const sl = String(index + 1).padStart(2, '0');
+                return (
+                  <div
+                    key={skill.id || index}
+                    className="px-spacing-4xl py-spacing-md flex items-center bg-white"
+                  >
+                    <span className="w-16 text-label-sm text-text-gray-quinary font-medium">
+                      {sl}
+                    </span>
+                    <span className="flex-1 text-label-sm font-medium text-text-gray-primary">
+                      {skill.name}
+                    </span>
+                    <span className="w-48 text-label-sm text-text-gray-secondary font-medium">
+                      {skill.level}
+                    </span>
+                    <div className="w-40">
+                      <span
+                        className={cn(
+                          'inline-flex items-center px-spacing-md py-0.5 rounded-full text-label-xs font-label-xs-strong!',
+                          skill.requirement === 'Required'
+                            ? 'bg-pink-50 text-pink-600 border border-pink-200'
+                            : 'bg-bg-gray-soft-secondary text-text-gray-secondary border border-border-gray-secondary',
+                        )}
+                      >
+                        {skill.requirement}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-border-gray-secondary p-spacing-4xl flex gap-spacing-lg items-center">
