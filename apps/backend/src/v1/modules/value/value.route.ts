@@ -1,5 +1,15 @@
 import express from "express";
-import { list, topThree, get, create, update, softRemove, hardRemove, restore } from "./value.controller";
+import {
+  list,
+  topThree,
+  get,
+  getAssessment,
+  create,
+  update,
+  softRemove,
+  hardRemove,
+  restore,
+} from "./value.controller";
 import { handleController } from "../../../common/helper";
 import { validate, validateQuery } from "../../../common/middlewares";
 import { createBodySchema, updateBodySchema, idParamsSchema, listQuerySchema } from "./value.validation";
@@ -11,6 +21,7 @@ const validateParams = validate("params");
 router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/top-three", handleController(topThree));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
+router.get("/:id/assessment", validateParams(idParamsSchema), handleController(getAssessment));
 router.post("/", validateBody(createBodySchema), handleController(create));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));
 router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemove));

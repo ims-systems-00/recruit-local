@@ -2,6 +2,8 @@ import { StatusCodes } from "http-status-codes";
 import { ApiResponse, ControllerParams, UnauthorizedException } from "../../../common/helper";
 import * as jobProfileService from "./job-profile.service";
 import { recomputeProfileCompletion } from "./profile-completion.service";
+import * as valueScoreService from "./value-score.service";
+import * as valueService from "../value/value.service";
 import * as applicationService from "../application/application.service";
 import * as jobService from "../job/job.service";
 import { update as updateUser } from "../user";
@@ -356,6 +358,42 @@ export const update = async ({ req }: ControllerParams) => {
     statusCode: StatusCodes.OK,
     data: getSanitizedResponse(jobProfile, ability),
     fieldName: "jobProfile",
+  });
+};
+
+/**
+ * Scores the candidate's answers to one value's questions and saves the score on
+ * the profile, replacing any earlier one. Gated like `update`: whoever may edit
+ * the profile may evaluate on it. The score itself is server-computed and never
+ * accepted from the client.
+ */
+export const evaluateValue = async ({ req }: ControllerParams) => {
+  const ability = new JobProfileAbilityBuilder(req.session).getAbility();
+
+  const existingJobProfile = await jobProfileService.getOne({ query: { _id: req.params.id } });
+
+  if (!existingJobProfile || !ability.can(AbilityAction.Update, new JobProfileAuthZEntity(existingJobProfile))) {
+    throw new UnauthorizedException("You do not have permission to evaluate values on this job profile.");
+  }
+
+  const assessment = await valueService.getAssessment({ id: req.body.valueId });
+  const answers = valueScoreService.matchAnswers(assessment.questions, req.body.answers);
+
+  const { score, feedback } = await valueScoreService.evaluate({ value: assessment, answers });
+
+  const valueScore = await valueScoreService.save({
+    jobProfileId: existingJobProfile._id,
+    valueId: assessment._id,
+    score,
+    feedback,
+    answers,
+  });
+
+  return new ApiResponse({
+    message: "Value evaluated.",
+    statusCode: StatusCodes.OK,
+    data: valueScore,
+    fieldName: "valueScore",
   });
 };
 

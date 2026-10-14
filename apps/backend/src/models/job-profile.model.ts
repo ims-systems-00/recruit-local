@@ -3,10 +3,25 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
-import { VISIBILITY, language, JOB_PROFILE_STATUS_ENUM, ONBOARDING_STEP_ENUMS, StoredCompletion } from "@rl/types";
+import {
+  VISIBILITY,
+  language,
+  JOB_PROFILE_STATUS_ENUM,
+  ONBOARDING_STEP_ENUMS,
+  StoredCompletion,
+  IValueScoreAnswer,
+} from "@rl/types";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { completionMongooseDefinition } from "./templates/completion.template";
+
+export interface IValueScore {
+  value: Types.ObjectId;
+  score: number;
+  feedback?: string;
+  answers: IValueScoreAnswer[];
+  evaluatedAt: Date;
+}
 
 export interface JobProfileInput extends IUserOwnedInput {
   name?: string;
@@ -25,6 +40,7 @@ export interface JobProfileInput extends IUserOwnedInput {
   skills?: string;
   interests?: string;
   values?: Types.ObjectId[];
+  valueScores?: IValueScore[];
   onboardingStep?: ONBOARDING_STEP_ENUMS;
   profileImageId?: Types.ObjectId;
   coverPhotoId?: Types.ObjectId;
@@ -36,7 +52,8 @@ export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, IBaseDo
 }
 
 interface IJobProfileModel
-  extends Model<IJobProfileDoc>,
+  extends
+    Model<IJobProfileDoc>,
     ISoftDeleteModel<IJobProfileDoc>,
     PaginateModel<IJobProfileDoc>,
     AggregatePaginateModel<IJobProfileDoc> {}
@@ -45,6 +62,26 @@ const languageSchema = new Schema({
   name: { type: String, required: true },
   proficiencyLevel: { type: String, required: true },
 });
+
+// One self-evaluated value. Written only by the evaluate endpoint — never by a
+// client update — and replaced wholesale on a retake.
+const valueScoreSchema = new Schema<IValueScore>(
+  {
+    value: { type: Schema.Types.ObjectId, ref: modelNames.VALUE, required: true },
+    score: { type: Number, required: true, min: 0, max: 100 },
+    feedback: { type: String },
+    answers: [
+      {
+        _id: false,
+        key: { type: String, required: true },
+        question: { type: String, required: true },
+        answer: { type: String, required: true },
+      },
+    ],
+    evaluatedAt: { type: Date, required: true },
+  },
+  { _id: false }
+);
 
 const jobProfileSchema = new Schema<IJobProfileDoc>(
   {
@@ -86,6 +123,7 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       type: String,
     },
     values: [{ type: Schema.Types.ObjectId, ref: modelNames.VALUE }],
+    valueScores: { type: [valueScoreSchema], default: [] },
     visibility: {
       type: String,
       enum: Object.values(VISIBILITY),

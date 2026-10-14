@@ -6,6 +6,7 @@ import { connectDB } from "../.config/database";
 import { userSeeder } from "./user.seeder";
 // import { statusSeeder } from "./status.seeder";
 import { valueSeeder } from "./value.seeder";
+import { valueAssessmentSeeder } from "./value-assessment.seeder";
 import { jobTitleSeeder } from "./job-title.seeder";
 import { industrySeeder } from "./industry.seeder";
 import { experienceLevelSeeder } from "./experience-level.seeder";
@@ -23,6 +24,8 @@ const runSeeders = async () => {
     await userSeeder();
     // await statusSeeder();
     await valueSeeder();
+    // After values: it attaches questions to value documents that must exist.
+    await valueAssessmentSeeder();
     await jobTitleSeeder();
     await industrySeeder();
     await experienceLevelSeeder();

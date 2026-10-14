@@ -222,6 +222,17 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
 
   const { kycDocumentStorage, profileImageStorage, coverPhotoStorage, ...cleanPayload } = payload;
 
+  // A new `values` list also drops the scores of values no longer on it, so a
+  // deselected value does not keep a score. Values evaluated before Continue are
+  // in the list Continue sends, so their scores survive.
+  const pruneValueScores = Array.isArray(payload.values)
+    ? {
+        $pull: {
+          valueScores: { value: { $nin: payload.values.map((id) => new Types.ObjectId(String(id))) } },
+        },
+      }
+    : {};
+
   const updatedJobProfile = await JobProfile.findOneAndUpdate(
     { _id: jobProfile._id },
     {
@@ -230,6 +241,7 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
         kycDocumentId: updatedKycDocumentId,
         ...photoIds,
       },
+      ...pruneValueScores,
     },
     {
       new: true,

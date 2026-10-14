@@ -34,6 +34,7 @@ export const PROMPT_NAME = {
   AGENT_SYSTEM_EMPLOYER: 'agent.system.employer',
   AGENT_SYSTEM_CANDIDATE: 'agent.system.candidate',
   CV_EXTRACT_SYSTEM: 'cv.extract.system',
+  VALUE_SCORE_SYSTEM: 'value.score.system',
 } as const;
 
 export type PromptName = (typeof PROMPT_NAME)[keyof typeof PROMPT_NAME];

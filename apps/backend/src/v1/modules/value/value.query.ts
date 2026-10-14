@@ -4,7 +4,9 @@ import { omit } from "lodash";
 import { IValueDoc, Value } from "../../../models";
 
 export const valueProjectQuery = (): PipelineStage[] => {
-  const fieldsToExclude: (keyof IValueDoc | "__v")[] = ["__v"];
+  // `assessment` is served only by `GET /values/:id/assessment`. Left in, it would
+  // ride along on every list page and every profile/tenant `values` lookup.
+  const fieldsToExclude: (keyof IValueDoc | "__v")[] = ["__v", "assessment"];
   const selectedFields = Object.keys(omit(Value.schema.paths, fieldsToExclude));
   return projectQuery(selectedFields);
 };

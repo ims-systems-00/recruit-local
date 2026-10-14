@@ -1,7 +1,7 @@
 import { PipelineStage } from "mongoose";
-import { IListParams, ListQueryParams } from "@rl/types";
+import { IListParams, ListQueryParams, ValueAssessmentResponseDto } from "@rl/types";
 import { ValueInput, Value } from "../../../models";
-import { NotFoundException } from "../../../common/helper";
+import { BadRequestException, NotFoundException } from "../../../common/helper";
 import {
   matchQuery,
   excludeDeletedQuery,
@@ -71,6 +71,30 @@ export const topThree = ({ query = {} }: IListValueParams) => {
   ];
 
   return Value.aggregate(pipeline);
+};
+
+/**
+ * The self-evaluation questions for one active value.
+ *
+ * Throws 400 rather than 404 when the value exists but has no questions yet:
+ * the value is real, it just cannot be evaluated until content is seeded.
+ */
+export const getAssessment = async ({ id }: { id: string }): Promise<ValueAssessmentResponseDto> => {
+  const value = await Value.findOne({ _id: id, isActive: true, "deleteMarker.status": { $ne: true } })
+    .select("type label assessment")
+    .lean();
+  if (!value) throw new NotFoundException("Value not found.");
+  if (!value.assessment?.questions?.length) {
+    throw new BadRequestException("This value has no evaluation questions yet.");
+  }
+
+  return {
+    _id: String(value._id),
+    type: value.type,
+    label: value.label,
+    heading: value.assessment.heading,
+    questions: value.assessment.questions.map(({ key, text, placeholder }) => ({ key, text, placeholder })),
+  };
 };
 
 export const create = async (payload: ValueInput) => {
