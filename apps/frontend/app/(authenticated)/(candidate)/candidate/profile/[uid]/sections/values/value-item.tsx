@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { PencilIcon } from 'lucide-react';
-import { VALUE_TYPE_ENUM } from '@rl/types';
+import { VALUE_TYPE_ENUM, ValueScoreResponseDto } from '@rl/types';
 import EditValueDialog from './edit-value-dialog';
 import { ValueData } from '@/services/value';
 
@@ -16,7 +16,9 @@ interface ValueItemProps {
   existingValues: ValueData[];
   types: VALUE_TYPE_ENUM[];
   values: ValueData[];
+  scoresByValueId: Map<string, number>;
   onSuccess: (values: ValueData[]) => void;
+  onValueScored: (valueScore: ValueScoreResponseDto) => void;
 }
 
 export default function ValueItem({
@@ -29,7 +31,9 @@ export default function ValueItem({
   existingValues,
   types,
   values,
+  scoresByValueId,
   onSuccess,
+  onValueScored,
 }: ValueItemProps) {
   const [open, setOpen] = useState(false);
 
@@ -64,14 +68,21 @@ export default function ValueItem({
               No values found
             </span>
           ) : (
-            values.map((value) => (
-              <span
-                key={value._id}
-                className="inline-flex min-h-6 items-center rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark"
-              >
-                {value.label}
-              </span>
-            ))
+            values.map((value) => {
+              const score = scoresByValueId.get(value._id);
+
+              return (
+                <span
+                  key={value._id}
+                  className="inline-flex min-h-6 items-center gap-spacing-xs rounded-lg border border-border-gray-primary bg-bg-gray-soft-primary px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-others-gray-dark"
+                >
+                  {value.label}
+                  {score !== undefined && (
+                    <span className="text-text-brand-primary">{score}%</span>
+                  )}
+                </span>
+              );
+            })
           )}
         </div>
       </div>
@@ -84,7 +95,9 @@ export default function ValueItem({
         profileId={profileId}
         existingValues={existingValues}
         types={[type]}
+        scoresByValueId={scoresByValueId}
         onSuccess={onSuccess}
+        onValueScored={onValueScored}
       />
     </>
   );

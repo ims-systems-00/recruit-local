@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { ArrowRight, RotateCw, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { ONBOARDING_STEP_ENUMS, VALUE_TYPE_ENUM } from '@rl/types';
 import {
   useGetTopThreeValues,
@@ -36,7 +36,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCatalogPageAction } from '@/components/ai-chat/use-catalog-page-action';
 import { RemovableChip } from '@/components/removable-chip';
 import { AnimatePresence } from 'framer-motion';
-import ValueEvaluationDialog from './value-evaluation-dialog';
+import ValueEvaluationDialog from '@/components/value-evaluation/value-evaluation-dialog';
+import ValueScoreActions from '@/components/value-evaluation/value-score-actions';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -366,33 +367,10 @@ export default function ValuesSection({
                         {item.label}
                       </Label>
                       {isSelected && (
-                        <div className=" ml-auto flex items-center gap-spacing-md">
-                          <span className=" whitespace-nowrap inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg border border-border-gray-primary text-label-sm font-label-sm-strong! text-others-gray-dark">
-                            Score : {score ?? 0}%
-                          </span>
-                          {score === undefined ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={() => openEvaluation(item as ValueData)}
-                              className=" h-8 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong! cursor-pointer"
-                            >
-                              Let&apos;s Evaluate
-                              <ArrowRight />
-                            </Button>
-                          ) : (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openEvaluation(item as ValueData)}
-                              className=" h-8 rounded-lg border-border-gray-primary text-label-sm font-label-sm-strong! text-text-gray-secondary cursor-pointer"
-                            >
-                              Start Again
-                              <RotateCw />
-                            </Button>
-                          )}
-                        </div>
+                        <ValueScoreActions
+                          score={score}
+                          onEvaluate={() => openEvaluation(item as ValueData)}
+                        />
                       )}
                     </div>
                   );

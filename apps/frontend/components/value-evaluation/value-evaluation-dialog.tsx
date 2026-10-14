@@ -1,7 +1,11 @@
 'use client';
 import { Resolver, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { VALUE_ASSESSMENT_QUESTION_COUNT, VALUE_TYPE_ENUM } from '@rl/types';
+import {
+  VALUE_ASSESSMENT_QUESTION_COUNT,
+  VALUE_TYPE_ENUM,
+  ValueScoreResponseDto,
+} from '@rl/types';
 import {
   Dialog,
   DialogContent,
@@ -34,17 +38,22 @@ const VALUE_TYPE_LABELS: Record<VALUE_TYPE_ENUM, string> = {
  *
  * The parent remounts this (new `key`) each time it opens, so every evaluation
  * — including "Start Again" — begins with empty answers.
+ *
+ * The new score is written into the React Query profile cache either way;
+ * `onEvaluated` is for screens that hold the profile in local state instead.
  */
 export default function ValueEvaluationDialog({
   value,
   jobProfileId,
   open,
   onOpenChange,
+  onEvaluated,
 }: {
   value: ValueData;
   jobProfileId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEvaluated?: (valueScore: ValueScoreResponseDto) => void;
 }) {
   const { assessment, isLoading, isError, error } = useValueAssessment(
     value._id,
@@ -80,7 +89,10 @@ export default function ValueEvaluationDialog({
           answer: data.answers[index] ?? '',
         })),
       },
-      onSuccessCallback: () => onOpenChange(false),
+      onSuccessCallback: (valueScore) => {
+        onEvaluated?.(valueScore);
+        onOpenChange(false);
+      },
     });
   };
 

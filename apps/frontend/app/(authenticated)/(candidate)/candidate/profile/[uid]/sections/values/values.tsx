@@ -1,9 +1,10 @@
 'use client';
 import { Brain, Layers2, Star, Target, Users } from 'lucide-react';
-import React, { useCallback, useState, useEffect } from 'react';
-import { VALUE_TYPE_ENUM } from '@rl/types';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import { VALUE_TYPE_ENUM, ValueScoreResponseDto } from '@rl/types';
 import ValueItem from './value-item';
 import { JobProfileData } from '@/services/job-profile/job-profile.type';
+import { ValueData } from '@/services/value';
 
 const VALUE_LIST = [
   {
@@ -62,6 +63,39 @@ export default function Values({ profile }: { profile: JobProfileData }) {
     setValues(profile.values ?? []);
   }, [profile.values]);
 
+  // Held locally like `values`: this page is server-rendered, so the React
+  // Query cache the evaluate mutation patches is not what it reads.
+  const [valueScores, setValueScores] = useState<ValueScoreResponseDto[]>(
+    profile.valueScores ?? [],
+  );
+
+  useEffect(() => {
+    setValueScores(profile.valueScores ?? []);
+  }, [profile.valueScores]);
+
+  const scoresByValueId = useMemo(
+    () => new Map(valueScores.map((item) => [item.value, item.score])),
+    [valueScores],
+  );
+
+  const handleValueScored = useCallback((valueScore: ValueScoreResponseDto) => {
+    setValueScores((prev) => [
+      ...prev.filter((item) => item.value !== valueScore.value),
+      valueScore,
+    ]);
+  }, []);
+
+  // Saving a values list drops the scores of values no longer on it — the
+  // backend prunes them in the same update, so mirror that here.
+  const handleValuesSaved = useCallback((nextValues: ValueData[]) => {
+    setValues(nextValues);
+    setValueScores((prev) =>
+      prev.filter((item) =>
+        nextValues.some((value) => value._id === item.value),
+      ),
+    );
+  }, []);
+
   const getFilteredValues = useCallback(
     (type: VALUE_TYPE_ENUM) => {
       return values?.filter((v) => v.type === type);
@@ -90,7 +124,9 @@ export default function Values({ profile }: { profile: JobProfileData }) {
               existingValues={values ?? []}
               profileId={profile._id}
               types={[item.type]}
-              onSuccess={setValues}
+              scoresByValueId={scoresByValueId}
+              onSuccess={handleValuesSaved}
+              onValueScored={handleValueScored}
             />
           ))}
         </div>
