@@ -18,6 +18,7 @@ import {
   hardDeleteJobProfile,
   restoreJobProfile,
   getAppliedJobs,
+  evaluateValue,
 } from './job-profile.server';
 import type {
   JobProfileCreateInput,
@@ -27,12 +28,13 @@ import type {
   JobProfileListFilters,
   JobProfileData,
   AppliedJobsListFilters,
+  EvaluateValueInput,
 } from './job-profile.type';
 import { useRouter } from 'next/navigation';
 import { JobData } from '../jobs/job.type';
 import { CursorPaginatedResponse } from '@/types/api';
 import { useSession } from 'next-auth/react';
-import { ONBOARDING_STEP_ENUMS } from '@rl/types';
+import { ONBOARDING_STEP_ENUMS, ValueScoreResponseDto } from '@rl/types';
 
 // --- QUERY KEYS ---
 export const jobProfileKeys = {
@@ -164,6 +166,78 @@ export function useUpdateJobProfile() {
   };
 }
 
+/**
+ * Evaluates one value and writes the new score into the cached profile.
+ *
+ * Patches the cache instead of invalidating it on purpose: a refetch hands the
+ * onboarding values round a new `values` array, which resets the round's
+ * unsaved selection. Only `valueScores` is replaced, so `values` keeps its
+ * reference and the selection survives.
+ */
+export function useEvaluateValue() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: EvaluateValueInput;
+    }) => evaluateValue(id, payload),
+  });
+
+  const evaluateValueAsync = async ({
+    id,
+    payload,
+    onSuccessCallback,
+  }: {
+    id: string;
+    payload: EvaluateValueInput;
+    onSuccessCallback?: (data: ValueScoreResponseDto) => void;
+  }) => {
+    try {
+      const response = await mutation.mutateAsync({ id, payload });
+
+      if (!response.success) {
+        toast.error(response.message);
+        return;
+      }
+
+      const valueScore = response.data;
+      queryClient.setQueryData<JobProfileData>(
+        jobProfileKeys.detail(id),
+        (old) =>
+          old && {
+            ...old,
+            valueScores: [
+              ...(old.valueScores ?? []).filter(
+                (item) => item.value !== valueScore.value,
+              ),
+              valueScore,
+            ],
+          },
+      );
+
+      toast.success(`Your score: ${valueScore.score}%`, {
+        description: valueScore.feedback,
+      });
+      onSuccessCallback?.(valueScore);
+    } catch (error) {
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to evaluate your answers',
+      );
+    }
+  };
+
+  return {
+    evaluateValue: evaluateValueAsync,
+    isPending: mutation.isPending,
+  };
+}
+
 export function useSoftDeleteJobProfile() {
   const queryClient = useQueryClient();
 
@@ -243,11 +317,7 @@ export function useInfiniteAppliedJobs(filters: AppliedJobsListFilters = {}) {
     QueryKey,
     string | undefined
   >({
-    queryKey: [
-      'applied-jobs',
-      session?.user?.jobProfileId,
-      filters,
-    ],
+    queryKey: ['applied-jobs', session?.user?.jobProfileId, filters],
     queryFn: async ({ pageParam }) => {
       const response = await getAppliedJobs(
         session?.user?.jobProfileId || '',

@@ -1,5 +1,11 @@
 import * as yup from 'yup';
-import { ONBOARDING_STEP_ENUMS, PROFICIENCY, VISIBILITY } from '@rl/types';
+import {
+  ONBOARDING_STEP_ENUMS,
+  PROFICIENCY,
+  VALUE_ANSWER_MAX_LENGTH,
+  VALUE_ANSWER_MIN_LENGTH,
+  VISIBILITY,
+} from '@rl/types';
 
 import {
   objectIdSchema,
@@ -174,6 +180,32 @@ export const candidateValuesStepSchema = yup.object({
 
 export type CandidateValuesStepFormValues = yup.InferType<
   typeof candidateValuesStepSchema
+>;
+
+// One answer per question, in the order the questions are shown. The limits are
+// the backend's, shared through @rl/types.
+export const valueEvaluationSchema = yup.object({
+  answers: yup
+    .array()
+    .of(
+      yup
+        .string()
+        .trim()
+        .required('Please answer this question')
+        .min(
+          VALUE_ANSWER_MIN_LENGTH,
+          `Please write at least ${VALUE_ANSWER_MIN_LENGTH} characters`,
+        )
+        .max(
+          VALUE_ANSWER_MAX_LENGTH,
+          `Please keep it under ${VALUE_ANSWER_MAX_LENGTH} characters`,
+        ),
+    )
+    .required(),
+});
+
+export type ValueEvaluationFormValues = yup.InferType<
+  typeof valueEvaluationSchema
 >;
 
 export const CANDIDATE_MAX_PERSONALISATION_STEP_SELECTION = 3;
