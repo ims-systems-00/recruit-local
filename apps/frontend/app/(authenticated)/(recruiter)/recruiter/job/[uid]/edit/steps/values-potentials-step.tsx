@@ -8,15 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  ChevronDown,
-  ChevronRight,
-  GripVertical,
-  Info,
-  Plus,
-  Search,
-  X,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, Info, Plus, Search, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import {
   JOB_VALUE_PRIORITY_ENUMS,
@@ -141,9 +133,15 @@ export default function ValuesPotentialsStep({
 
   const currentCategoryLabel = VALUE_TYPE_LABELS[activeCategory];
 
-  const activeCategoryValues = selectedValues.filter(
-    (v) => v.category === activeCategory,
-  );
+  // Highest priority first, so a row moves as soon as its priority changes.
+  // Values sharing a priority keep the order they were added in (stable sort).
+  const byPriority = (a: ValueRow, b: ValueRow) =>
+    PRIORITY_RANKS.findIndex((r) => r.priority === a.priority) -
+    PRIORITY_RANKS.findIndex((r) => r.priority === b.priority);
+
+  const activeCategoryValues = selectedValues
+    .filter((v) => v.category === activeCategory)
+    .sort(byPriority);
 
   const isValueSelected = (valueId: string) => {
     return selectedValues.some((v) => v.id === valueId);
@@ -206,10 +204,13 @@ export default function ValuesPotentialsStep({
     await updateJob({
       id: defaultValues._id,
       data: {
-        values: selectedValues.map(({ id, priority }) => ({
-          value: id,
-          priority,
-        })),
+        // Saved in the order shown, so the preview lists them the same way.
+        values: [...selectedValues]
+          .sort(byPriority)
+          .map(({ id, priority }) => ({
+            value: id,
+            priority,
+          })),
       },
       onSuccessNext: (newData) => next(newData),
     });
@@ -223,8 +224,9 @@ export default function ValuesPotentialsStep({
           Values and Potentials
         </h2>
         <p className="text-body-sm text-text-gray-tertiary mt-1">
-          Choose values and set their importance separately within each
-          category.
+          Choose values in each category and set how much each one matters. A
+          priority counts the same in every category: Essentials is x4
+          everywhere.
         </p>
       </div>
 
@@ -461,7 +463,6 @@ export default function ValuesPotentialsStep({
                   >
                     {/* Left: Drag grip & Name */}
                     <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                      <GripVertical className="w-4 h-4 text-text-gray-quaternary shrink-0 cursor-grab" />
                       <span className="text-label-sm font-label-sm-strong! text-text-gray-primary truncate">
                         {item.name}
                       </span>
