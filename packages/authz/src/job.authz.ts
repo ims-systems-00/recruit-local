@@ -79,6 +79,9 @@ export const ALL_JOB_FIELDS = [
   // --- Skills (each row's `skill` is populated from the skill catalogue on read) ---
   'skills',
 
+  // --- Values (each row's `value` is populated, and `weight` derived, on read) ---
+  'values',
+
   // --- Board Settings ---
   'boardBackground',
   'boardSortBy',
@@ -124,6 +127,9 @@ const EMPLOYER_CREATE_FIELDS = [
 
   // skills & requirements
   'skills',
+
+  // values & priorities
+  'values',
 ];
 
 const CANDIDATE_READ_FIELDS = omitFields([
