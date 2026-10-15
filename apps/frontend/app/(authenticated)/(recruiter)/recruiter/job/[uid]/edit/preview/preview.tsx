@@ -1,4 +1,12 @@
 import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { JobData, JobSkillItem } from '@/services/jobs/job.type';
 import {
   Building2,
@@ -433,46 +441,56 @@ export default function Preview({
             Skills &amp; Requirements
           </p>
 
-          <div className="border border-border-gray-secondary rounded-2xl overflow-hidden bg-white">
-            <div className="bg-bg-gray-soft-primary px-spacing-4xl py-spacing-md flex items-center text-label-xs font-label-xs-strong! text-text-gray-tertiary">
-              <span className="w-16">Sl</span>
-              <span className="flex-1">Skills</span>
-              <span className="w-48">Required Level</span>
-              <span className="w-40">Requirements</span>
-            </div>
-            <div className="divide-y divide-border-gray-secondary">
-              {skillsToRender.map((skill, index) => {
-                const sl = String(index + 1).padStart(2, '0');
-                return (
-                  <div
-                    key={skill.id || index}
-                    className="px-spacing-4xl py-spacing-md flex items-center bg-white"
-                  >
-                    <span className="w-16 text-label-sm text-text-gray-quinary font-medium">
-                      {sl}
-                    </span>
-                    <span className="flex-1 text-label-sm font-medium text-text-gray-primary">
-                      {skill.name}
-                    </span>
-                    <span className="w-48 text-label-sm text-text-gray-secondary font-medium">
-                      {skill.level}
-                    </span>
-                    <div className="w-40">
-                      <span
-                        className={cn(
-                          'inline-flex items-center px-spacing-md py-0.5 rounded-full text-label-xs font-label-xs-strong!',
-                          skill.requirement === 'Required'
-                            ? 'bg-pink-50 text-pink-600 border border-pink-200'
-                            : 'bg-bg-gray-soft-secondary text-text-gray-secondary border border-border-gray-secondary',
-                        )}
-                      >
-                        {skill.requirement}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          <div className="overflow-hidden bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border-gray-secondary bg-bg-gray-soft-primary hover:bg-bg-gray-soft-primary">
+                  <TableHead className="w-16 px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary"></TableHead>
+                  <TableHead className="px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Skills
+                  </TableHead>
+                  <TableHead className="w-48 px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Required Level
+                  </TableHead>
+                  <TableHead className="w-40 px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Requirements
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {skillsToRender.map((skill, index) => {
+                  const sl = String(index + 1).padStart(2, '0');
+                  return (
+                    <TableRow
+                      key={skill.id || index}
+                      className=" border-none! hover:bg-bg-gray-soft-primary/40 transition-colors"
+                    >
+                      <TableCell className="w-16 px-spacing-4xl py-spacing-md text-label-sm text-text-gray-secondary">
+                        {sl}
+                      </TableCell>
+                      <TableCell className="px-spacing-4xl py-spacing-md text-label-sm text-text-gray-secondary">
+                        {skill.name}
+                      </TableCell>
+                      <TableCell className="w-48 px-spacing-4xl py-spacing-md text-label-sm text-text-gray-secondary">
+                        {skill.level}
+                      </TableCell>
+                      <TableCell className="w-40 px-spacing-4xl py-spacing-md">
+                        <span
+                          className={cn(
+                            'inline-flex items-center px-spacing-md py-0.5 rounded-full text-label-xs font-label-xs-strong!',
+                            skill.requirement === 'Required'
+                              ? 'bg-pink-50 text-pink-600 border border-pink-200'
+                              : 'bg-bg-gray-soft-secondary text-text-gray-secondary border border-border-gray-secondary',
+                          )}
+                        >
+                          {skill.requirement}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
         </div>
 
