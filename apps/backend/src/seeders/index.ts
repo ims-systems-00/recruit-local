@@ -11,6 +11,7 @@ import { jobTitleSeeder } from "./job-title.seeder";
 import { industrySeeder } from "./industry.seeder";
 import { experienceLevelSeeder } from "./experience-level.seeder";
 import { workModeSeeder } from "./work-mode.seeder";
+import { skillCatalogSeeder } from "./skill-catalog.seeder";
 import { promptSeeder } from "./prompt.seeder";
 import { helpArticleSeeder } from "./help-article.seeder";
 import { logger } from "../common/helper/logger";
@@ -30,6 +31,7 @@ const runSeeders = async () => {
     await industrySeeder();
     await experienceLevelSeeder();
     await workModeSeeder();
+    await skillCatalogSeeder();
     await promptSeeder();
     await helpArticleSeeder();
     logger.info("Seeding completed");
