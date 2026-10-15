@@ -143,8 +143,12 @@ export const JOB_VALUE_PRIORITY_LABELS: Record<
   [JOB_VALUE_PRIORITY_ENUMS.DESIRABLE]: 'Desirable',
 };
 
-/** Most values one job may list, across all value types. */
-export const JOB_VALUES_MAX_TOTAL = 10;
+/**
+ * Most values one job may list, across all value types. Set to the per-type cap
+ * times the five types, so in practice only `JOB_VALUES_MAX_PER_TYPE` limits a
+ * job — matching the form, which counts values per category.
+ */
+export const JOB_VALUES_MAX_TOTAL = 25;
 
 /** Most values one job may list from a single value type (`VALUE_TYPE_ENUM`). */
 export const JOB_VALUES_MAX_PER_TYPE = 5;
