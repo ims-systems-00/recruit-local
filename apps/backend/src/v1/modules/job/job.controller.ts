@@ -51,6 +51,7 @@ const PUBLIC_JOB_DETAIL_FIELDS = [
   "email",
   "number",
   "skills",
+  "values",
 ];
 
 const caslFieldOptions = {

@@ -19,6 +19,7 @@ import {
   jobAttachmentsLookupQuery,
   jobProjectionQuery,
   jobSkillsLookupQuery,
+  jobValuesLookupQuery,
 } from "./job.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
@@ -95,6 +96,7 @@ export const list = async ({
     ...alreadyAlliped(jobProfileId),
     ...alreadysaved(tenantId, jobProfileId),
     ...jobSkillsLookupQuery(),
+    ...jobValuesLookupQuery(),
   ]);
 
   const mongoSession = getMongoSession(session);
@@ -121,6 +123,7 @@ export const getOne = async ({ query = {}, session, tenantId, jobProfileId }: IJ
     ...jobProjectionQuery(),
     ...jobAttachmentsLookupQuery(),
     ...jobSkillsLookupQuery(),
+    ...jobValuesLookupQuery(),
     ...alreadyAlliped(jobProfileId),
     ...alreadysaved(tenantId, jobProfileId),
   ]);
@@ -142,6 +145,7 @@ export const listSoftDeleted = async ({ query = {}, options, session, offset = 0
     ...jobProjectionQuery(),
     ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
     ...jobSkillsLookupQuery(),
+    ...jobValuesLookupQuery(),
   ]);
 
   const mongoSession = getMongoSession(session);
@@ -157,6 +161,7 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IJobGetParams) 
     ...jobProjectionQuery(),
     ...jobAttachmentsLookupQuery(),
     ...jobSkillsLookupQuery(),
+    ...jobValuesLookupQuery(),
   ]);
 
   const mongoSession = getMongoSession(session);
@@ -243,8 +248,10 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
 
   await enqueueJobKeywords(job.id);
 
-  // Reads return each skill as `{ _id, name }` (jobSkillsLookupQuery); match that.
+  // Reads return each skill as `{ _id, name }` and each value as `{ _id, label,
+  // type }` (jobSkillsLookupQuery / jobValuesLookupQuery); match that.
   if (job.skills?.length) await job.populate({ path: "skills.skill", select: "name" });
+  if (job.values?.length) await job.populate({ path: "values.value", select: "label type" });
 
   return job;
 };

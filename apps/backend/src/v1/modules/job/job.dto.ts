@@ -1,4 +1,13 @@
-import { AdditionalQueryResponseDto, JobResponseDto, JobSkillResponseDto, NamedCatalogResponseDto } from "@rl/types";
+import {
+  AdditionalQueryResponseDto,
+  JobResponseDto,
+  JobSkillResponseDto,
+  JobValueResponseDto,
+  JOB_VALUE_PRIORITY_ENUMS,
+  JOB_VALUE_PRIORITY_WEIGHT,
+  NamedCatalogResponseDto,
+  ValueResponseDto,
+} from "@rl/types";
 
 const toIso = (v: unknown): string => (v instanceof Date ? v.toISOString() : (v as string));
 
@@ -15,6 +24,18 @@ const toJobSkill = (row: Record<string, unknown>): JobSkillResponseDto => {
   return {
     ...(row as unknown as JobSkillResponseDto),
     skill: { ...(skill as unknown as NamedCatalogResponseDto), _id: String(skill._id) },
+  };
+};
+
+// `value` arrives populated, as `skill` does. `weight` is derived here from the
+// tier, never stored — and only when `priority` survived sanitizing.
+const toJobValue = (row: Record<string, unknown>): JobValueResponseDto => {
+  const value = row.value as Record<string, unknown>;
+  const priority = row.priority as JOB_VALUE_PRIORITY_ENUMS | undefined;
+  return {
+    ...(row as unknown as JobValueResponseDto),
+    value: { ...(value as unknown as ValueResponseDto), _id: String(value._id) },
+    ...(priority ? { weight: JOB_VALUE_PRIORITY_WEIGHT[priority] } : {}),
   };
 };
 
@@ -51,6 +72,9 @@ export const toJobResponse = (doc: unknown): JobResponseDto => {
   }
   if (has(d, "skills") && Array.isArray(d.skills)) {
     d.skills = d.skills.map((row) => toJobSkill(row as Record<string, unknown>));
+  }
+  if (has(d, "values") && Array.isArray(d.values)) {
+    d.values = d.values.map((row) => toJobValue(row as Record<string, unknown>));
   }
 
   return d as JobResponseDto;
