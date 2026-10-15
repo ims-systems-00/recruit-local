@@ -79,8 +79,11 @@ export const ALL_JOB_FIELDS = [
   // --- Skills (each row's `skill` is populated from the skill catalogue on read) ---
   'skills',
 
-  // --- Values (each row's `value` is populated, and `weight` derived, on read) ---
-  'values',
+  // --- Values (each row's `value` is populated, and `weight` derived from
+  // `priority`, on read). Listed per sub-field, like additionalQueries, so a
+  // role can be shown which values a job wants without the employer's ranking. ---
+  'values.value',
+  'values.priority',
 
   // --- Board Settings ---
   'boardBackground',
@@ -141,6 +144,9 @@ const CANDIDATE_READ_FIELDS = omitFields([
   'boardSortBy',
   'boardSortOrder',
   'additionalQueries.expectedAnswer',
+  // The employer's ranking of its values. Candidates scoring their own values
+  // could otherwise tune their answers to whatever a job marks Essential.
+  'values.priority',
 ]);
 
 const EMPLOYER_UPDATE_FIELDS = [...EMPLOYER_CREATE_FIELDS, 'status'];

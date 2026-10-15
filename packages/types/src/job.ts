@@ -121,12 +121,17 @@ export const JOB_VALUES_MAX_TOTAL = 10;
 /** Most values one job may list from a single value type (`VALUE_TYPE_ENUM`). */
 export const JOB_VALUES_MAX_PER_TYPE = 5;
 
-/** Public HTTP shape of one of a job's values, with the value populated. */
+/**
+ * Public HTTP shape of one of a job's values, with the value populated.
+ *
+ * `priority` and `weight` are the employer's ranking: present for the job's own
+ * employer, absent for candidates and on the public job page.
+ */
 export interface JobValueResponseDto {
   value: ValueResponseDto;
-  priority: JOB_VALUE_PRIORITY_ENUMS;
-  /** From `JOB_VALUE_PRIORITY_WEIGHT[priority]`. */
-  weight: number;
+  priority?: JOB_VALUE_PRIORITY_ENUMS;
+  /** From `JOB_VALUE_PRIORITY_WEIGHT[priority]`; absent whenever `priority` is. */
+  weight?: number;
 }
 
 /**

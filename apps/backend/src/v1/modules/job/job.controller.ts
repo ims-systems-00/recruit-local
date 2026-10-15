@@ -54,6 +54,14 @@ const PUBLIC_JOB_DETAIL_FIELDS = [
   "values",
 ];
 
+/**
+ * A value's `priority` (and the `weight` derived from it) is the employer's own
+ * ranking — CASL keeps it from candidates, so the public page drops it too.
+ * `pick` cannot reach into array rows, hence this.
+ */
+const withoutValuePriorities = <T extends { values?: unknown }>(job: T): T =>
+  Array.isArray(job.values) ? { ...job, values: job.values.map(({ value }: { value: unknown }) => ({ value })) } : job;
+
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_FIELDS,
 };
@@ -408,7 +416,7 @@ export const publicGet = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job retrieved.",
     statusCode: StatusCodes.OK,
-    data: toJobResponse(pick(job, PUBLIC_JOB_DETAIL_FIELDS)),
+    data: toJobResponse(withoutValuePriorities(pick(job, PUBLIC_JOB_DETAIL_FIELDS))),
     fieldName: "job",
   });
 };
