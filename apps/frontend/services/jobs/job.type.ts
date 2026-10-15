@@ -3,6 +3,7 @@ import { DeleteMarker } from '../file-media/file-media.type';
 import {
   EMPLOYMENT_TYPE,
   JobSkillResponseDto,
+  JobValueResponseDto,
   PERIOD_ENUMS,
   QUERY_TYPE_ENUMS,
   WORKING_DAYS_ENUMS,
@@ -27,20 +28,6 @@ export type StorageInformation = {
   Key: string;
   Bucket: string;
 };
-
-export type ValuePriorityRank =
-  | 'Essentials'
-  | 'Highly Important'
-  | 'Important'
-  | 'Desirable';
-
-export interface JobValueItem {
-  id: string;
-  category: string;
-  name: string;
-  rank: ValuePriorityRank;
-  weight: number;
-}
 
 export type AdditionalQuery = {
   _id?: string;
@@ -127,7 +114,7 @@ export interface JobData {
   }[];
   additionalQueries?: AdditionalQuery[];
   skills?: JobSkillResponseDto[];
-  values?: JobValueItem[];
+  values?: JobValueResponseDto[];
   // Wizard-only: the skills step's "Save for Future use" choice. Never sent.
   saveSkillsForFuture?: boolean;
   createdAt: string;

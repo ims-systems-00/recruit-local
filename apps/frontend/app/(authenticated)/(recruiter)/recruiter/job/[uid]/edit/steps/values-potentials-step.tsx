@@ -19,16 +19,16 @@ import {
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import {
+  JOB_VALUE_PRIORITY_ENUMS,
+  JOB_VALUE_PRIORITY_LABELS,
+  JOB_VALUE_PRIORITY_WEIGHT,
   JOB_VALUES_MAX_PER_TYPE,
   JOB_VALUES_MAX_TOTAL,
   VALUE_TYPE_ENUM,
   VALUE_TYPE_LABELS,
 } from '@rl/types';
-import {
-  JobData,
-  JobValueItem,
-  ValuePriorityRank,
-} from '@/services/jobs/job.type';
+import { JobData } from '@/services/jobs/job.type';
+import { useUpdateJob } from '@/services/jobs/jobs.client';
 import { useTenant } from '@/services/tenants/tenants.client';
 import { useValues } from '@/services/value/value.client';
 import { ValueData } from '@/services/value/value.type';
@@ -46,38 +46,42 @@ const CATEGORIES: VALUE_TYPE_ENUM[] = [
   VALUE_TYPE_ENUM.MOTIVATION,
 ];
 
+// Highest first. Labels and weights come from JOB_VALUE_PRIORITY_LABELS /
+// JOB_VALUE_PRIORITY_WEIGHT; only the badge style is this screen's own.
 const PRIORITY_RANKS: {
-  rank: ValuePriorityRank;
-  weight: number;
-  multiplierText: string;
+  priority: JOB_VALUE_PRIORITY_ENUMS;
   badgeClass: string;
 }[] = [
   {
-    rank: 'Essentials',
-    weight: 4,
-    multiplierText: 'x4',
+    priority: JOB_VALUE_PRIORITY_ENUMS.ESSENTIAL,
     badgeClass: 'bg-bg-brand-solid-primary text-white font-semibold',
   },
   {
-    rank: 'Highly Important',
-    weight: 3,
-    multiplierText: 'x3',
+    priority: JOB_VALUE_PRIORITY_ENUMS.HIGHLY_IMPORTANT,
     badgeClass: 'bg-pink-100 text-pink-700 font-semibold',
   },
   {
-    rank: 'Important',
-    weight: 2,
-    multiplierText: 'x2',
+    priority: JOB_VALUE_PRIORITY_ENUMS.IMPORTANT,
     badgeClass: 'bg-pink-50 text-pink-600 font-medium',
   },
   {
-    rank: 'Desirable',
-    weight: 1,
-    multiplierText: 'x1',
+    priority: JOB_VALUE_PRIORITY_ENUMS.DESIRABLE,
     badgeClass:
       'bg-bg-gray-soft-secondary text-text-gray-secondary font-medium',
   },
 ];
+
+const multiplierText = (priority: JOB_VALUE_PRIORITY_ENUMS) =>
+  `x${JOB_VALUE_PRIORITY_WEIGHT[priority]}`;
+
+// A selected value as this step edits it: the catalogue value, plus the
+// priority the job gives it.
+type ValueRow = {
+  id: string;
+  category: VALUE_TYPE_ENUM;
+  name: string;
+  priority: JOB_VALUE_PRIORITY_ENUMS;
+};
 
 interface ValuesPotentialsStepProps {
   defaultValues: JobData;
@@ -90,9 +94,19 @@ export default function ValuesPotentialsStep({
   prev,
   next,
 }: ValuesPotentialsStepProps) {
-  const [selectedValues, setSelectedValues] = useState<JobValueItem[]>(
-    () => defaultValues.values ?? [],
+  const [selectedValues, setSelectedValues] = useState<ValueRow[]>(() =>
+    (defaultValues.values ?? []).map(({ value, priority }) => ({
+      id: value._id,
+      category: value.type,
+      name: value.label,
+      // Always present here: priorities are hidden from candidates and the
+      // public only, and this step is the job's own employer.
+      priority: priority ?? JOB_VALUE_PRIORITY_ENUMS.ESSENTIAL,
+    })),
   );
+  const [error, setError] = useState<string | null>(null);
+
+  const { updateJob, isPending } = useUpdateJob();
 
   const [activeCategory, setActiveCategory] = useState<VALUE_TYPE_ENUM>(
     VALUE_TYPE_ENUM.MINDSET,
@@ -149,40 +163,55 @@ export default function ValuesPotentialsStep({
     if (getCategoryCount(value.type) >= JOB_VALUES_MAX_PER_TYPE) return;
     if (isAtTotalMax) return;
 
-    const defaultRankConfig = PRIORITY_RANKS[0]; // Essentials by default
-    const newItem: JobValueItem = {
+    const newItem: ValueRow = {
       id: value._id,
       category: value.type,
       name: value.label,
-      rank: defaultRankConfig.rank,
-      weight: defaultRankConfig.weight,
+      priority: PRIORITY_RANKS[0].priority, // Essentials by default
     };
 
     setSelectedValues((prev) => [...prev, newItem]);
+    setError(null);
   };
 
   const removeValue = (id: string) => {
     setSelectedValues((prev) => prev.filter((v) => v.id !== id));
   };
 
-  const updateRank = (id: string, rank: ValuePriorityRank) => {
-    const config = PRIORITY_RANKS.find((r) => r.rank === rank);
-    const weight = config ? config.weight : 1;
-
+  const updateRank = (id: string, priority: JOB_VALUE_PRIORITY_ENUMS) => {
     setSelectedValues((prev) =>
-      prev.map((v) => (v.id === id ? { ...v, rank, weight } : v)),
+      prev.map((v) => (v.id === id ? { ...v, priority } : v)),
     );
   };
 
+  // Back keeps unsaved picks in the wizard, as the other steps do; only
+  // Continue saves.
   const handlePrev = () => {
     prev({
-      values: selectedValues,
+      values: selectedValues.map(({ id, category, name, priority }) => ({
+        value: { _id: id, type: category, label: name },
+        priority,
+        weight: JOB_VALUE_PRIORITY_WEIGHT[priority],
+      })),
     });
   };
 
-  const handleNext = () => {
-    next({
-      values: selectedValues,
+  const handleNext = async () => {
+    // Publishing needs at least one value; say so here rather than at publish.
+    if (selectedValues.length === 0) {
+      setError('Add at least one value to continue.');
+      return;
+    }
+
+    await updateJob({
+      id: defaultValues._id,
+      data: {
+        values: selectedValues.map(({ id, priority }) => ({
+          value: id,
+          priority,
+        })),
+      },
+      onSuccessNext: (newData) => next(newData),
     });
   };
 
@@ -422,7 +451,7 @@ export default function ValuesPotentialsStep({
             ) : (
               activeCategoryValues.map((item) => {
                 const rankConfig =
-                  PRIORITY_RANKS.find((r) => r.rank === item.rank) ||
+                  PRIORITY_RANKS.find((r) => r.priority === item.priority) ||
                   PRIORITY_RANKS[0];
 
                 return (
@@ -449,7 +478,9 @@ export default function ValuesPotentialsStep({
                               rankConfig.badgeClass,
                             )}
                           >
-                            <span>{item.rank}</span>
+                            <span>
+                              {JOB_VALUE_PRIORITY_LABELS[item.priority]}
+                            </span>
                             <ChevronDown className="w-3.5 h-3.5 opacity-80" />
                           </button>
                         </DropdownMenuTrigger>
@@ -459,21 +490,23 @@ export default function ValuesPotentialsStep({
                         >
                           {PRIORITY_RANKS.map((option) => (
                             <DropdownMenuItem
-                              key={option.rank}
-                              onClick={() => updateRank(item.id, option.rank)}
+                              key={option.priority}
+                              onClick={() =>
+                                updateRank(item.id, option.priority)
+                              }
                               className="flex items-center justify-between px-3 py-2 text-label-sm rounded-lg cursor-pointer hover:bg-bg-gray-soft-primary"
                             >
                               <span
                                 className={
-                                  item.rank === option.rank
+                                  item.priority === option.priority
                                     ? 'font-bold text-text-brand-primary'
                                     : 'text-text-gray-primary'
                                 }
                               >
-                                {option.rank}
+                                {JOB_VALUE_PRIORITY_LABELS[option.priority]}
                               </span>
                               <span className="text-text-gray-quaternary text-xs font-medium">
-                                {option.multiplierText}
+                                {multiplierText(option.priority)}
                               </span>
                             </DropdownMenuItem>
                           ))}
@@ -481,7 +514,7 @@ export default function ValuesPotentialsStep({
                       </DropdownMenu>
 
                       <span className="text-label-sm font-medium text-text-gray-secondary w-6 text-center">
-                        {rankConfig.multiplierText}
+                        {multiplierText(item.priority)}
                       </span>
 
                       <button
@@ -500,6 +533,12 @@ export default function ValuesPotentialsStep({
         </div>
       </div>
 
+      {error && (
+        <p className="text-label-sm text-text-error-primary text-right">
+          {error}
+        </p>
+      )}
+
       {/* Footer Navigation Buttons */}
       <div className="flex justify-end gap-spacing-md pt-4">
         <Button
@@ -513,9 +552,10 @@ export default function ValuesPotentialsStep({
         <Button
           type="button"
           onClick={handleNext}
+          disabled={isPending}
           className="h-10 px-spacing-xl rounded-lg text-label-sm font-label-sm-strong! text-white bg-bg-brand-solid-primary hover:bg-bg-brand-solid-hover"
         >
-          Continue
+          {isPending ? 'Saving...' : 'Continue'}
         </Button>
       </div>
 
