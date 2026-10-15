@@ -15,6 +15,7 @@ import { salaryUpdateQueue } from "../../../queue/salaryUpdateQueue";
 import { enqueueProfileFeedRebuild } from "../../../queue/profileFeedRebuildQueue";
 import { enqueueJobCleanup } from "../../../queue/jobCleanupQueue";
 import { readFeedIds } from "./feed.service";
+import { assertJobSkills } from "./job.assertions";
 import pick from "lodash/pick";
 
 const PUBLIC_JOB_FIELDS = [
@@ -197,6 +198,10 @@ export const create = async ({ req }: ControllerParams) => {
   // Field-level check for creation payload
   validateUpdatePayload(req.body, ability, AbilityAction.Create, new JobAuthZEntity(req.body));
 
+  // A new job is always a draft (`status` is not accepted on create), so this
+  // only checks the skills it was sent.
+  await assertJobSkills({ skills: req.body.skills, publishing: false });
+
   const job = await jobService.create({
     payload: {
       ...req.body,
@@ -243,6 +248,15 @@ export const update = async ({ req }: ControllerParams) => {
 
   // Field-Level Check
   validateUpdatePayload(req.body, ability, AbilityAction.Update, authZEntity);
+
+  // Publishing is the move to `open`, not a repeat of it — re-sending `open` for
+  // a job that already is (an older one, say, listed before skills existed)
+  // must not start failing.
+  const publishing = req.body.status === JOBS_STATUS_ENUMS.OPEN && existingJob.status !== JOBS_STATUS_ENUMS.OPEN;
+  await assertJobSkills({
+    skills: req.body.skills ?? (publishing ? existingJob.skills : undefined),
+    publishing,
+  });
 
   const job = await jobService.update({
     query: { _id: req.params.id },
