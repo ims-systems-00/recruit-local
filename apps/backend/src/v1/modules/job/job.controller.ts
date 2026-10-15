@@ -15,6 +15,7 @@ import { salaryUpdateQueue } from "../../../queue/salaryUpdateQueue";
 import { enqueueProfileFeedRebuild } from "../../../queue/profileFeedRebuildQueue";
 import { enqueueJobCleanup } from "../../../queue/jobCleanupQueue";
 import { readFeedIds } from "./feed.service";
+import { assertJobSkills, assertJobValues } from "./job.assertions";
 import pick from "lodash/pick";
 
 const PUBLIC_JOB_FIELDS = [
@@ -49,7 +50,17 @@ const PUBLIC_JOB_DETAIL_FIELDS = [
   "attachments",
   "email",
   "number",
+  "skills",
+  "values",
 ];
+
+/**
+ * A value's `priority` (and the `weight` derived from it) is the employer's own
+ * ranking — CASL keeps it from candidates, so the public page drops it too.
+ * `pick` cannot reach into array rows, hence this.
+ */
+const withoutValuePriorities = <T extends { values?: unknown }>(job: T): T =>
+  Array.isArray(job.values) ? { ...job, values: job.values.map(({ value }: { value: unknown }) => ({ value })) } : job;
 
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_FIELDS,
@@ -197,6 +208,11 @@ export const create = async ({ req }: ControllerParams) => {
   // Field-level check for creation payload
   validateUpdatePayload(req.body, ability, AbilityAction.Create, new JobAuthZEntity(req.body));
 
+  // A new job is always a draft (`status` is not accepted on create), so these
+  // only check the skills and values it was sent.
+  await assertJobSkills({ skills: req.body.skills, publishing: false });
+  await assertJobValues({ values: req.body.values, publishing: false });
+
   const job = await jobService.create({
     payload: {
       ...req.body,
@@ -243,6 +259,19 @@ export const update = async ({ req }: ControllerParams) => {
 
   // Field-Level Check
   validateUpdatePayload(req.body, ability, AbilityAction.Update, authZEntity);
+
+  // Publishing is the move to `open`, not a repeat of it — re-sending `open` for
+  // a job that already is (an older one, say, listed before skills existed)
+  // must not start failing.
+  const publishing = req.body.status === JOBS_STATUS_ENUMS.OPEN && existingJob.status !== JOBS_STATUS_ENUMS.OPEN;
+  await assertJobSkills({
+    skills: req.body.skills ?? (publishing ? existingJob.skills : undefined),
+    publishing,
+  });
+  await assertJobValues({
+    values: req.body.values ?? (publishing ? existingJob.values : undefined),
+    publishing,
+  });
 
   const job = await jobService.update({
     query: { _id: req.params.id },
@@ -387,7 +416,7 @@ export const publicGet = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job retrieved.",
     statusCode: StatusCodes.OK,
-    data: toJobResponse(pick(job, PUBLIC_JOB_DETAIL_FIELDS)),
+    data: toJobResponse(withoutValuePriorities(pick(job, PUBLIC_JOB_DETAIL_FIELDS))),
     fieldName: "job",
   });
 };

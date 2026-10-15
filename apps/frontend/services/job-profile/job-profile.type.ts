@@ -1,6 +1,6 @@
 import * as yup from 'yup';
 import type { CursorPaginatedResponse, ApiResponse } from '@/types/api';
-import { PROFICIENCY, VISIBILITY } from '@rl/types';
+import { PROFICIENCY, ValueScoreResponseDto, VISIBILITY } from '@rl/types';
 import {
   createJobProfileSchema,
   updateJobProfileSchema,
@@ -32,6 +32,9 @@ export interface JobProfileData {
   industry: Industry[];
   workMode: WorkMode[];
   values: ValueData[];
+  // One entry per self-evaluated value, matched to `values` by id. Absent on
+  // profiles that have never evaluated one.
+  valueScores?: ValueScoreResponseDto[];
   languages: Language[];
 
   coverPhoto: {
@@ -125,3 +128,9 @@ export type AppliedJobsListFilters = {
 // --- FRONTEND RESPONSE TYPES ---
 export type JobProfileListResponse = CursorPaginatedResponse<JobProfile>;
 export type JobProfileApiResponse<T> = ApiResponse<T>;
+
+/** Body of `POST /job-profiles/:id/value-scores`. */
+export type EvaluateValueInput = {
+  valueId: string;
+  answers: { key: string; answer: string }[];
+};

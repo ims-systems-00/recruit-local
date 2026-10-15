@@ -1,6 +1,14 @@
 import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
-import { PROFICIENCY, VISIBILITY, ONBOARDING_STEP_ENUMS, JOB_PROFILE_STATUS_ENUM } from "@rl/types";
+import {
+  PROFICIENCY,
+  VISIBILITY,
+  ONBOARDING_STEP_ENUMS,
+  JOB_PROFILE_STATUS_ENUM,
+  VALUE_ASSESSMENT_QUESTION_COUNT,
+  VALUE_ANSWER_MIN_LENGTH,
+  VALUE_ANSWER_MAX_LENGTH,
+} from "@rl/types";
 
 // --- Sub-Schemas ---
 
@@ -138,4 +146,30 @@ export const appliedJobsQuerySchema = Joi.object({
   page: Joi.any().strip(),
   limit: Joi.number().integer().min(1).max(100).default(10),
   sort: Joi.string().valid("-createdAt", "createdAt").default("-createdAt"),
+});
+
+/**
+ * The contract for `POST /job-profiles/:id/value-scores`.
+ *
+ * Shape only. Whether the keys are the value's actual question keys is checked
+ * in the controller, against the value as it is stored.
+ */
+export const valueScoreBodySchema = Joi.object({
+  valueId: Joi.string().custom(objectIdValidation).required().label("Value"),
+  answers: Joi.array()
+    .items(
+      Joi.object({
+        key: Joi.string().trim().min(1).max(20).required().label("Question Key"),
+        answer: Joi.string()
+          .trim()
+          .min(VALUE_ANSWER_MIN_LENGTH)
+          .max(VALUE_ANSWER_MAX_LENGTH)
+          .required()
+          .label("Answer"),
+      })
+    )
+    .length(VALUE_ASSESSMENT_QUESTION_COUNT)
+    .unique("key")
+    .required()
+    .label("Answers"),
 });

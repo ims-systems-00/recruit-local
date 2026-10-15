@@ -18,6 +18,7 @@ export const modelNames = {
   EXPERIENCE: "experiences",
   EDUCATION: "educations",
   SKILL: "skills",
+  SKILL_CATALOG: "skillcatalogs",
   CERTIFICATION: "certifications",
   INTEREST: "interests",
   JOB: "jobs",

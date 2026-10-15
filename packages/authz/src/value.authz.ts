@@ -26,6 +26,8 @@ export const ALL_VALUE_FIELDS = [
   'label',
   'isActive',
   'weight',
+  'assessment',
+  'assessment.*',
 ];
 
 export class ValueAuthZEntity {

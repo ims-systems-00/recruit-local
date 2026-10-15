@@ -22,6 +22,26 @@ const valueSchema = new Schema<IValueDoc>(
     label: { type: String, required: true, trim: true },
     isActive: { type: Boolean, default: true },
     weight: { type: Number, default: 0 },
+    // The self-evaluation a candidate answers for this value. Optional: a value
+    // with none simply cannot be evaluated yet. Seeded from
+    // seeders/value-assessments.content.ts.
+    assessment: {
+      type: new Schema(
+        {
+          heading: { type: String, required: true, trim: true },
+          questions: [
+            {
+              _id: false,
+              key: { type: String, required: true, trim: true },
+              text: { type: String, required: true, trim: true },
+              placeholder: { type: String, trim: true },
+            },
+          ],
+        },
+        { _id: false }
+      ),
+      required: false,
+    },
   },
   { timestamps: true }
 );

@@ -41,6 +41,7 @@ import jobTitleRoutes from "../modules/job-title/job-title.route";
 import industryRoutes from "../modules/industry/industry.route";
 import experienceLevelRoutes from "../modules/experience-level/experience-level.route";
 import workModeRoutes from "../modules/work-mode/work-mode.route";
+import skillCatalogRoutes from "../modules/skill-catalog/skill-catalog.route";
 import userInterestSurveyRoutes from "../modules/user-interest-survey/user-interest-survey.route";
 import salaryRoutes from "../modules/salary/salary.route";
 import agentRoutes from "../modules/agent/agent.route";
@@ -57,6 +58,7 @@ const getApiRoutes = () => {
   router.use("/industries", industryRoutes);
   router.use("/experience-levels", experienceLevelRoutes);
   router.use("/work-modes", workModeRoutes);
+  router.use("/skill-catalog", skillCatalogRoutes);
   router.use("/tenants", tenantRoutes);
   // router.use("/comment-activities", commentActivityRoutes);
   router.use("/file-medias", fileMediaRoutes);

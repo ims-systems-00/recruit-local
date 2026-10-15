@@ -18,6 +18,8 @@ import {
   hybridSearchStages,
   jobAttachmentsLookupQuery,
   jobProjectionQuery,
+  jobSkillsLookupQuery,
+  jobValuesLookupQuery,
 } from "./job.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
@@ -89,10 +91,12 @@ export const list = async ({
     // has a total order to walk.
     ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset ?? 0, limit),
 
-    // Per-viewer flags, and nothing more — moved past the $limit so they join the
+    // Per-viewer flags and skill names — moved past the $limit so they join the
     // page instead of every matching job.
     ...alreadyAlliped(jobProfileId),
     ...alreadysaved(tenantId, jobProfileId),
+    ...jobSkillsLookupQuery(),
+    ...jobValuesLookupQuery(),
   ]);
 
   const mongoSession = getMongoSession(session);
@@ -118,6 +122,8 @@ export const getOne = async ({ query = {}, session, tenantId, jobProfileId }: IJ
     ...excludeDeletedQuery(),
     ...jobProjectionQuery(),
     ...jobAttachmentsLookupQuery(),
+    ...jobSkillsLookupQuery(),
+    ...jobValuesLookupQuery(),
     ...alreadyAlliped(jobProfileId),
     ...alreadysaved(tenantId, jobProfileId),
   ]);
@@ -138,6 +144,8 @@ export const listSoftDeleted = async ({ query = {}, options, session, offset = 0
     ...onlyDeletedQuery(),
     ...jobProjectionQuery(),
     ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+    ...jobSkillsLookupQuery(),
+    ...jobValuesLookupQuery(),
   ]);
 
   const mongoSession = getMongoSession(session);
@@ -152,6 +160,8 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IJobGetParams) 
     ...onlyDeletedQuery(),
     ...jobProjectionQuery(),
     ...jobAttachmentsLookupQuery(),
+    ...jobSkillsLookupQuery(),
+    ...jobValuesLookupQuery(),
   ]);
 
   const mongoSession = getMongoSession(session);
@@ -237,6 +247,12 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
   });
 
   await enqueueJobKeywords(job.id);
+
+  // Reads return each skill as `{ _id, name }` and each value as `{ _id, label,
+  // type }` (jobSkillsLookupQuery / jobValuesLookupQuery); match that.
+  if (job.skills?.length) await job.populate({ path: "skills.skill", select: "name" });
+  if (job.values?.length) await job.populate({ path: "values.value", select: "label type" });
+
   return job;
 };
 

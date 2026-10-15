@@ -43,3 +43,26 @@ export enum JOB_TITLE_ENUMS {
   FINANCE_ANALYST = 'Finance Analyst',
   BUSINESS_ANALYST = 'Business Analyst',
 }
+
+/** One answered question, with the question text as it read when answered. */
+export interface IValueScoreAnswer {
+  key: string;
+  question: string;
+  answer: string;
+}
+
+/**
+ * A candidate's self-evaluation of one value, scored by the LLM. One entry per
+ * value on the profile; a retake replaces it.
+ *
+ * Employers reading a public profile see `value`, `score` and `evaluatedAt`
+ * only — the answers and feedback are the candidate's own.
+ */
+export interface ValueScoreResponseDto {
+  value: string;
+  /** 0–100, the mean of the per-question scores. */
+  score: number;
+  feedback?: string;
+  answers?: IValueScoreAnswer[];
+  evaluatedAt: string;
+}

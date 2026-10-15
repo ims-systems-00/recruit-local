@@ -8,155 +8,72 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ChevronDown, ChevronRight, Info, Plus, Search, X } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import {
-  ChevronDown,
-  ChevronRight,
-  GripVertical,
-  Info,
-  Plus,
-  Search,
-  X,
-} from 'lucide-react';
-import {
-  JobData,
-  JobValueItem,
-  ValuePriorityRank,
-} from '@/services/jobs/job.type';
+  JOB_VALUE_PRIORITY_ENUMS,
+  JOB_VALUE_PRIORITY_LABELS,
+  JOB_VALUE_PRIORITY_WEIGHT,
+  JOB_VALUES_MAX_PER_TYPE,
+  JOB_VALUES_MAX_TOTAL,
+  VALUE_TYPE_ENUM,
+  VALUE_TYPE_LABELS,
+} from '@rl/types';
+import { JobData } from '@/services/jobs/job.type';
+import { useUpdateJob } from '@/services/jobs/jobs.client';
+import { useTenant } from '@/services/tenants/tenants.client';
+import { useValues } from '@/services/value/value.client';
+import { ValueData } from '@/services/value/value.type';
+import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
 import { PriorityRanksDialog } from './modals/priority-ranks-dialog';
 import { ValueCatalogueDialog } from './modals/value-catalogue-dialog';
 
-interface CategoryData {
-  id: string;
-  name: string;
-  orgValues: string[];
-  suggestedValues: string[];
-}
-
-const CATEGORIES: CategoryData[] = [
-  {
-    id: 'mindset',
-    name: 'Mindset',
-    orgValues: [
-      'Growth-oriented',
-      'Entrepreneurial',
-      'Proactive',
-      'Critical thinker',
-      'Solution-focused',
-    ],
-    suggestedValues: [
-      'Analytical',
-      'Strategic thinker',
-      'Resilient',
-      'Open-minded',
-      'Problem solver',
-      'Creative',
-      'Ambitious',
-    ],
-  },
-  {
-    id: 'working-style',
-    name: 'Working style',
-    orgValues: [
-      'Collaborative',
-      'Detail-oriented',
-      'Autonomous',
-      'Organized',
-      'Flexible',
-    ],
-    suggestedValues: [
-      'Adaptable',
-      'Fast-paced',
-      'Methodical',
-      'Communicative',
-      'Pragmatic',
-    ],
-  },
-  {
-    id: 'culture-and-behavior',
-    name: 'Culture & Behavior',
-    orgValues: [
-      'Inclusive',
-      'Empathetic',
-      'Transparent',
-      'Respectful',
-      'Ethical',
-    ],
-    suggestedValues: [
-      'Authentic',
-      'Accountable',
-      'Humble',
-      'Team player',
-      'Kind',
-    ],
-  },
-  {
-    id: 'leadership',
-    name: 'Leadership & team dynamics',
-    orgValues: [
-      'Mentorship',
-      'Empowering',
-      'Visionary',
-      'Decisive',
-      'Supportive',
-    ],
-    suggestedValues: [
-      'Inspirational',
-      'Coaching-oriented',
-      'Trust-builder',
-      'Delegator',
-    ],
-  },
-  {
-    id: 'motivation',
-    name: 'Purpose & motivation',
-    orgValues: [
-      'Mission-driven',
-      'Continuous learner',
-      'Impact-focused',
-      'Passionate',
-      'Goal-oriented',
-    ],
-    suggestedValues: [
-      'Excellence-driven',
-      'Community-focused',
-      'Self-starter',
-      'Customer-first',
-    ],
-  },
+// The value types, in the order the catalogue lists them.
+const CATEGORIES: VALUE_TYPE_ENUM[] = [
+  VALUE_TYPE_ENUM.MINDSET,
+  VALUE_TYPE_ENUM.WORKING_STYLE,
+  VALUE_TYPE_ENUM.CULTURE_AND_BEHAVIOR,
+  VALUE_TYPE_ENUM.LEADERSHIP,
+  VALUE_TYPE_ENUM.MOTIVATION,
 ];
 
+// Highest first. Labels and weights come from JOB_VALUE_PRIORITY_LABELS /
+// JOB_VALUE_PRIORITY_WEIGHT; only the badge style is this screen's own.
 const PRIORITY_RANKS: {
-  rank: ValuePriorityRank;
-  weight: number;
-  multiplierText: string;
+  priority: JOB_VALUE_PRIORITY_ENUMS;
   badgeClass: string;
 }[] = [
   {
-    rank: 'Essentials',
-    weight: 4,
-    multiplierText: 'x4',
+    priority: JOB_VALUE_PRIORITY_ENUMS.ESSENTIAL,
     badgeClass: 'bg-bg-brand-solid-primary text-white font-semibold',
   },
   {
-    rank: 'Highly Important',
-    weight: 3,
-    multiplierText: 'x3',
+    priority: JOB_VALUE_PRIORITY_ENUMS.HIGHLY_IMPORTANT,
     badgeClass: 'bg-pink-100 text-pink-700 font-semibold',
   },
   {
-    rank: 'Important',
-    weight: 2,
-    multiplierText: 'x2',
+    priority: JOB_VALUE_PRIORITY_ENUMS.IMPORTANT,
     badgeClass: 'bg-pink-50 text-pink-600 font-medium',
   },
   {
-    rank: 'Desirable',
-    weight: 1,
-    multiplierText: 'x1',
-    badgeClass: 'bg-bg-gray-soft-secondary text-text-gray-secondary font-medium',
+    priority: JOB_VALUE_PRIORITY_ENUMS.DESIRABLE,
+    badgeClass:
+      'bg-bg-gray-soft-secondary text-text-gray-secondary font-medium',
   },
 ];
+
+const multiplierText = (priority: JOB_VALUE_PRIORITY_ENUMS) =>
+  `x${JOB_VALUE_PRIORITY_WEIGHT[priority]}`;
+
+// A selected value as this step edits it: the catalogue value, plus the
+// priority the job gives it.
+type ValueRow = {
+  id: string;
+  category: VALUE_TYPE_ENUM;
+  name: string;
+  priority: JOB_VALUE_PRIORITY_ENUMS;
+};
 
 interface ValuesPotentialsStepProps {
   defaultValues: JobData;
@@ -169,120 +86,133 @@ export default function ValuesPotentialsStep({
   prev,
   next,
 }: ValuesPotentialsStepProps) {
-  const [selectedValues, setSelectedValues] = useState<JobValueItem[]>(() => {
-    if (defaultValues.values && defaultValues.values.length > 0) {
-      return defaultValues.values;
-    }
-    // Default initial mock selected values matching Image 3
-    return [
-      {
-        id: '1',
-        category: 'mindset',
-        name: 'Growth-oriented',
-        rank: 'Essentials',
-        weight: 4,
-      },
-      {
-        id: '2',
-        category: 'mindset',
-        name: 'Analytical',
-        rank: 'Essentials',
-        weight: 4,
-      },
-      {
-        id: '3',
-        category: 'mindset',
-        name: 'Entrepreneurial',
-        rank: 'Highly Important',
-        weight: 3,
-      },
-      {
-        id: '4',
-        category: 'mindset',
-        name: 'Proactive',
-        rank: 'Important',
-        weight: 2,
-      },
-      {
-        id: '5',
-        category: 'mindset',
-        name: 'Strategic thinker',
-        rank: 'Desirable',
-        weight: 1,
-      },
-    ];
-  });
+  const [selectedValues, setSelectedValues] = useState<ValueRow[]>(() =>
+    (defaultValues.values ?? []).map(({ value, priority }) => ({
+      id: value._id,
+      category: value.type,
+      name: value.label,
+      // Always present here: priorities are hidden from candidates and the
+      // public only, and this step is the job's own employer.
+      priority: priority ?? JOB_VALUE_PRIORITY_ENUMS.ESSENTIAL,
+    })),
+  );
+  const [error, setError] = useState<string | null>(null);
 
-  const [activeCategory, setActiveCategory] = useState<string>('mindset');
+  const { updateJob, isPending } = useUpdateJob();
+
+  const [activeCategory, setActiveCategory] = useState<VALUE_TYPE_ENUM>(
+    VALUE_TYPE_ENUM.MINDSET,
+  );
   const [categorySearchQuery, setCategorySearchQuery] = useState<
     Record<string, string>
   >({});
   const [priorityDialogOpen, setPriorityDialogOpen] = useState(false);
   const [catalogueDialogOpen, setCatalogueDialogOpen] = useState(false);
 
-  const toggleCategory = (categoryId: string) => {
-    setActiveCategory(categoryId);
-  };
+  // "Selected from your organisation": the values on the organisation profile.
+  const { data: session } = useSession();
+  const tenantId = session?.user?.tenantId;
+  const { tenant } = useTenant(tenantId, !!tenantId);
+  const organisationValues = tenant?.values ?? [];
 
-  const currentCategory =
-    CATEGORIES.find((c) => c.id === activeCategory) || CATEGORIES[0];
-
-  const activeCategoryValues = selectedValues.filter(
-    (v) => v.category === currentCategory.id,
+  // "Suggested Values": the rest of the catalogue. Only the expanded type shows
+  // its values, so only that type is fetched.
+  const debouncedCategorySearch = useDebounce(
+    (categorySearchQuery[activeCategory] || '').trim(),
+    500,
   );
+  const { values: catalogueValues, isLoading: isCatalogueLoading } = useValues({
+    type: activeCategory,
+    clientSearch: debouncedCategorySearch || undefined,
+    limit: 20,
+  });
 
-  const isValueSelected = (valName: string) => {
-    return selectedValues.some(
-      (v) => v.name.toLowerCase() === valName.toLowerCase(),
-    );
+  const toggleCategory = (category: VALUE_TYPE_ENUM) => {
+    setActiveCategory(category);
   };
 
-  const getCategoryCount = (categoryId: string) => {
-    return selectedValues.filter((v) => v.category === categoryId).length;
+  const currentCategoryLabel = VALUE_TYPE_LABELS[activeCategory];
+
+  // Highest priority first, so a row moves as soon as its priority changes.
+  // Values sharing a priority keep the order they were added in (stable sort).
+  const byPriority = (a: ValueRow, b: ValueRow) =>
+    PRIORITY_RANKS.findIndex((r) => r.priority === a.priority) -
+    PRIORITY_RANKS.findIndex((r) => r.priority === b.priority);
+
+  const activeCategoryValues = selectedValues
+    .filter((v) => v.category === activeCategory)
+    .sort(byPriority);
+
+  const isValueSelected = (valueId: string) => {
+    return selectedValues.some((v) => v.id === valueId);
   };
 
-  const addValue = (categoryId: string, valName: string) => {
-    if (isValueSelected(valName)) return;
+  const getCategoryCount = (category: string) => {
+    return selectedValues.filter((v) => v.category === category).length;
+  };
 
-    // Each value type can contain maximum 5 values
-    if (getCategoryCount(categoryId) >= 5) {
-      return;
-    }
+  const isAtTotalMax = selectedValues.length >= JOB_VALUES_MAX_TOTAL;
 
-    const defaultRankConfig = PRIORITY_RANKS[0]; // Essentials by default
-    const newItem: JobValueItem = {
-      id: crypto.randomUUID(),
-      category: categoryId,
-      name: valName,
-      rank: defaultRankConfig.rank,
-      weight: defaultRankConfig.weight,
+  const addValue = (value: ValueData) => {
+    if (isValueSelected(value._id)) return;
+
+    // At most JOB_VALUES_MAX_PER_TYPE per type and JOB_VALUES_MAX_TOTAL overall;
+    // the backend enforces both again.
+    if (getCategoryCount(value.type) >= JOB_VALUES_MAX_PER_TYPE) return;
+    if (isAtTotalMax) return;
+
+    const newItem: ValueRow = {
+      id: value._id,
+      category: value.type,
+      name: value.label,
+      priority: PRIORITY_RANKS[0].priority, // Essentials by default
     };
 
     setSelectedValues((prev) => [...prev, newItem]);
+    setError(null);
   };
 
   const removeValue = (id: string) => {
     setSelectedValues((prev) => prev.filter((v) => v.id !== id));
   };
 
-  const updateRank = (id: string, rank: ValuePriorityRank) => {
-    const config = PRIORITY_RANKS.find((r) => r.rank === rank);
-    const weight = config ? config.weight : 1;
-
+  const updateRank = (id: string, priority: JOB_VALUE_PRIORITY_ENUMS) => {
     setSelectedValues((prev) =>
-      prev.map((v) => (v.id === id ? { ...v, rank, weight } : v)),
+      prev.map((v) => (v.id === id ? { ...v, priority } : v)),
     );
   };
 
+  // Back keeps unsaved picks in the wizard, as the other steps do; only
+  // Continue saves.
   const handlePrev = () => {
     prev({
-      values: selectedValues,
+      values: selectedValues.map(({ id, category, name, priority }) => ({
+        value: { _id: id, type: category, label: name },
+        priority,
+        weight: JOB_VALUE_PRIORITY_WEIGHT[priority],
+      })),
     });
   };
 
-  const handleNext = () => {
-    next({
-      values: selectedValues,
+  const handleNext = async () => {
+    // Publishing needs at least one value; say so here rather than at publish.
+    if (selectedValues.length === 0) {
+      setError('Add at least one value to continue.');
+      return;
+    }
+
+    await updateJob({
+      id: defaultValues._id,
+      data: {
+        // Saved in the order shown, so the preview lists them the same way.
+        values: [...selectedValues]
+          .sort(byPriority)
+          .map(({ id, priority }) => ({
+            value: id,
+            priority,
+          })),
+      },
+      onSuccessNext: (newData) => next(newData),
     });
   };
 
@@ -294,7 +224,9 @@ export default function ValuesPotentialsStep({
           Values and Potentials
         </h2>
         <p className="text-body-sm text-text-gray-tertiary mt-1">
-          Choose values and set their importance separately within each category.
+          Choose values in each category and set how much each one matters. A
+          priority counts the same in every category: Essentials is x4
+          everywhere.
         </p>
       </div>
 
@@ -318,20 +250,30 @@ export default function ValuesPotentialsStep({
 
           <div className="space-y-3">
             {CATEGORIES.map((cat) => {
-              const isExpanded = activeCategory === cat.id;
-              const count = getCategoryCount(cat.id);
-              const query = (categorySearchQuery[cat.id] || '').toLowerCase();
+              const isExpanded = activeCategory === cat;
+              const count = getCategoryCount(cat);
+              const label = VALUE_TYPE_LABELS[cat];
+              const query = (categorySearchQuery[cat] || '')
+                .trim()
+                .toLowerCase();
 
-              const filteredOrg = cat.orgValues.filter((v) =>
-                v.toLowerCase().includes(query),
+              const categoryOrgValues = organisationValues.filter(
+                (v) => v.type === cat,
               );
-              const filteredSuggested = cat.suggestedValues.filter((v) =>
-                v.toLowerCase().includes(query),
+              const filteredOrg = categoryOrgValues.filter((v) =>
+                v.label.toLowerCase().includes(query),
               );
+              // Already searched server-side; the organisation's own values
+              // are listed above, so they are left out here.
+              const filteredSuggested = isExpanded
+                ? catalogueValues.filter(
+                    (v) => !categoryOrgValues.some((o) => o._id === v._id),
+                  )
+                : [];
 
               return (
                 <div
-                  key={cat.id}
+                  key={cat}
                   className={cn(
                     'rounded-2xl border bg-white transition-all overflow-hidden',
                     isExpanded
@@ -341,7 +283,7 @@ export default function ValuesPotentialsStep({
                 >
                   {/* Category Header */}
                   <div
-                    onClick={() => toggleCategory(cat.id)}
+                    onClick={() => toggleCategory(cat)}
                     className="p-4 flex items-center justify-between cursor-pointer select-none"
                   >
                     <div className="flex items-center gap-2 text-label-sm font-label-sm-strong! text-text-gray-primary">
@@ -350,7 +292,7 @@ export default function ValuesPotentialsStep({
                       ) : (
                         <ChevronRight className="w-4 h-4 text-text-gray-tertiary" />
                       )}
-                      <span>{cat.name}</span>
+                      <span>{label}</span>
                     </div>
 
                     <span
@@ -361,7 +303,7 @@ export default function ValuesPotentialsStep({
                           : 'bg-bg-gray-soft-primary text-text-gray-quaternary',
                       )}
                     >
-                      {count}/5
+                      {count}/{JOB_VALUES_MAX_PER_TYPE}
                     </span>
                   </div>
 
@@ -373,14 +315,14 @@ export default function ValuesPotentialsStep({
                         <Search className="w-4 h-4 text-text-gray-quaternary absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                           type="text"
-                          value={categorySearchQuery[cat.id] || ''}
+                          value={categorySearchQuery[cat] || ''}
                           onChange={(e) =>
                             setCategorySearchQuery((prev) => ({
                               ...prev,
-                              [cat.id]: e.target.value,
+                              [cat]: e.target.value,
                             }))
                           }
-                          placeholder={`Search ${cat.name} values...`}
+                          placeholder={`Search ${label} values...`}
                           className="w-full pl-9 pr-3 py-2 text-body-sm rounded-xl border border-border-gray-secondary outline-none focus:border-border-brand-primary transition-all text-text-gray-primary placeholder:text-text-gray-quaternary"
                         />
                       </div>
@@ -393,25 +335,27 @@ export default function ValuesPotentialsStep({
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {filteredOrg.map((val) => {
-                              const selected = isValueSelected(val);
-                              const isCatFull = count >= 5;
+                              const selected = isValueSelected(val._id);
+                              const isFull =
+                                count >= JOB_VALUES_MAX_PER_TYPE ||
+                                isAtTotalMax;
                               return (
                                 <button
-                                  key={val}
+                                  key={val._id}
                                   type="button"
-                                  onClick={() => addValue(cat.id, val)}
-                                  disabled={selected || isCatFull}
+                                  onClick={() => addValue(val)}
+                                  disabled={selected || isFull}
                                   className={cn(
                                     'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-label-xs font-medium border transition-colors',
                                     selected
                                       ? 'bg-pink-50 text-pink-700 border-pink-200 opacity-60 cursor-default'
-                                      : isCatFull
+                                      : isFull
                                         ? 'bg-bg-gray-soft-primary text-text-gray-quaternary border-border-gray-secondary opacity-50 cursor-not-allowed'
                                         : 'bg-white text-text-gray-primary border-border-gray-secondary hover:border-border-brand-primary hover:text-text-brand-primary cursor-pointer',
                                   )}
                                 >
                                   {!selected && <Plus className="w-3 h-3" />}
-                                  <span>{val}</span>
+                                  <span>{val.label}</span>
                                 </button>
                               );
                             })}
@@ -427,30 +371,45 @@ export default function ValuesPotentialsStep({
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {filteredSuggested.map((val) => {
-                              const selected = isValueSelected(val);
-                              const isCatFull = count >= 5;
+                              const selected = isValueSelected(val._id);
+                              const isFull =
+                                count >= JOB_VALUES_MAX_PER_TYPE ||
+                                isAtTotalMax;
                               return (
                                 <button
-                                  key={val}
+                                  key={val._id}
                                   type="button"
-                                  onClick={() => addValue(cat.id, val)}
-                                  disabled={selected || isCatFull}
+                                  onClick={() => addValue(val)}
+                                  disabled={selected || isFull}
                                   className={cn(
                                     'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-label-xs font-medium border transition-colors',
                                     selected
                                       ? 'bg-pink-50 text-pink-700 border-pink-200 opacity-60 cursor-default'
-                                      : isCatFull
+                                      : isFull
                                         ? 'bg-bg-gray-soft-primary text-text-gray-quaternary border-border-gray-secondary opacity-50 cursor-not-allowed'
                                         : 'bg-white text-text-gray-primary border-border-gray-secondary hover:border-border-brand-primary hover:text-text-brand-primary cursor-pointer',
                                   )}
                                 >
                                   {!selected && <Plus className="w-3 h-3" />}
-                                  <span>{val}</span>
+                                  <span>{val.label}</span>
                                 </button>
                               );
                             })}
                           </div>
                         </div>
+                      )}
+
+                      {isCatalogueLoading ? (
+                        <p className="text-label-xs text-text-gray-quaternary">
+                          Loading values...
+                        </p>
+                      ) : (
+                        filteredOrg.length === 0 &&
+                        filteredSuggested.length === 0 && (
+                          <p className="text-label-xs text-text-gray-quaternary">
+                            No values found.
+                          </p>
+                        )
                       )}
                     </div>
                   )}
@@ -478,7 +437,8 @@ export default function ValuesPotentialsStep({
             </div>
 
             <span className="px-3 py-1 rounded-full text-label-xs font-label-xs-strong! bg-emerald-50 text-emerald-700 border border-emerald-200">
-              {activeCategoryValues.length} of 5 Selected
+              {activeCategoryValues.length} of {JOB_VALUES_MAX_PER_TYPE}{' '}
+              Selected
             </span>
           </div>
 
@@ -486,13 +446,14 @@ export default function ValuesPotentialsStep({
             {activeCategoryValues.length === 0 ? (
               <div className="border border-dashed border-border-gray-secondary rounded-2xl p-10 text-center bg-white">
                 <p className="text-body-sm text-text-gray-tertiary">
-                  No values selected for {currentCategory.name} yet. Choose values from the catalogue on the left.
+                  No values selected for {currentCategoryLabel} yet. Choose
+                  values from the catalogue on the left.
                 </p>
               </div>
             ) : (
               activeCategoryValues.map((item) => {
                 const rankConfig =
-                  PRIORITY_RANKS.find((r) => r.rank === item.rank) ||
+                  PRIORITY_RANKS.find((r) => r.priority === item.priority) ||
                   PRIORITY_RANKS[0];
 
                 return (
@@ -502,7 +463,6 @@ export default function ValuesPotentialsStep({
                   >
                     {/* Left: Drag grip & Name */}
                     <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                      <GripVertical className="w-4 h-4 text-text-gray-quaternary shrink-0 cursor-grab" />
                       <span className="text-label-sm font-label-sm-strong! text-text-gray-primary truncate">
                         {item.name}
                       </span>
@@ -519,7 +479,9 @@ export default function ValuesPotentialsStep({
                               rankConfig.badgeClass,
                             )}
                           >
-                            <span>{item.rank}</span>
+                            <span>
+                              {JOB_VALUE_PRIORITY_LABELS[item.priority]}
+                            </span>
                             <ChevronDown className="w-3.5 h-3.5 opacity-80" />
                           </button>
                         </DropdownMenuTrigger>
@@ -529,21 +491,23 @@ export default function ValuesPotentialsStep({
                         >
                           {PRIORITY_RANKS.map((option) => (
                             <DropdownMenuItem
-                              key={option.rank}
-                              onClick={() => updateRank(item.id, option.rank)}
+                              key={option.priority}
+                              onClick={() =>
+                                updateRank(item.id, option.priority)
+                              }
                               className="flex items-center justify-between px-3 py-2 text-label-sm rounded-lg cursor-pointer hover:bg-bg-gray-soft-primary"
                             >
                               <span
                                 className={
-                                  item.rank === option.rank
+                                  item.priority === option.priority
                                     ? 'font-bold text-text-brand-primary'
                                     : 'text-text-gray-primary'
                                 }
                               >
-                                {option.rank}
+                                {JOB_VALUE_PRIORITY_LABELS[option.priority]}
                               </span>
                               <span className="text-text-gray-quaternary text-xs font-medium">
-                                {option.multiplierText}
+                                {multiplierText(option.priority)}
                               </span>
                             </DropdownMenuItem>
                           ))}
@@ -551,7 +515,7 @@ export default function ValuesPotentialsStep({
                       </DropdownMenu>
 
                       <span className="text-label-sm font-medium text-text-gray-secondary w-6 text-center">
-                        {rankConfig.multiplierText}
+                        {multiplierText(item.priority)}
                       </span>
 
                       <button
@@ -570,6 +534,12 @@ export default function ValuesPotentialsStep({
         </div>
       </div>
 
+      {error && (
+        <p className="text-label-sm text-text-error-primary text-right">
+          {error}
+        </p>
+      )}
+
       {/* Footer Navigation Buttons */}
       <div className="flex justify-end gap-spacing-md pt-4">
         <Button
@@ -583,9 +553,10 @@ export default function ValuesPotentialsStep({
         <Button
           type="button"
           onClick={handleNext}
+          disabled={isPending}
           className="h-10 px-spacing-xl rounded-lg text-label-sm font-label-sm-strong! text-white bg-bg-brand-solid-primary hover:bg-bg-brand-solid-hover"
         >
-          Continue
+          {isPending ? 'Saving...' : 'Continue'}
         </Button>
       </div>
 

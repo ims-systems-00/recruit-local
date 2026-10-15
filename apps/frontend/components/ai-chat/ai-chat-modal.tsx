@@ -41,6 +41,7 @@ import AiChatSettings from './ai-chat-settings';
 import AiChatHistory from './ai-chat-history';
 import { useAgentPage } from './page-context';
 import Image from 'next/image';
+import Link from 'next/link';
 
 import aiBotLogo from '@/public/images/Alice_Logo.svg';
 import aiBot from '@/public/images/alice_icon.svg';
@@ -52,6 +53,8 @@ type Message = {
   time: string;
   /** A change Alice proposed on this turn and is waiting for approval on. */
   pendingWrite?: PendingWriteItem;
+  /** Her opening line, worded at render time — see `greetingMessages`. */
+  greeting?: true;
 };
 
 /** The approval sent by the card's button. Any affirmative reply works too. */
@@ -73,17 +76,31 @@ const toAliceMessage = (data: AgentData): Message => {
   };
 };
 
-const initialMessages: Message[] = [
-  {
-    id: 1,
-    sender: 'alice',
-    text: "Hi there! I'm your recruitment assistant. How can I help you today?",
-    time: '11:25',
-  },
-];
-
 const now = () =>
   new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+const MEMBER_GREETING =
+  "Hi there! I'm Alice, your recruitment assistant. How can I help you today?";
+
+const VISITOR_GREETING = `Hi, I'm **Alice** 👋 Recruit Local's AI assistant.
+
+Once you're signed in, I can:
+- build your profile with you, just by chatting
+- help you fill in forms and answer application questions
+- move candidates through your pipeline, if you're hiring
+- explain how anything on Recruit Local works
+
+Log in or sign up below to start chatting.`;
+
+/**
+ * A fresh chat, opened by Alice's greeting. The greeting's text is chosen at
+ * render rather than stored here, because the session may still be loading
+ * when the chat opens — a signed-in user must not be shown the sign-up pitch —
+ * and because it follows the page. It is fixed once the user first sends.
+ */
+const greetingMessages = (): Message[] => [
+  { id: 1, sender: 'alice', text: '', time: now(), greeting: true },
+];
 
 /**
  * Rebuilds the visible chat from a stored transcript. Tool results, and
@@ -134,18 +151,29 @@ function BotAvatar({ variant = 'chat' }: { variant?: 'chat' | 'launcher' }) {
 
 function AiChatModal({
   hidden = false,
+  pageMessage,
   onClose,
   onMinimize,
 }: {
   hidden?: boolean;
+  /** What she says about the current page, if it has an intro; see `page-intros.ts`. */
+  pageMessage?: string;
   onClose: () => void;
   onMinimize: () => void;
 }) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const isLoggedIn = session?.user?.email ? true : false;
+  // Only once the session has resolved, unlike `isLoggedIn`, which is also
+  // false while it loads.
+  const isVisitor = status === 'unauthenticated';
+  const greetingText = isVisitor
+    ? VISITOR_GREETING
+    : pageMessage
+      ? `Hi, I'm Alice! ${pageMessage}`
+      : MEMBER_GREETING;
   const [conversationId, setConversationId] = useState<string | null>(null);
 
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>(greetingMessages);
 
   const { createAgentConversation, isPending: isCreatingConversation } =
     useCreateAgentConversation();
@@ -229,7 +257,14 @@ function AiChatModal({
       time: now(),
     };
 
-    setMessages((current) => [...current, userMessage]);
+    // Fix the greeting as it reads now, so moving to another page with the chat
+    // open does not rewrite what she already said.
+    setMessages((current) => [
+      ...current.map(({ greeting, ...message }) =>
+        greeting ? { ...message, text: greetingText } : message,
+      ),
+      userMessage,
+    ]);
     setDraft('');
     setEditingId(null);
     setHistoryOpen(false);
@@ -264,7 +299,7 @@ function AiChatModal({
   const startNewChat = () => {
     stop();
     setConversationId(null);
-    setMessages(initialMessages);
+    setMessages(greetingMessages());
     setDraft('');
     setEditingId(null);
     setHistoryOpen(false);
@@ -281,7 +316,7 @@ function AiChatModal({
     stop();
     const restored = toHistoryMessages(conversation.messages ?? []);
     setConversationId(id);
-    setMessages(restored.length ? restored : initialMessages);
+    setMessages(restored.length ? restored : greetingMessages());
     setDraft('');
     setEditingId(null);
     setHistoryOpen(false);
@@ -290,7 +325,7 @@ function AiChatModal({
   const handleConversationDeleted = (id: string) => {
     if (id === conversationId) {
       setConversationId(null);
-      setMessages(initialMessages);
+      setMessages(greetingMessages());
     }
   };
 
@@ -302,6 +337,10 @@ function AiChatModal({
   };
 
   const lastMessageId = messages[messages.length - 1]?.id;
+
+  const shownMessages = messages.map((message) =>
+    message.greeting ? { ...message, text: greetingText } : message,
+  );
 
   const handleCopy = (message: Message) => {
     navigator.clipboard.writeText(message.text).then(() => {
@@ -453,7 +492,7 @@ function AiChatModal({
           role="log"
           ref={messagesRef}
         >
-          {messages.map((message) => {
+          {shownMessages.map((message) => {
             const isUser = message.sender === 'user';
             const isCopied = copiedId === message.id;
             const isPlaying = playingId === message.id;
@@ -624,11 +663,25 @@ function AiChatModal({
           )}
         </div>
 
-        {!isLoggedIn && (
-          <div className="flex items-center mx-6 gap-2.5 mb-[18px] justify-center p-4 bg-[#fefce8] rounded-lg">
-            <span className="text-label-sm text-[#894b00]">
-              Please login to continue
+        {isVisitor && (
+          <div className="flex items-center justify-between gap-3 mx-4 mb-[14px] p-3 rounded-lg bg-bg-gray-soft-secondary max-sm:mx-3">
+            <span className="text-label-sm text-text-gray-primary">
+              Log in to chat with Alice
             </span>
+            <div className="flex shrink-0 gap-2">
+              <Link
+                href="/sign-up"
+                className="h-8 px-3 grid place-items-center text-label-sm font-label-sm-strong! text-text-gray-primary bg-white border border-border-gray-primary rounded-lg transition hover:bg-[#edf0f4]"
+              >
+                Sign up
+              </Link>
+              <Link
+                href="/login"
+                className="h-8 px-3 grid place-items-center text-label-sm font-label-sm-strong! text-white rounded-lg bg-bg-brand-solid-primary transition hover:bg-brand-dark"
+              >
+                Log in
+              </Link>
+            </div>
           </div>
         )}
 

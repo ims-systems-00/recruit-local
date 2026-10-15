@@ -103,6 +103,17 @@ export class TooManyRequestsException extends ApiError {
     });
   }
 }
+
+/** An upstream dependency (e.g. the LLM) failed; the request is safe to retry. */
+export class ServiceUnavailableException extends ApiError {
+  constructor(message = "Service temporarily unavailable.") {
+    super(message, {
+      httpStatusCode: StatusCodes.SERVICE_UNAVAILABLE,
+      httpReasonPhrase: ReasonPhrases.SERVICE_UNAVAILABLE,
+    });
+  }
+}
+
 export class EmailMissConfigException extends ApiError {
   constructor(message = "Invalid email contents, email can not be sent.") {
     super(message, {

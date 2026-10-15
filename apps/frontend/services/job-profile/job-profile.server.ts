@@ -18,7 +18,9 @@ import type {
   JobProfileListFilters,
   JobProfileData,
   AppliedJobsListFilters,
+  EvaluateValueInput,
 } from './job-profile.type';
+import { ValueScoreResponseDto } from '@rl/types';
 import { AppliedJobsBackendResponse, JobData } from '../jobs/job.type';
 import { CursorPaginatedResponse } from '@/types/api';
 
@@ -142,6 +144,35 @@ export async function updateJobProfile(
     };
   } catch (error) {
     return handleServerError(error, 'Failed to update job profile');
+  }
+}
+
+/**
+ * EVALUATE A VALUE
+ *
+ * Scores the candidate's answers with the LLM and saves the score on the
+ * profile. Slow by nature (one model call), and fails with 503 when scoring is
+ * unavailable or 429 when rate-limited — both carry a message worth showing.
+ */
+export async function evaluateValue(
+  id: string,
+  payload: EvaluateValueInput,
+): Promise<JobProfileApiResponse<ValueScoreResponseDto>> {
+  try {
+    await idParamsSchema.validate({ id });
+
+    const res = await axiosServer.post(
+      `${API_ENDPOINT}/${id}/value-scores`,
+      payload,
+    );
+
+    return {
+      success: true,
+      data: res.data.valueScore,
+      message: res.data.message || 'Value evaluated',
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to evaluate your answers');
   }
 }
 

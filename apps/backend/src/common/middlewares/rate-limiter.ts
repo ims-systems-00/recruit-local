@@ -52,6 +52,22 @@ const speechRateLimiter = rateLimit({
 });
 
 /**
+ * Per-user limiter for value self-evaluations.
+ *
+ * Each evaluation is one LLM call on the shared OpenAI account, and retakes are
+ * unlimited by design, so this is what bounds the cost. A candidate writes three
+ * answers per evaluation, so a legitimate one stays well inside the default.
+ */
+const valueScoreRateLimiter = rateLimit({
+  windowMs: parseInt(process.env.VALUE_SCORE_RATE_LIMIT_WINDOW_MS || "60000"),
+  max: parseInt(process.env.VALUE_SCORE_RATE_LIMIT_MAX || "10"),
+  keyGenerator: (req: Request) => req.session?.user?._id || req.ip,
+  handler: (req: Request, res: Response, next: NextFunction) => {
+    return next(new TooManyRequestsException("Too many evaluations. Please wait a moment and try again."));
+  },
+});
+
+/**
  * Limiter for the BullMQ dashboard.
  *
  * Keyed on the IP, not the user: it fronts `deserializeUser`, so the requests
@@ -67,4 +83,4 @@ const bullBoardRateLimiter = rateLimit({
   },
 });
 
-export { globalRateLimiter, agentRateLimiter, speechRateLimiter, bullBoardRateLimiter };
+export { globalRateLimiter, agentRateLimiter, speechRateLimiter, valueScoreRateLimiter, bullBoardRateLimiter };
