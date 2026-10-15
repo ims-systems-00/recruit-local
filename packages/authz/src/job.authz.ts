@@ -76,6 +76,9 @@ export const ALL_JOB_FIELDS = [
   'additionalQueries.expectedAnswer',
   'additionalQueries._id',
 
+  // --- Skills (each row's `skill` is populated from the skill catalogue on read) ---
+  'skills',
+
   // --- Board Settings ---
   'boardBackground',
   'boardSortBy',
@@ -118,6 +121,9 @@ const EMPLOYER_CREATE_FIELDS = [
   // additional queries
   'formId',
   'additionalQueries',
+
+  // skills & requirements
+  'skills',
 ];
 
 const CANDIDATE_READ_FIELDS = omitFields([
