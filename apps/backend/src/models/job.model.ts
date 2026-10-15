@@ -19,6 +19,7 @@ import {
   QUERY_TYPE_ENUMS,
   JOB_SKILL_LEVEL_ENUMS,
   JOB_SKILL_REQUIREMENT_ENUMS,
+  JOB_VALUE_PRIORITY_ENUMS,
 } from "@rl/types";
 
 export interface IAdditionalQuery {
@@ -39,6 +40,15 @@ export interface IJobSkill {
   skill: Types.ObjectId;
   level: JOB_SKILL_LEVEL_ENUMS;
   requirement: JOB_SKILL_REQUIREMENT_ENUMS;
+}
+
+/**
+ * One of a job's values: a value catalogue entry and how much it matters. The
+ * tier's weight is derived on read (`JOB_VALUE_PRIORITY_WEIGHT`), never stored.
+ */
+export interface IJobValue {
+  value: Types.ObjectId;
+  priority: JOB_VALUE_PRIORITY_ENUMS;
 }
 
 export interface IJobInput extends TenantInput {
@@ -69,6 +79,7 @@ export interface IJobInput extends TenantInput {
   formId?: Types.ObjectId;
   additionalQueries?: IAdditionalQuery[];
   skills?: IJobSkill[];
+  values?: IJobValue[];
 }
 
 export interface IJobDoc
@@ -110,6 +121,16 @@ const jobSkillSchema = new Schema<IJobSkill>(
     skill: { type: Schema.Types.ObjectId, ref: modelNames.SKILL_CATALOG, required: true },
     level: { type: String, enum: Object.values(JOB_SKILL_LEVEL_ENUMS), required: true },
     requirement: { type: String, enum: Object.values(JOB_SKILL_REQUIREMENT_ENUMS), required: true },
+  },
+  { _id: false }
+);
+
+// No `_id`, for the same reason: each value appears at most once per job. Array
+// order is display order only — `priority` is what ranks a value.
+const jobValueSchema = new Schema<IJobValue>(
+  {
+    value: { type: Schema.Types.ObjectId, ref: modelNames.VALUE, required: true },
+    priority: { type: String, enum: Object.values(JOB_VALUE_PRIORITY_ENUMS), required: true },
   },
   { _id: false }
 );
@@ -161,6 +182,7 @@ const jobSchema = new Schema<IJobDoc>(
     totalApplications: { type: Number, default: 0 },
     additionalQueries: [additionalQuerySchema],
     skills: [jobSkillSchema],
+    values: [jobValueSchema],
   },
   {
     timestamps: true,
@@ -183,6 +205,9 @@ jobSchema.index({ keywords: 1 });
 // Backs "which jobs use this catalogue skill?" — the check before a skill is
 // hard-deleted, and skill matching.
 jobSchema.index({ "skills.skill": 1 });
+
+// The same for values: "which jobs use this value?", for value matching.
+jobSchema.index({ "values.value": 1 });
 
 // Back the default cursor page: the keyset walks (createdAt, _id) under whichever
 // scope the security $match applies — status for candidates and the public list,
