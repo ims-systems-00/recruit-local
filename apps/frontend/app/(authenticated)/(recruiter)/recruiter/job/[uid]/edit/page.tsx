@@ -48,7 +48,7 @@ export default async function EditJob({ params }: PageProps) {
         </Breadcrumb>
       </div>
 
-      <div className=" px-spacing-4xl">
+      <div className=" px-spacing-md sm:px-spacing-4xl">
         <EditForm defaultValues={jobData} />
       </div>
     </div>

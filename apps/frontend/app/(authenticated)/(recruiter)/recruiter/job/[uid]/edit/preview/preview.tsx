@@ -289,7 +289,7 @@ export default function Preview({
           </div>
         </div>
 
-        <div className=" grid grid-cols-3 gap-spacing-2xl">
+        <div className=" grid sm:grid-cols-2 lg:grid-cols-3 gap-spacing-2xl">
           {/* <InfoCard
             icon={<Briefcase size={20} />}
             title="Job Category"

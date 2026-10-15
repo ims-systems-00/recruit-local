@@ -9,6 +9,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { ChevronDown, X } from 'lucide-react';
 import {
   JobData,
@@ -296,132 +304,145 @@ export default function SkillsRequirementsStep({
             Choose Skills
           </h3>
 
-          <div className="border border-border-gray-secondary rounded-xl overflow-hidden">
-            {/* Table Header */}
-            <div className="bg-bg-gray-soft-primary px-4 py-3 flex items-center text-label-xs font-label-xs-strong! text-text-gray-tertiary">
-              <span className="w-16">Sl</span>
-              <span className="flex-1">Skills</span>
-              <span className="w-48">Required Level</span>
-              <span className="w-40">Requirements</span>
-              <span className="w-12 text-center"></span>
-            </div>
-
-            {/* Table Rows */}
-            {skills.length === 0 ? (
-              <div className="p-8 text-center text-body-sm text-text-gray-quaternary">
-                No skills added yet. Search and add skills from the field above.
-              </div>
-            ) : (
-              <div className="divide-y divide-border-gray-secondary">
-                {skills.map((skill, index) => {
-                  const sl = String(index + 1).padStart(2, '0');
-                  return (
-                    <div
-                      key={skill.id}
-                      className="px-4 py-3.5 flex items-center bg-white hover:bg-bg-gray-soft-primary/40 transition-colors"
+          <div className="overflow-hidden bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border-gray-secondary bg-bg-gray-soft-secondary">
+                  <TableHead className="w-16 px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary"></TableHead>
+                  <TableHead className="px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Skills
+                  </TableHead>
+                  <TableHead className="w-48 px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Required Level
+                  </TableHead>
+                  <TableHead className="w-40 px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Requirements
+                  </TableHead>
+                  <TableHead className="w-12 px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {skills.length === 0 ? (
+                  <TableRow className="border-none! hover:bg-transparent">
+                    <TableCell
+                      colSpan={5}
+                      className="p-8 text-center text-body-sm text-text-gray-quaternary"
                     >
-                      {/* Sl */}
-                      <span className="w-16 text-label-sm text-text-gray-quinary font-medium">
-                        {sl}
-                      </span>
+                      No skills added yet. Search and add skills from the field
+                      above.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  skills.map((skill, index) => {
+                    const sl = String(index + 1).padStart(2, '0');
+                    return (
+                      <TableRow
+                        key={skill.id}
+                        className="border-none! hover:bg-bg-gray-soft-primary/40 transition-colors"
+                      >
+                        {/* Sl */}
+                        <TableCell className="w-16 px-spacing-4xl py-spacing-md text-label-sm text-text-gray-secondary">
+                          {sl}
+                        </TableCell>
 
-                      {/* Skill Name */}
-                      <span className="flex-1 text-label-sm font-medium text-text-gray-primary">
-                        {skill.name}
-                      </span>
+                        {/* Skill Name */}
+                        <TableCell className="px-spacing-4xl py-spacing-md text-label-sm text-text-gray-secondary">
+                          {skill.name}
+                        </TableCell>
 
-                      {/* Required Level Dropdown */}
-                      <div className="w-48">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              className="flex items-center gap-1.5 text-label-sm text-text-gray-primary font-medium hover:text-text-brand-primary cursor-pointer transition-colors"
+                        {/* Required Level Dropdown */}
+                        <TableCell className="w-48 px-spacing-4xl py-spacing-md text-label-sm text-text-gray-secondary">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="flex items-center gap-1.5 text-label-sm text-text-gray-primary font-medium hover:text-text-brand-primary cursor-pointer transition-colors"
+                              >
+                                <span>{skill.level}</span>
+                                <ChevronDown className="w-4 h-4 text-text-gray-tertiary" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="start"
+                              className="bg-white rounded-xl shadow-lg border border-border-gray-secondary p-1 min-w-[160px]"
                             >
-                              <span>{skill.level}</span>
-                              <ChevronDown className="w-4 h-4 text-text-gray-tertiary" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="start"
-                            className="bg-white rounded-xl shadow-lg border border-border-gray-secondary p-1 min-w-[160px]"
-                          >
-                            {SKILL_LEVELS.map((level) => (
-                              <DropdownMenuItem
-                                key={level}
-                                onClick={() =>
-                                  updateSkillLevel(skill.id, level)
-                                }
+                              {SKILL_LEVELS.map((level) => (
+                                <DropdownMenuItem
+                                  key={level}
+                                  onClick={() =>
+                                    updateSkillLevel(skill.id, level)
+                                  }
+                                  className={cn(
+                                    'text-label-sm rounded-lg px-3 py-2 cursor-pointer',
+                                    skill.level === level
+                                      ? 'bg-bg-gray-soft-primary text-text-gray-primary font-semibold'
+                                      : 'text-text-gray-secondary hover:bg-bg-gray-soft-primary',
+                                  )}
+                                >
+                                  {level}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+
+                        {/* Requirements Dropdown */}
+                        <TableCell className="w-40 px-spacing-4xl py-spacing-md">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
                                 className={cn(
-                                  'text-label-sm rounded-lg px-3 py-2 cursor-pointer',
-                                  skill.level === level
-                                    ? 'bg-bg-gray-soft-primary text-text-gray-primary font-semibold'
-                                    : 'text-text-gray-secondary hover:bg-bg-gray-soft-primary',
+                                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-xs font-label-xs-strong! cursor-pointer transition-colors',
+                                  skill.requirement === 'Required'
+                                    ? 'bg-pink-50 text-pink-600 border border-pink-200'
+                                    : 'bg-bg-gray-soft-secondary text-text-gray-secondary border border-border-gray-secondary',
                                 )}
                               >
-                                {level}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      {/* Requirements Dropdown */}
-                      <div className="w-40">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              className={cn(
-                                'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-xs font-label-xs-strong! cursor-pointer transition-colors',
-                                skill.requirement === 'Required'
-                                  ? 'bg-pink-50 text-pink-600 border border-pink-200'
-                                  : 'bg-bg-gray-soft-secondary text-text-gray-secondary border border-border-gray-secondary',
-                              )}
+                                <span>{skill.requirement}</span>
+                                <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="start"
+                              className="bg-white rounded-xl shadow-lg border border-border-gray-secondary p-1 min-w-[130px]"
                             >
-                              <span>{skill.requirement}</span>
-                              <ChevronDown className="w-3.5 h-3.5 opacity-70" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="start"
-                            className="bg-white rounded-xl shadow-lg border border-border-gray-secondary p-1 min-w-[130px]"
-                          >
-                            {SKILL_REQUIREMENTS.map((req) => (
-                              <DropdownMenuItem
-                                key={req}
-                                onClick={() =>
-                                  updateSkillRequirement(skill.id, req)
-                                }
-                                className={cn(
-                                  'text-label-sm rounded-lg px-3 py-2 cursor-pointer',
-                                  skill.requirement === req
-                                    ? 'bg-bg-gray-soft-primary text-text-gray-primary font-semibold'
-                                    : 'text-text-gray-secondary hover:bg-bg-gray-soft-primary',
-                                )}
-                              >
-                                {req}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                              {SKILL_REQUIREMENTS.map((req) => (
+                                <DropdownMenuItem
+                                  key={req}
+                                  onClick={() =>
+                                    updateSkillRequirement(skill.id, req)
+                                  }
+                                  className={cn(
+                                    'text-label-sm rounded-lg px-3 py-2 cursor-pointer',
+                                    skill.requirement === req
+                                      ? 'bg-bg-gray-soft-primary text-text-gray-primary font-semibold'
+                                      : 'text-text-gray-secondary hover:bg-bg-gray-soft-primary',
+                                  )}
+                                >
+                                  {req}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
 
-                      {/* Remove Button */}
-                      <div className="w-12 text-center">
-                        <button
-                          type="button"
-                          onClick={() => removeSkill(skill.id)}
-                          className="text-text-gray-quaternary hover:text-red-500 p-1 rounded-lg cursor-pointer transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                        {/* Remove Button */}
+                        <TableCell className="w-12 px-spacing-4xl py-spacing-md text-center">
+                          <button
+                            type="button"
+                            onClick={() => removeSkill(skill.id)}
+                            className="text-text-gray-quaternary hover:text-red-500 p-1 rounded-lg cursor-pointer transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
           </div>
         </div>
       </div>

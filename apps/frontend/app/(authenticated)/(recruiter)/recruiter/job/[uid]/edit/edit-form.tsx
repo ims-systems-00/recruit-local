@@ -10,6 +10,14 @@ import SkillsRequirementsStep from './steps/skills-requirements-step';
 import ValuesPotentialsStep from './steps/values-potentials-step';
 import { JobData } from '@/services/jobs/job.type';
 
+const FORM_STEPS = [
+  { id: 1, label: 'Basic Info' },
+  { id: 2, label: 'Job Description' },
+  { id: 3, label: 'Skills' },
+  { id: 4, label: 'Values' },
+  { id: 5, label: 'Queries' },
+];
+
 export default function EditForm({
   defaultValues,
 }: {
@@ -19,8 +27,13 @@ export default function EditForm({
   const [formData, setFormData] = useState(defaultValues);
 
   return (
-    <div className="min-h-screen flex items-stretch gap-spacing-4xl">
-      <div className=" flex flex-col gap-y-spacing-6xl flex-1 pt-spacing-4xl">
+    <div className="min-h-screen flex flex-col xl:flex-row items-stretch gap-spacing-2xl xl:gap-spacing-4xl">
+      <div className="flex flex-col gap-y-spacing-4xl sm:gap-y-spacing-6xl flex-1 pt-spacing-2xl sm:pt-spacing-4xl pb-spacing-6xl w-full min-w-0">
+        {step !== 6 && (
+          <div className="block xl:hidden">
+            <Stepper steps={FORM_STEPS} currentStep={step} />
+          </div>
+        )}
         {step === 1 && (
           <JobInformationForm
             defaultValues={formData}
@@ -86,7 +99,9 @@ export default function EditForm({
           <Preview prev={() => setStep(5)} defaultValues={formData} />
         )}
       </div>
-      {step !== 6 && <StepsSidebar currentStep={step} />}
+      {step !== 6 && (
+        <StepsSidebar currentStep={step} className="hidden xl:block" />
+      )}
     </div>
   );
 }

@@ -39,11 +39,17 @@ const STEPS: Step[] = [
 
 interface StepsSidebarProps {
   currentStep: number;
+  className?: string;
 }
 
-export function StepsSidebar({ currentStep }: StepsSidebarProps) {
+export function StepsSidebar({ currentStep, className }: StepsSidebarProps) {
   return (
-    <div className="w-[312px] min-w-[312px] shrink-0 pt-spacing-4xl pl-spacing-4xl border-l border-border-gray-secondary">
+    <div
+      className={cn(
+        'w-[312px] min-w-[312px] shrink-0 pt-spacing-4xl pl-spacing-4xl border-l border-border-gray-secondary',
+        className,
+      )}
+    >
       <h2 className=" text-label-xl font-label-xl-strong! text-text-gray-primary mb-spacing-4xl">
         Steps
       </h2>
