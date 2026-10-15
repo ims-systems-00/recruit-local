@@ -3,6 +3,11 @@ import {
   WORKING_DAYS_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
   QUERY_TYPE_ENUMS,
+  JOB_SKILL_LEVEL_ENUMS,
+  JOB_SKILL_REQUIREMENT_ENUMS,
+  JOB_SKILLS_MAX,
+  JOB_VALUE_PRIORITY_ENUMS,
+  JOB_VALUES_MAX_TOTAL,
 } from '@rl/types';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 
@@ -170,6 +175,51 @@ export type jobAdditionalQueryFormValues = yup.InferType<
   typeof jobAdditionalQuerySchema
 >;
 
+// Skills & Requirements step: skill-catalogue ids, each with the level and
+// requirement the job asks for. Mirrors the backend's job skills validation.
+export const jobSkillSchema = yup.object({
+  skill: yup.string().required('Skill is required'),
+  level: yup
+    .string()
+    .oneOf(Object.values(JOB_SKILL_LEVEL_ENUMS), 'Invalid skill level')
+    .required('Skill level is required'),
+  requirement: yup
+    .string()
+    .oneOf(Object.values(JOB_SKILL_REQUIREMENT_ENUMS), 'Invalid requirement')
+    .required('Requirement is required'),
+});
+
+export const jobSkillsSchema = yup.object({
+  skills: yup
+    .array()
+    .of(jobSkillSchema)
+    .max(JOB_SKILLS_MAX, `Add at most ${JOB_SKILLS_MAX} skills`)
+    .default([]),
+});
+
+export type JobSkillsFormValues = yup.InferType<typeof jobSkillsSchema>;
+
+// Values & Potentials step: value ids, each with its priority tier. The cap per
+// value type needs each value's type, so the step enforces it as values are
+// picked; the backend checks it again.
+export const jobValueSchema = yup.object({
+  value: yup.string().required('Value is required'),
+  priority: yup
+    .string()
+    .oneOf(Object.values(JOB_VALUE_PRIORITY_ENUMS), 'Invalid priority')
+    .required('Priority is required'),
+});
+
+export const jobValuesSchema = yup.object({
+  values: yup
+    .array()
+    .of(jobValueSchema)
+    .max(JOB_VALUES_MAX_TOTAL, `Choose at most ${JOB_VALUES_MAX_TOTAL} values`)
+    .default([]),
+});
+
+export type JobValuesFormValues = yup.InferType<typeof jobValuesSchema>;
+
 export const jobPreviewSchema = yup.object({
   status: yup.string().optional(),
 });
@@ -178,6 +228,8 @@ export type JobPreviewFormValues = yup.InferType<typeof jobPreviewSchema>;
 
 export const fullJobSchema = jobInformationSchema
   .concat(jobDescriptionSchema)
+  .concat(jobSkillsSchema)
+  .concat(jobValuesSchema)
   .concat(jobAdditionalQuerySchema)
   .concat(jobPreviewSchema);
 
