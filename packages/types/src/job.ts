@@ -79,6 +79,23 @@ export enum JOB_SKILL_REQUIREMENT_ENUMS {
   PREFERRED = 'preferred',
 }
 
+/** Display text for each skill level, as the job form shows it. */
+export const JOB_SKILL_LEVEL_LABELS: Record<JOB_SKILL_LEVEL_ENUMS, string> = {
+  [JOB_SKILL_LEVEL_ENUMS.WILLING_TO_LEARN]: 'Willing to Learn',
+  [JOB_SKILL_LEVEL_ENUMS.BEGINNER]: 'Beginner',
+  [JOB_SKILL_LEVEL_ENUMS.INTERMEDIATE]: 'Intermediate',
+  [JOB_SKILL_LEVEL_ENUMS.ADVANCED]: 'Advance',
+};
+
+/** Display text for each skill requirement, as the job form shows it. */
+export const JOB_SKILL_REQUIREMENT_LABELS: Record<
+  JOB_SKILL_REQUIREMENT_ENUMS,
+  string
+> = {
+  [JOB_SKILL_REQUIREMENT_ENUMS.REQUIRED]: 'Required',
+  [JOB_SKILL_REQUIREMENT_ENUMS.PREFERRED]: 'Preferred',
+};
+
 /** Most skills one job may list. Shared so the form and the validator agree. */
 export const JOB_SKILLS_MAX = 20;
 
@@ -113,6 +130,17 @@ export const JOB_VALUE_PRIORITY_WEIGHT: Record<
   [JOB_VALUE_PRIORITY_ENUMS.HIGHLY_IMPORTANT]: 3,
   [JOB_VALUE_PRIORITY_ENUMS.IMPORTANT]: 2,
   [JOB_VALUE_PRIORITY_ENUMS.DESIRABLE]: 1,
+};
+
+/** Display text for each priority tier, as the job form shows it. */
+export const JOB_VALUE_PRIORITY_LABELS: Record<
+  JOB_VALUE_PRIORITY_ENUMS,
+  string
+> = {
+  [JOB_VALUE_PRIORITY_ENUMS.ESSENTIAL]: 'Essentials',
+  [JOB_VALUE_PRIORITY_ENUMS.HIGHLY_IMPORTANT]: 'Highly Important',
+  [JOB_VALUE_PRIORITY_ENUMS.IMPORTANT]: 'Important',
+  [JOB_VALUE_PRIORITY_ENUMS.DESIRABLE]: 'Desirable',
 };
 
 /** Most values one job may list, across all value types. */

@@ -7,6 +7,18 @@ export enum VALUE_TYPE_ENUM {
 }
 
 /**
+ * Display name for each value type, as the job form's value catalogue shows it.
+ * The backend uses it too, so an error about a type reads the same as the form.
+ */
+export const VALUE_TYPE_LABELS: Record<VALUE_TYPE_ENUM, string> = {
+  [VALUE_TYPE_ENUM.MINDSET]: 'Mindset',
+  [VALUE_TYPE_ENUM.WORKING_STYLE]: 'Working style',
+  [VALUE_TYPE_ENUM.CULTURE_AND_BEHAVIOR]: 'Culture & Behavior',
+  [VALUE_TYPE_ENUM.LEADERSHIP]: 'Leadership & team dynamics',
+  [VALUE_TYPE_ENUM.MOTIVATION]: 'Purpose & motivation',
+};
+
+/**
  * Limits on a candidate's value self-evaluation, shared so the frontend form
  * and the backend validator cannot disagree about what a valid answer is.
  */

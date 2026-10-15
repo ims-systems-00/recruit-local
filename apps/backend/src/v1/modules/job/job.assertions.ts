@@ -1,4 +1,4 @@
-import { JOB_VALUES_MAX_PER_TYPE } from "@rl/types";
+import { JOB_VALUES_MAX_PER_TYPE, VALUE_TYPE_ENUM, VALUE_TYPE_LABELS } from "@rl/types";
 import { BadRequestException } from "../../../common/helper";
 import * as skillCatalogService from "../skill-catalog/skill-catalog.service";
 import * as valueService from "../value/value.service";
@@ -82,7 +82,7 @@ export const assertJobValues = async ({
   if (overCap.length) {
     throw new BadRequestException(
       `Choose at most ${JOB_VALUES_MAX_PER_TYPE} values from each category. Too many from: ${overCap
-        .map(([type, count]) => `${type} (${count})`)
+        .map(([type, count]) => `${VALUE_TYPE_LABELS[type as VALUE_TYPE_ENUM] ?? type} (${count})`)
         .join(", ")}`
     );
   }
