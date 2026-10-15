@@ -3,7 +3,7 @@ import { Resolver, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
   VALUE_ASSESSMENT_QUESTION_COUNT,
-  VALUE_TYPE_ENUM,
+  VALUE_TYPE_LABELS,
   ValueScoreResponseDto,
 } from '@rl/types';
 import {
@@ -24,14 +24,6 @@ import {
   valueEvaluationSchema,
   ValueEvaluationFormValues,
 } from '@/services/job-profile/job-profile.validation';
-
-const VALUE_TYPE_LABELS: Record<VALUE_TYPE_ENUM, string> = {
-  [VALUE_TYPE_ENUM.WORKING_STYLE]: 'Working Style',
-  [VALUE_TYPE_ENUM.MINDSET]: 'Mindset',
-  [VALUE_TYPE_ENUM.CULTURE_AND_BEHAVIOR]: 'Culture & Behaviour',
-  [VALUE_TYPE_ENUM.LEADERSHIP]: 'Leadership',
-  [VALUE_TYPE_ENUM.MOTIVATION]: 'Motivation',
-};
 
 /**
  * Asks the value's three questions and sends the answers for scoring.

@@ -7,15 +7,16 @@ export enum VALUE_TYPE_ENUM {
 }
 
 /**
- * Display name for each value type, as the job form's value catalogue shows it.
- * The backend uses it too, so an error about a type reads the same as the form.
+ * Display name for each value type — one wording everywhere a type is named:
+ * the candidate's value evaluation, the job form's value catalogue, and backend
+ * messages about a type.
  */
 export const VALUE_TYPE_LABELS: Record<VALUE_TYPE_ENUM, string> = {
   [VALUE_TYPE_ENUM.MINDSET]: 'Mindset',
-  [VALUE_TYPE_ENUM.WORKING_STYLE]: 'Working style',
-  [VALUE_TYPE_ENUM.CULTURE_AND_BEHAVIOR]: 'Culture & Behavior',
-  [VALUE_TYPE_ENUM.LEADERSHIP]: 'Leadership & team dynamics',
-  [VALUE_TYPE_ENUM.MOTIVATION]: 'Purpose & motivation',
+  [VALUE_TYPE_ENUM.WORKING_STYLE]: 'Working Style',
+  [VALUE_TYPE_ENUM.CULTURE_AND_BEHAVIOR]: 'Culture & Behaviour',
+  [VALUE_TYPE_ENUM.LEADERSHIP]: 'Leadership',
+  [VALUE_TYPE_ENUM.MOTIVATION]: 'Motivation',
 };
 
 /**
