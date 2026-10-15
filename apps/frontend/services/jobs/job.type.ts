@@ -2,6 +2,7 @@ import { CursorPagination } from '@/types/api';
 import { DeleteMarker } from '../file-media/file-media.type';
 import {
   EMPLOYMENT_TYPE,
+  JobSkillResponseDto,
   PERIOD_ENUMS,
   QUERY_TYPE_ENUMS,
   WORKING_DAYS_ENUMS,
@@ -26,21 +27,6 @@ export type StorageInformation = {
   Key: string;
   Bucket: string;
 };
-
-export type SkillLevel =
-  | 'Willing to Learn'
-  | 'Beginner'
-  | 'Intermediate'
-  | 'Advance';
-
-export type SkillRequirement = 'Required' | 'Preferred';
-
-export interface JobSkillItem {
-  id: string;
-  name: string;
-  level: SkillLevel;
-  requirement: SkillRequirement;
-}
 
 export type ValuePriorityRank =
   | 'Essentials'
@@ -140,8 +126,9 @@ export interface JobData {
     src: string;
   }[];
   additionalQueries?: AdditionalQuery[];
-  skills?: JobSkillItem[];
+  skills?: JobSkillResponseDto[];
   values?: JobValueItem[];
+  // Wizard-only: the skills step's "Save for Future use" choice. Never sent.
   saveSkillsForFuture?: boolean;
   createdAt: string;
   updatedAt: string;

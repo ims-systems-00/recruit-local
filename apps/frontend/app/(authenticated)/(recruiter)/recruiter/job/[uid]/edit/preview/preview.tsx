@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { JobData, JobSkillItem } from '@/services/jobs/job.type';
+import { JobData } from '@/services/jobs/job.type';
 import {
   Building2,
   Calendar,
@@ -29,7 +29,13 @@ import {
 import moment from 'moment';
 import React, { useState } from 'react';
 import InfoCard from './info-card';
-import { JOBS_STATUS_ENUMS, REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
+import {
+  JOBS_STATUS_ENUMS,
+  REQUIRED_DOCUMENTS_ENUMS,
+  JOB_SKILL_LEVEL_LABELS,
+  JOB_SKILL_REQUIREMENT_ENUMS,
+  JOB_SKILL_REQUIREMENT_LABELS,
+} from '@rl/types';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
@@ -146,20 +152,6 @@ const PREVIEW_VALUE_CATEGORIES = [
   },
 ];
 
-const DEFAULT_PREVIEW_SKILLS: JobSkillItem[] = [
-  {
-    id: '1',
-    name: 'Medication Administration',
-    level: 'Intermediate',
-    requirement: 'Required',
-  },
-  {
-    id: '2',
-    name: 'Manual handling',
-    level: 'Beginner',
-    requirement: 'Preferred',
-  },
-];
 import MapByAddress from '@/components/map-by-address';
 import { useUpdateJob } from '@/services/jobs/jobs.client';
 import { useRouter } from 'next/navigation';
@@ -233,13 +225,7 @@ export default function Preview({
     };
   }).filter((cat) => cat.values.length > 0);
 
-  // Skills computation
-  const hasCustomSkills = Boolean(
-    defaultValues?.skills && defaultValues.skills.length > 0,
-  );
-  const skillsToRender = hasCustomSkills
-    ? defaultValues.skills!
-    : DEFAULT_PREVIEW_SKILLS;
+  const skillsToRender = defaultValues?.skills ?? [];
 
   const onUpdateJob = async () => {
     await updateJob({
@@ -458,32 +444,43 @@ export default function Preview({
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {skillsToRender.length === 0 && (
+                  <TableRow className="border-none! hover:bg-transparent">
+                    <TableCell
+                      colSpan={4}
+                      className="p-8 text-center text-body-sm text-text-gray-quaternary"
+                    >
+                      No skills added yet.
+                    </TableCell>
+                  </TableRow>
+                )}
                 {skillsToRender.map((skill, index) => {
                   const sl = String(index + 1).padStart(2, '0');
                   return (
                     <TableRow
-                      key={skill.id || index}
+                      key={skill.skill._id}
                       className=" border-none! hover:bg-bg-gray-soft-primary/40 transition-colors"
                     >
                       <TableCell className="w-16 px-spacing-4xl py-spacing-md text-label-sm text-text-gray-secondary">
                         {sl}
                       </TableCell>
                       <TableCell className="px-spacing-4xl py-spacing-md text-label-sm text-text-gray-secondary">
-                        {skill.name}
+                        {skill.skill.name}
                       </TableCell>
                       <TableCell className="w-48 px-spacing-4xl py-spacing-md text-label-sm text-text-gray-secondary">
-                        {skill.level}
+                        {JOB_SKILL_LEVEL_LABELS[skill.level]}
                       </TableCell>
                       <TableCell className="w-40 px-spacing-4xl py-spacing-md">
                         <span
                           className={cn(
                             'inline-flex items-center px-spacing-md py-0.5 rounded-full text-label-xs font-label-xs-strong!',
-                            skill.requirement === 'Required'
+                            skill.requirement ===
+                              JOB_SKILL_REQUIREMENT_ENUMS.REQUIRED
                               ? 'bg-pink-50 text-pink-600 border border-pink-200'
                               : 'bg-bg-gray-soft-secondary text-text-gray-secondary border border-border-gray-secondary',
                           )}
                         >
-                          {skill.requirement}
+                          {JOB_SKILL_REQUIREMENT_LABELS[skill.requirement]}
                         </span>
                       </TableCell>
                     </TableRow>

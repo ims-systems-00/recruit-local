@@ -17,113 +17,33 @@ import {
   Search,
   X,
 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import {
+  JOB_VALUES_MAX_PER_TYPE,
+  JOB_VALUES_MAX_TOTAL,
+  VALUE_TYPE_ENUM,
+  VALUE_TYPE_LABELS,
+} from '@rl/types';
 import {
   JobData,
   JobValueItem,
   ValuePriorityRank,
 } from '@/services/jobs/job.type';
+import { useTenant } from '@/services/tenants/tenants.client';
+import { useValues } from '@/services/value/value.client';
+import { ValueData } from '@/services/value/value.type';
+import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
 import { PriorityRanksDialog } from './modals/priority-ranks-dialog';
 import { ValueCatalogueDialog } from './modals/value-catalogue-dialog';
 
-interface CategoryData {
-  id: string;
-  name: string;
-  orgValues: string[];
-  suggestedValues: string[];
-}
-
-const CATEGORIES: CategoryData[] = [
-  {
-    id: 'mindset',
-    name: 'Mindset',
-    orgValues: [
-      'Growth-oriented',
-      'Entrepreneurial',
-      'Proactive',
-      'Critical thinker',
-      'Solution-focused',
-    ],
-    suggestedValues: [
-      'Analytical',
-      'Strategic thinker',
-      'Resilient',
-      'Open-minded',
-      'Problem solver',
-      'Creative',
-      'Ambitious',
-    ],
-  },
-  {
-    id: 'working-style',
-    name: 'Working style',
-    orgValues: [
-      'Collaborative',
-      'Detail-oriented',
-      'Autonomous',
-      'Organized',
-      'Flexible',
-    ],
-    suggestedValues: [
-      'Adaptable',
-      'Fast-paced',
-      'Methodical',
-      'Communicative',
-      'Pragmatic',
-    ],
-  },
-  {
-    id: 'culture-and-behavior',
-    name: 'Culture & Behavior',
-    orgValues: [
-      'Inclusive',
-      'Empathetic',
-      'Transparent',
-      'Respectful',
-      'Ethical',
-    ],
-    suggestedValues: [
-      'Authentic',
-      'Accountable',
-      'Humble',
-      'Team player',
-      'Kind',
-    ],
-  },
-  {
-    id: 'leadership',
-    name: 'Leadership & team dynamics',
-    orgValues: [
-      'Mentorship',
-      'Empowering',
-      'Visionary',
-      'Decisive',
-      'Supportive',
-    ],
-    suggestedValues: [
-      'Inspirational',
-      'Coaching-oriented',
-      'Trust-builder',
-      'Delegator',
-    ],
-  },
-  {
-    id: 'motivation',
-    name: 'Purpose & motivation',
-    orgValues: [
-      'Mission-driven',
-      'Continuous learner',
-      'Impact-focused',
-      'Passionate',
-      'Goal-oriented',
-    ],
-    suggestedValues: [
-      'Excellence-driven',
-      'Community-focused',
-      'Self-starter',
-      'Customer-first',
-    ],
-  },
+// The value types, in the order the catalogue lists them.
+const CATEGORIES: VALUE_TYPE_ENUM[] = [
+  VALUE_TYPE_ENUM.MINDSET,
+  VALUE_TYPE_ENUM.WORKING_STYLE,
+  VALUE_TYPE_ENUM.CULTURE_AND_BEHAVIOR,
+  VALUE_TYPE_ENUM.LEADERSHIP,
+  VALUE_TYPE_ENUM.MOTIVATION,
 ];
 
 const PRIORITY_RANKS: {
@@ -154,7 +74,8 @@ const PRIORITY_RANKS: {
     rank: 'Desirable',
     weight: 1,
     multiplierText: 'x1',
-    badgeClass: 'bg-bg-gray-soft-secondary text-text-gray-secondary font-medium',
+    badgeClass:
+      'bg-bg-gray-soft-secondary text-text-gray-secondary font-medium',
   },
 ];
 
@@ -169,91 +90,70 @@ export default function ValuesPotentialsStep({
   prev,
   next,
 }: ValuesPotentialsStepProps) {
-  const [selectedValues, setSelectedValues] = useState<JobValueItem[]>(() => {
-    if (defaultValues.values && defaultValues.values.length > 0) {
-      return defaultValues.values;
-    }
-    // Default initial mock selected values matching Image 3
-    return [
-      {
-        id: '1',
-        category: 'mindset',
-        name: 'Growth-oriented',
-        rank: 'Essentials',
-        weight: 4,
-      },
-      {
-        id: '2',
-        category: 'mindset',
-        name: 'Analytical',
-        rank: 'Essentials',
-        weight: 4,
-      },
-      {
-        id: '3',
-        category: 'mindset',
-        name: 'Entrepreneurial',
-        rank: 'Highly Important',
-        weight: 3,
-      },
-      {
-        id: '4',
-        category: 'mindset',
-        name: 'Proactive',
-        rank: 'Important',
-        weight: 2,
-      },
-      {
-        id: '5',
-        category: 'mindset',
-        name: 'Strategic thinker',
-        rank: 'Desirable',
-        weight: 1,
-      },
-    ];
-  });
+  const [selectedValues, setSelectedValues] = useState<JobValueItem[]>(
+    () => defaultValues.values ?? [],
+  );
 
-  const [activeCategory, setActiveCategory] = useState<string>('mindset');
+  const [activeCategory, setActiveCategory] = useState<VALUE_TYPE_ENUM>(
+    VALUE_TYPE_ENUM.MINDSET,
+  );
   const [categorySearchQuery, setCategorySearchQuery] = useState<
     Record<string, string>
   >({});
   const [priorityDialogOpen, setPriorityDialogOpen] = useState(false);
   const [catalogueDialogOpen, setCatalogueDialogOpen] = useState(false);
 
-  const toggleCategory = (categoryId: string) => {
-    setActiveCategory(categoryId);
+  // "Selected from your organisation": the values on the organisation profile.
+  const { data: session } = useSession();
+  const tenantId = session?.user?.tenantId;
+  const { tenant } = useTenant(tenantId, !!tenantId);
+  const organisationValues = tenant?.values ?? [];
+
+  // "Suggested Values": the rest of the catalogue. Only the expanded type shows
+  // its values, so only that type is fetched.
+  const debouncedCategorySearch = useDebounce(
+    (categorySearchQuery[activeCategory] || '').trim(),
+    500,
+  );
+  const { values: catalogueValues, isLoading: isCatalogueLoading } = useValues({
+    type: activeCategory,
+    clientSearch: debouncedCategorySearch || undefined,
+    limit: 20,
+  });
+
+  const toggleCategory = (category: VALUE_TYPE_ENUM) => {
+    setActiveCategory(category);
   };
 
-  const currentCategory =
-    CATEGORIES.find((c) => c.id === activeCategory) || CATEGORIES[0];
+  const currentCategoryLabel = VALUE_TYPE_LABELS[activeCategory];
 
   const activeCategoryValues = selectedValues.filter(
-    (v) => v.category === currentCategory.id,
+    (v) => v.category === activeCategory,
   );
 
-  const isValueSelected = (valName: string) => {
-    return selectedValues.some(
-      (v) => v.name.toLowerCase() === valName.toLowerCase(),
-    );
+  const isValueSelected = (valueId: string) => {
+    return selectedValues.some((v) => v.id === valueId);
   };
 
-  const getCategoryCount = (categoryId: string) => {
-    return selectedValues.filter((v) => v.category === categoryId).length;
+  const getCategoryCount = (category: string) => {
+    return selectedValues.filter((v) => v.category === category).length;
   };
 
-  const addValue = (categoryId: string, valName: string) => {
-    if (isValueSelected(valName)) return;
+  const isAtTotalMax = selectedValues.length >= JOB_VALUES_MAX_TOTAL;
 
-    // Each value type can contain maximum 5 values
-    if (getCategoryCount(categoryId) >= 5) {
-      return;
-    }
+  const addValue = (value: ValueData) => {
+    if (isValueSelected(value._id)) return;
+
+    // At most JOB_VALUES_MAX_PER_TYPE per type and JOB_VALUES_MAX_TOTAL overall;
+    // the backend enforces both again.
+    if (getCategoryCount(value.type) >= JOB_VALUES_MAX_PER_TYPE) return;
+    if (isAtTotalMax) return;
 
     const defaultRankConfig = PRIORITY_RANKS[0]; // Essentials by default
     const newItem: JobValueItem = {
-      id: crypto.randomUUID(),
-      category: categoryId,
-      name: valName,
+      id: value._id,
+      category: value.type,
+      name: value.label,
       rank: defaultRankConfig.rank,
       weight: defaultRankConfig.weight,
     };
@@ -294,7 +194,8 @@ export default function ValuesPotentialsStep({
           Values and Potentials
         </h2>
         <p className="text-body-sm text-text-gray-tertiary mt-1">
-          Choose values and set their importance separately within each category.
+          Choose values and set their importance separately within each
+          category.
         </p>
       </div>
 
@@ -318,20 +219,30 @@ export default function ValuesPotentialsStep({
 
           <div className="space-y-3">
             {CATEGORIES.map((cat) => {
-              const isExpanded = activeCategory === cat.id;
-              const count = getCategoryCount(cat.id);
-              const query = (categorySearchQuery[cat.id] || '').toLowerCase();
+              const isExpanded = activeCategory === cat;
+              const count = getCategoryCount(cat);
+              const label = VALUE_TYPE_LABELS[cat];
+              const query = (categorySearchQuery[cat] || '')
+                .trim()
+                .toLowerCase();
 
-              const filteredOrg = cat.orgValues.filter((v) =>
-                v.toLowerCase().includes(query),
+              const categoryOrgValues = organisationValues.filter(
+                (v) => v.type === cat,
               );
-              const filteredSuggested = cat.suggestedValues.filter((v) =>
-                v.toLowerCase().includes(query),
+              const filteredOrg = categoryOrgValues.filter((v) =>
+                v.label.toLowerCase().includes(query),
               );
+              // Already searched server-side; the organisation's own values
+              // are listed above, so they are left out here.
+              const filteredSuggested = isExpanded
+                ? catalogueValues.filter(
+                    (v) => !categoryOrgValues.some((o) => o._id === v._id),
+                  )
+                : [];
 
               return (
                 <div
-                  key={cat.id}
+                  key={cat}
                   className={cn(
                     'rounded-2xl border bg-white transition-all overflow-hidden',
                     isExpanded
@@ -341,7 +252,7 @@ export default function ValuesPotentialsStep({
                 >
                   {/* Category Header */}
                   <div
-                    onClick={() => toggleCategory(cat.id)}
+                    onClick={() => toggleCategory(cat)}
                     className="p-4 flex items-center justify-between cursor-pointer select-none"
                   >
                     <div className="flex items-center gap-2 text-label-sm font-label-sm-strong! text-text-gray-primary">
@@ -350,7 +261,7 @@ export default function ValuesPotentialsStep({
                       ) : (
                         <ChevronRight className="w-4 h-4 text-text-gray-tertiary" />
                       )}
-                      <span>{cat.name}</span>
+                      <span>{label}</span>
                     </div>
 
                     <span
@@ -361,7 +272,7 @@ export default function ValuesPotentialsStep({
                           : 'bg-bg-gray-soft-primary text-text-gray-quaternary',
                       )}
                     >
-                      {count}/5
+                      {count}/{JOB_VALUES_MAX_PER_TYPE}
                     </span>
                   </div>
 
@@ -373,14 +284,14 @@ export default function ValuesPotentialsStep({
                         <Search className="w-4 h-4 text-text-gray-quaternary absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                           type="text"
-                          value={categorySearchQuery[cat.id] || ''}
+                          value={categorySearchQuery[cat] || ''}
                           onChange={(e) =>
                             setCategorySearchQuery((prev) => ({
                               ...prev,
-                              [cat.id]: e.target.value,
+                              [cat]: e.target.value,
                             }))
                           }
-                          placeholder={`Search ${cat.name} values...`}
+                          placeholder={`Search ${label} values...`}
                           className="w-full pl-9 pr-3 py-2 text-body-sm rounded-xl border border-border-gray-secondary outline-none focus:border-border-brand-primary transition-all text-text-gray-primary placeholder:text-text-gray-quaternary"
                         />
                       </div>
@@ -393,25 +304,27 @@ export default function ValuesPotentialsStep({
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {filteredOrg.map((val) => {
-                              const selected = isValueSelected(val);
-                              const isCatFull = count >= 5;
+                              const selected = isValueSelected(val._id);
+                              const isFull =
+                                count >= JOB_VALUES_MAX_PER_TYPE ||
+                                isAtTotalMax;
                               return (
                                 <button
-                                  key={val}
+                                  key={val._id}
                                   type="button"
-                                  onClick={() => addValue(cat.id, val)}
-                                  disabled={selected || isCatFull}
+                                  onClick={() => addValue(val)}
+                                  disabled={selected || isFull}
                                   className={cn(
                                     'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-label-xs font-medium border transition-colors',
                                     selected
                                       ? 'bg-pink-50 text-pink-700 border-pink-200 opacity-60 cursor-default'
-                                      : isCatFull
+                                      : isFull
                                         ? 'bg-bg-gray-soft-primary text-text-gray-quaternary border-border-gray-secondary opacity-50 cursor-not-allowed'
                                         : 'bg-white text-text-gray-primary border-border-gray-secondary hover:border-border-brand-primary hover:text-text-brand-primary cursor-pointer',
                                   )}
                                 >
                                   {!selected && <Plus className="w-3 h-3" />}
-                                  <span>{val}</span>
+                                  <span>{val.label}</span>
                                 </button>
                               );
                             })}
@@ -427,30 +340,45 @@ export default function ValuesPotentialsStep({
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {filteredSuggested.map((val) => {
-                              const selected = isValueSelected(val);
-                              const isCatFull = count >= 5;
+                              const selected = isValueSelected(val._id);
+                              const isFull =
+                                count >= JOB_VALUES_MAX_PER_TYPE ||
+                                isAtTotalMax;
                               return (
                                 <button
-                                  key={val}
+                                  key={val._id}
                                   type="button"
-                                  onClick={() => addValue(cat.id, val)}
-                                  disabled={selected || isCatFull}
+                                  onClick={() => addValue(val)}
+                                  disabled={selected || isFull}
                                   className={cn(
                                     'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-label-xs font-medium border transition-colors',
                                     selected
                                       ? 'bg-pink-50 text-pink-700 border-pink-200 opacity-60 cursor-default'
-                                      : isCatFull
+                                      : isFull
                                         ? 'bg-bg-gray-soft-primary text-text-gray-quaternary border-border-gray-secondary opacity-50 cursor-not-allowed'
                                         : 'bg-white text-text-gray-primary border-border-gray-secondary hover:border-border-brand-primary hover:text-text-brand-primary cursor-pointer',
                                   )}
                                 >
                                   {!selected && <Plus className="w-3 h-3" />}
-                                  <span>{val}</span>
+                                  <span>{val.label}</span>
                                 </button>
                               );
                             })}
                           </div>
                         </div>
+                      )}
+
+                      {isCatalogueLoading ? (
+                        <p className="text-label-xs text-text-gray-quaternary">
+                          Loading values...
+                        </p>
+                      ) : (
+                        filteredOrg.length === 0 &&
+                        filteredSuggested.length === 0 && (
+                          <p className="text-label-xs text-text-gray-quaternary">
+                            No values found.
+                          </p>
+                        )
                       )}
                     </div>
                   )}
@@ -478,7 +406,8 @@ export default function ValuesPotentialsStep({
             </div>
 
             <span className="px-3 py-1 rounded-full text-label-xs font-label-xs-strong! bg-emerald-50 text-emerald-700 border border-emerald-200">
-              {activeCategoryValues.length} of 5 Selected
+              {activeCategoryValues.length} of {JOB_VALUES_MAX_PER_TYPE}{' '}
+              Selected
             </span>
           </div>
 
@@ -486,7 +415,8 @@ export default function ValuesPotentialsStep({
             {activeCategoryValues.length === 0 ? (
               <div className="border border-dashed border-border-gray-secondary rounded-2xl p-10 text-center bg-white">
                 <p className="text-body-sm text-text-gray-tertiary">
-                  No values selected for {currentCategory.name} yet. Choose values from the catalogue on the left.
+                  No values selected for {currentCategoryLabel} yet. Choose
+                  values from the catalogue on the left.
                 </p>
               </div>
             ) : (

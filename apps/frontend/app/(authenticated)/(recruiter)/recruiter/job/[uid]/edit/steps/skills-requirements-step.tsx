@@ -19,43 +19,31 @@ import {
 } from '@/components/ui/table';
 import { ChevronDown, X } from 'lucide-react';
 import {
-  JobData,
-  JobSkillItem,
-  SkillLevel,
-  SkillRequirement,
-} from '@/services/jobs/job.type';
+  JOB_SKILL_LEVEL_ENUMS,
+  JOB_SKILL_LEVEL_LABELS,
+  JOB_SKILL_REQUIREMENT_ENUMS,
+  JOB_SKILL_REQUIREMENT_LABELS,
+  JOB_SKILLS_MAX,
+} from '@rl/types';
+import { JobData } from '@/services/jobs/job.type';
+import { useUpdateJob } from '@/services/jobs/jobs.client';
+import { useSkillCatalog } from '@/services/skill-catalog/skill-catalog.client';
+import { SkillCatalogData } from '@/services/skill-catalog/skill-catalog.type';
+import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
 
-const DEFAULT_CATALOGUE_SKILLS = [
-  'Medication Administration',
-  'Manual handling',
-  'Personal care',
-  'Patient Assessment',
-  'First Aid & CPR',
-  'Wound Care',
-  'Vital Signs Monitoring',
-  'Dementia Care',
-  'Infection Control',
-  'Nutrition & Hydration Support',
-  'Palliative Care',
-  'Health Record Management',
-  'Communication & Empathy',
-  'Rehabilitation Support',
-  'Mental Health Support',
-  'Catheter Care',
-  'Stoma Care',
-  'Time Management',
-  'Emergency Response',
-];
+const SKILL_LEVELS = Object.values(JOB_SKILL_LEVEL_ENUMS);
 
-const SKILL_LEVELS: SkillLevel[] = [
-  'Willing to Learn',
-  'Beginner',
-  'Intermediate',
-  'Advance',
-];
+const SKILL_REQUIREMENTS = Object.values(JOB_SKILL_REQUIREMENT_ENUMS);
 
-const SKILL_REQUIREMENTS: SkillRequirement[] = ['Required', 'Preferred'];
+// A selected skill as this step edits it: the catalogue entry, plus the level
+// and requirement the job asks for.
+type SkillRow = {
+  id: string;
+  name: string;
+  level: JOB_SKILL_LEVEL_ENUMS;
+  requirement: JOB_SKILL_REQUIREMENT_ENUMS;
+};
 
 interface SkillsRequirementsStepProps {
   defaultValues: JobData;
@@ -72,31 +60,32 @@ export default function SkillsRequirementsStep({
     defaultValues.saveSkillsForFuture ?? true,
   );
 
-  const [skills, setSkills] = useState<JobSkillItem[]>(() => {
-    if (defaultValues.skills && defaultValues.skills.length > 0) {
-      return defaultValues.skills;
-    }
-    // Default initial mock skills matching Image 1
-    return [
-      {
-        id: '1',
-        name: 'Medication Administration',
-        level: 'Intermediate',
-        requirement: 'Required',
-      },
-      {
-        id: '2',
-        name: 'Manual handling',
-        level: 'Beginner',
-        requirement: 'Preferred',
-      },
-    ];
-  });
+  const [skills, setSkills] = useState<SkillRow[]>(() =>
+    (defaultValues.skills ?? []).map(({ skill, level, requirement }) => ({
+      id: skill._id,
+      name: skill.name,
+      level,
+      requirement,
+    })),
+  );
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { updateJob, isPending } = useUpdateJob();
+
+  const debouncedSearch = useDebounce(searchQuery.trim(), 500);
+  const isAtMax = skills.length >= JOB_SKILLS_MAX;
+
+  // Only searched while the dropdown is open, so the step makes no request
+  // until the recruiter starts picking.
+  const { skills: catalogueSkills, isFetching: isSearching } = useSkillCatalog(
+    { clientSearch: debouncedSearch || undefined, limit: 20 },
+    isDropdownOpen && !isAtMax,
+  );
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -112,24 +101,20 @@ export default function SkillsRequirementsStep({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const addSkill = (skillName: string) => {
-    const trimmed = skillName.trim();
-    if (!trimmed) return;
+  // Catalogue entries only — free text cannot be matched against candidates.
+  const addSkill = (item: SkillCatalogData) => {
+    if (isAtMax || skills.some((s) => s.id === item._id)) return;
 
-    if (skills.some((s) => s.name.toLowerCase() === trimmed.toLowerCase())) {
-      setSearchQuery('');
-      setIsDropdownOpen(false);
-      return;
-    }
-
-    const newSkill: JobSkillItem = {
-      id: crypto.randomUUID(),
-      name: trimmed,
-      level: 'Intermediate',
-      requirement: 'Required',
-    };
-
-    setSkills((prevSkills) => [...prevSkills, newSkill]);
+    setSkills((prevSkills) => [
+      ...prevSkills,
+      {
+        id: item._id,
+        name: item.name,
+        level: JOB_SKILL_LEVEL_ENUMS.INTERMEDIATE,
+        requirement: JOB_SKILL_REQUIREMENT_ENUMS.REQUIRED,
+      },
+    ]);
+    setError(null);
     setSearchQuery('');
     setIsDropdownOpen(false);
     inputRef.current?.focus();
@@ -139,7 +124,7 @@ export default function SkillsRequirementsStep({
     setSkills((prevSkills) => prevSkills.filter((s) => s.id !== id));
   };
 
-  const updateSkillLevel = (id: string, level: SkillLevel) => {
+  const updateSkillLevel = (id: string, level: JOB_SKILL_LEVEL_ENUMS) => {
     setSkills((prevSkills) =>
       prevSkills.map((s) => (s.id === id ? { ...s, level } : s)),
     );
@@ -147,36 +132,52 @@ export default function SkillsRequirementsStep({
 
   const updateSkillRequirement = (
     id: string,
-    requirement: SkillRequirement,
+    requirement: JOB_SKILL_REQUIREMENT_ENUMS,
   ) => {
     setSkills((prevSkills) =>
       prevSkills.map((s) => (s.id === id ? { ...s, requirement } : s)),
     );
   };
 
+  // Back keeps unsaved picks in the wizard, as the other steps do; only
+  // Continue saves.
   const handlePrev = () => {
     prev({
-      skills,
+      skills: skills.map(({ id, name, level, requirement }) => ({
+        skill: { _id: id, name },
+        level,
+        requirement,
+      })),
       saveSkillsForFuture: saveForFuture,
     });
   };
 
-  const handleNext = () => {
-    next({
-      skills,
-      saveSkillsForFuture: saveForFuture,
+  const handleNext = async () => {
+    // Publishing needs at least one skill; say so here rather than at publish.
+    if (skills.length === 0) {
+      setError('Add at least one skill to continue.');
+      return;
+    }
+
+    await updateJob({
+      id: defaultValues._id,
+      data: {
+        skills: skills.map(({ id, level, requirement }) => ({
+          skill: id,
+          level,
+          requirement,
+        })),
+      },
+      // Not saved yet — "Save for Future use" is still to be built — so it
+      // rides along in the wizard's state only.
+      onSuccessNext: (newData) =>
+        next({ ...newData, saveSkillsForFuture: saveForFuture }),
     });
   };
 
-  // Filter skills catalogue
-  const filteredCatalogue = DEFAULT_CATALOGUE_SKILLS.filter((item) => {
-    const isAlreadySelected = skills.some(
-      (s) => s.name.toLowerCase() === item.toLowerCase(),
-    );
-    if (isAlreadySelected) return false;
-    if (!searchQuery.trim()) return true;
-    return item.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  const filteredCatalogue = catalogueSkills.filter(
+    (item) => !skills.some((s) => s.id === item._id),
+  );
 
   return (
     <div className="space-y-spacing-4xl pb-10">
@@ -259,10 +260,12 @@ export default function SkillsRequirementsStep({
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  if (filteredCatalogue.length > 0) {
+                  // Only once the results are for what is typed now, so Enter
+                  // never adds a match left over from the previous keystroke.
+                  const resultsAreCurrent =
+                    debouncedSearch === searchQuery.trim() && !isSearching;
+                  if (resultsAreCurrent && filteredCatalogue.length > 0) {
                     addSkill(filteredCatalogue[0]);
-                  } else if (searchQuery.trim()) {
-                    addSkill(searchQuery);
                   }
                 } else if (
                   e.key === 'Backspace' &&
@@ -279,20 +282,34 @@ export default function SkillsRequirementsStep({
             />
           </div>
 
+          {isAtMax && (
+            <p className="text-body-sm text-text-gray-tertiary">
+              You can add up to {JOB_SKILLS_MAX} skills.
+            </p>
+          )}
+
           {/* Autocomplete Dropdown */}
-          {isDropdownOpen && filteredCatalogue.length > 0 && (
+          {isDropdownOpen && !isAtMax && (
             <div className="relative">
               <div className="absolute z-20 top-1 left-0 w-full max-h-56 overflow-y-auto bg-white rounded-xl border border-border-gray-secondary shadow-lg py-1">
-                {filteredCatalogue.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => addSkill(item)}
-                    className="w-full text-left px-4 py-2 text-label-sm text-text-gray-secondary hover:bg-bg-brand-soft-primary hover:text-text-brand-primary transition-colors cursor-pointer"
-                  >
-                    {item}
-                  </button>
-                ))}
+                {filteredCatalogue.length > 0 ? (
+                  filteredCatalogue.map((item) => (
+                    <button
+                      key={item._id}
+                      type="button"
+                      onClick={() => addSkill(item)}
+                      className="w-full text-left px-4 py-2 text-label-sm text-text-gray-secondary hover:bg-bg-brand-soft-primary hover:text-text-brand-primary transition-colors cursor-pointer"
+                    >
+                      {item.name}
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-4 py-2 text-label-sm text-text-gray-quaternary">
+                    {isSearching
+                      ? 'Searching...'
+                      : 'No matching skills in the catalogue.'}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -358,7 +375,9 @@ export default function SkillsRequirementsStep({
                                 type="button"
                                 className="flex items-center gap-1.5 text-label-sm text-text-gray-primary font-medium hover:text-text-brand-primary cursor-pointer transition-colors"
                               >
-                                <span>{skill.level}</span>
+                                <span>
+                                  {JOB_SKILL_LEVEL_LABELS[skill.level]}
+                                </span>
                                 <ChevronDown className="w-4 h-4 text-text-gray-tertiary" />
                               </button>
                             </DropdownMenuTrigger>
@@ -379,7 +398,7 @@ export default function SkillsRequirementsStep({
                                       : 'text-text-gray-secondary hover:bg-bg-gray-soft-primary',
                                   )}
                                 >
-                                  {level}
+                                  {JOB_SKILL_LEVEL_LABELS[level]}
                                 </DropdownMenuItem>
                               ))}
                             </DropdownMenuContent>
@@ -394,12 +413,19 @@ export default function SkillsRequirementsStep({
                                 type="button"
                                 className={cn(
                                   'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-xs font-label-xs-strong! cursor-pointer transition-colors',
-                                  skill.requirement === 'Required'
+                                  skill.requirement ===
+                                    JOB_SKILL_REQUIREMENT_ENUMS.REQUIRED
                                     ? 'bg-pink-50 text-pink-600 border border-pink-200'
                                     : 'bg-bg-gray-soft-secondary text-text-gray-secondary border border-border-gray-secondary',
                                 )}
                               >
-                                <span>{skill.requirement}</span>
+                                <span>
+                                  {
+                                    JOB_SKILL_REQUIREMENT_LABELS[
+                                      skill.requirement
+                                    ]
+                                  }
+                                </span>
                                 <ChevronDown className="w-3.5 h-3.5 opacity-70" />
                               </button>
                             </DropdownMenuTrigger>
@@ -420,7 +446,7 @@ export default function SkillsRequirementsStep({
                                       : 'text-text-gray-secondary hover:bg-bg-gray-soft-primary',
                                   )}
                                 >
-                                  {req}
+                                  {JOB_SKILL_REQUIREMENT_LABELS[req]}
                                 </DropdownMenuItem>
                               ))}
                             </DropdownMenuContent>
@@ -444,6 +470,10 @@ export default function SkillsRequirementsStep({
               </TableBody>
             </Table>
           </div>
+
+          {error && (
+            <p className="text-label-sm text-text-error-primary">{error}</p>
+          )}
         </div>
       </div>
 
@@ -460,9 +490,10 @@ export default function SkillsRequirementsStep({
         <Button
           type="button"
           onClick={handleNext}
+          disabled={isPending}
           className="h-10 px-spacing-xl rounded-lg text-label-sm font-label-sm-strong! text-white bg-bg-brand-solid-primary hover:bg-bg-brand-solid-hover"
         >
-          Continue
+          {isPending ? 'Saving...' : 'Continue'}
         </Button>
       </div>
     </div>
