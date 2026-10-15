@@ -10,6 +10,7 @@ export * from './job';
 export * from './experience';
 export * from './education';
 export * from './skill';
+export * from './skill-catalog';
 export * from './interest';
 export * from './event';
 export * from './event-registration';
