@@ -61,6 +61,16 @@ export const getOneSoftDeleted = async ({ query = {} }: IListValueParams) => {
   return results[0];
 };
 
+/**
+ * The live, active values among `ids` — what a job's `values` are checked
+ * against. An id missing from the result is unknown, deleted, or deactivated.
+ * `type` comes back for the per-type cap.
+ */
+export const findActiveByIds = (ids: string[]) =>
+  Value.find({ _id: { $in: ids }, isActive: true, "deleteMarker.status": { $ne: true } })
+    .select("_id type")
+    .lean();
+
 export const topThree = ({ query = {} }: IListValueParams) => {
   const pipeline: PipelineStage[] = [
     ...matchQuery(sanitizeQueryIds(query)),
