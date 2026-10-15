@@ -1,5 +1,5 @@
 import { IListParams, ListQueryParams } from "@rl/types";
-import { SkillCatalogInput, SkillCatalog } from "../../../models";
+import { SkillCatalogInput, SkillCatalog, Job } from "../../../models";
 import { ConflictException, NotFoundException } from "../../../common/helper";
 import {
   matchQuery,
@@ -115,6 +115,18 @@ export const softRemove = async ({ query }: { query: ISkillCatalogQueryParams })
 
 export const hardRemove = async ({ query }: { query: ISkillCatalogQueryParams }) => {
   const result = await getOneSoftDeleted({ query });
+
+  // Jobs hold their skills as bare ids, so deleting an entry outright would orphan
+  // them. Soft-deleted jobs count too: they can be restored. No race with a job
+  // adding it meanwhile — the entry is already in the trash, and a job's skills
+  // must be live entries.
+  const jobsUsingSkill = await Job.countDocuments({ "skills.skill": result._id });
+  if (jobsUsingSkill > 0) {
+    throw new ConflictException(
+      `This skill is used by ${jobsUsingSkill} job(s), so it cannot be permanently deleted. Leave it in the trash or deactivate it instead.`
+    );
+  }
+
   const deleted = await SkillCatalog.findOneAndDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Skill not found to delete.");
   return result;
