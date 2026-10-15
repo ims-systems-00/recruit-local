@@ -1,7 +1,7 @@
 import { PipelineStage } from "mongoose";
 import { IListParams, ListQueryParams, ValueAssessmentResponseDto } from "@rl/types";
-import { ValueInput, Value } from "../../../models";
-import { BadRequestException, NotFoundException } from "../../../common/helper";
+import { ValueInput, Value, Job } from "../../../models";
+import { BadRequestException, ConflictException, NotFoundException } from "../../../common/helper";
 import {
   matchQuery,
   excludeDeletedQuery,
@@ -116,6 +116,18 @@ export const softRemove = async ({ query }: { query: IValueQueryParams }) => {
 
 export const hardRemove = async ({ query }: { query: IValueQueryParams }) => {
   const result = await getOneSoftDeleted({ query });
+
+  // Jobs hold their values as bare ids, so deleting a value outright would orphan
+  // them. Soft-deleted jobs count too: they can be restored. No race with a job
+  // adding it meanwhile — the value is already in the trash, and a job's values
+  // must be live entries.
+  const jobsUsingValue = await Job.countDocuments({ "values.value": result._id });
+  if (jobsUsingValue > 0) {
+    throw new ConflictException(
+      `This value is used by ${jobsUsingValue} job(s), so it cannot be permanently deleted. Leave it in the trash or deactivate it instead.`
+    );
+  }
+
   const deleted = await Value.findOneAndDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Value not found to delete.");
   return result;
