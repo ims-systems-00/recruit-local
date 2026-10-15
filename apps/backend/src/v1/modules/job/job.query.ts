@@ -73,6 +73,66 @@ export const jobAttachmentsLookupQuery = (): PipelineStage[] => {
   ];
 };
 
+/**
+ * Resolves each `skills[].skill` id to its catalogue entry `{ _id, name }`,
+ * keeping the rows' order, `level` and `requirement`.
+ *
+ * Deactivated and soft-deleted entries still resolve — the skill was valid when
+ * the job was saved, and its readers should still see what it asks for. Only a
+ * row whose entry is gone outright (hard-deleted) is dropped, rather than
+ * returned with a bare id the response type does not allow.
+ */
+export const jobSkillsLookupQuery = (): PipelineStage[] => [
+  {
+    $lookup: {
+      from: modelNames.SKILL_CATALOG,
+      localField: "skills.skill",
+      foreignField: "_id",
+      pipeline: [{ $project: { name: 1 } }],
+      as: "_skillCatalogEntries",
+    },
+  },
+  {
+    $addFields: {
+      skills: {
+        $filter: {
+          input: {
+            $map: {
+              input: { $ifNull: ["$skills", []] },
+              as: "row",
+              in: {
+                $let: {
+                  vars: {
+                    entry: {
+                      $first: {
+                        $filter: {
+                          input: "$_skillCatalogEntries",
+                          as: "entry",
+                          cond: { $eq: ["$$entry._id", "$$row.skill"] },
+                        },
+                      },
+                    },
+                  },
+                  in: {
+                    $cond: [
+                      { $eq: [{ $type: "$$entry" }, "object"] },
+                      { $mergeObjects: ["$$row", { skill: "$$entry" }] },
+                      null,
+                    ],
+                  },
+                },
+              },
+            },
+          },
+          as: "row",
+          cond: { $ne: ["$$row", null] },
+        },
+      },
+    },
+  },
+  { $project: { _skillCatalogEntries: 0 } },
+];
+
 export const alreadyAlliped = (jobProfileId?: string): PipelineStage[] => {
   if (!jobProfileId || !Types.ObjectId.isValid(jobProfileId)) {
     return [{ $addFields: { alreadyApplied: false } }];

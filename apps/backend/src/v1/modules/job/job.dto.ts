@@ -1,4 +1,4 @@
-import { AdditionalQueryResponseDto, JobResponseDto } from "@rl/types";
+import { AdditionalQueryResponseDto, JobResponseDto, JobSkillResponseDto, NamedCatalogResponseDto } from "@rl/types";
 
 const toIso = (v: unknown): string => (v instanceof Date ? v.toISOString() : (v as string));
 
@@ -8,6 +8,15 @@ const toAdditionalQuery = (q: Record<string, unknown>): AdditionalQueryResponseD
   ...(q as unknown as AdditionalQueryResponseDto),
   ...(q._id != null ? { _id: String(q._id) } : {}),
 });
+
+// `skill` arrives populated — by jobSkillsLookupQuery on reads, by populate() on create.
+const toJobSkill = (row: Record<string, unknown>): JobSkillResponseDto => {
+  const skill = row.skill as Record<string, unknown>;
+  return {
+    ...(row as unknown as JobSkillResponseDto),
+    skill: { ...(skill as unknown as NamedCatalogResponseDto), _id: String(skill._id) },
+  };
+};
 
 /**
  * Serializes a (possibly partial) sanitized job into its public HTTP shape.
@@ -39,6 +48,9 @@ export const toJobResponse = (doc: unknown): JobResponseDto => {
   if (has(d, "updatedAt")) d.updatedAt = toIso(d.updatedAt);
   if (has(d, "additionalQueries") && Array.isArray(d.additionalQueries)) {
     d.additionalQueries = d.additionalQueries.map((q) => toAdditionalQuery(q as Record<string, unknown>));
+  }
+  if (has(d, "skills") && Array.isArray(d.skills)) {
+    d.skills = d.skills.map((row) => toJobSkill(row as Record<string, unknown>));
   }
 
   return d as JobResponseDto;
