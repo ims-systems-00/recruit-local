@@ -269,7 +269,7 @@ export default function ApplicationsForm({ job }: { job: JobData }) {
                     )}
                     {errors.resumeStorage && (
                       <p className="text-label-xs text-text-error-primary">
-                        {errors.resumeStorage.message}
+                        Please provide resume/cv
                       </p>
                     )}
                   </div>
