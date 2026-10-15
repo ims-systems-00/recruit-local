@@ -11,6 +11,8 @@ import {
   JOB_SKILL_LEVEL_ENUMS,
   JOB_SKILL_REQUIREMENT_ENUMS,
   JOB_SKILLS_MAX,
+  JOB_VALUE_PRIORITY_ENUMS,
+  JOB_VALUES_MAX_TOTAL,
 } from "@rl/types";
 
 const awsStorageSchema = Joi.object({
@@ -73,6 +75,24 @@ const jobSkillsSchema = Joi.array()
   .messages({ "array.unique": "Each skill can only be added once." })
   .label("Skills");
 
+const jobValueSchema = Joi.object({
+  value: Joi.string().custom(objectIdValidation).required().label("Value"),
+  priority: Joi.string()
+    .valid(...Object.values(JOB_VALUE_PRIORITY_ENUMS))
+    .required()
+    .label("Value Priority"),
+}).label("Job Value");
+
+// Shape only, as for skills. The per-type cap (`JOB_VALUES_MAX_PER_TYPE`) needs
+// each value's `type` from the database, so the controller checks it along with
+// the values being live and a published job having any.
+const jobValuesSchema = Joi.array()
+  .items(jobValueSchema)
+  .max(JOB_VALUES_MAX_TOTAL)
+  .unique("value")
+  .messages({ "array.unique": "Each value can only be added once." })
+  .label("Values");
+
 export const createBodySchema = Joi.object({
   title: Joi.string().required().label("Title"),
   description: Joi.string().optional().label("Description"),
@@ -127,6 +147,7 @@ export const createBodySchema = Joi.object({
   formId: Joi.string().custom(objectIdValidation).optional().label("Form ID"),
   additionalQueries: Joi.array().items(additionalQuerySchema).optional().label("Additional Queries"),
   skills: jobSkillsSchema.optional(),
+  values: jobValuesSchema.optional(),
 });
 
 export const updateBodySchema = Joi.object({
@@ -180,6 +201,7 @@ export const updateBodySchema = Joi.object({
   formId: Joi.string().custom(objectIdValidation).optional().label("Form ID"),
   additionalQueries: Joi.array().items(additionalQuerySchema).optional().label("Additional Queries"),
   skills: jobSkillsSchema.optional(),
+  values: jobValuesSchema.optional(),
 });
 
 export const idParamsSchema = Joi.object({
