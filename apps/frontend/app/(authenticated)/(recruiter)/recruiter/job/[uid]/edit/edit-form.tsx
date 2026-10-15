@@ -6,7 +6,17 @@ import JobDescriptionForm from './steps/job-description-form';
 import Preview from './preview/preview';
 import { StepsSidebar } from './steps-sidebar';
 import AdditionalQueries from './steps/additional-queries';
+import SkillsRequirementsStep from './steps/skills-requirements-step';
+import ValuesPotentialsStep from './steps/values-potentials-step';
 import { JobData } from '@/services/jobs/job.type';
+
+const FORM_STEPS = [
+  { id: 1, label: 'Basic Info' },
+  { id: 2, label: 'Job Description' },
+  { id: 3, label: 'Skills' },
+  { id: 4, label: 'Values' },
+  { id: 5, label: 'Queries' },
+];
 
 export default function EditForm({
   defaultValues,
@@ -17,8 +27,13 @@ export default function EditForm({
   const [formData, setFormData] = useState(defaultValues);
 
   return (
-    <div className="min-h-screen flex items-stretch gap-spacing-4xl">
-      <div className=" flex flex-col gap-y-spacing-6xl flex-1 pt-spacing-4xl">
+    <div className="min-h-screen flex flex-col xl:flex-row items-stretch gap-spacing-2xl xl:gap-spacing-4xl">
+      <div className="flex flex-col gap-y-spacing-4xl sm:gap-y-spacing-6xl flex-1 pt-spacing-2xl sm:pt-spacing-4xl pb-spacing-6xl w-full min-w-0">
+        {step !== 6 && (
+          <div className="block xl:hidden">
+            <Stepper steps={FORM_STEPS} currentStep={step} />
+          </div>
+        )}
         {step === 1 && (
           <JobInformationForm
             defaultValues={formData}
@@ -42,7 +57,7 @@ export default function EditForm({
           />
         )}
         {step === 3 && (
-          <AdditionalQueries
+          <SkillsRequirementsStep
             prev={(data) => {
               setFormData((prev) => ({ ...prev, ...data }));
               setStep(2);
@@ -55,10 +70,38 @@ export default function EditForm({
           />
         )}
         {step === 4 && (
-          <Preview prev={() => setStep(3)} defaultValues={formData} />
+          <ValuesPotentialsStep
+            prev={(data) => {
+              setFormData((prev) => ({ ...prev, ...data }));
+              setStep(3);
+            }}
+            next={(data) => {
+              setFormData((prev) => ({ ...prev, ...data }));
+              setStep(5);
+            }}
+            defaultValues={formData}
+          />
+        )}
+        {step === 5 && (
+          <AdditionalQueries
+            prev={(data) => {
+              setFormData((prev) => ({ ...prev, ...data }));
+              setStep(4);
+            }}
+            next={(data) => {
+              setFormData((prev) => ({ ...prev, ...data }));
+              setStep(6);
+            }}
+            defaultValues={formData}
+          />
+        )}
+        {step === 6 && (
+          <Preview prev={() => setStep(5)} defaultValues={formData} />
         )}
       </div>
-      {step !== 4 && <StepsSidebar currentStep={step} />}
+      {step !== 6 && (
+        <StepsSidebar currentStep={step} className="hidden xl:block" />
+      )}
     </div>
   );
 }

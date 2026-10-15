@@ -270,7 +270,7 @@ export default function JobDescriptionForm({
                   Required Document(s)
                 </Label>
                 <div className=" space-y-spacing-sm">
-                  <div className=" flex gap-spacing-4xl items-center">
+                  <div className=" flex gap-spacing-4xl items-center flex-wrap">
                     {REQUIRED_DOCUMENTS_OPTIONS.map((item) => {
                       const checked = selectedDocs.includes(item.id);
                       return (
