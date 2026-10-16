@@ -13,7 +13,7 @@ import { useForm, type Resolver } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { yupResolver } from '@hookform/resolvers/yup';
-import { VALUE_TYPE_ENUM } from '@rl/types';
+import { VALUE_TYPE_ENUM, ValueScoreResponseDto } from '@rl/types';
 import { ValueData } from '@/services/value';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useCallback, useMemo } from 'react';
@@ -33,6 +33,8 @@ import {
 } from '@/services/job-profile/job-profile.validation';
 import { useUpdateJobProfile } from '@/services/job-profile';
 import { Skeleton } from '@/components/ui/skeleton';
+import ValueEvaluationDialog from '@/components/value-evaluation/value-evaluation-dialog';
+import ValueScoreActions from '@/components/value-evaluation/value-score-actions';
 
 const PAGE_LIMIT = 10;
 
@@ -50,7 +52,9 @@ interface EditValueDialogProps {
   profileId: string;
   existingValues: ValueData[];
   types: VALUE_TYPE_ENUM[];
+  scoresByValueId: Map<string, number>;
   onSuccess: (values: ValueData[]) => void;
+  onValueScored: (valueScore: ValueScoreResponseDto) => void;
 }
 
 export default function EditValueDialog({
@@ -61,7 +65,9 @@ export default function EditValueDialog({
   profileId,
   existingValues,
   types,
+  scoresByValueId,
   onSuccess,
+  onValueScored,
 }: EditValueDialogProps) {
   const queryClient = useQueryClient();
 
@@ -85,6 +91,19 @@ export default function EditValueDialog({
   const selectedValues = watch('values');
 
   const { updateJobProfile, isPending: isUpdating } = useUpdateJobProfile();
+
+  // Same pattern as onboarding: `attempt` remounts the evaluation dialog on
+  // every open so each evaluation starts blank.
+  const [evaluation, setEvaluation] = useState<{
+    value: ValueData;
+    attempt: number;
+  } | null>(null);
+  const [isEvaluationOpen, setIsEvaluationOpen] = useState(false);
+
+  const openEvaluation = (value: ValueData) => {
+    setEvaluation((prev) => ({ value, attempt: (prev?.attempt ?? 0) + 1 }));
+    setIsEvaluationOpen(true);
+  };
 
   const [search, setSearch] = useState('');
 
@@ -256,7 +275,8 @@ export default function EditValueDialog({
                     <div
                       key={item._id}
                       className={cn(
-                        ' flex items-center gap-spacing-lg p-spacing-2xl rounded-2xl border border-border-gray-secondary min-h-14',
+                        ' flex flex-wrap items-center gap-spacing-lg p-spacing-2xl rounded-2xl border border-border-gray-secondary min-h-14',
+                        isSelected && 'border-border-brand-primary',
                         isDisabled && 'opacity-50 cursor-not-allowed',
                       )}
                     >
@@ -272,12 +292,18 @@ export default function EditValueDialog({
                       <Label
                         htmlFor={item._id}
                         className={cn(
-                          ' text-label-md font-label-md-strong! text-text-gray-secondary',
+                          ' flex-1 text-label-md font-label-md-strong! text-text-gray-secondary',
                           isDisabled && 'cursor-not-allowed',
                         )}
                       >
                         {item.label}
                       </Label>
+                      {isSelected && (
+                        <ValueScoreActions
+                          score={scoresByValueId.get(item._id)}
+                          onEvaluate={() => openEvaluation(item as ValueData)}
+                        />
+                      )}
                     </div>
                   );
                 })}
@@ -315,6 +341,16 @@ export default function EditValueDialog({
           </Button>
         </div>
       </DialogContent>
+      {evaluation && (
+        <ValueEvaluationDialog
+          key={evaluation.attempt}
+          value={evaluation.value}
+          jobProfileId={profileId}
+          open={isEvaluationOpen}
+          onOpenChange={setIsEvaluationOpen}
+          onEvaluated={onValueScored}
+        />
+      )}
     </Dialog>
   );
 }

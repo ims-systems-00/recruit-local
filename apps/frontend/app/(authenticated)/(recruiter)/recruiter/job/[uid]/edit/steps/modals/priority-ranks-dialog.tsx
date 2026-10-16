@@ -8,38 +8,39 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Info } from 'lucide-react';
+import {
+  JOB_VALUE_PRIORITY_ENUMS,
+  JOB_VALUE_PRIORITY_LABELS,
+  JOB_VALUE_PRIORITY_WEIGHT,
+} from '@rl/types';
 
 interface PriorityRanksDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+// One dot per point of weight, out of the highest tier's.
+const MAX_WEIGHT = Math.max(...Object.values(JOB_VALUE_PRIORITY_WEIGHT));
+
+// Names and multipliers come from the shared constants, so this explains the
+// same weights the matching uses.
 const IMPACT_LEVELS = [
+  { priority: JOB_VALUE_PRIORITY_ENUMS.ESSENTIAL, impact: 'Highest Impact' },
   {
-    name: 'Essentials',
-    dots: [true, true, true, true],
-    multiplier: 'x4',
-    impact: 'Highest Impact',
-  },
-  {
-    name: 'Highly Important',
-    dots: [true, true, true, false],
-    multiplier: 'x3',
+    priority: JOB_VALUE_PRIORITY_ENUMS.HIGHLY_IMPORTANT,
     impact: 'High Impact',
   },
-  {
-    name: 'Important',
-    dots: [true, true, false, false],
-    multiplier: 'x2',
-    impact: 'Medium Impact',
-  },
-  {
-    name: 'Desirable',
-    dots: [true, false, false, false],
-    multiplier: 'x1',
-    impact: 'Lower Impact',
-  },
-];
+  { priority: JOB_VALUE_PRIORITY_ENUMS.IMPORTANT, impact: 'Medium Impact' },
+  { priority: JOB_VALUE_PRIORITY_ENUMS.DESIRABLE, impact: 'Lower Impact' },
+].map(({ priority, impact }) => ({
+  name: JOB_VALUE_PRIORITY_LABELS[priority],
+  dots: Array.from(
+    { length: MAX_WEIGHT },
+    (_, i) => i < JOB_VALUE_PRIORITY_WEIGHT[priority],
+  ),
+  multiplier: `x${JOB_VALUE_PRIORITY_WEIGHT[priority]}`,
+  impact,
+}));
 
 export function PriorityRanksDialog({
   open,
@@ -57,7 +58,8 @@ export function PriorityRanksDialog({
               Priority ranks
             </DialogTitle>
             <p className="text-body-sm text-text-gray-tertiary mt-1 leading-relaxed">
-              Allows you to rank and mathematically weight which skills or traits matter most when evaluating or scoring candidates.
+              Allows you to rank and mathematically weight which skills or
+              traits matter most when evaluating or scoring candidates.
             </p>
           </div>
         </DialogHeader>

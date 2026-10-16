@@ -19,6 +19,7 @@ import {
   registrationVerificationToken,
   resendVerificationLink,
 } from './auth.server';
+import { markLoginWelcome } from '@/components/ai-chat/page-intros';
 
 const AUTH_ERROR_MAP: Record<string, string> = {
   CredentialsSignin: 'Invalid email or password',
@@ -67,6 +68,8 @@ export function useLogin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', session?.user?._id] });
       toast.success('Logged in successfully');
+      // Alice says "welcome back" on the page this login lands on.
+      markLoginWelcome();
       const redirect = searchParams.get('redirect');
       if (redirect) {
         router.push(`/system-preparation?redirect=${redirect}`);

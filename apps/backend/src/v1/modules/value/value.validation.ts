@@ -1,6 +1,22 @@
 import Joi from "joi";
-import { VALUE_TYPE_ENUM } from "@rl/types";
+import { VALUE_ASSESSMENT_QUESTION_COUNT, VALUE_TYPE_ENUM } from "@rl/types";
 import { objectIdValidation } from "../../../common/helper/validate";
+
+const assessmentSchema = Joi.object({
+  heading: Joi.string().trim().min(2).max(200).required().label("Heading"),
+  questions: Joi.array()
+    .items(
+      Joi.object({
+        key: Joi.string().trim().min(1).max(20).required().label("Question Key"),
+        text: Joi.string().trim().min(5).max(500).required().label("Question Text"),
+        placeholder: Joi.string().trim().max(300).allow("").optional().label("Question Placeholder"),
+      })
+    )
+    .length(VALUE_ASSESSMENT_QUESTION_COUNT)
+    .unique("key")
+    .required()
+    .label("Questions"),
+}).label("Assessment");
 
 export const createBodySchema = Joi.object({
   type: Joi.string()
@@ -10,6 +26,7 @@ export const createBodySchema = Joi.object({
   label: Joi.string().min(2).max(200).required().label("Label"),
   isActive: Joi.boolean().optional().label("Is Active"),
   weight: Joi.number().min(0).optional().label("Weight"),
+  assessment: assessmentSchema.optional(),
 });
 
 export const updateBodySchema = Joi.object({
@@ -20,6 +37,7 @@ export const updateBodySchema = Joi.object({
   label: Joi.string().min(2).max(200).optional().label("Label"),
   isActive: Joi.boolean().optional().label("Is Active"),
   weight: Joi.number().min(0).optional().label("Weight"),
+  assessment: assessmentSchema.optional(),
 });
 
 export const idParamsSchema = Joi.object({

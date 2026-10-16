@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Pointer, Share2 } from 'lucide-react';
 import BookmarkButton from './sections/job-description/bookmark-button';
+import JobPageContext from './sections/job-page-context';
 
 type PageProps = {
   params: Promise<{ uid: string }>;
@@ -24,6 +25,7 @@ export default async function JobDetailsPage({ params }: PageProps) {
   const jobData = response.data;
   return (
     <div>
+      <JobPageContext jobId={uid} jobTitle={jobData?.title} />
       <Banner />
 
       <div className=" max-w-7xl mx-auto px-spacing-5xl py-spacing-7xl  flex flex-col gap-y-spacing-7xl">

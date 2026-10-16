@@ -25,13 +25,30 @@ export const getProfileKeywords = async (jobProfileId: string): Promise<string[]
 };
 
 /**
- * Recompute a Job's keywords[] from its own text/enum fields. Union with any
- * existing keywords so recruiter-entered tags are preserved.
+ * Recompute a Job's keywords[] from its own text/enum fields and its skills.
+ * Union with any existing keywords so recruiter-entered tags are preserved.
+ *
+ * Skills are catalogue refs, so they are resolved to names first — the same move
+ * as a profile's jobTitle/industry/workMode below — which is what lets them meet
+ * a profile's free-text `skills` in the shared vocabulary. A hard-deleted entry
+ * populates as null and simply adds nothing.
  */
 export const recomputeJobKeywords = async (id: string) => {
-  const job = await Job.findById(id).lean();
+  const job = await Job.findById(id)
+    .populate<{ skills: { skill: { name?: string } | null }[] }>({ path: "skills.skill", select: "name" })
+    .lean();
   if (!job) return;
-  const keywords = buildKeywords([job.title, job.category, job.employmentType, job.workplace, ...(job.keywords ?? [])]);
+
+  const skillNames = (job.skills ?? []).map((row) => row.skill?.name);
+
+  const keywords = buildKeywords([
+    job.title,
+    job.category,
+    job.employmentType,
+    job.workplace,
+    ...skillNames,
+    ...(job.keywords ?? []),
+  ]);
   await Job.findByIdAndUpdate(id, { $set: { keywords } });
 };
 

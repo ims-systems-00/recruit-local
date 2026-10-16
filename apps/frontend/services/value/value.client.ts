@@ -5,8 +5,12 @@ import {
   QueryKey,
 } from '@tanstack/react-query';
 import { ValueData, ValueListFilters, ValueListResponse } from './value.type';
-import { getTopThreeValues, getValues } from './value.server';
-import { VALUE_TYPE_ENUM } from '@rl/types';
+import {
+  getTopThreeValues,
+  getValueAssessment,
+  getValues,
+} from './value.server';
+import { ValueAssessmentResponseDto, VALUE_TYPE_ENUM } from '@rl/types';
 
 export const valueKeys = {
   all: ['values'] as const,
@@ -16,6 +20,7 @@ export const valueKeys = {
   detail: (id: string) => [...valueKeys.details(), id] as const,
   topThree: (type: VALUE_TYPE_ENUM) =>
     [...valueKeys.all, 'topThree', type] as const,
+  assessment: (id: string) => [...valueKeys.detail(id), 'assessment'] as const,
 };
 
 // Hook to fetch list of values
@@ -97,5 +102,30 @@ export function useGetTopThreeValues(type: VALUE_TYPE_ENUM) {
     error: query.error,
     refetch: query.refetch,
     isFetching: query.isFetching,
+  };
+}
+
+// Questions change only when content is reseeded, so they are cached for the
+// session rather than refetched each time the dialog opens.
+export function useValueAssessment(id: string, isEnabled = true) {
+  const query = useQuery<ValueAssessmentResponseDto, Error>({
+    queryKey: valueKeys.assessment(id),
+    queryFn: async () => {
+      const response = await getValueAssessment(id);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+    enabled: !!id && isEnabled,
+    staleTime: Infinity,
+    retry: false,
+  });
+
+  return {
+    assessment: query.data,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
   };
 }

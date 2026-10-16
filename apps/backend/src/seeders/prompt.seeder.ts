@@ -7,6 +7,7 @@ import {
   DEFAULT_EMPLOYER_PROMPT,
 } from "../v1/modules/agent/agent.constants";
 import { DEFAULT_CV_EXTRACT_SYSTEM_PROMPT } from "../v1/modules/cv/cv.constants";
+import { DEFAULT_VALUE_SCORE_SYSTEM_PROMPT } from "../v1/modules/job-profile/value-score.constants";
 import { extractPromptVariables } from "../v1/modules/prompt/prompt.render";
 
 /**
@@ -21,6 +22,7 @@ export const PROMPT_DEFAULTS = [
   { name: PROMPT_NAME.AGENT_SYSTEM_EMPLOYER, content: DEFAULT_EMPLOYER_PROMPT },
   { name: PROMPT_NAME.AGENT_SYSTEM_CANDIDATE, content: DEFAULT_CANDIDATE_PROMPT },
   { name: PROMPT_NAME.CV_EXTRACT_SYSTEM, content: DEFAULT_CV_EXTRACT_SYSTEM_PROMPT },
+  { name: PROMPT_NAME.VALUE_SCORE_SYSTEM, content: DEFAULT_VALUE_SCORE_SYSTEM_PROMPT },
 ];
 
 /**

@@ -73,6 +73,88 @@ export const jobAttachmentsLookupQuery = (): PipelineStage[] => {
   ];
 };
 
+/**
+ * Resolves the catalogue id at `<field>[].<key>` to its entry (`_id` plus the
+ * `project`ed fields), keeping each row's other fields and the rows' order.
+ *
+ * Deactivated and soft-deleted entries still resolve — the entry was valid when
+ * the job was saved, and its readers should still see what it asks for. Only a
+ * row whose entry is gone outright (hard-deleted) is dropped, rather than
+ * returned with a bare id the response type does not allow.
+ */
+const catalogueRowsLookupQuery = ({
+  field,
+  key,
+  from,
+  project,
+}: {
+  field: string;
+  key: string;
+  from: string;
+  project: Record<string, 1>;
+}): PipelineStage[] => {
+  const joined = `_${field}CatalogueEntries`;
+
+  return [
+    {
+      $lookup: {
+        from,
+        localField: `${field}.${key}`,
+        foreignField: "_id",
+        pipeline: [{ $project: project }],
+        as: joined,
+      },
+    },
+    {
+      $addFields: {
+        [field]: {
+          $filter: {
+            input: {
+              $map: {
+                input: { $ifNull: [`$${field}`, []] },
+                as: "row",
+                in: {
+                  $let: {
+                    vars: {
+                      entry: {
+                        $first: {
+                          $filter: {
+                            input: `$${joined}`,
+                            as: "entry",
+                            cond: { $eq: ["$$entry._id", `$$row.${key}`] },
+                          },
+                        },
+                      },
+                    },
+                    in: {
+                      $cond: [
+                        { $eq: [{ $type: "$$entry" }, "object"] },
+                        { $mergeObjects: ["$$row", { [key]: "$$entry" }] },
+                        null,
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+            as: "row",
+            cond: { $ne: ["$$row", null] },
+          },
+        },
+      },
+    },
+    { $project: { [joined]: 0 } },
+  ];
+};
+
+/** `skills[].skill` -> `{ _id, name }`, keeping each row's `level` and `requirement`. */
+export const jobSkillsLookupQuery = (): PipelineStage[] =>
+  catalogueRowsLookupQuery({ field: "skills", key: "skill", from: modelNames.SKILL_CATALOG, project: { name: 1 } });
+
+/** `values[].value` -> `{ _id, label, type }`, keeping each row's `priority`. `weight` is added by the DTO. */
+export const jobValuesLookupQuery = (): PipelineStage[] =>
+  catalogueRowsLookupQuery({ field: "values", key: "value", from: modelNames.VALUE, project: { label: 1, type: 1 } });
+
 export const alreadyAlliped = (jobProfileId?: string): PipelineStage[] => {
   if (!jobProfileId || !Types.ObjectId.isValid(jobProfileId)) {
     return [{ $addFields: { alreadyApplied: false } }];

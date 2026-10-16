@@ -14,3 +14,4 @@ TESTABLE-FEATURES.md
 .env.*
 !.env.example
 /audit
+/search_plan.md

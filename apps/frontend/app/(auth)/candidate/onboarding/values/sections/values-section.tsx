@@ -24,6 +24,7 @@ import { Resolver, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
   jobProfileKeys,
+  useJobProfile,
   useUpdateJobProfile,
 } from '@/services/job-profile/job-profile.client';
 import {
@@ -35,6 +36,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCatalogPageAction } from '@/components/ai-chat/use-catalog-page-action';
 import { RemovableChip } from '@/components/removable-chip';
 import { AnimatePresence } from 'framer-motion';
+import ValueEvaluationDialog from '@/components/value-evaluation/value-evaluation-dialog';
+import ValueScoreActions from '@/components/value-evaluation/value-score-actions';
 
 const PAGE_LIMIT = 10;
 const SCROLL_THRESHOLD = 80;
@@ -88,6 +91,33 @@ export default function ValuesSection({
   const selectedValues = watch('values');
 
   const { updateJobProfile, isPending: isUpdating } = useUpdateJobProfile();
+
+  // Same query as the page, so this reads the cache rather than refetching.
+  // `useEvaluateValue` patches `valueScores` into it after each evaluation.
+  const { jobProfile } = useJobProfile(jobProfileId);
+  const scoresByValueId = useMemo(
+    () =>
+      new Map(
+        (jobProfile?.valueScores ?? []).map((valueScore) => [
+          valueScore.value,
+          valueScore.score,
+        ]),
+      ),
+    [jobProfile?.valueScores],
+  );
+
+  // `attempt` remounts the dialog on every open, so each evaluation starts
+  // blank. The value is kept after closing so the close animation has content.
+  const [evaluation, setEvaluation] = useState<{
+    value: ValueData;
+    attempt: number;
+  } | null>(null);
+  const [isEvaluationOpen, setIsEvaluationOpen] = useState(false);
+
+  const openEvaluation = (value: ValueData) => {
+    setEvaluation((prev) => ({ value, attempt: (prev?.attempt ?? 0) + 1 }));
+    setIsEvaluationOpen(true);
+  };
 
   const [search, setSearch] = useState('');
 
@@ -307,12 +337,14 @@ export default function ValuesSection({
                 {values.map((item) => {
                   const isSelected = selectedValues.includes(item._id);
                   const isDisabled = isMaxSelected && !isSelected;
+                  const score = scoresByValueId.get(item._id);
 
                   return (
                     <div
                       key={item._id}
                       className={cn(
-                        ' flex items-center gap-spacing-lg p-spacing-2xl rounded-2xl border border-border-gray-secondary min-h-14 transition-opacity duration-200',
+                        ' flex flex-wrap items-center gap-spacing-lg p-spacing-2xl rounded-2xl border border-border-gray-secondary min-h-14 transition-opacity duration-200',
+                        isSelected && 'border-border-brand-primary',
                         isDisabled && 'opacity-50 cursor-not-allowed',
                       )}
                     >
@@ -328,12 +360,18 @@ export default function ValuesSection({
                       <Label
                         htmlFor={item._id}
                         className={cn(
-                          ' text-label-md font-label-md-strong! text-text-gray-secondary',
+                          ' flex-1 text-label-md font-label-md-strong! text-text-gray-secondary',
                           isDisabled && 'cursor-not-allowed',
                         )}
                       >
                         {item.label}
                       </Label>
+                      {isSelected && (
+                        <ValueScoreActions
+                          score={score}
+                          onEvaluate={() => openEvaluation(item as ValueData)}
+                        />
+                      )}
                     </div>
                   );
                 })}
@@ -373,6 +411,15 @@ export default function ValuesSection({
           </Button>
         </div>
       </div>
+      {evaluation && (
+        <ValueEvaluationDialog
+          key={evaluation.attempt}
+          value={evaluation.value}
+          jobProfileId={jobProfileId}
+          open={isEvaluationOpen}
+          onOpenChange={setIsEvaluationOpen}
+        />
+      )}
     </div>
   );
 }

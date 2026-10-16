@@ -17,6 +17,9 @@ import {
   WorkingHours,
   JOBS_STATUS_ENUMS,
   QUERY_TYPE_ENUMS,
+  JOB_SKILL_LEVEL_ENUMS,
+  JOB_SKILL_REQUIREMENT_ENUMS,
+  JOB_VALUE_PRIORITY_ENUMS,
 } from "@rl/types";
 
 export interface IAdditionalQuery {
@@ -30,6 +33,22 @@ export interface IAdditionalQuery {
   options?: string[];
   isRequired: boolean;
   expectedAnswer?: string;
+}
+
+/** One of a job's skills: a skill catalogue entry and how much of it the job asks for. */
+export interface IJobSkill {
+  skill: Types.ObjectId;
+  level: JOB_SKILL_LEVEL_ENUMS;
+  requirement: JOB_SKILL_REQUIREMENT_ENUMS;
+}
+
+/**
+ * One of a job's values: a value catalogue entry and how much it matters. The
+ * tier's weight is derived on read (`JOB_VALUE_PRIORITY_WEIGHT`), never stored.
+ */
+export interface IJobValue {
+  value: Types.ObjectId;
+  priority: JOB_VALUE_PRIORITY_ENUMS;
 }
 
 export interface IJobInput extends TenantInput {
@@ -59,15 +78,12 @@ export interface IJobInput extends TenantInput {
   status: JOBS_STATUS_ENUMS;
   formId?: Types.ObjectId;
   additionalQueries?: IAdditionalQuery[];
+  skills?: IJobSkill[];
+  values?: IJobValue[];
 }
 
 export interface IJobDoc
-  extends IJobInput,
-    ITenantDoc,
-    ISoftDeleteDoc,
-    IBaseDoc,
-    IBoardSettings,
-    IAutomaticReferenceDoc {
+  extends IJobInput, ITenantDoc, ISoftDeleteDoc, IBaseDoc, IBoardSettings, IAutomaticReferenceDoc {
   keywords?: string[];
   /** 1536-d embedding backing $vectorSearch. Never returned to clients. */
   embedding?: number[];
@@ -76,7 +92,8 @@ export interface IJobDoc
 }
 
 export interface IJobModel
-  extends Model<IJobDoc>,
+  extends
+    Model<IJobDoc>,
     ISoftDeleteModel<IJobDoc>,
     PaginateModel<IJobDoc>,
     AggregatePaginateModel<IJobDoc>,
@@ -95,6 +112,27 @@ const additionalQuerySchema = new Schema<IAdditionalQuery>(
     expectedAnswer: { type: String },
   },
   { _id: true }
+);
+
+// No `_id`: the validator keeps each catalogue skill to one row per job, so
+// `skill` already identifies the row.
+const jobSkillSchema = new Schema<IJobSkill>(
+  {
+    skill: { type: Schema.Types.ObjectId, ref: modelNames.SKILL_CATALOG, required: true },
+    level: { type: String, enum: Object.values(JOB_SKILL_LEVEL_ENUMS), required: true },
+    requirement: { type: String, enum: Object.values(JOB_SKILL_REQUIREMENT_ENUMS), required: true },
+  },
+  { _id: false }
+);
+
+// No `_id`, for the same reason: each value appears at most once per job. Array
+// order is display order only — `priority` is what ranks a value.
+const jobValueSchema = new Schema<IJobValue>(
+  {
+    value: { type: Schema.Types.ObjectId, ref: modelNames.VALUE, required: true },
+    priority: { type: String, enum: Object.values(JOB_VALUE_PRIORITY_ENUMS), required: true },
+  },
+  { _id: false }
 );
 
 const jobSchema = new Schema<IJobDoc>(
@@ -143,6 +181,8 @@ const jobSchema = new Schema<IJobDoc>(
     embeddingUpdatedAt: { type: Date },
     totalApplications: { type: Number, default: 0 },
     additionalQueries: [additionalQuerySchema],
+    skills: [jobSkillSchema],
+    values: [jobValueSchema],
   },
   {
     timestamps: true,
@@ -161,6 +201,13 @@ jobSchema.plugin(automaticReferencePlugin({ model: modelNames.JOB, referencePref
 
 // Backs the keyword `$in` lookup used by profile feed rebuild (profile -> matching jobs).
 jobSchema.index({ keywords: 1 });
+
+// Backs "which jobs use this catalogue skill?" — the check before a skill is
+// hard-deleted, and skill matching.
+jobSchema.index({ "skills.skill": 1 });
+
+// The same for values: "which jobs use this value?", for value matching.
+jobSchema.index({ "values.value": 1 });
 
 // Back the default cursor page: the keyset walks (createdAt, _id) under whichever
 // scope the security $match applies — status for candidates and the public list,
