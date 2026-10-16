@@ -26,7 +26,7 @@ import {
 import { runCursorList } from "../../../common/query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { toValueResponseList } from "../value/value.dto";
-import { toNamedRefResponse, toNamedRefResponseList } from "./job-profile.dto";
+import { toNamedRefResponse, toNamedRefResponseList, toProfileSkillResponseList } from "./job-profile.dto";
 import { assertProfileSkills } from "./job-profile.assertions";
 
 const caslFieldOptions = {
@@ -57,6 +57,7 @@ const finalizeJobProfile = (doc: any) => {
   if (doc && Array.isArray(doc.jobTitle)) doc.jobTitle = toNamedRefResponseList(doc.jobTitle);
   if (doc && Array.isArray(doc.industry)) doc.industry = toNamedRefResponseList(doc.industry);
   if (doc && Array.isArray(doc.workMode)) doc.workMode = toNamedRefResponseList(doc.workMode);
+  if (doc && Array.isArray(doc.skills)) doc.skills = toProfileSkillResponseList(doc.skills);
   if (doc && doc.experienceLevel && typeof doc.experienceLevel === "object")
     doc.experienceLevel = toNamedRefResponse(doc.experienceLevel);
   // The raw photo ids are redundant with the populated objects' `_id` — expose

@@ -13,7 +13,11 @@ import {
   toCursorPage,
 } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { jobProfileProjectQuery, populateJobProfileKycStatusQuery } from "./job-profile.query";
+import {
+  jobProfileProjectQuery,
+  populateJobProfileKycStatusQuery,
+  profileSkillsLookupQuery,
+} from "./job-profile.query";
 import { recomputeProfileCompletion } from "./profile-completion.service";
 import { populateValuesQuery } from "../value/value.query";
 import * as FileMediaService from "../file-media/file-media.service";
@@ -95,6 +99,7 @@ export const list = async ({ query = {}, options, allowedFields, offset = 0 }: I
     ...populateNamedRefQuery(Industry, "industry"),
     ...populateNamedRefQuery(WorkMode, "workMode"),
     ...populateSingleNamedRefQuery(ExperienceLevel, "experienceLevel"),
+    ...profileSkillsLookupQuery(),
     ...populateFileMediaQuery("profileImageId", "profileImage"),
     ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
     ...jobProfileProjectQuery(allowedFields),
@@ -113,6 +118,7 @@ export const getOne = async ({ query = {}, allowedFields }: IJobProfileGetParams
     ...populateNamedRefQuery(Industry, "industry"),
     ...populateNamedRefQuery(WorkMode, "workMode"),
     ...populateSingleNamedRefQuery(ExperienceLevel, "experienceLevel"),
+    ...profileSkillsLookupQuery(),
     ...populateFileMediaQuery("profileImageId", "profileImage"),
     ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
     ...populateJobProfileKycStatusQuery(),
