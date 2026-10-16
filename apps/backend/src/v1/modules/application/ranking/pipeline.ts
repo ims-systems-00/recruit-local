@@ -94,7 +94,12 @@ export interface RankingSignal {
   details: unknown;
 }
 
-export interface RankingMatcher {
+/**
+ * One matcher. `C` is what it reads — the application context by default, but
+ * the combiner below only ever passes it through, so another feature can score
+ * against a context of its own with the same weighting rules.
+ */
+export interface RankingMatcher<C = RankingContext> {
   key: string;
   label: string;
   /**
@@ -109,7 +114,7 @@ export interface RankingMatcher {
    * pipeline — a matcher that pre-scales would be averaged as if it were a
    * ratio and swamp every other signal.
    */
-  run: (context: RankingContext) => { ratio: number; applicable: boolean; details?: unknown };
+  run: (context: C) => { ratio: number; applicable: boolean; details?: unknown };
 }
 
 export interface RankingResult {
@@ -191,21 +196,18 @@ export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, questionMatcher
 export const RANKING_PIPELINE_VERSION = 4;
 
 /**
- * Runs every matcher in the pipeline and folds the applicable ones into a
+ * Runs every matcher against `context` and folds the applicable ones into a
  * single score out of `scale`.
  *
  * Matchers are synchronous and read-only: the context is fetched once by the
- * caller and every matcher works off it, so ranking a page of applications
- * costs one query set, not one per candidate.
+ * caller and every matcher works off it, so scoring a page of documents costs
+ * one query set, not one per document.
  *
- * `scale` is injectable for testing; production callers should leave it alone
- * so `RANKING_SCALE` stays the single answer to "what is a score out of?".
+ * Generic over the context so a feature other than application ranking can
+ * reuse the weighting rules — renormalize over applicable matchers, round once
+ * — with matchers and a scale of its own.
  */
-export const runRankingPipeline = (
-  context: RankingContext,
-  matchers: RankingMatcher[] = RANKING_PIPELINE,
-  scale: number = RANKING_SCALE
-): RankingResult => {
+export const runMatchers = <C>(context: C, matchers: RankingMatcher<C>[], scale: number): RankingResult => {
   const outcomes = matchers.map((matcher) => ({ matcher, outcome: matcher.run(context) }));
 
   // Only applicable matchers with a positive weight can move the score.
@@ -242,3 +244,15 @@ export const runRankingPipeline = (
 
   return { ratio, score: Math.round(ratio * scale), scale, applicable: true, signals };
 };
+
+/**
+ * Ranks one application: the registered pipeline, out of `RANKING_SCALE`.
+ *
+ * `scale` is injectable for testing; production callers should leave it alone
+ * so `RANKING_SCALE` stays the single answer to "what is a score out of?".
+ */
+export const runRankingPipeline = (
+  context: RankingContext,
+  matchers: RankingMatcher[] = RANKING_PIPELINE,
+  scale: number = RANKING_SCALE
+): RankingResult => runMatchers(context, matchers, scale);

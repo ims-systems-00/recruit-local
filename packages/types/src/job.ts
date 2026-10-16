@@ -166,6 +166,25 @@ export interface JobValueResponseDto {
   weight?: number;
 }
 
+/** The parts a candidate's match against a job is scored on. */
+export enum JOB_MATCH_PART_ENUMS {
+  SKILLS = 'skills',
+  VALUES = 'values',
+  LOCATION = 'location',
+}
+
+/**
+ * Relative weight of each part in a job's `matchPercentage`. Only the
+ * proportion matters: a part with nothing to compare (a job with no skills, say)
+ * drops out and the others are rescaled to fill the whole, so a sparsely filled
+ * job does not drag every candidate down equally.
+ */
+export const JOB_MATCH_WEIGHTS: Record<JOB_MATCH_PART_ENUMS, number> = {
+  [JOB_MATCH_PART_ENUMS.SKILLS]: 40,
+  [JOB_MATCH_PART_ENUMS.VALUES]: 40,
+  [JOB_MATCH_PART_ENUMS.LOCATION]: 20,
+};
+
 /**
  * Public HTTP shape of a Job.
  *
@@ -218,6 +237,12 @@ export interface JobResponseDto {
    * when `alreadySaved` is false. Mirrors `PostResponseDto`.
    */
   alreadySavedId?: string | null;
+  /**
+   * How well the viewer's job profile fits this job, 0-100, weighted by
+   * `JOB_MATCH_WEIGHTS`. Only on the job list, and only for a viewer with a job
+   * profile. `null` when there is nothing to compare on either side.
+   */
+  matchPercentage?: number | null;
   createdAt?: string; // ISO
   updatedAt?: string; // ISO
 }

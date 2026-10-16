@@ -13,7 +13,7 @@ import {
 import React from 'react';
 import ProfileInfoCard from './profile-info-card';
 import MapByAddress from '@/components/map-by-address';
-import { INDUSTRY_ENUMS } from '@rl/types';
+import { INDUSTRY_ENUMS, JOB_SKILL_LEVEL_LABELS } from '@rl/types';
 import { JobProfileData } from '@/services/job-profile/job-profile.type';
 export const TENANT_INDUSTRY_LABEL_MAP: Record<INDUSTRY_ENUMS, string> = {
   [INDUSTRY_ENUMS.TECHNOLOGY]: 'Technology',
@@ -100,10 +100,26 @@ export default function About({ profile }: { profile: JobProfileData }) {
           <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
             Skills
           </p>
-          <p className=" text-body-lg text-text-gray-tertiary">
-            {profile?.skills?.map(({ skill }) => skill.name).join(', ') ||
-              'N/A'}
-          </p>
+          {/* One chip per catalogue skill, styled like the picker's tags. */}
+          {profile?.skills?.length ? (
+            <ul className="flex flex-wrap gap-2">
+              {profile.skills.map(({ skill, level }) => (
+                <li
+                  key={skill._id}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-border-gray-secondary bg-bg-gray-soft-primary text-label-sm"
+                >
+                  <span className="font-medium text-text-gray-primary">
+                    {skill.name}
+                  </span>
+                  <span className="text-text-gray-tertiary">
+                    · {JOB_SKILL_LEVEL_LABELS[level]}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className=" text-body-lg text-text-gray-tertiary">N/A</p>
+          )}
         </div>
         <div className=" space-y-spacing-2xl">
           <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
