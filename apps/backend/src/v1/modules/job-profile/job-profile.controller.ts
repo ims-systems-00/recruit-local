@@ -27,6 +27,7 @@ import { runCursorList } from "../../../common/query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { toValueResponseList } from "../value/value.dto";
 import { toNamedRefResponse, toNamedRefResponseList } from "./job-profile.dto";
+import { assertProfileSkills } from "./job-profile.assertions";
 
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_PROFILE_FIELDS,
@@ -316,6 +317,8 @@ export const create = async ({ req }: ControllerParams) => {
   // Field-level check for creation payload
   validateUpdatePayload(req.body, ability, AbilityAction.Create, new JobProfileAuthZEntity(req.body));
 
+  await assertProfileSkills(req.body.skills);
+
   req.body.userId = req.session.user?._id;
 
   const jobProfile = await jobProfileService.create({
@@ -347,6 +350,8 @@ export const update = async ({ req }: ControllerParams) => {
 
   // Field-level payload validation
   validateUpdatePayload(req.body, ability, AbilityAction.Update, new JobProfileAuthZEntity(existingJobProfile));
+
+  await assertProfileSkills(req.body.skills);
 
   const jobProfile = await jobProfileService.update({
     query: { _id: req.params.id },
