@@ -46,6 +46,10 @@ export const ALL_JOB_FIELDS = [
   // (`DELETE /favourites/:id/soft`). Null when the job is not saved. Server-derived
   // and read-only — absent from EMPLOYER_CREATE_FIELDS/EMPLOYER_UPDATE_FIELDS.
   'alreadySavedId',
+  // The viewer's match against the job, 0-100 or null; only on the job list, and
+  // only for a viewer with a job profile. Server-derived and read-only — absent
+  // from EMPLOYER_CREATE_FIELDS/EMPLOYER_UPDATE_FIELDS.
+  'matchPercentage',
   'category',
   'vacancy',
   'location',

@@ -16,6 +16,8 @@ import { enqueueProfileFeedRebuild } from "../../../queue/profileFeedRebuildQueu
 import { enqueueJobCleanup } from "../../../queue/jobCleanupQueue";
 import { readFeedIds } from "./feed.service";
 import { assertJobSkills, assertJobValues } from "./job.assertions";
+import { computeJobMatch } from "./match/job-match";
+import { loadMatchProfile } from "./match/profile.service";
 import pick from "lodash/pick";
 
 const PUBLIC_JOB_FIELDS = [
@@ -91,7 +93,7 @@ export const list = async ({ req }: ControllerParams) => {
   let searchVector: number[] | undefined;
   let matchKeywords: string[] | undefined;
 
-  const { docs, pagination } = await runCursorList({
+  const listing = runCursorList({
     query: req.query,
     spec: jobListQuerySpec,
     securityQuery: jobRoleScopedSecurityQuery(ability),
@@ -154,8 +156,20 @@ export const list = async ({ req }: ControllerParams) => {
     // frontend is off offset paging.
   });
 
+  // The profile is read alongside the page, not after it. Both promises are
+  // awaited in the same tick they are created, so neither can reject unobserved.
+  const [{ docs, pagination }, matchProfile] = await Promise.all([listing, loadMatchProfile(req.session.jobProfileId)]);
+
+  // Only a viewer with a job profile has anything to be matched against; for
+  // everyone else the field is left off rather than sent as null. Scored before
+  // sanitizing, which keeps the field (it is in ALL_JOB_FIELDS) and strips the
+  // value priorities the matcher never reads anyway.
+  const scoredDocs = matchProfile
+    ? docs.map((doc) => ({ ...doc, matchPercentage: computeJobMatch(matchProfile, doc) }))
+    : docs;
+
   const sanitizedDocs = sanitizeDocuments<JobAuthZEntity>(
-    docs,
+    scoredDocs,
     ability,
     AbilityAction.Read,
     JobAuthZEntity,

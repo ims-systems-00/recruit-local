@@ -53,9 +53,12 @@ export default function CardJobItem({
                   {job?.title || 'N/A'}
                 </h4>
               </Link>
-              <span className=" whitespace-nowrap rounded-md text-label-xs font-label-xs-strong! text-others-brand-dark flex items-center justify-center py-spacing-3xs px-spacing-md bg-others-brand-brand-zero border border-others-brand-light">
-                92% Match
-              </span>
+              {/* The public list has no viewer to match, so this stays hidden here. */}
+              {typeof job?.matchPercentage === 'number' && (
+                <span className=" whitespace-nowrap rounded-md text-label-xs font-label-xs-strong! text-others-brand-dark flex items-center justify-center py-spacing-3xs px-spacing-md bg-others-brand-brand-zero border border-others-brand-light">
+                  {job.matchPercentage}% Match
+                </span>
+              )}
             </div>
             <div className=" flex items-center gap-spacing-2xs">
               <p className="text-label-sm capitalize text-text-gray-quaternary">

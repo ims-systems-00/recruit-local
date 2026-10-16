@@ -8,9 +8,28 @@ import {
   VALUE_ASSESSMENT_QUESTION_COUNT,
   VALUE_ANSWER_MIN_LENGTH,
   VALUE_ANSWER_MAX_LENGTH,
+  JOB_SKILL_LEVEL_ENUMS,
+  PROFILE_SKILLS_MAX,
 } from "@rl/types";
 
 // --- Sub-Schemas ---
+
+const profileSkillSchema = Joi.object({
+  skill: Joi.string().custom(objectIdValidation).required().label("Skill"),
+  level: Joi.string()
+    .valid(...Object.values(JOB_SKILL_LEVEL_ENUMS))
+    .required()
+    .label("Skill Level"),
+}).label("Profile Skill");
+
+// Shape only. Whether each `skill` is a live catalogue entry needs the database
+// — the controller checks it. An empty array is allowed: it clears the skills.
+const profileSkillsSchema = Joi.array()
+  .items(profileSkillSchema)
+  .max(PROFILE_SKILLS_MAX)
+  .unique("skill")
+  .messages({ "array.unique": "Each skill can only be added once." })
+  .label("Skills");
 
 // Reusable storage schema for AWS templates (profile/cover photo uploads).
 const awsStorageSchema = Joi.object({
@@ -45,7 +64,7 @@ export const createBodySchema = Joi.object({
     )
     .optional()
     .label("Languages"),
-  skills: Joi.string().optional().label("Skills"),
+  skills: profileSkillsSchema.optional(),
   interests: Joi.string().optional().label("Interests"),
   values: Joi.array().items(Joi.string().custom(objectIdValidation)).optional().label("Values"),
   onboardingStep: Joi.string()
@@ -80,7 +99,7 @@ export const updateBodySchema = Joi.object({
     )
     .optional()
     .label("Languages"),
-  skills: Joi.string().optional().label("Skills"),
+  skills: profileSkillsSchema.optional(),
   interests: Joi.string().optional().label("Interests"),
   values: Joi.array().items(Joi.string().custom(objectIdValidation)).optional().label("Values"),
   onboardingStep: Joi.string()

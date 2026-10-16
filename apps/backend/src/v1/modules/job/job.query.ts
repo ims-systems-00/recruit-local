@@ -1,5 +1,16 @@
 import { PipelineStage, Types } from "mongoose";
-import { projectQuery, ListQuerySpec, eq, gte, lt, lte, objectId, oneOf, range } from "../../../common/query";
+import {
+  projectQuery,
+  ListQuerySpec,
+  eq,
+  gte,
+  lt,
+  lte,
+  objectId,
+  oneOf,
+  range,
+  catalogueRowsLookupQuery,
+} from "../../../common/query";
 import { omit } from "lodash";
 import { IJobDoc, Job } from "../../../models";
 import { JobAbilityBuilder, JobAuthZEntity } from "@rl/authz";
@@ -70,80 +81,6 @@ export const jobAttachmentsLookupQuery = (): PipelineStage[] => {
         as: "attachments",
       },
     },
-  ];
-};
-
-/**
- * Resolves the catalogue id at `<field>[].<key>` to its entry (`_id` plus the
- * `project`ed fields), keeping each row's other fields and the rows' order.
- *
- * Deactivated and soft-deleted entries still resolve — the entry was valid when
- * the job was saved, and its readers should still see what it asks for. Only a
- * row whose entry is gone outright (hard-deleted) is dropped, rather than
- * returned with a bare id the response type does not allow.
- */
-const catalogueRowsLookupQuery = ({
-  field,
-  key,
-  from,
-  project,
-}: {
-  field: string;
-  key: string;
-  from: string;
-  project: Record<string, 1>;
-}): PipelineStage[] => {
-  const joined = `_${field}CatalogueEntries`;
-
-  return [
-    {
-      $lookup: {
-        from,
-        localField: `${field}.${key}`,
-        foreignField: "_id",
-        pipeline: [{ $project: project }],
-        as: joined,
-      },
-    },
-    {
-      $addFields: {
-        [field]: {
-          $filter: {
-            input: {
-              $map: {
-                input: { $ifNull: [`$${field}`, []] },
-                as: "row",
-                in: {
-                  $let: {
-                    vars: {
-                      entry: {
-                        $first: {
-                          $filter: {
-                            input: `$${joined}`,
-                            as: "entry",
-                            cond: { $eq: ["$$entry._id", `$$row.${key}`] },
-                          },
-                        },
-                      },
-                    },
-                    in: {
-                      $cond: [
-                        { $eq: [{ $type: "$$entry" }, "object"] },
-                        { $mergeObjects: ["$$row", { [key]: "$$entry" }] },
-                        null,
-                      ],
-                    },
-                  },
-                },
-              },
-            },
-            as: "row",
-            cond: { $ne: ["$$row", null] },
-          },
-        },
-      },
-    },
-    { $project: { [joined]: 0 } },
   ];
 };
 

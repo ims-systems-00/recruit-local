@@ -1,5 +1,5 @@
 import { PipelineStage } from "mongoose";
-import { eq, ListQuerySpec, objectId, projectQuery } from "../../../common/query";
+import { catalogueRowsLookupQuery, eq, ListQuerySpec, objectId, projectQuery } from "../../../common/query";
 import { omit } from "lodash";
 import { JobProfile, IJobProfileDoc } from "../../../models";
 import { accessibleBy } from "@casl/mongoose";
@@ -28,6 +28,10 @@ export const jobProfileProjectQuery = (allowedFields?: string[]): PipelineStage[
   selectedFields.push("kycStatus");
   return projectQuery(selectedFields);
 };
+
+/** `skills[].skill` -> `{ _id, name }`, keeping each row's `level`. */
+export const profileSkillsLookupQuery = (): PipelineStage[] =>
+  catalogueRowsLookupQuery({ field: "skills", key: "skill", from: modelNames.SKILL_CATALOG, project: { name: 1 } });
 
 /**
  * Populates `kycStatus` onto a job profile from its owning User's account-level

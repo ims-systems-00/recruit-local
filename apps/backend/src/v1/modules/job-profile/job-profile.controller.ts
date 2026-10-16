@@ -26,7 +26,8 @@ import {
 import { runCursorList } from "../../../common/query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { toValueResponseList } from "../value/value.dto";
-import { toNamedRefResponse, toNamedRefResponseList } from "./job-profile.dto";
+import { toNamedRefResponse, toNamedRefResponseList, toProfileSkillResponseList } from "./job-profile.dto";
+import { assertProfileSkills } from "./job-profile.assertions";
 
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_PROFILE_FIELDS,
@@ -56,6 +57,7 @@ const finalizeJobProfile = (doc: any) => {
   if (doc && Array.isArray(doc.jobTitle)) doc.jobTitle = toNamedRefResponseList(doc.jobTitle);
   if (doc && Array.isArray(doc.industry)) doc.industry = toNamedRefResponseList(doc.industry);
   if (doc && Array.isArray(doc.workMode)) doc.workMode = toNamedRefResponseList(doc.workMode);
+  if (doc && Array.isArray(doc.skills)) doc.skills = toProfileSkillResponseList(doc.skills);
   if (doc && doc.experienceLevel && typeof doc.experienceLevel === "object")
     doc.experienceLevel = toNamedRefResponse(doc.experienceLevel);
   // The raw photo ids are redundant with the populated objects' `_id` — expose
@@ -316,6 +318,8 @@ export const create = async ({ req }: ControllerParams) => {
   // Field-level check for creation payload
   validateUpdatePayload(req.body, ability, AbilityAction.Create, new JobProfileAuthZEntity(req.body));
 
+  await assertProfileSkills(req.body.skills);
+
   req.body.userId = req.session.user?._id;
 
   const jobProfile = await jobProfileService.create({
@@ -347,6 +351,8 @@ export const update = async ({ req }: ControllerParams) => {
 
   // Field-level payload validation
   validateUpdatePayload(req.body, ability, AbilityAction.Update, new JobProfileAuthZEntity(existingJobProfile));
+
+  await assertProfileSkills(req.body.skills);
 
   const jobProfile = await jobProfileService.update({
     query: { _id: req.params.id },

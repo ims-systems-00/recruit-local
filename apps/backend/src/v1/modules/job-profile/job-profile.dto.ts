@@ -1,4 +1,4 @@
-import { NamedCatalogResponseDto } from "@rl/types";
+import { JOB_SKILL_LEVEL_ENUMS, NamedCatalogResponseDto, ProfileSkillResponseDto } from "@rl/types";
 
 const has = (obj: Record<string, unknown>, key: string): boolean => Object.prototype.hasOwnProperty.call(obj, key);
 
@@ -29,3 +29,15 @@ export const toNamedRefResponse = (v: unknown): NamedCatalogResponseDto | string
 /** Serializes an array that may hold populated catalog documents or raw ObjectIds. */
 export const toNamedRefResponseList = (items: unknown): (NamedCatalogResponseDto | string)[] =>
   Array.isArray(items) ? items.map(toNamedRefResponse) : [];
+
+/**
+ * Serializes a profile's skill rows, each `skill` populated to `{ _id, name }`
+ * by `profileSkillsLookupQuery`, into their public HTTP shape.
+ */
+export const toProfileSkillResponseList = (rows: unknown): ProfileSkillResponseDto[] =>
+  Array.isArray(rows)
+    ? rows.map((row: { skill: { _id: unknown; name: string }; level: JOB_SKILL_LEVEL_ENUMS }) => ({
+        skill: { _id: String(row.skill._id), name: row.skill.name },
+        level: row.level,
+      }))
+    : [];

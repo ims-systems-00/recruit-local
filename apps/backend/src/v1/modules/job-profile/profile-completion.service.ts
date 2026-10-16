@@ -5,6 +5,7 @@ import { computeCompletion } from "@rl/utils";
 
 const filledStr = (v: unknown): boolean => typeof v === "string" && v.trim().length > 0;
 const filledArr = (v: unknown): boolean => Array.isArray(v) && v.length > 0;
+const countArr = (v: unknown): number => (Array.isArray(v) ? v.length : 0);
 // A catalog reference (ObjectId) counts as filled whenever it is present.
 const filledRef = (v: unknown): boolean => v != null && String(v).trim().length > 0;
 
@@ -55,7 +56,9 @@ export const recomputeProfileCompletion = async (userId: string | Types.ObjectId
     profilePhoto: filledRef(jobProfile.profileImageId),
     experience: experienceCount > 0,
     education: educationCount > 0,
-    skills: skillCount >= 3 || filledStr(jobProfile.skills),
+    // Catalogue skills on the profile, or the free-text Skill rows the
+    // assistant's add_skills tool still writes — whichever source has more.
+    skills: Math.max(skillCount, countArr(jobProfile.skills)) >= 3,
     cv: Boolean(cvDoc),
     certifications: certificationCount > 0,
     profileValues: filledArr(jobProfile.values),

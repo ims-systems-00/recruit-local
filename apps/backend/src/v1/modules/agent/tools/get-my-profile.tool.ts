@@ -22,7 +22,11 @@ import { toTenantResponse } from "../../tenant/tenant.dto";
 import { recomputeTenantCompletion } from "../../tenant/tenant-completion.service";
 import * as jobProfileService from "../../job-profile/job-profile.service";
 import { recomputeProfileCompletion } from "../../job-profile/profile-completion.service";
-import { toNamedRefResponse, toNamedRefResponseList } from "../../job-profile/job-profile.dto";
+import {
+  toNamedRefResponse,
+  toNamedRefResponseList,
+  toProfileSkillResponseList,
+} from "../../job-profile/job-profile.dto";
 import { toValueResponseList } from "../../value/value.dto";
 import { AgentTool, AgentToolContext } from "./tool.types";
 
@@ -65,6 +69,7 @@ const finalizeJobProfile = (doc: any) => {
   if (Array.isArray(doc.jobTitle)) doc.jobTitle = toNamedRefResponseList(doc.jobTitle);
   if (Array.isArray(doc.industry)) doc.industry = toNamedRefResponseList(doc.industry);
   if (Array.isArray(doc.workMode)) doc.workMode = toNamedRefResponseList(doc.workMode);
+  if (Array.isArray(doc.skills)) doc.skills = toProfileSkillResponseList(doc.skills);
   if (doc.experienceLevel && typeof doc.experienceLevel === "object") {
     doc.experienceLevel = toNamedRefResponse(doc.experienceLevel);
   }

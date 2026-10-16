@@ -10,6 +10,7 @@ import {
   ONBOARDING_STEP_ENUMS,
   StoredCompletion,
   IValueScoreAnswer,
+  JOB_SKILL_LEVEL_ENUMS,
 } from "@rl/types";
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { IBaseDoc } from "./interfaces/base.interface";
@@ -21,6 +22,16 @@ export interface IValueScore {
   feedback?: string;
   answers: IValueScoreAnswer[];
   evaluatedAt: Date;
+}
+
+/**
+ * One of a profile's skills: a skill catalogue entry and the candidate's level
+ * in it. The same catalogue and level scale a job's skills use, so the two
+ * compare directly.
+ */
+export interface IProfileSkill {
+  skill: Types.ObjectId;
+  level: JOB_SKILL_LEVEL_ENUMS;
 }
 
 export interface JobProfileInput extends IUserOwnedInput {
@@ -37,7 +48,7 @@ export interface JobProfileInput extends IUserOwnedInput {
   keywords?: string[];
   languages?: language[];
   status: JOB_PROFILE_STATUS_ENUM;
-  skills?: string;
+  skills?: IProfileSkill[];
   interests?: string;
   values?: Types.ObjectId[];
   valueScores?: IValueScore[];
@@ -83,6 +94,16 @@ const valueScoreSchema = new Schema<IValueScore>(
   { _id: false }
 );
 
+// No `_id`: the validator keeps each catalogue skill to one row per profile, so
+// `skill` already identifies the row.
+const profileSkillSchema = new Schema<IProfileSkill>(
+  {
+    skill: { type: Schema.Types.ObjectId, ref: modelNames.SKILL_CATALOG, required: true },
+    level: { type: String, enum: Object.values(JOB_SKILL_LEVEL_ENUMS), required: true },
+  },
+  { _id: false }
+);
+
 const jobProfileSchema = new Schema<IJobProfileDoc>(
   {
     userId: {
@@ -116,9 +137,7 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       },
     ],
     languages: [languageSchema],
-    skills: {
-      type: String,
-    },
+    skills: [profileSkillSchema],
     interests: {
       type: String,
     },
@@ -170,6 +189,10 @@ jobProfileSchema.plugin(userOwnedPlugin);
 
 // Backs the keyword `$in` lookup used by the job fan-out (job -> matching profiles).
 jobProfileSchema.index({ keywords: 1 });
+
+// Backs "which profiles use this catalogue skill?" — the check before a skill is
+// hard-deleted, and skill matching.
+jobProfileSchema.index({ "skills.skill": 1 });
 
 // Create and export the model
 export const JobProfile = model<IJobProfileDoc, IJobProfileModel>(modelNames.JOB_PROFILE, jobProfileSchema);
