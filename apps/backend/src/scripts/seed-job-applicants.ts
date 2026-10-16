@@ -101,7 +101,6 @@ const seedApplicants = async () => {
             summary: `Machine learning practitioner with ${randInt(1, 12)} years building ${skills
               .slice(0, 3)
               .join(", ")} systems in production.`,
-            skills: skills.join(", "),
             jobTitle: sample(titles, randInt(1, 3)).map((t) => t._id),
             experienceLevel: pick(levels, i)?._id,
             industry: sample(industries, 2).map((d) => d._id),

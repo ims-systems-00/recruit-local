@@ -71,6 +71,6 @@ export const recomputeProfileKeywords = async (id: string) => {
     (ref) => ref?.name
   );
 
-  const keywords = buildKeywords([...refNames, profile.skills, profile.interests, ...(profile.keywords ?? [])]);
+  const keywords = buildKeywords([...refNames, profile.interests, ...(profile.keywords ?? [])]);
   await JobProfile.findByIdAndUpdate(id, { $set: { keywords } });
 };

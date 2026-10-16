@@ -265,13 +265,16 @@ const skillsRule: ProfileRule = {
   severity: "medium",
   section: "skills",
   run: ({ profile, counts }) => {
-    if (counts.skills >= MIN_SKILLS || filledStr(profile.skills)) return null;
+    // Counted as completion counts it: catalogue skills on the profile, or the
+    // free-text Skill rows the assistant still writes, whichever has more.
+    const added = Math.max(counts.skills, Array.isArray(profile.skills) ? profile.skills.length : 0);
+    if (added >= MIN_SKILLS) return null;
 
     return {
       problem:
-        counts.skills === 0
+        added === 0
           ? "No skills have been added."
-          : `Only ${counts.skills} skill${counts.skills === 1 ? "" : "s"} added, out of the ${MIN_SKILLS} needed.`,
+          : `Only ${added} skill${added === 1 ? "" : "s"} added, out of the ${MIN_SKILLS} needed.`,
       fix: `Add at least ${MIN_SKILLS} skills, naming the tools and disciplines you actually work in.`,
       impact:
         "Skills feed the keywords a job is matched against, so a thin list narrows which jobs can be recommended " +
