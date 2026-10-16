@@ -9,7 +9,8 @@ import { WORKPLACE_ENUMS } from "@rl/types";
  *   candidate's preferred work modes, read off `MODE_FIT`. Asymmetric on
  *   purpose: someone who prefers the office can still do a remote job, but a
  *   remote-only candidate is a poor fit for an onsite one. A candidate with no
- *   stated preference is not marked down for it.
+ *   stated preference scores 0: missing data counts against the match, the
+ *   same as a skill or value they have not filled in.
  * - **Distance fit.** Full credit within `FULL_CREDIT_KM` of the job, falling in
  *   a straight line to nothing at `ZERO_CREDIT_KM`, which is further out for a
  *   hybrid job because the commute is not daily. A remote job ignores distance.
@@ -146,7 +147,7 @@ export const matchLocation = (job: LocationMatchJob, profile: LocationMatchProfi
   let modeFit: number | null = null;
   if (workplace) {
     const preferred = toPreferredModes(profile.workModes);
-    modeFit = preferred.length ? Math.max(...preferred.map((mode) => MODE_FIT[workplace][mode])) : 1;
+    modeFit = preferred.length ? Math.max(...preferred.map((mode) => MODE_FIT[workplace][mode])) : 0;
   }
 
   let distance: number | null = null;
@@ -193,20 +194,23 @@ const demo = () => {
     matchLocation({ workplace: ONSITE }, { workModes: [{ name: "Remote" }, { name: "On-site" }] }).ratio === 1,
     "the best of several modes counts, from names or { name } entries"
   );
+  const noPreference = matchLocation({ workplace: HYBRID }, { workModes: [] });
+  assert(noPreference.applicable && noPreference.ratio === 0, "no stated preference scores 0");
   assert(
-    matchLocation({ workplace: HYBRID }, { workModes: [] }).ratio === 1,
-    "no stated preference is not marked down"
+    matchLocation({ workplace: HYBRID }, { workModes: ["Flexible"] }).ratio === 0,
+    "unknown mode names are ignored, leaving no preference"
   );
   assert(
-    matchLocation({ workplace: HYBRID }, { workModes: ["Flexible"] }).ratio === 1,
-    "unknown mode names are ignored"
+    matchLocation({ workplace: HYBRID, point: london }, { point: north28 }).ratio === 0,
+    "no preference scores 0 even when close by"
   );
   assert(
     close(matchLocation({ workplace: ONSITE, point: london }, { workModes: ["Onsite"] }).ratio, 1),
     "one side without coordinates scores work mode alone"
   );
   assert(
-    matchLocation({ workplace: ONSITE, point: { lat: 0, lng: 0 } }, { point: paris }).ratio === 1,
+    matchLocation({ workplace: ONSITE, point: { lat: 0, lng: 0 } }, { workModes: ["Onsite"], point: paris }).ratio ===
+      1,
     "a 0/0 point counts as no coordinates"
   );
   assert(!matchLocation({}, { workModes: ["Remote"] }).applicable, "no workplace and no coordinates is not applicable");

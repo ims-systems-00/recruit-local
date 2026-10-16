@@ -174,10 +174,9 @@ export enum JOB_MATCH_PART_ENUMS {
 }
 
 /**
- * Relative weight of each part in a job's `matchPercentage`. Only the
- * proportion matters: a part with nothing to compare (a job with no skills, say)
- * drops out and the others are rescaled to fill the whole, so a sparsely filled
- * job does not drag every candidate down equally.
+ * Weight of each part in a job's `matchPercentage`, out of 100. Every part
+ * always counts at its full weight: one with nothing to compare, on either side
+ * (a job with no skills, a candidate with no work mode), scores 0.
  */
 export const JOB_MATCH_WEIGHTS: Record<JOB_MATCH_PART_ENUMS, number> = {
   [JOB_MATCH_PART_ENUMS.SKILLS]: 40,
@@ -240,7 +239,7 @@ export interface JobResponseDto {
   /**
    * How well the viewer's job profile fits this job, 0-100, weighted by
    * `JOB_MATCH_WEIGHTS`. Only on the job list, and only for a viewer with a job
-   * profile. `null` when there is nothing to compare on either side.
+   * profile. `null` while the profile has no skills, values or work modes yet.
    */
   matchPercentage?: number | null;
   createdAt?: string; // ISO

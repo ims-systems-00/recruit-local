@@ -10,8 +10,11 @@ import { matchLocation } from "./location";
  *
  * Three matchers — skills, values, location — each report a 0-1 ratio, and the
  * application ranking's combiner (`runMatchers`) folds them with
- * `JOB_MATCH_WEIGHTS`: a part the job gives nothing to compare drops out and
- * the rest are rescaled, and the result rounds once.
+ * `JOB_MATCH_WEIGHTS`, rounding once.
+ *
+ * Every part always counts at its full weight: one with nothing to compare, on
+ * either side, scores 0 rather than dropping out. Rescaling whatever parts
+ * remained let a job with no skills or values show 100% on work mode alone.
  *
  * Every matcher reads only the job as a candidate may see it and the
  * candidate's own profile, so the number is safe to show them. See
@@ -47,42 +50,49 @@ interface JobMatchContext {
 
 const { SKILLS, VALUES, LOCATION } = JOB_MATCH_PART_ENUMS;
 
+/**
+ * A part the job gives nothing to compare still counts, as 0. The matchers
+ * report it as not applicable, which would make `runMatchers` drop the part and
+ * rescale the rest.
+ */
+const missingCountsAsZero = (result: { ratio: number; applicable: boolean }) =>
+  result.applicable ? result : { ratio: 0, applicable: true };
+
 const JOB_MATCHERS: RankingMatcher<JobMatchContext>[] = [
   {
     key: SKILLS,
     label: "Skills",
     weight: JOB_MATCH_WEIGHTS[SKILLS],
-    run: ({ job, profile }) => matchSkills(job.skills, profile.skills),
+    run: ({ job, profile }) => missingCountsAsZero(matchSkills(job.skills, profile.skills)),
   },
   {
     key: VALUES,
     label: "Values",
     weight: JOB_MATCH_WEIGHTS[VALUES],
-    run: ({ job, profile }) => matchValueScores(job.values, profile.values, profile.valueScores),
+    run: ({ job, profile }) => missingCountsAsZero(matchValueScores(job.values, profile.values, profile.valueScores)),
   },
   {
     key: LOCATION,
     label: "Location",
     weight: JOB_MATCH_WEIGHTS[LOCATION],
-    run: ({ job, profile }) => matchLocation({ workplace: job.workplace }, { workModes: profile.workModes }),
+    run: ({ job, profile }) =>
+      missingCountsAsZero(matchLocation({ workplace: job.workplace }, { workModes: profile.workModes })),
   },
 ];
 
 const hasRows = (field: unknown) => Array.isArray(field) && field.length > 0;
 
 /**
- * Whether the profile states anything a matcher compares. Each part's
- * applicability depends on the job, so without this an empty profile would
- * still score — zero on skills and values, full marks on location for having no
- * preference — and show a number that measures nothing.
+ * Whether the profile states anything a matcher compares. A profile with
+ * nothing in it yet gets no score at all rather than 0% on every job, so a new
+ * candidate sees no badge until there is something to measure.
  */
 const hasAnythingToCompare = (profile: MatchProfile) =>
   hasRows(profile.skills) || hasRows(profile.values) || hasRows(profile.valueScores) || hasRows(profile.workModes);
 
 /**
- * The candidate's match against one job, 0-100, or `null` when there is
- * nothing to compare: the profile states none of skills, values or work modes,
- * or the job gives none of the parts anything to measure.
+ * The candidate's match against one job, 0-100, or `null` when their profile
+ * states none of skills, values or work modes yet.
  */
 export const computeJobMatch = (profile: MatchProfile, job: MatchJob): number | null => {
   if (!hasAnythingToCompare(profile)) return null;
@@ -124,17 +134,25 @@ const demo = () => {
   // Skills 3.7/6, values 1.71/4, location 1 (no coordinates yet) at 40/40/20.
   assert(computeJobMatch(profile, job) === 62, "worked example without distance is 62");
 
-  // A part with nothing to compare drops out and the rest rescale: values alone.
-  assert(computeJobMatch(profile, { values: job.values }) === 43, "values alone is 43");
-  assert(computeJobMatch(profile, { workplace: "onsite" }) === 80, "location alone: onsite job, hybrid candidate");
+  // A part with nothing to compare scores 0 at its full weight; nothing rescales.
+  assert(computeJobMatch(profile, { values: job.values }) === 17, "a job with only values: 0.4 x 0.4275");
+  assert(computeJobMatch(profile, { workplace: "onsite" }) === 16, "a job with only a workplace: 0.2 x 0.8");
+  assert(computeJobMatch(profile, {}) === 0, "a job with nothing to compare scores 0");
 
-  assert(computeJobMatch(profile, {}) === null, "a job with nothing to compare is null");
-  assert(computeJobMatch({}, job) === null, "an empty profile is null, not a low score");
+  // Missing on the candidate's side counts as 0 too: no work mode set.
+  const { workModes, ...noWorkMode } = profile;
+  assert(workModes.length && computeJobMatch(noWorkMode, job) === 42, "no work mode loses the location share");
+  assert(
+    computeJobMatch(noWorkMode, { workplace: "remote" }) === 0,
+    "an old job with only a workplace, against no work mode, is 0, not 100"
+  );
+
+  assert(computeJobMatch({}, job) === null, "an empty profile is null, not 0");
   assert(
     computeJobMatch({ skills: "react", values: [], workModes: [] }, job) === null,
     "legacy free-text skills alone are nothing to compare"
   );
-  assert(computeJobMatch({ workModes: ["Remote"] }, { workplace: "onsite" }) === 30, "work modes alone still score");
+  assert(computeJobMatch({ workModes: ["Remote"] }, { workplace: "onsite" }) === 6, "work modes alone: 0.2 x 0.3");
 
   console.log("job match self-check ok");
 };

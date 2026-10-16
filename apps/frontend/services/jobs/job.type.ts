@@ -121,6 +121,9 @@ export interface JobData {
   updatedAt: string;
   alreadySaved?: boolean;
   alreadyApplied?: boolean;
+  // The viewer's match against the job, 0-100. Only on the candidate job list
+  // (GET /jobs); null when the profile has nothing to compare yet.
+  matchPercentage?: number | null;
 }
 
 export type JobListResponse = {
