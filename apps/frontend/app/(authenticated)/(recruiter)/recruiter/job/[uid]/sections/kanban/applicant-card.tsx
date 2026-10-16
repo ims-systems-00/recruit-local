@@ -92,13 +92,12 @@ export function ApplicantCardContent({
                 View Details
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
+            {/* <DropdownMenuItem>Edit</DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              // onClick={() => onDelete(applicant.id)}
             >
               Delete
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -124,7 +123,7 @@ export function ApplicantCardContent({
       {/* Applied date/time */}
       <div className="flex items-center justify-between">
         <span className=" text-label-sm font-label-sm-strong! text-text-gray-tertiary">
-          Applied on
+          92% match
         </span>
         <div className=" flex gap-spacing-sm items-center">
           <span className="flex items-center gap-spacing-2xs bg-others-gray-gray-zero py-spacing-3xs px-spacing-md rounded-full border border-others-gray-light ">

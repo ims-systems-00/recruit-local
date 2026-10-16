@@ -48,7 +48,17 @@ export const userColumns: ColumnDef<Application>[] = [
     accessorKey: 'rank',
     header: 'Rank ID',
   },
-
+  {
+    accessorKey: 'value_matching',
+    header: 'Value matching',
+    cell: ({ row }) => (
+      <div className="flex items-center gap-spacing-xs">
+        <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
+          {row?.original?.rank?.toFixed(2)}%
+        </span>
+      </div>
+    ),
+  },
   {
     accessorKey: 'status.label',
     header: 'Status',

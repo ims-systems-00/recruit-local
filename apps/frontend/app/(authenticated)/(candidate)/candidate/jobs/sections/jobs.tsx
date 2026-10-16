@@ -68,7 +68,7 @@ export default function Jobs() {
 
   return (
     <div className=" p-spacing-4xl">
-      <div className=" flex justify-between items-center gap-spacing-2xl">
+      <div className=" flex flex-col lg:flex-row lg:justify-between lg:items-center gap-spacing-2xl">
         <div className=" space-y-spacing-2xs">
           <h3 className=" text-body-xl font-body-xl-strong! text-text-gray-primary">
             Good Morning, {user?.firstName} {user?.lastName}
@@ -77,7 +77,7 @@ export default function Jobs() {
             Find and Filter your dream jobs with Recruit Local
           </p>
         </div>
-        <div className=" flex items-center gap-spacing-2xl">
+        <div className=" flex flex-col md:flex-row md:items-center gap-spacing-2xl">
           <InputGroup className=" min-w-[320px] max-w-[320px] h-10 rounded-lg shadow-xs border-border-gray-primary">
             <InputGroupInput
               type="text"
