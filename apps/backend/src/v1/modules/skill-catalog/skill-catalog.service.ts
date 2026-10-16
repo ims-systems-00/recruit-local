@@ -1,5 +1,5 @@
 import { IListParams, ListQueryParams } from "@rl/types";
-import { SkillCatalogInput, SkillCatalog, Job } from "../../../models";
+import { SkillCatalogInput, SkillCatalog, Job, JobProfile } from "../../../models";
 import { ConflictException, NotFoundException } from "../../../common/helper";
 import {
   matchQuery,
@@ -82,8 +82,9 @@ export const getOneSoftDeleted = async ({ query = {} }: ISkillCatalogListParams)
 };
 
 /**
- * The live, active entries among `ids` — what a job's `skills` are checked
- * against. An id missing from the result is unknown, deleted, or deactivated.
+ * The live, active entries among `ids` — what a job's or a profile's `skills`
+ * are checked against. An id missing from the result is unknown, deleted, or
+ * deactivated.
  */
 export const findActiveByIds = (ids: string[]) =>
   SkillCatalog.find({ _id: { $in: ids }, isActive: true, "deleteMarker.status": { $ne: true } })
@@ -116,14 +117,23 @@ export const softRemove = async ({ query }: { query: ISkillCatalogQueryParams })
 export const hardRemove = async ({ query }: { query: ISkillCatalogQueryParams }) => {
   const result = await getOneSoftDeleted({ query });
 
-  // Jobs hold their skills as bare ids, so deleting an entry outright would orphan
-  // them. Soft-deleted jobs count too: they can be restored. No race with a job
-  // adding it meanwhile — the entry is already in the trash, and a job's skills
-  // must be live entries.
-  const jobsUsingSkill = await Job.countDocuments({ "skills.skill": result._id });
-  if (jobsUsingSkill > 0) {
+  // Jobs and job profiles hold their skills as bare ids, so deleting an entry
+  // outright would orphan them. Soft-deleted ones count too: they can be
+  // restored. No race with either adding it meanwhile — the entry is already in
+  // the trash, and both only accept live entries.
+  const [jobsUsingSkill, profilesUsingSkill] = await Promise.all([
+    Job.countDocuments({ "skills.skill": result._id }),
+    JobProfile.countDocuments({ "skills.skill": result._id }),
+  ]);
+  if (jobsUsingSkill > 0 || profilesUsingSkill > 0) {
+    const usedBy = [
+      jobsUsingSkill > 0 ? `${jobsUsingSkill} job(s)` : null,
+      profilesUsingSkill > 0 ? `${profilesUsingSkill} candidate profile(s)` : null,
+    ]
+      .filter(Boolean)
+      .join(" and ");
     throw new ConflictException(
-      `This skill is used by ${jobsUsingSkill} job(s), so it cannot be permanently deleted. Leave it in the trash or deactivate it instead.`
+      `This skill is used by ${usedBy}, so it cannot be permanently deleted. Leave it in the trash or deactivate it instead.`
     );
   }
 
