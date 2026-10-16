@@ -1,7 +1,9 @@
 import * as yup from 'yup';
 import {
+  JOB_SKILL_LEVEL_ENUMS,
   ONBOARDING_STEP_ENUMS,
   PROFICIENCY,
+  PROFILE_SKILLS_MAX,
   VALUE_ANSWER_MAX_LENGTH,
   VALUE_ANSWER_MIN_LENGTH,
   VISIBILITY,
@@ -25,6 +27,32 @@ export const languageSchema = yup.object({
   createdAt: yup.string().optional(),
   updatedAt: yup.string().optional(),
 });
+
+const skillLevelSchema = yup
+  .mixed<JOB_SKILL_LEVEL_ENUMS>()
+  .oneOf(Object.values(JOB_SKILL_LEVEL_ENUMS));
+
+// One of the profile's skills as the API returns it, the catalogue entry populated.
+export const profileSkillSchema = yup.object({
+  skill: yup
+    .object({
+      _id: objectIdSchema.required(),
+      name: yup.string().required(),
+    })
+    .required(),
+  level: skillLevelSchema.required(),
+});
+
+// The same as create/update take it: a catalogue id and a level.
+const profileSkillsInputSchema = yup
+  .array()
+  .of(
+    yup.object({
+      skill: objectIdSchema.required('Skill is required'),
+      level: skillLevelSchema.required('Skill level is required'),
+    }),
+  )
+  .max(PROFILE_SKILLS_MAX, `You can add up to ${PROFILE_SKILLS_MAX} skills`);
 
 export const awsStorageSchema = yup.object({
   Name: yup.string().required('Name is required'),
@@ -50,7 +78,7 @@ export const jobProfileSchema = yup.object({
   workMode: yup.array().of(yup.string().required()).nullable().optional(),
   onboardingStep: yup.string().nullable().optional(),
   summary: yup.string().nullable().optional(),
-  skills: yup.string().nullable().optional(),
+  skills: yup.array().of(profileSkillSchema).nullable().optional(),
   interests: yup.string().nullable().optional(),
   keywords: yup.array().of(yup.string().required()).nullable().optional(),
   languages: yup.array().of(languageSchema).nullable().optional(),
@@ -84,7 +112,7 @@ export const createJobProfileSchema = yup.object({
   experienceLevel: yup.array().of(yup.string().required()).optional(),
   workMode: yup.array().of(yup.string().required()).optional(),
   keywords: yup.array().of(yup.string().required()).optional(),
-  skills: yup.string().optional(),
+  skills: profileSkillsInputSchema.optional(),
   interests: yup.string().optional(),
   languages: yup.array().of(languageSchema).optional(),
   kycDocumentStorage: awsStorageSchema
@@ -106,7 +134,7 @@ export const updateJobProfileSchema = yup.object({
   onboardingStep: yup.string().optional(),
   values: yup.array().of(yup.string()).optional(),
   summary: yup.string().optional(),
-  skills: yup.string().optional(),
+  skills: profileSkillsInputSchema.optional(),
   interests: yup.string().optional(),
   keywords: yup.array().of(yup.string().required()).optional(),
   languages: yup.array().of(languageSchema).optional(),

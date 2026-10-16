@@ -101,7 +101,8 @@ export default function About({ profile }: { profile: JobProfileData }) {
             Skills
           </p>
           <p className=" text-body-lg text-text-gray-tertiary">
-            {profile?.skills || 'N/A'}
+            {profile?.skills?.map(({ skill }) => skill.name).join(', ') ||
+              'N/A'}
           </p>
         </div>
         <div className=" space-y-spacing-2xl">

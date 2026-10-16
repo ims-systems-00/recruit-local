@@ -21,8 +21,17 @@ import {
   UseFormWatch,
 } from 'react-hook-form';
 import { cn } from '@/lib/utils';
-import { INDUSTRY_ENUMS, TENANT_TYPE } from '@rl/types';
+import {
+  INDUSTRY_ENUMS,
+  JOB_SKILL_LEVEL_ENUMS,
+  PROFILE_SKILLS_MAX,
+  ProfileSkillResponseDto,
+  TENANT_TYPE,
+} from '@rl/types';
 import LocationSelector from '@/components/location-selector';
+import CatalogueSkillPicker, {
+  CatalogueSkillRow,
+} from '@/components/skills/catalogue-skill-picker';
 import {
   JobProfileUpdateInput,
   JobTitle,
@@ -88,7 +97,8 @@ export const TENANT_INDUSTRY_OPTIONS = [
  *
  * `email` and `visibility` are deliberately absent, for the reasons given on
  * `update_my_profile` in the backend: email is an identity field, and who can
- * see the profile is not a thing to change as a side effect of a chat.
+ * see the profile is not a thing to change as a side effect of a chat. `skills`
+ * is absent too: it is picked from the skill catalogue, not written.
  *
  * The caps mirror the form's own yup schema where it has one (`name`) and are
  * otherwise a sanity bound — the point is to reject a runaway value before it
@@ -100,7 +110,6 @@ const FILLABLE_FIELDS = [
   { key: 'address', label: 'location', max: 200 },
   { key: 'contactNumber', label: 'contact number', max: 30 },
   { key: 'portfolioUrl', label: 'portfolio URL', max: 300 },
-  { key: 'skills', label: 'skills', max: 1000 },
   { key: 'interests', label: 'interests', max: 1000 },
 ] as const;
 
@@ -147,6 +156,19 @@ const parseProfileFields = (args: Record<string, unknown>) => {
   return filled;
 };
 
+// A stable default, since the skills effect below re-runs whenever it changes.
+const NO_SKILLS: ProfileSkillResponseDto[] = [];
+
+const toSkillRows = (skills: ProfileSkillResponseDto[]): CatalogueSkillRow[] =>
+  skills.map(({ skill, level }) => ({
+    id: skill._id,
+    name: skill.name,
+    level,
+  }));
+
+const toSkillInputs = (rows: CatalogueSkillRow[]) =>
+  rows.map(({ id, level }) => ({ skill: id, level }));
+
 type EditProfileProps = {
   register: UseFormRegister<JobProfileUpdateInput>;
   control: Control<JobProfileUpdateInput>;
@@ -154,6 +176,7 @@ type EditProfileProps = {
   existingJobTitles?: JobTitleData[];
   existingIndustries?: IndustryData[];
   existingWorkModes?: WorkModeData[];
+  existingSkills?: ProfileSkillResponseDto[];
   setValue: UseFormSetValue<JobProfileUpdateInput>;
   watch: UseFormWatch<JobProfileUpdateInput>;
 };
@@ -165,6 +188,7 @@ export default function EditProfile({
   existingJobTitles = [],
   existingIndustries = [],
   existingWorkModes = [],
+  existingSkills = NO_SKILLS,
   setValue,
   watch,
 }: EditProfileProps) {
@@ -196,6 +220,27 @@ export default function EditProfile({
   useEffect(() => {
     setSavedWorkModes(existingWorkModes);
   }, [existingWorkModes]);
+
+  // The picker's rows carry the names; the form holds only ids and levels.
+  const [skillRows, setSkillRows] = useState<CatalogueSkillRow[]>(() =>
+    toSkillRows(existingSkills),
+  );
+
+  // Start from the saved skills each time the form opens, and put the form value
+  // back in step with them: the form outlives a cancelled edit, these rows do not.
+  useEffect(() => {
+    const rows = toSkillRows(existingSkills);
+    setSkillRows(rows);
+    setValue('skills', toSkillInputs(rows));
+  }, [existingSkills, setValue]);
+
+  const handleSkillsChange = (rows: CatalogueSkillRow[]) => {
+    setSkillRows(rows);
+    setValue('skills', toSkillInputs(rows), {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+  };
 
   const { jobTitles, isLoading, isFetching } = useJobTitles({
     limit: 20,
@@ -244,7 +289,7 @@ export default function EditProfile({
    *
    * The text fields go in as excerpts, not in full. The server caps a page state
    * at 2,000 serialized characters and rejects the whole request over it, and a
-   * filled-in summary, skills and interests together run past that on their own.
+   * filled-in summary and interests together run past that on their own.
    * An excerpt is enough for what Alice needs it for — knowing whether a field
    * is filled and roughly what it says — and `length` carries the rest.
    */
@@ -260,7 +305,7 @@ export default function EditProfile({
       address: excerpt(watch('address')),
       contactNumber: excerpt(watch('contactNumber')),
       portfolioUrl: excerpt(watch('portfolioUrl')),
-      skills: excerpt(watch('skills')),
+      skills: skillRows.map((row) => row.name),
       interests: excerpt(watch('interests')),
       jobTitles: savedJobTitles.map((option) => option.name),
       industries: savedIndustries.map((option) => option.name),
@@ -357,7 +402,7 @@ export default function EditProfile({
     name: 'fill_profile_fields',
     description:
       "Fill in the written fields on the user's open profile form: display name, summary, " +
-      'location, contact number, portfolio URL, skills or interests. Pass only the fields being ' +
+      'location, contact number, portfolio URL or interests. Pass only the fields being ' +
       'changed — anything left out keeps its current value. Use what the user told you; do not ' +
       'invent details about them. This does not save; the user presses Save.',
     parameters: {
@@ -380,7 +425,6 @@ export default function EditProfile({
           type: 'string',
           description: 'Full URL including https://.',
         },
-        skills: { type: 'string', description: 'Their skills, as prose.' },
         interests: {
           type: 'string',
           description: 'Their interests, as prose.',
@@ -981,17 +1025,19 @@ export default function EditProfile({
             <Label className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
               Skills
             </Label>
-            <div className=" space-y-spacing-sm ">
-              <InputGroup className="rounded-lg shadow-xs border-border-gray-primary">
-                <InputGroupTextarea
-                  placeholder="Eg. React, Node.js, MongoDB"
-                  {...register('skills')}
-                  className="min-h-[136px] text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
-                />
-              </InputGroup>
-              {errors.skills && (
-                <p className="text-sm text-red-500">{errors.skills.message}</p>
-              )}
+            <div className=" space-y-spacing-2xl">
+              <CatalogueSkillPicker
+                rows={skillRows}
+                onChange={handleSkillsChange}
+                newRow={(item) => ({
+                  id: item._id,
+                  name: item.name,
+                  level: JOB_SKILL_LEVEL_ENUMS.INTERMEDIATE,
+                })}
+                max={PROFILE_SKILLS_MAX}
+                levelHeading="Your Level"
+                error={errors.skills?.message}
+              />
             </div>
           </div>
           <div className="space-y-spacing-xs sm:col-span-2">

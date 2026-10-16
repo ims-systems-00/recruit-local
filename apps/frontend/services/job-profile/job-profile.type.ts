@@ -1,6 +1,11 @@
 import * as yup from 'yup';
 import type { CursorPaginatedResponse, ApiResponse } from '@/types/api';
-import { PROFICIENCY, ValueScoreResponseDto, VISIBILITY } from '@rl/types';
+import {
+  PROFICIENCY,
+  ProfileSkillResponseDto,
+  ValueScoreResponseDto,
+  VISIBILITY,
+} from '@rl/types';
 import {
   createJobProfileSchema,
   updateJobProfileSchema,
@@ -24,7 +29,8 @@ export interface JobProfileData {
   contactNumber: string;
   portfolioUrl: string;
   summary: string;
-  skills: string;
+  // Catalogue skills, each with the candidate's level in it.
+  skills: ProfileSkillResponseDto[];
   interests: string;
   kycStatus?: string;
 

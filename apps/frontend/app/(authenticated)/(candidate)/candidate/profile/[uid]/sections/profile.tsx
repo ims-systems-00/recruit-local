@@ -33,7 +33,7 @@ import TakenTests from './taken-tests/taken-tests';
 import Applied from './applied/applied';
 import Documents from './documents/documents';
 import Values from './values/values';
-import { VISIBILITY } from '@rl/types';
+import { ProfileSkillResponseDto, VISIBILITY } from '@rl/types';
 import FileUploader from '@/components/file-uploader';
 import { Camera, CircleQuestionMark, Info, ShieldCheck, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -45,6 +45,10 @@ import {
   usePageAction,
   usePageContext,
 } from '@/components/ai-chat/page-context';
+
+// The profile's skills as the update form holds them: catalogue id and level.
+const toSkillInputs = (skills?: ProfileSkillResponseDto[]) =>
+  (skills ?? []).map(({ skill, level }) => ({ skill: skill._id, level }));
 
 export default function Profile({
   jobProfileData,
@@ -85,6 +89,10 @@ export default function Profile({
     () => jobProfileDetails?.workMode ?? [],
     [jobProfileDetails?.workMode],
   );
+  const existingSkills = useMemo(
+    () => jobProfileDetails?.skills ?? [],
+    [jobProfileDetails?.skills],
+  );
 
   const { updateJobProfile, isPending } = useUpdateJobProfile();
   const methods = useForm<JobProfileUpdateInput>({
@@ -98,7 +106,7 @@ export default function Profile({
       contactNumber: jobProfileDetails?.contactNumber || '',
       address: jobProfileDetails?.address || '',
       summary: jobProfileDetails?.summary || '',
-      skills: jobProfileDetails?.skills || '',
+      skills: toSkillInputs(jobProfileDetails?.skills),
       interests: jobProfileDetails?.interests || '',
       portfolioUrl: jobProfileDetails?.portfolioUrl || '',
       keywords: jobProfileDetails?.keywords || [],
@@ -119,7 +127,7 @@ export default function Profile({
   const {
     register,
     control,
-    formState: { errors },
+    formState: { errors, dirtyFields },
     handleSubmit,
     reset,
     setValue,
@@ -130,6 +138,11 @@ export default function Profile({
     const payload = {
       ...data,
     };
+
+    // Skills go only when changed: the server checks every one sent against the
+    // catalogue, so resending an untouched list would fail the whole save once
+    // any of its skills had been retired.
+    if (!dirtyFields.skills) delete payload.skills;
 
     const cleanPayload = Object.fromEntries(
       Object.entries(payload).filter(
@@ -317,7 +330,7 @@ export default function Profile({
       contactNumber: jobProfileDetails?.contactNumber,
       address: jobProfileDetails?.address,
       summary: jobProfileDetails?.summary,
-      skills: jobProfileDetails?.skills,
+      skills: toSkillInputs(jobProfileDetails?.skills),
       interests: jobProfileDetails?.interests,
       portfolioUrl: jobProfileDetails?.portfolioUrl,
       keywords: jobProfileDetails?.keywords,
@@ -627,6 +640,7 @@ export default function Profile({
             control={control}
             errors={errors}
             existingJobTitles={existingJobTitles}
+            existingSkills={existingSkills}
             setValue={setValue}
             watch={watch}
           />
