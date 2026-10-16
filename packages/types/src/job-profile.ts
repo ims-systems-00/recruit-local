@@ -1,5 +1,7 @@
 import { PROFICIENCY } from './enums';
 import { FileMediaRefDto } from './file-media';
+import { NamedCatalogResponseDto } from './catalog';
+import { JOB_SKILL_LEVEL_ENUMS } from './job';
 
 /**
  * Compact, public shape of the job profile (seeker) that owns another document
@@ -24,6 +26,19 @@ export interface JobProfileSummaryDto {
 export interface language {
   name: string;
   proficiencyLevel: PROFICIENCY;
+}
+
+/** Most skills one profile may list. Shared so the form and the validator agree. */
+export const PROFILE_SKILLS_MAX = 20;
+
+/**
+ * Public HTTP shape of one of a profile's skills, with the catalogue entry
+ * populated. `level` is on the same scale a job asks for, so the two compare
+ * directly; there is no `requirement` — that is the employer's side.
+ */
+export interface ProfileSkillResponseDto {
+  skill: NamedCatalogResponseDto;
+  level: JOB_SKILL_LEVEL_ENUMS;
 }
 
 export enum JOB_PROFILE_STATUS_ENUM {
