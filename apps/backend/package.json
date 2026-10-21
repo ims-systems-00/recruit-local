@@ -24,6 +24,7 @@
     "backfill:completion:dev": "env-cmd -f ./.env.dev ts-node ./src/scripts/backfill-completion.ts",
     "backfill:keywords:dev": "env-cmd -f ./.env.dev ts-node ./src/scripts/backfill-keywords.ts",
     "backfill:embeddings:dev": "env-cmd -f ./.env.dev ts-node ./src/scripts/backfill-embeddings.ts",
+    "backfill:geo:dev": "env-cmd -f ./.env.dev ts-node ./src/scripts/backfill-geo.ts",
     "search-indexes:dev": "env-cmd -f ./.env.dev ts-node ./src/scripts/ensure-search-indexes.ts",
     "search-indexes:prod": "node dist/src/scripts/ensure-search-indexes.js",
     "check:list-query": "ts-node ./src/scripts/check-list-query.ts",

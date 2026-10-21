@@ -3,7 +3,7 @@ import { JOB_MATCH_PART_ENUMS, JOB_MATCH_WEIGHTS } from "@rl/types";
 import { RankingMatcher, runMatchers } from "../../application/ranking/pipeline";
 import { matchSkills } from "./skill";
 import { matchValueScores } from "./value";
-import { matchLocation } from "./location";
+import { fromGeoJson, matchLocation } from "./location";
 
 /**
  * A candidate's overall match against one job, as a percentage.
@@ -34,6 +34,8 @@ export interface MatchProfile {
   valueScores?: unknown;
   /** Names of the candidate's preferred work modes. */
   workModes?: unknown;
+  /** The candidate's geocoded address, as stored (GeoJSON). */
+  geo?: unknown;
 }
 
 /** The parts of a job the matchers read, as the job list returns it. */
@@ -41,6 +43,8 @@ export interface MatchJob {
   skills?: unknown;
   values?: unknown;
   workplace?: unknown;
+  /** The job's geocoded location, as stored (GeoJSON). */
+  geo?: unknown;
 }
 
 interface JobMatchContext {
@@ -76,7 +80,12 @@ const JOB_MATCHERS: RankingMatcher<JobMatchContext>[] = [
     label: "Location",
     weight: JOB_MATCH_WEIGHTS[LOCATION],
     run: ({ job, profile }) =>
-      missingCountsAsZero(matchLocation({ workplace: job.workplace }, { workModes: profile.workModes })),
+      missingCountsAsZero(
+        matchLocation(
+          { workplace: job.workplace, point: fromGeoJson(job.geo) },
+          { workModes: profile.workModes, point: fromGeoJson(profile.geo) }
+        )
+      ),
   },
 ];
 
@@ -131,8 +140,22 @@ const demo = () => {
     workModes: ["Hybrid"],
   };
 
-  // Skills 3.7/6, values 1.71/4, location 1 (no coordinates yet) at 40/40/20.
+  // Skills 3.7/6, values 1.71/4, location 1 (no coordinates) at 40/40/20.
   assert(computeJobMatch(profile, job) === 62, "worked example without distance is 62");
+
+  // Distance counts once both sides have a point: 28 km from a hybrid job keeps 0.8.
+  const london = { type: "Point", coordinates: [-0.1278, 51.5074] };
+  const north28 = { type: "Point", coordinates: [-0.1278, 51.5074 + 28 / ((6371 * Math.PI) / 180)] };
+  const paris = { type: "Point", coordinates: [2.3522, 48.8566] };
+  assert(computeJobMatch({ ...profile, geo: north28 }, { ...job, geo: london }) === 58, "worked example is 58");
+  assert(
+    computeJobMatch({ ...profile, geo: paris }, { ...job, geo: london }) === 42,
+    "too far loses the location share"
+  );
+  assert(
+    computeJobMatch(profile, { ...job, geo: london }) === 62,
+    "without the candidate's point, distance is skipped"
+  );
 
   // A part with nothing to compare scores 0 at its full weight; nothing rescales.
   assert(computeJobMatch(profile, { values: job.values }) === 17, "a job with only values: 0.4 x 0.4275");

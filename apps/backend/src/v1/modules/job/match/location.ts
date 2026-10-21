@@ -63,6 +63,18 @@ export interface GeoPoint {
   lng: number;
 }
 
+/**
+ * A stored GeoJSON point — `geo` on a job or profile, `[longitude, latitude]` —
+ * as the `{ lat, lng }` this matcher works in, or `null` when there is none or
+ * it is malformed. Range and the 0/0 placeholder are left to `isUsablePoint`.
+ */
+export const fromGeoJson = (geo: unknown): GeoPoint | null => {
+  const coordinates = (geo as { coordinates?: unknown } | null | undefined)?.coordinates;
+  if (!Array.isArray(coordinates) || coordinates.length !== 2) return null;
+  const [lng, lat] = coordinates;
+  return typeof lat === "number" && typeof lng === "number" ? { lat, lng } : null;
+};
+
 export interface LocationMatchJob {
   /** The job's `workplace`. */
   workplace?: unknown;
@@ -217,6 +229,11 @@ const demo = () => {
   assert(!matchLocation({ workplace: "anywhere" }, {}).applicable, "an unknown workplace reads as none");
   const placeOnly = matchLocation({ point: london }, { point: { lat: london.lat + 0.3, lng: london.lng } });
   assert(placeOnly.applicable && placeOnly.ratio < 1, "coordinates without a workplace score distance as onsite");
+
+  const stored = fromGeoJson({ type: "Point", coordinates: [-2.2426, 53.4808] });
+  assert(stored?.lat === 53.4808 && stored.lng === -2.2426, "GeoJSON is read as [longitude, latitude]");
+  assert(fromGeoJson(undefined) === null && fromGeoJson({ coordinates: [1] }) === null, "no or short point is null");
+  assert(fromGeoJson({ coordinates: ["-2", "53"] }) === null, "non-numeric coordinates are null");
 
   console.log("location match self-check ok");
 };

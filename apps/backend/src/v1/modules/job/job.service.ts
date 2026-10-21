@@ -33,6 +33,7 @@ import {
 } from "./job.interface";
 import * as statusService from "../status/status.service";
 import { enqueueJobKeywords } from "../../../queue/keywordUpdateQueue";
+import { enqueueJobGeocode } from "../../../queue/geocodeQueue";
 
 /**
  * Helper to fetch tenant data for job autofill
@@ -247,6 +248,7 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
   });
 
   await enqueueJobKeywords(job.id);
+  if (job.location) await enqueueJobGeocode(job.id);
 
   // Reads return each skill as `{ _id, name }` and each value as `{ _id, label,
   // type }` (jobSkillsLookupQuery / jobValuesLookupQuery); match that.
@@ -309,6 +311,8 @@ export const update = async ({ query, payload, session }: IJobUpdateParams) => {
   if (!updatedJob) throw new NotFoundException("Job not found.");
 
   await enqueueJobKeywords((updatedJob as any)._id);
+  // Only a sent location can have changed; the worker skips text it has already geocoded.
+  if (cleanPayload.location !== undefined) await enqueueJobGeocode((updatedJob as any)._id);
 
   const jobResponse = await getOne({ query: { _id: (updatedJob as any)._id.toString() }, session });
   return jobResponse;
