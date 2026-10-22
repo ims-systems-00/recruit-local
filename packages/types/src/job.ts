@@ -170,6 +170,8 @@ export interface JobValueResponseDto {
 export enum JOB_MATCH_PART_ENUMS {
   SKILLS = 'skills',
   VALUES = 'values',
+  /** Whether the job is the kind of role the candidate is after. */
+  ROLE = 'role',
   LOCATION = 'location',
 }
 
@@ -179,9 +181,10 @@ export enum JOB_MATCH_PART_ENUMS {
  * (a job with no skills, a candidate with no work mode), scores 0.
  */
 export const JOB_MATCH_WEIGHTS: Record<JOB_MATCH_PART_ENUMS, number> = {
-  [JOB_MATCH_PART_ENUMS.SKILLS]: 40,
-  [JOB_MATCH_PART_ENUMS.VALUES]: 40,
-  [JOB_MATCH_PART_ENUMS.LOCATION]: 20,
+  [JOB_MATCH_PART_ENUMS.SKILLS]: 35,
+  [JOB_MATCH_PART_ENUMS.VALUES]: 35,
+  [JOB_MATCH_PART_ENUMS.ROLE]: 15,
+  [JOB_MATCH_PART_ENUMS.LOCATION]: 15,
 };
 
 /**
