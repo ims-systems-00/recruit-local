@@ -4,7 +4,7 @@ import { redisConnection, REDIS_KEY_PREFIX } from "../../../.config/ioredis";
 /**
  * Per-profile "matched jobs" feed, maintained by the fan-out workers.
  *
- * Stored as a Redis ZSET `rl:jobfeed:{profileId}` — member = jobId, score = the
+ * Stored as a Redis ZSET `rl:jobfeed:v2:{profileId}` — member = jobId, score = the
  * job's match percentage for that profile (`computeJobMatch`); keyword overlap
  * only decides which jobs are scored.
  *
@@ -16,7 +16,21 @@ import { redisConnection, REDIS_KEY_PREFIX } from "../../../.config/ioredis";
 
 // ponytail: cap each feed to the top matches; deep pagination isn't feed-served.
 const FEED_CAP = 300;
-const feedKey = (profileId: string) => `${REDIS_KEY_PREFIX}:jobfeed:${profileId}`;
+
+/**
+ * v2 since the score became the match percentage. The unversioned feeds held
+ * keyword overlap counts, which must never sort against percentages;
+ * `scripts/cleanup-job-feeds.ts` deletes them.
+ */
+const feedKey = (profileId: string) => `${REDIS_KEY_PREFIX}:jobfeed:v2:${profileId}`;
+
+const LEGACY_FEED_KEY = new RegExp(`^${REDIS_KEY_PREFIX}:jobfeed:[0-9a-f]{24}$`);
+
+/** SCAN pattern covering the pre-v2 feeds. It matches v2 feeds too, so filter with `isLegacyFeedKey`. */
+export const LEGACY_FEED_KEY_MATCH = `${REDIS_KEY_PREFIX}:jobfeed:*`;
+
+/** Whether a key is a pre-v2 feed, `rl:jobfeed:<profileId>`. */
+export const isLegacyFeedKey = (key: string): boolean => LEGACY_FEED_KEY.test(key);
 
 /** Keyword overlap count between a doc's keywords and a prebuilt set. */
 export const keywordOverlap = (keywords: string[] | undefined, against: Set<string>): number =>
@@ -70,6 +84,11 @@ const demo = () => {
 
   const top = topScored([{ score: 1 }, { score: 5 }, { score: 0 }, { score: 3 }], 2);
   assert(top.length === 2 && top[0].score === 5 && top[1].score === 3, "topScored must keep highest N, drop score 0");
+
+  const profileId = "64b7f0c2a1b2c3d4e5f60718";
+  assert(isLegacyFeedKey(`rl:jobfeed:${profileId}`), "an unversioned feed is legacy");
+  assert(!isLegacyFeedKey(feedKey(profileId)), "a v2 feed is not legacy");
+  assert(!isLegacyFeedKey("rl:jobfeed:not-an-id") && !isLegacyFeedKey("rl:postfeed:" + profileId), "only feed ids");
 
   console.log("feed self-check ok");
   // Importing this module opens the shared Redis socket; exit before its async
