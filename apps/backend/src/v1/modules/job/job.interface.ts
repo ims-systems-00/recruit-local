@@ -24,12 +24,15 @@ export interface IJobListParams extends IServiceListParams<IJobDoc> {
   jobProfileId?: string;
   // When set, jobs get a `matchScore` = keyword overlap with these, for ranking.
   matchKeywords?: string[];
+  // When set, jobs get a `feedRank` = their position in this list — the viewer's
+  // feed, best match first — for matched mode's ordering.
+  feedOrder?: string[];
   // When set, the pipeline opens with a hybrid Atlas search stage instead of $match.
   searchTerm?: string;
   searchVector?: number[];
   searchPreFilter?: JobSearchPreFilter;
-  // Set only in the cursor modes that cannot key on a stored field — relevance
-  // and matchScore ordering. Plain mode narrows with a keyset $match instead.
+  // Set only in the cursor modes that cannot key on a stored field — relevance,
+  // matchScore and feedRank ordering. Plain mode narrows with a keyset $match instead.
   offset?: number;
 }
 export interface IJobGetParams extends IServiceGetParams<IJobDoc> {

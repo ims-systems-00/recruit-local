@@ -61,6 +61,7 @@ export const list = async ({
   tenantId,
   jobProfileId,
   matchKeywords,
+  feedOrder,
   searchTerm,
   searchVector,
   searchPreFilter,
@@ -81,6 +82,20 @@ export const list = async ({
           {
             $addFields: {
               matchScore: { $size: { $setIntersection: [{ $ifNull: ["$keywords", []] }, matchKeywords] } },
+            },
+          },
+        ]
+      : []),
+    ...(feedOrder?.length
+      ? [
+          {
+            $addFields: {
+              feedRank: {
+                $indexOfArray: [
+                  feedOrder.filter((id) => Types.ObjectId.isValid(id)).map((id) => new Types.ObjectId(id)),
+                  "$_id",
+                ],
+              },
             },
           },
         ]

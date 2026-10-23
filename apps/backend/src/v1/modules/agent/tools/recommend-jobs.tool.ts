@@ -9,6 +9,8 @@ import * as jobService from "../../job/job.service";
 import { jobRoleScopedSecurityQuery } from "../../job/job.query";
 import { getProfileKeywords } from "../../job/keyword.service";
 import { readFeedIds } from "../../job/feed.service";
+import { computeJobMatch } from "../../job/match/job-match";
+import { loadMatchProfile } from "../../job/match/profile.service";
 import { enqueueProfileFeedRebuild } from "../../../../queue/profileFeedRebuildQueue";
 import { AgentTool, AgentToolContext } from "./tool.types";
 import { jobFieldOptions, rulesCollapsed, present, JOB_SUMMARY_FIELDS } from "./tool.shared";
@@ -29,33 +31,41 @@ interface RecommendJobsInput {
   excludeApplied?: boolean;
 }
 
-/** The same row shape `list_jobs` returns, plus the match fields added below. */
-const RESULT_FIELDS = JOB_SUMMARY_FIELDS;
+/**
+ * The same row shape `list_jobs` returns, plus the candidate's match percentage
+ * and the keyword fields added below.
+ */
+const RESULT_FIELDS = [...JOB_SUMMARY_FIELDS, "matchPercentage"];
 
 /**
  * Recommends open jobs to the signed-in candidate, best match first.
  *
  * This is the tool form of the jobs list's `matched` mode, and reuses the same
- * three pieces: the profile's `keywords`, the precomputed Redis feed that
- * narrows the collection to jobs already known to overlap it, and Mongo's
- * `$setIntersection` scoring over `Job.keywords`. Both sides of that
- * intersection are built by `buildKeywords`, which is what makes the vocabulary
- * comparable at all.
+ * pieces: the profile's `keywords`, and the precomputed Redis feed of jobs that
+ * overlap them, kept best match percentage first. A warm feed's order is the
+ * order returned. When the user adds keywords of their own, or the feed is
+ * cold, jobs are ranked instead by Mongo's `$setIntersection` overlap over
+ * `Job.keywords`. Both sides of that intersection are built by `buildKeywords`,
+ * which is what makes the vocabulary comparable at all.
  *
- * The one thing it adds is the reason: the list endpoint sorts by overlap but
- * never says which words overlapped, and "you match this job" is not an answer a
- * candidate can act on. `matchedKeywords` is recomputed here from the sanitized
- * document, so it can only ever name words the caller was allowed to read.
+ * Each row carries the candidate's `matchPercentage`, the number on their job
+ * list, and the reason: the list endpoint never says which words overlapped,
+ * and "you match this job" is not an answer a candidate can act on.
+ * `matchedKeywords` is recomputed here from the sanitized document, so it can
+ * only ever name words the caller was allowed to read.
  */
 export const recommendJobsTool: AgentTool<RecommendJobsInput> = {
   name: "recommend_jobs",
   description:
-    "Recommend open jobs for the user to apply to, best match first, by keyword overlap between their profile " +
-    "and the job. Use for what they should apply for or what suits them. " +
+    "Recommend open jobs for the user to apply to, best match first. Without `keywords`, ranked by their match " +
+    "percentage — the 0-100 number on their job list, from skills, values, role and location. With `keywords`, " +
+    "ranked by keyword overlap between the job and those words plus their profile. " +
+    "Use for what they should apply for or what suits them. " +
     'Pass `keywords` when the question narrows the ask ("remote react jobs") — matched in addition to their ' +
     "profile, not instead of it. " +
-    "Each result carries `matchedKeywords` and `matchStrength`, a count of shared terms — not a percentage, and " +
-    "not the match score an employer sees. Explain a recommendation from those words. " +
+    "Each result carries `matchPercentage` — their own match, not the score an employer sees, and absent until " +
+    "their profile has something to compare — plus `matchedKeywords` and `matchStrength`, a count of shared " +
+    "terms. Explain a recommendation from those. " +
     "An empty result means too few profile keywords, which analyze_my_profile diagnoses — not that no jobs are open.",
 
   parameters: {
@@ -128,17 +138,18 @@ export const recommendJobsTool: AgentTool<RecommendJobsInput> = {
       };
     }
 
-    // Narrow to the precomputed feed so Mongo scores only jobs already known to
-    // overlap. A cold or evicted feed is rebuilt in the background and this run
-    // falls through to matching the whole collection — correct, just not
-    // accelerated. Skipped entirely when the user supplied their own keywords,
-    // since the feed was built from the profile alone and would exclude the very
-    // jobs they just asked for.
+    // Narrow to the precomputed feed, and follow its order: it is kept best match
+    // percentage first. A cold or evicted feed is rebuilt in the background and
+    // this run falls through to ranking the whole collection by keyword overlap
+    // — correct, just coarser. Skipped entirely when the user supplied their own
+    // keywords, since the feed was built from the profile alone and would
+    // exclude the very jobs they just asked for.
     let feedIds: string[] = [];
     if (askedKeywords.length === 0) {
       feedIds = await readFeedIds(jobProfileId);
       if (!feedIds.length) await enqueueProfileFeedRebuild(jobProfileId);
     }
+    const byFeed = feedIds.length > 0;
 
     const limit = Math.min(input.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const excludeApplied = input.excludeApplied ?? true;
@@ -151,19 +162,32 @@ export const recommendJobsTool: AgentTool<RecommendJobsInput> = {
       ],
     };
 
-    const results = await jobService.list({
-      query,
-      options: {
-        limit: excludeApplied ? limit * OVERFETCH : limit,
-        sort: "-matchScore -createdAt",
-      },
-      tenantId: ctx.session.tenantId,
-      jobProfileId,
-      matchKeywords,
-    });
+    // The profile is read alongside the jobs, not after them. Both promises are
+    // awaited in the same tick they are created, so neither can reject unobserved.
+    const [results, matchProfile] = await Promise.all([
+      jobService.list({
+        query,
+        options: {
+          limit: excludeApplied ? limit * OVERFETCH : limit,
+          sort: byFeed ? "feedRank" : "-matchScore -createdAt",
+        },
+        tenantId: ctx.session.tenantId,
+        jobProfileId,
+        // A warm feed's order replaces keyword overlap, so matchScore is not computed.
+        matchKeywords: byFeed ? undefined : matchKeywords,
+        feedOrder: byFeed ? feedIds : undefined,
+      }),
+      loadMatchProfile(jobProfileId),
+    ]);
+
+    // Scored on the raw documents, as the jobs list does: sanitizing drops `geo`,
+    // and distance is part of the match.
+    const scored = matchProfile
+      ? results.docs.map((doc) => ({ ...doc, matchPercentage: computeJobMatch(matchProfile, doc) }))
+      : results.docs;
 
     const jobs = sanitizeDocuments<Record<string, any>>(
-      results.docs,
+      scored,
       ability,
       AbilityAction.Read,
       JobAuthZEntity,

@@ -92,6 +92,7 @@ export const list = async ({ req }: ControllerParams) => {
   let searchTerm: string | undefined;
   let searchVector: number[] | undefined;
   let matchKeywords: string[] | undefined;
+  let feedOrder: string[] | undefined;
 
   const listing = runCursorList({
     query: req.query,
@@ -110,16 +111,23 @@ export const list = async ({ req }: ControllerParams) => {
           // Ranking is the point of matched mode — sort best-match first. A search
           // term outranks it: $rankFusion already ordered those results, and any
           // trailing $sort would throw that ordering away.
-          options.sort = "-matchScore -createdAt";
-
-          // Narrow to the precomputed feed so Mongo scores/sorts only the already
+          //
+          // Narrow to the precomputed feed so Mongo sorts only the already
           // matched candidates instead of the whole collection. Skipped when there
           // is a search term: the feed is capped at 300 profile-matched ids, so
           // searching inside it hides every job outside the candidate's keywords.
           feedIds = await readFeedIds(req.session.jobProfileId);
-          // Cold/evicted feed → build it in the background; this request still
-          // matches over the full collection (correct, just not accelerated).
-          if (!feedIds.length) await enqueueProfileFeedRebuild(req.session.jobProfileId);
+          if (feedIds.length) {
+            // The feed is kept best match first by match percentage — the number
+            // on each card — so the list follows the feed's own order.
+            feedOrder = feedIds;
+            options.sort = "feedRank";
+          } else {
+            // Cold/evicted feed → build it in the background; this request ranks
+            // the full collection by keyword overlap instead (correct, coarser).
+            options.sort = "-matchScore -createdAt";
+            await enqueueProfileFeedRebuild(req.session.jobProfileId);
+          }
         }
       }
 
@@ -144,7 +152,9 @@ export const list = async ({ req }: ControllerParams) => {
         options,
         tenantId: req.session.tenantId,
         jobProfileId: req.session.jobProfileId,
-        matchKeywords,
+        // A warm feed's order replaces keyword overlap, so matchScore is not computed.
+        matchKeywords: feedOrder ? undefined : matchKeywords,
+        feedOrder,
         searchTerm,
         searchVector,
         searchPreFilter: jobSearchPreFilter(req.session),
