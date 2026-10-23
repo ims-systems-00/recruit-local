@@ -4,11 +4,14 @@ import { redisConnection, REDIS_KEY_PREFIX } from "../../../.config/ioredis";
 /**
  * Per-profile "matched jobs" feed, maintained by the fan-out workers.
  *
- * Stored as a Redis ZSET `rl:jobfeed:{profileId}` — member = jobId, score = keyword
- * overlap count. It is a *candidate index*, not the source of truth: the jobs
- * list constrains its normal aggregation with `_id $in <feed>`, so security,
- * soft-delete and status filters still run in Mongo and any stale/closed jobs in
- * the feed simply drop out at read time (no per-mutation invalidation needed).
+ * Stored as a Redis ZSET `rl:jobfeed:{profileId}` — member = jobId, score = the
+ * job's match percentage for that profile (`computeJobMatch`); keyword overlap
+ * only decides which jobs are scored.
+ *
+ * It is a *candidate index*, not the source of truth: the jobs list constrains
+ * its normal aggregation with `_id $in <feed>`, so security, soft-delete and
+ * status filters still run in Mongo and any stale/closed jobs in the feed simply
+ * drop out at read time (no per-mutation invalidation needed).
  */
 
 // ponytail: cap each feed to the top matches; deep pagination isn't feed-served.
@@ -33,6 +36,11 @@ export const addJobToFeed = async (profileId: string, jobId: string, score: numb
   await redisConnection.zadd(key, score, jobId);
   // Drop everything below the top FEED_CAP (ranks 0..len-CAP-1 are the lowest).
   await redisConnection.zremrangebyrank(key, 0, -(FEED_CAP + 1));
+};
+
+/** Drop one job from a profile's feed, once it no longer matches that profile. */
+export const removeJobFromFeed = async (profileId: string, jobId: string): Promise<void> => {
+  await redisConnection.zrem(feedKey(profileId), jobId);
 };
 
 /** Replace a profile's whole feed (used by the profile rebuild worker). */
