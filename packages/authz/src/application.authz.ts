@@ -33,6 +33,7 @@ export const ALL_APPLICATION_FIELDS = [
 
   // --- Ranking (application-ranking queue) ---
   'matchScore',
+  'matchBreakdown',
 
   // --- Job Profile Plugin (JobProfileInput) ---
   'jobProfileId',
@@ -91,6 +92,7 @@ const CANDIDATE_READ_FIELDS = omitFields([
   'deletedAt',
   'rank',
   'matchScore',
+  'matchBreakdown',
   'answers',
   'answers.expectedAnswer',
 ]);

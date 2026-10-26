@@ -48,6 +48,33 @@ export interface ApplicationFileDto {
 }
 
 /**
+ * The parts an application's `matchScore` is ranked on. The first four line up
+ * with `JOB_MATCH_PART_ENUMS`, the candidate's own match against a job.
+ */
+export enum APPLICATION_MATCH_PART_ENUMS {
+  VALUES = 'values',
+  SKILLS = 'skills',
+  ROLE = 'role',
+  LOCATION = 'location',
+  /** How the candidate answered the job's screening questions. */
+  QUESTION = 'question',
+  EXPERIENCE = 'experience',
+}
+
+/** One part of an application's `matchScore`, as the application-ranking queue stored it. */
+export interface ApplicationMatchPartDto {
+  key: APPLICATION_MATCH_PART_ENUMS;
+  /**
+   * This part alone, out of 1000 like `matchScore`. `null` when the job gave it
+   * nothing to compare (no skills, no values, no screening questions), so it
+   * was left out of `matchScore` rather than counted as 0.
+   */
+  score: number | null;
+  /** Share of `matchScore` this part carried, 0-1. 0 when `score` is null. */
+  influence: number;
+}
+
+/**
  * Public HTTP shape of an Application.
  *
  * All fields are optional because application responses are CASL field-sanitized
@@ -67,6 +94,12 @@ export interface ApplicationResponseDto {
   statusId?: string | null;
   rank?: number;
   matchScore?: number;
+  /**
+   * The parts behind `matchScore`, in ranking order. Employers only, like
+   * `matchScore`. Absent until the application is ranked, which is how an
+   * unranked application's `matchScore` of 0 is told apart from a real 0.
+   */
+  matchBreakdown?: ApplicationMatchPartDto[];
   coverLetter?: string;
   resumeId?: string | null;
   caseStudyId?: string[];
