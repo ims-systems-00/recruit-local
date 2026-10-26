@@ -33,9 +33,10 @@ they are looking for, then browse and apply to jobs. **Employers** set up an
 organisation profile, post jobs, and review the people who apply.
 
 What makes matching work is that both sides describe more than a job title. Candidates
-record the values that matter to them in a workplace; organisations record their own.
-When someone applies, the platform computes a match score from both the practical fit
-and that values comparison, so employers rank applicants on more than keywords.
+record the values that matter to them in a workplace, and each job lists the values the
+role asks for. When someone applies, the platform computes a match score from both the
+practical fit and how the candidate's values line up with the job's, so employers rank
+applicants on more than keywords.
 
 You can do everything on the platform through its screens. You can also ask me — I can
 explain how something works, walk you through setting up your account, and for
@@ -85,7 +86,7 @@ The steps, in order:
 5. **Work mode** — remote, on-site, hybrid, or a combination.
 6. **Location** — where you are, and where you would work.
 7. **Values** — five short rounds where you say what matters to you in a workplace. This
-   is what lets employers be compared to you on more than job titles.
+   is what lets jobs be matched to you on more than job titles.
 8. **Notice period** — how long before you could start. This is the last step.
 
 None of this is permanent. Every answer is editable afterwards from your profile, and
@@ -100,16 +101,17 @@ the values rounds can be retaken.`,
     summary: "What an employer fills in during setup and why the organisation profile matters for matching.",
     keywords: ["onboarding", "getting started", "setup", "organisation", "company setup"],
     body: `Employer setup builds your **organisation profile** — the record every job you post
-hangs off, and one side of the values comparison used to rank applicants.
+hangs off, and the starting point for the values each of those jobs asks for.
 
 You will be asked for your organisation's basics (name, description, industry, type and
 size), contact details, your logo and branding, your web presence, your mission and
 vision, the products and services you offer, and your organisation's values.
 
-The values step is the one worth slowing down for. Candidates record their own values
-during their setup, and the match score on every application compares the two. An
-organisation that skips its values is ranking applicants on practical fit alone and
-losing the part of the score that is hardest to fake.
+The values step is the one worth slowing down for. When you post a job you choose the
+values that role asks for, and your organisation's values are offered first. The match
+score on every application compares the candidate's own values with the job's, so values
+chosen with care here carry through to every job you post — and they are the part of the
+score that is hardest to fake.
 
 Setup remembers where you stopped, so you can complete it across several sittings.`,
   },
@@ -165,7 +167,8 @@ As with candidate profiles, scoring is per field rather than per section, so par
 progress counts.
 
 A fuller profile is not cosmetic. Candidates see who they would be working for, and your
-values section feeds the match score on every application you receive.`,
+values are offered first whenever you choose the values a job asks for — the ones every
+applicant's values are scored against.`,
   },
 
   {
@@ -173,12 +176,18 @@ values section feeds the match score on every application you receive.`,
     title: "Values and how matching works",
     topic: HELP_ARTICLE_TOPIC.PROFILE,
     audience: HELP_ARTICLE_AUDIENCE.EVERYONE,
-    summary: "Both sides record workplace values, and the platform compares them to compute a match score.",
+    summary: "Candidates and jobs both name workplace values, and the platform compares them as part of a match score.",
     keywords: ["values", "match score", "matching", "culture fit", "ranking", "how am I ranked"],
-    body: `Candidates record the values that matter to them in a workplace during setup.
-Organisations record their own values on their profile. When a candidate applies to a
-job, the platform computes a **match score** for that application from the practical fit
-and from comparing those two sets of values.
+    body: `Candidates record the values that matter to them in a workplace during setup, and can
+evaluate each one. Organisations record their own values on their profile, and each job
+lists the values that role asks for — the organisation's are offered first when it is
+posted.
+
+When a candidate applies to a job, the platform computes a **match score** for that
+application. It compares the candidate's values with the job's, and also weighs their
+skills, the kind of role they are after, location and work mode, their answers to the
+job's screening questions, and their experience. A value the candidate has evaluated
+counts at their evaluation score; one they have only selected counts for a little.
 
 The score is computed by the platform, not judged by a person, and it is what employers
 sort applicants by when they want a ranking.
@@ -189,10 +198,11 @@ Two things worth knowing about it:
 records where somebody moved a candidate to; the score is what was computed. Ranking by
 stage tells you about your own process, not about fit.
 
-**For candidates** — you can see how a job's stated requirements line up against your
-profile, but not your values score against an organisation. An organisation's values are
-not visible to candidates, so that half of the comparison cannot be shown to you, and
-guessing at it from the wording of a job advert would be inventing a number.`,
+**For candidates** — the match percentage on your job list compares your skills, values,
+the roles you are after and your location with each job's. It is not the employer's
+score: theirs also grades your answers to the job's screening questions against answers
+you are not shown, so that number cannot be shown to you, and guessing at it would be
+inventing one.`,
   },
 
   {
@@ -309,13 +319,13 @@ is recorded anywhere I can read, and guessing at it would not do you any favours
     summary: "What goes into a job posting and how the details affect who you attract.",
     keywords: ["post a job", "create job", "vacancy", "job advert", "hiring", "new role"],
     body: `A job posting belongs to your organisation and carries the role's title, description,
-location, work mode, experience level and salary details, along with any screening
-questions or required documents.
+location, work mode, experience level and salary details, the skills and values it asks
+for, along with any screening questions or required documents.
 
 The fields are not just a form. Candidates search and filter on them, recommendations are
-computed from them, and the match score on every application is computed partly against
-what the job says it wants. A posting with a vague description and no experience level
-will be matched vaguely.
+computed from them, and the match score on every application is computed against what
+the job says it wants — its skills, values, title, workplace and experience level. A
+posting that leaves those empty will be matched vaguely.
 
 Screening questions are the cheapest filter available to you: a question answered badly
 tells you more in ten seconds than a CV does in five minutes.
@@ -338,7 +348,8 @@ Ask me to rank applicants for a job and I will sort them by that score. A rankin
 own is not a recommendation, though, so I will also tell you what the job asked for — a
 score with no criteria beside it is not something you can act on, or defend.
 
-Worth keeping distinct: the **score** is computed from fit and values; the **stage** is
+Worth keeping distinct: the **score** is computed from values, skills, role, location,
+screening answers and experience; the **stage** is
 where someone on your team moved that candidate. Sorting by stage tells you about your
 pipeline, not about your applicants.
 

@@ -1,10 +1,19 @@
 import { PipelineStage, Types } from "mongoose";
 import { APPLICATION_MATCH_PART_ENUMS } from "@rl/types";
-import { Application, IApplicationMatchPart, Job, JobProfile } from "../../../../models";
+import {
+  Application,
+  IApplicationMatchPart,
+  IApplicationValueCategory,
+  Job,
+  JobProfile,
+  Value,
+} from "../../../../models";
 import { matchQuery, excludeDeletedQuery } from "../../../../common/query";
 import { populateValuesQuery } from "../../value/value.query";
 import { populateExperienceLevelQuery } from "../../experience-level/experience-level.query";
 import { loadMatchProfile } from "../../job/match/profile.service";
+import { refId } from "../../job/match/ref-id";
+import { matchValueCategories } from "./matching/value-category";
 import {
   RANKING_PIPELINE_VERSION,
   RankingContext,
@@ -36,16 +45,37 @@ const findWithValues = async <T>(
 };
 
 /**
+ * The type of each of the job's values, by value id, for the per-type split of
+ * the values part. Soft-deleted catalogue entries keep their type.
+ */
+const loadValueTypes = async (jobValues: unknown): Promise<Map<string, string>> => {
+  const ids = (Array.isArray(jobValues) ? jobValues : [])
+    .map((row) => refId(row?.value))
+    .filter((id): id is string => id !== null && Types.ObjectId.isValid(id));
+  if (!ids.length) return new Map();
+
+  const values = await Value.find({ _id: { $in: ids } })
+    .select("type")
+    .lean();
+  return new Map(values.map((value) => [String(value._id), value.type]));
+};
+
+/**
  * A result's signals in the shape `matchBreakdown` stores: each part's display
  * score, or null when it had nothing to compare and so was left out of the
- * composite. The matchers' own `details` stay in the result.
+ * composite, with the values part carrying its per-type split. The matchers'
+ * own `details` stay in the result.
  */
-const toMatchBreakdown = (result: RankingResult): IApplicationMatchPart[] =>
+const toMatchBreakdown = (
+  result: RankingResult,
+  valueCategories: IApplicationValueCategory[]
+): IApplicationMatchPart[] =>
   result.signals.map((signal) => ({
     // Every matcher in `RANKING_PIPELINE` is keyed by its part.
     key: signal.key as APPLICATION_MATCH_PART_ENUMS,
     score: signal.applicable ? signal.score : null,
     influence: signal.influence,
+    ...(signal.key === APPLICATION_MATCH_PART_ENUMS.VALUES ? { categories: valueCategories } : {}),
   }));
 
 export interface RankApplicationOptions {
@@ -102,13 +132,22 @@ export const rankApplication = async (
   const context: RankingContext = { jobProfile, matchProfile, job, application };
   const result = runRankingPipeline(context);
 
+  const valueTypes = await loadValueTypes(job.values);
+  const valueCategories = matchValueCategories(job.values, matchProfile.values, matchProfile.valueScores, (id) =>
+    valueTypes.get(id)
+  ).map(({ type, ratio, applicable }) => ({
+    type,
+    // Scaled and rounded the way the pipeline scales each signal's display score.
+    score: applicable ? Math.round(ratio * result.scale) : null,
+  }));
+
   await Application.updateOne(
     { _id: application._id },
     {
       $set: {
         matchScore: result.score,
         ...(seedRank ? { rank: result.score } : {}),
-        matchBreakdown: toMatchBreakdown(result),
+        matchBreakdown: toMatchBreakdown(result, valueCategories),
         rankingVersion: RANKING_PIPELINE_VERSION,
       },
     }

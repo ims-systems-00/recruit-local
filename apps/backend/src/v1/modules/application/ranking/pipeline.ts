@@ -271,12 +271,13 @@ export const RANKING_PIPELINE: RankingMatcher[] = [
 /**
  * Stamped onto every stored ranking. Bump it whenever a change would make old
  * scores incomparable to new ones — adding or removing a matcher, retuning a
- * weight, changing `RANKING_SCALE`, changing how a matcher scores. Stored
- * rankings carrying an older
- * version are stale by definition and can be found and re-ranked with a single
- * query; without it there is no way to tell a fresh score from a legacy one.
+ * weight, changing `RANKING_SCALE`, changing how a matcher scores — and
+ * whenever `matchBreakdown` gains something older rankings lack, so the
+ * backfill fills it in. Stored rankings carrying an older version are stale by
+ * definition and can be found and re-ranked with a single query; without it
+ * there is no way to tell a fresh score from a legacy one.
  */
-export const RANKING_PIPELINE_VERSION = 6;
+export const RANKING_PIPELINE_VERSION = 7;
 
 /**
  * Runs every matcher against `context` and folds the applicable ones into a

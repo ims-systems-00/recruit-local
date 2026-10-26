@@ -8,11 +8,18 @@ import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { boardablePlugin, IBoardableInput, IBoardableModel } from "./plugins/boardable.plugin";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import { automaticReferencePlugin, IAutomaticReferenceDoc } from "./plugins/automatic-reference.plugin";
-import { APPLICATION_MATCH_PART_ENUMS } from "@rl/types";
+import { APPLICATION_MATCH_PART_ENUMS, VALUE_TYPE_ENUM } from "@rl/types";
 
 export interface IApplicationAnswer {
   queryId: Types.ObjectId;
   answer: string | string[] | number | boolean;
+}
+
+/** The values part of `matchScore` for one value type. */
+export interface IApplicationValueCategory {
+  type: VALUE_TYPE_ENUM;
+  /** Out of `RANKING_SCALE`; null when the job lists no values of this type. */
+  score: number | null;
 }
 
 /** One part of `matchScore`. */
@@ -22,6 +29,8 @@ export interface IApplicationMatchPart {
   score: number | null;
   /** Share of `matchScore` this part carried, 0-1. */
   influence: number;
+  /** The values part only: its score split by value type. */
+  categories?: IApplicationValueCategory[];
 }
 
 export interface ApplicationInput extends JobProfileInput, IBoardableInput, TenantInput {
@@ -48,7 +57,7 @@ export interface ApplicationInput extends JobProfileInput, IBoardableInput, Tena
    */
   matchBreakdown?: IApplicationMatchPart[];
   /**
-   * The `RANKING_PIPELINE_VERSION` that wrote `matchScore`. Anything older is
+   * The `RANKING_PIPELINE_VERSION` that wrote `matchScore` and `matchBreakdown`. Anything older is
    * stale and can be found and re-ranked with one query. Never returned to
    * clients — not in `ALL_APPLICATION_FIELDS`.
    */
@@ -81,11 +90,21 @@ const answerSchema = new Schema<IApplicationAnswer>(
   { _id: false }
 );
 
+const valueCategorySchema = new Schema<IApplicationValueCategory>(
+  {
+    type: { type: String, enum: Object.values(VALUE_TYPE_ENUM), required: true },
+    score: { type: Number, default: null },
+  },
+  { _id: false }
+);
+
 const matchPartSchema = new Schema<IApplicationMatchPart>(
   {
     key: { type: String, enum: Object.values(APPLICATION_MATCH_PART_ENUMS), required: true },
     score: { type: Number, default: null },
     influence: { type: Number, required: true },
+    // Only the values part has categories; undefined keeps the others free of an empty [].
+    categories: { type: [valueCategorySchema], default: undefined },
   },
   { _id: false }
 );

@@ -1,5 +1,6 @@
 import { VISIBILITY_ENUM } from './file-media';
 import { QUERY_TYPE_ENUMS } from './job';
+import { VALUE_TYPE_ENUM } from './value';
 
 /** Public HTTP shape of a single answer to a job's additional query. */
 export interface ApplicationAnswerResponseDto {
@@ -61,6 +62,13 @@ export enum APPLICATION_MATCH_PART_ENUMS {
   EXPERIENCE = 'experience',
 }
 
+/** The values part of an application's `matchScore`, for one value type. */
+export interface ApplicationValueCategoryDto {
+  type: VALUE_TYPE_ENUM;
+  /** Out of 1000, like `matchScore`. `null` when the job lists no values of this type. */
+  score: number | null;
+}
+
 /** One part of an application's `matchScore`, as the application-ranking queue stored it. */
 export interface ApplicationMatchPartDto {
   key: APPLICATION_MATCH_PART_ENUMS;
@@ -72,6 +80,13 @@ export interface ApplicationMatchPartDto {
   score: number | null;
   /** Share of `matchScore` this part carried, 0-1. 0 when `score` is null. */
   influence: number;
+  /**
+   * The `values` part only: its score split by value type, every type in
+   * `VALUE_TYPE_ENUM` order. Weighted by how many of the job's values each type
+   * holds, they average back to the part's `score`, give or take rounding and
+   * any value since removed from the catalogue.
+   */
+  categories?: ApplicationValueCategoryDto[];
 }
 
 /**
