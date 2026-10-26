@@ -25,12 +25,14 @@ import {
   formatMatchPercent,
   overallMatchPercent,
   partMatchPercent,
+  toMatchPercent,
 } from '@/services/application/application.match';
 import { JobData } from '@/services/jobs/job.type';
 import {
   APPLICATION_MATCH_PART_ENUMS,
   MATCH_SCORE_BAND_FLOORS,
   QUERY_TYPE_ENUMS,
+  VALUE_TYPE_LABELS,
 } from '@rl/types';
 
 type ApplicantDetailsViewProps = {
@@ -58,14 +60,6 @@ const ALIGNMENT = {
   weak: { label: 'Weak Alignment', color: '#F04438' },
   unscored: { label: 'Not scored yet', color: '#98A2B3' },
 };
-
-const VALUE_BREAKDOWN_CATEGORIES = [
-  { name: 'Mindset', percentage: 75 },
-  { name: 'Working Style', percentage: 90 },
-  { name: 'Culture & Behavior', percentage: 60 },
-  { name: 'Leadership & Team Dynamics', percentage: 80 },
-  { name: 'Purpose & Motivation', percentage: 60 },
-];
 
 export default function ApplicantDetailsView({
   jobId,
@@ -125,6 +119,28 @@ export default function ApplicantDetailsView({
   const skillsScore = partMatchPercent(applicationData, SKILLS);
   const rolesScore = partMatchPercent(applicationData, ROLE);
   const locationScore = partMatchPercent(applicationData, LOCATION);
+
+  // The values part split by value type, for the breakdown dialog: every type,
+  // null where the job lists no values of it. Empty until the application is
+  // ranked by a pipeline that stores the split.
+  const valueCategories = (
+    applicationData?.matchBreakdown?.find((part) => part.key === VALUES)
+      ?.categories ?? []
+  ).map((category) => ({
+    type: category.type,
+    name: VALUE_TYPE_LABELS[category.type] ?? category.type,
+    percentage: toMatchPercent(category.score),
+  }));
+  const canShowBreakdown = valueCategories.some(
+    (category) => category.percentage != null,
+  );
+  const breakdownHint = canShowBreakdown
+    ? 'See breakdown'
+    : overallScore == null
+      ? 'Not scored yet'
+      : valueCategories.length === 0
+        ? 'Breakdown available once this application is re-scored'
+        : 'This job lists no values to break down';
 
   const alignment =
     overallScore == null || matchScore == null
@@ -529,11 +545,18 @@ export default function ApplicantDetailsView({
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
                     Value match
                   </span>
+                  {/* aria-disabled rather than disabled: a disabled button shows
+                      no tooltip in some browsers, and the tooltip says why. */}
                   <button
                     type="button"
-                    onClick={() => setIsBreakdownOpen(true)}
-                    className="text-text-gray-quaternary hover:text-text-brand-primary transition-colors cursor-pointer"
-                    title="See breakdown"
+                    onClick={() => canShowBreakdown && setIsBreakdownOpen(true)}
+                    aria-disabled={!canShowBreakdown}
+                    className={
+                      canShowBreakdown
+                        ? 'text-text-gray-quaternary hover:text-text-brand-primary transition-colors cursor-pointer'
+                        : 'text-text-gray-quaternary opacity-50 cursor-not-allowed'
+                    }
+                    title={breakdownHint}
                   >
                     <Info size={14} />
                   </button>
@@ -621,7 +644,8 @@ export default function ApplicantDetailsView({
                 Values and Potentials breakdown
               </DialogTitle>
               <DialogDescription className="text-label-sm font-label-sm-base text-text-gray-tertiary">
-                See how each value contributes to the overall match score.
+                How the candidate&apos;s values match the values this job lists,
+                by type.
               </DialogDescription>
             </div>
           </DialogHeader>
@@ -663,15 +687,16 @@ export default function ApplicantDetailsView({
 
                     {/* 5 Bars */}
                     <div className="absolute inset-0 flex items-end justify-around px-1 sm:px-4">
-                      {VALUE_BREAKDOWN_CATEGORIES.map((item) => (
+                      {/* A type the job lists no values of keeps its slot, with no bar. */}
+                      {valueCategories.map((item) => (
                         <div
-                          key={item.name}
+                          key={item.type}
                           className="flex flex-col items-center h-full justify-end"
                         >
                           <div
                             className="w-7 sm:w-11 bg-[#FACFE5] rounded-t-sm sm:rounded-t-md transition-all duration-500 hover:brightness-95"
-                            style={{ height: `${item.percentage}%` }}
-                            title={`${item.name}: ${item.percentage}%`}
+                            style={{ height: `${item.percentage ?? 0}%` }}
+                            title={`${item.name}: ${formatMatchPercent(item.percentage)}`}
                           />
                         </div>
                       ))}
@@ -682,10 +707,22 @@ export default function ApplicantDetailsView({
                 {/* X-axis labels below the bars */}
                 <div className="flex pt-3 pl-8">
                   <div className="w-full flex justify-around px-1 sm:px-4">
-                    {VALUE_BREAKDOWN_CATEGORIES.map((item) => (
-                      <div key={item.name} className="w-12 sm:w-16 text-center">
-                        <span className="text-[10px] sm:text-label-xs font-label-xs-strong! text-text-gray-secondary leading-tight block">
+                    {valueCategories.map((item) => (
+                      <div key={item.type} className="w-12 sm:w-16 text-center">
+                        <span
+                          className={`text-[10px] sm:text-label-xs font-label-xs-strong! leading-tight block ${
+                            item.percentage == null
+                              ? 'text-text-gray-quaternary'
+                              : 'text-text-gray-secondary'
+                          }`}
+                          title={
+                            item.percentage == null
+                              ? 'This job lists no values of this type'
+                              : undefined
+                          }
+                        >
                           {item.name}
+                          {item.percentage == null && ' —'}
                         </span>
                       </div>
                     ))}
