@@ -1,3 +1,4 @@
+import { APPLICATION_MATCH_PART_ENUMS } from "@rl/types";
 import { JobProfileInput } from "../../../../models/job-profile.model";
 import { IJobDoc, IJobInput } from "../../../../models/job.model";
 import { ApplicationInput } from "../../../../models/application.model";
@@ -141,6 +142,9 @@ export interface RankingResult {
   signals: RankingSignal[];
 }
 
+// Each matcher's key is the part it scores, as stored in `matchBreakdown`.
+const { VALUES, SKILLS, ROLE, LOCATION, QUESTION, EXPERIENCE } = APPLICATION_MATCH_PART_ENUMS;
+
 /**
  * How well the candidate's values line up with the values this job lists. Each
  * of the job's values earns the candidate's evaluated score in it, a small
@@ -153,7 +157,7 @@ export interface RankingResult {
  * applicable when the job lists no values.
  */
 export const valueMatcher: RankingMatcher = {
-  key: "value",
+  key: VALUES,
   label: "Values",
   weight: 2,
   run: ({ job, matchProfile }) => {
@@ -173,7 +177,7 @@ export const valueMatcher: RankingMatcher = {
  * other has nothing to work with.
  */
 export const questionMatcher: RankingMatcher = {
-  key: "question",
+  key: QUESTION,
   label: "Screening Questions",
   weight: 1,
   run: ({ job, application }) => {
@@ -188,7 +192,7 @@ export const questionMatcher: RankingMatcher = {
  * under the requirement far more harshly than being over it.
  */
 export const experienceMatcher: RankingMatcher = {
-  key: "experience",
+  key: EXPERIENCE,
   label: "Experience",
   weight: 1,
   run: ({ job, jobProfile }) => {
@@ -206,7 +210,7 @@ export const experienceMatcher: RankingMatcher = {
  * (`JOB_MATCH_WEIGHTS`). Not applicable when the job names no skills.
  */
 export const skillMatcher: RankingMatcher = {
-  key: "skills",
+  key: SKILLS,
   label: "Skills",
   weight: 2,
   run: ({ job, matchProfile }) => {
@@ -221,7 +225,7 @@ export const skillMatcher: RankingMatcher = {
  * profile — see `job/match/role.ts`.
  */
 export const roleMatcher: RankingMatcher = {
-  key: "role",
+  key: ROLE,
   label: "Role",
   weight: 1,
   run: ({ job, matchProfile }) => {
@@ -239,7 +243,7 @@ export const roleMatcher: RankingMatcher = {
  * see `job/match/location.ts`.
  */
 export const locationMatcher: RankingMatcher = {
-  key: "location",
+  key: LOCATION,
   label: "Location",
   weight: 1,
   run: ({ job, matchProfile }) => {

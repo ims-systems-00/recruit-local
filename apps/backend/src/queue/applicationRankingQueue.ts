@@ -1,11 +1,13 @@
 import { Job as BullJob } from "bullmq";
 import { PipelineStage, Types } from "mongoose";
 import { ReusableQueue } from "./Queue";
-import { Application, Job, JobProfile } from "../models";
+import { Application, IApplicationMatchPart, Job, JobProfile } from "../models";
 import { matchQuery, excludeDeletedQuery } from "../common/query";
 import { populateValuesQuery } from "../v1/modules/value/value.query";
 import { populateExperienceLevelQuery } from "../v1/modules/experience-level/experience-level.query";
+import { APPLICATION_MATCH_PART_ENUMS } from "@rl/types";
 import {
+  RANKING_PIPELINE_VERSION,
   RankingContext,
   RankingJob,
   RankingJobProfile,
@@ -40,6 +42,19 @@ const findWithValues = async <T>(
 };
 
 /**
+ * A result's signals in the shape `matchBreakdown` stores: each part's display
+ * score, or null when it had nothing to compare and so was left out of the
+ * composite. The matchers' own `details` stay in the job's `returnvalue`.
+ */
+const toMatchBreakdown = (result: RankingResult): IApplicationMatchPart[] =>
+  result.signals.map((signal) => ({
+    // Every matcher in `RANKING_PIPELINE` is keyed by its part.
+    key: signal.key as APPLICATION_MATCH_PART_ENUMS,
+    score: signal.applicable ? signal.score : null,
+    influence: signal.influence,
+  }));
+
+/**
  * Scores one application against the job it was submitted to.
  *
  * The pipeline itself is pure and synchronous; all this does is assemble the
@@ -51,9 +66,10 @@ const findWithValues = async <T>(
  * so a recruiter's board comes up best-match-first. From then on the board owns
  * `rank` — `moveToPosition` and `rebalanceColumn` rewrite it on every drag and
  * every rebalance — so the two legitimately diverge and `matchScore` is the copy
- * that survives. Only the composite score out of `RANKING_SCALE` is stored; the
- * per-signal breakdown stays in the job's `returnvalue`, visible on the board at
- * /admin/queues.
+ * that survives. Each part's score goes in `matchBreakdown` beside it, for the
+ * recruiter's applicant view, and `rankingVersion` records which pipeline wrote
+ * them. The matchers' full details stay in the job's `returnvalue`, visible on
+ * the board at /admin/queues.
  *
  * An unrankable application keeps the 0 it was created with. Those cases bail
  * out with a reason instead of throwing, since "this job lists nothing to
@@ -83,7 +99,17 @@ const processApplicationRanking = async ({
   const context: RankingContext = { jobProfile, matchProfile, job, application };
   const result = runRankingPipeline(context);
 
-  await Application.updateOne({ _id: application._id }, { $set: { matchScore: result.score, rank: result.score } });
+  await Application.updateOne(
+    { _id: application._id },
+    {
+      $set: {
+        matchScore: result.score,
+        rank: result.score,
+        matchBreakdown: toMatchBreakdown(result),
+        rankingVersion: RANKING_PIPELINE_VERSION,
+      },
+    }
+  );
 
   return result;
 };

@@ -8,10 +8,20 @@ import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { boardablePlugin, IBoardableInput, IBoardableModel } from "./plugins/boardable.plugin";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import { automaticReferencePlugin, IAutomaticReferenceDoc } from "./plugins/automatic-reference.plugin";
+import { APPLICATION_MATCH_PART_ENUMS } from "@rl/types";
 
 export interface IApplicationAnswer {
   queryId: Types.ObjectId;
   answer: string | string[] | number | boolean;
+}
+
+/** One part of `matchScore`. */
+export interface IApplicationMatchPart {
+  key: APPLICATION_MATCH_PART_ENUMS;
+  /** Out of `RANKING_SCALE`, like `matchScore`; null when the job gave this part nothing to compare. */
+  score: number | null;
+  /** Share of `matchScore` this part carried, 0-1. */
+  influence: number;
 }
 
 export interface ApplicationInput extends JobProfileInput, IBoardableInput, TenantInput {
@@ -32,6 +42,17 @@ export interface ApplicationInput extends JobProfileInput, IBoardableInput, Tena
    * board rewrites it on every move and rebalance — this is the copy that lasts.
    */
   matchScore?: number;
+  /**
+   * The parts behind `matchScore`, written with it. Absent until the
+   * application is ranked, so an unranked 0 can be told apart from a real one.
+   */
+  matchBreakdown?: IApplicationMatchPart[];
+  /**
+   * The `RANKING_PIPELINE_VERSION` that wrote `matchScore`. Anything older is
+   * stale and can be found and re-ranked with one query. Never returned to
+   * clients — not in `ALL_APPLICATION_FIELDS`.
+   */
+  rankingVersion?: number;
 }
 
 export interface IApplicationDoc
@@ -56,6 +77,15 @@ const answerSchema = new Schema<IApplicationAnswer>(
       type: Schema.Types.Mixed,
       required: true,
     },
+  },
+  { _id: false }
+);
+
+const matchPartSchema = new Schema<IApplicationMatchPart>(
+  {
+    key: { type: String, enum: Object.values(APPLICATION_MATCH_PART_ENUMS), required: true },
+    score: { type: Number, default: null },
+    influence: { type: Number, required: true },
   },
   { _id: false }
 );
@@ -87,6 +117,9 @@ const applicationSchema = new Schema<IApplicationDoc>(
     currentSalary: { type: Number },
     expectedSalary: { type: Number },
     matchScore: { type: Number, default: 0 },
+    // Mongoose defaults arrays to []; undefined keeps "not ranked yet" absent.
+    matchBreakdown: { type: [matchPartSchema], default: undefined },
+    rankingVersion: { type: Number },
   },
   {
     timestamps: true,
