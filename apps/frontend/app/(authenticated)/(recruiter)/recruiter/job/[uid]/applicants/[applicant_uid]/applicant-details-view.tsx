@@ -22,7 +22,12 @@ import { toast } from 'sonner';
 import { formatDate } from '@/lib/utils';
 import { Application } from '@/services/application/application.type';
 import { JobData } from '@/services/jobs/job.type';
-import { QUERY_TYPE_ENUMS } from '@rl/types';
+import {
+  APPLICATION_MATCH_PART_ENUMS,
+  MATCH_SCORE_BAND_FLOORS,
+  MATCH_SCORE_SCALE,
+  QUERY_TYPE_ENUMS,
+} from '@rl/types';
 
 type ApplicantDetailsViewProps = {
   jobId: string;
@@ -41,6 +46,14 @@ const DEFAULT_CASE_STUDIES = [
   { name: 'user_research_insights.pdf', size: '100KB' },
   { name: 'ux_strategy_deck_2023.pdf', size: '100KB' },
 ];
+
+// The label under the gauge: the overview's match bands, or not scored yet.
+const ALIGNMENT = {
+  strong: { label: 'Strong Alignment', color: '#12B76A' },
+  good: { label: 'Good Alignment', color: '#F79009' },
+  weak: { label: 'Weak Alignment', color: '#F04438' },
+  unscored: { label: 'Not scored yet', color: '#98A2B3' },
+};
 
 const VALUE_BREAKDOWN_CATEGORIES = [
   { name: 'Mindset', percentage: 75 },
@@ -99,31 +112,40 @@ export default function ApplicantDetailsView({
       : String(jobData.workingHours)
     : '8 Hours';
 
-  // Overall match & breakdown scores
-  // Backend rank/matchScore is stored on a 0-1000 scale (RANKING_SCALE = 1000).
-  // If raw score > 100, convert it to 0-100 percentage.
-  const rawScore =
-    (applicationData as unknown as { matchScore?: number })?.matchScore ??
-    applicationData?.rank;
+  // Match scores arrive out of MATCH_SCORE_SCALE and show as percentages.
+  // `matchBreakdown` is absent until the ranking queue has scored the
+  // application, and a part's score is null when the job gave it nothing to
+  // compare; both show as "—" rather than as 0%.
+  const matchScore = applicationData?.matchScore;
+  const matchBreakdown = applicationData?.matchBreakdown;
+  const isScored = matchBreakdown != null && matchScore != null;
 
-  const normalizeScore = (raw: number | null | undefined): number => {
-    if (raw == null) return 90;
-    const score = raw > 100 ? raw / 10 : raw;
-    return Math.min(Math.max(Math.round(score), 0), 100);
-  };
+  const toPercent = (score: number | null | undefined): number | null =>
+    score == null ? null : Math.round((score / MATCH_SCORE_SCALE) * 100);
+  const partPercent = (key: APPLICATION_MATCH_PART_ENUMS) =>
+    toPercent(matchBreakdown?.find((part) => part.key === key)?.score);
+  const formatPercent = (percent: number | null) =>
+    percent == null ? '—' : `${percent}%`;
 
-  const overallScore = normalizeScore(rawScore);
-  const valueMatchScore = overallScore;
-  const skillsScore = overallScore;
-  const rolesScore = Math.max(10, overallScore - 10);
-  const locationScore = overallScore;
-  const keyRespScore = overallScore;
+  const overallScore = isScored ? toPercent(matchScore) : null;
+  const valueMatchScore = partPercent(APPLICATION_MATCH_PART_ENUMS.VALUES);
+  const skillsScore = partPercent(APPLICATION_MATCH_PART_ENUMS.SKILLS);
+  const rolesScore = partPercent(APPLICATION_MATCH_PART_ENUMS.ROLE);
+  const locationScore = partPercent(APPLICATION_MATCH_PART_ENUMS.LOCATION);
+
+  const alignment = !isScored
+    ? ALIGNMENT.unscored
+    : matchScore >= MATCH_SCORE_BAND_FLOORS.strong
+      ? ALIGNMENT.strong
+      : matchScore >= MATCH_SCORE_BAND_FLOORS.good
+        ? ALIGNMENT.good
+        : ALIGNMENT.weak;
 
   // Semicircle arc calculation: R = 76, circumference = pi * R ≈ 238.76
   const ARC_RADIUS = 76;
   const ARC_LENGTH = Math.PI * ARC_RADIUS;
   const arcDashOffset =
-    ARC_LENGTH * (1 - Math.min(Math.max(overallScore, 0), 100) / 100);
+    ARC_LENGTH * (1 - Math.min(Math.max(overallScore ?? 0, 0), 100) / 100);
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(fullPortfolioUrl);
@@ -487,18 +509,21 @@ export default function ApplicantDetailsView({
                   fontWeight="700"
                   className="select-none font-sans"
                 >
-                  {overallScore}%
+                  {formatPercent(overallScore)}
                 </text>
               </svg>
             </div>
 
-            {/* Strong Alignment Status */}
+            {/* Alignment Status */}
             <div className="flex items-center gap-spacing-md">
-              <div className="size-5 rounded-full border-2 border-[#12B76A] flex items-center justify-center text-[#12B76A] shrink-0 font-bold text-xs select-none">
+              <div
+                className="size-5 rounded-full border-2 flex items-center justify-center shrink-0 font-bold text-xs select-none"
+                style={{ borderColor: alignment.color, color: alignment.color }}
+              >
                 !
               </div>
               <span className="text-label-md font-label-md-strong! text-text-gray-primary">
-                Strong Alignment
+                {alignment.label}
               </span>
             </div>
 
@@ -523,11 +548,11 @@ export default function ApplicantDetailsView({
                   <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
                     <div
                       className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${valueMatchScore}%` }}
+                      style={{ width: `${valueMatchScore ?? 0}%` }}
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {valueMatchScore}%
+                    {formatPercent(valueMatchScore)}
                   </span>
                 </div>
               </div>
@@ -541,11 +566,11 @@ export default function ApplicantDetailsView({
                   <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
                     <div
                       className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${skillsScore}%` }}
+                      style={{ width: `${skillsScore ?? 0}%` }}
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {skillsScore}%
+                    {formatPercent(skillsScore)}
                   </span>
                 </div>
               </div>
@@ -559,11 +584,11 @@ export default function ApplicantDetailsView({
                   <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
                     <div
                       className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${rolesScore}%` }}
+                      style={{ width: `${rolesScore ?? 0}%` }}
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {rolesScore}%
+                    {formatPercent(rolesScore)}
                   </span>
                 </div>
               </div>
@@ -577,29 +602,11 @@ export default function ApplicantDetailsView({
                   <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
                     <div
                       className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${locationScore}%` }}
+                      style={{ width: `${locationScore ?? 0}%` }}
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {locationScore}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Key responsibility */}
-              <div className="space-y-spacing-xs">
-                <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Key responsibility
-                </span>
-                <div className="flex items-center gap-spacing-lg">
-                  <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
-                    <div
-                      className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${keyRespScore}%` }}
-                    />
-                  </div>
-                  <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {keyRespScore}%
+                    {formatPercent(locationScore)}
                   </span>
                 </div>
               </div>

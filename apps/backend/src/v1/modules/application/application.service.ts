@@ -5,6 +5,7 @@ import {
   JobOverviewRange,
   JobOverviewResponseDto,
   JobOverviewStageDto,
+  MATCH_SCORE_BAND_FLOORS,
   VISIBILITY_ENUM,
 } from "@rl/types";
 import { BadRequestException, NotFoundException } from "../../../common/helper";
@@ -480,9 +481,6 @@ export const moveItemOnBoard = async ({ itemId, targetStatusId, targetIndex }: I
 
 const OVERVIEW_RANGE_DAYS: Record<JobOverviewRange, number> = { week: 7, month: 30 };
 const DAY_MS = 24 * 60 * 60 * 1000;
-/** `matchScore` band floors on the 0–RANKING_SCALE (1000) scale. */
-const MATCH_SCORE_STRONG = 700;
-const MATCH_SCORE_GOOD = 400;
 
 /** `YYYY-MM-DD` of `date` as seen in `tz` — the same key `$dateToString` produces. */
 const dayKeyInTz = (date: Date, tz: string) =>
@@ -561,8 +559,8 @@ export const getOverview = async ({
                   _id: {
                     $switch: {
                       branches: [
-                        { case: { $gte: ["$matchScore", MATCH_SCORE_STRONG] }, then: "strong" },
-                        { case: { $gte: ["$matchScore", MATCH_SCORE_GOOD] }, then: "good" },
+                        { case: { $gte: ["$matchScore", MATCH_SCORE_BAND_FLOORS.strong] }, then: "strong" },
+                        { case: { $gte: ["$matchScore", MATCH_SCORE_BAND_FLOORS.good] }, then: "good" },
                       ],
                       default: "weak",
                     },

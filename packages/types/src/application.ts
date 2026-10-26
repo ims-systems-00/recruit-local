@@ -48,6 +48,16 @@ export interface ApplicationFileDto {
   };
 }
 
+/** What an application's `matchScore`, and each part's `score`, is out of. */
+export const MATCH_SCORE_SCALE = 1000;
+
+/**
+ * The lowest `matchScore` in each band, on `MATCH_SCORE_SCALE`. Anything below
+ * `good` is weak. The job overview counts applications by these, and the
+ * applicant view labels one by them.
+ */
+export const MATCH_SCORE_BAND_FLOORS = { strong: 700, good: 400 } as const;
+
 /**
  * The parts an application's `matchScore` is ranked on. The first four line up
  * with `JOB_MATCH_PART_ENUMS`, the candidate's own match against a job.
@@ -151,7 +161,7 @@ export interface JobOverviewStageDto {
   count: number;
 }
 
-/** Applications bucketed by `matchScore` (out of 1000): strong >= 700, good 400-699, weak < 400. */
+/** Applications bucketed by `matchScore`, at `MATCH_SCORE_BAND_FLOORS`. */
 export interface JobOverviewMatchScoreDto {
   strong: number;
   good: number;

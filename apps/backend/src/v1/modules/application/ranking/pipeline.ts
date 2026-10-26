@@ -1,4 +1,4 @@
-import { APPLICATION_MATCH_PART_ENUMS, VALUE_TYPE_ENUM } from "@rl/types";
+import { APPLICATION_MATCH_PART_ENUMS, MATCH_SCORE_SCALE, VALUE_TYPE_ENUM } from "@rl/types";
 import { JobProfileInput } from "../../../../models/job-profile.model";
 import { IJobDoc, IJobInput } from "../../../../models/job.model";
 import { ApplicationInput } from "../../../../models/application.model";
@@ -84,14 +84,16 @@ export interface RankingContext {
 }
 
 /**
- * The top of the ranking scale, and the only place the output range is decided.
- * Matchers report normalized ratios and know nothing about it, so moving this
- * moves every score with it and changes nothing else.
+ * The top of the ranking scale. Decided once, as `MATCH_SCORE_SCALE` in
+ * `@rl/types`, so the frontend reads stored scores on the same scale. Matchers
+ * report normalized ratios and know nothing about it, so moving it moves every
+ * score with it and changes nothing else.
  *
  * Changing it makes previously stored scores incomparable to new ones — bump
- * `RANKING_PIPELINE_VERSION` alongside it so stale rows can be found.
+ * `RANKING_PIPELINE_VERSION` alongside it so stale rows can be found, and move
+ * `MATCH_SCORE_BAND_FLOORS` with it.
  */
-export const RANKING_SCALE = 1000;
+export const RANKING_SCALE = MATCH_SCORE_SCALE;
 
 /** One matcher's answer. */
 export interface RankingSignal {
