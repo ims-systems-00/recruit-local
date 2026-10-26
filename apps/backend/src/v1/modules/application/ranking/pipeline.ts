@@ -1,8 +1,7 @@
-import { APPLICATION_MATCH_PART_ENUMS } from "@rl/types";
+import { APPLICATION_MATCH_PART_ENUMS, VALUE_TYPE_ENUM } from "@rl/types";
 import { JobProfileInput } from "../../../../models/job-profile.model";
 import { IJobDoc, IJobInput } from "../../../../models/job.model";
 import { ApplicationInput } from "../../../../models/application.model";
-import { MatchableValue } from "./matching/value";
 import { QuestionMatchResult, matchQuestionAnswers } from "./matching/valuebasedQuestion";
 import { ExperienceMatchResult, MatchableExperienceLevel, matchExperience } from "./matching/experience";
 import { ValueMatchResult, matchValueScores } from "../../job/match/value";
@@ -18,12 +17,23 @@ import type { MatchProfile } from "../../job/match/job-match";
  * Ranking an application means asking several independent questions about how
  * well a candidate fits a job — do their values line up, their skills, their
  * salary expectation — and folding the answers into one number. Each of those
- * questions is a matcher in `matching/`, and this file is the ordered list of
+ * questions is a matcher — in `matching/`, or in `job/match/` for the parts the
+ * candidate's own job match scores too — and this file is the ordered list of
  * matchers plus the code that runs them.
  *
  * Adding a technique means writing it in `matching/` and appending one entry to
  * `RANKING_PIPELINE`. Nothing else changes.
  */
+
+/**
+ * A value document as `populateValuesQuery` returns it. Loose on purpose: `_id`
+ * may arrive as an `ObjectId` or as an already-stringified id.
+ */
+interface MatchableValue {
+  _id: unknown;
+  type?: VALUE_TYPE_ENUM | string;
+  weight?: number;
+}
 
 /**
  * A parent document read through `populateValuesQuery`, where the `values`
