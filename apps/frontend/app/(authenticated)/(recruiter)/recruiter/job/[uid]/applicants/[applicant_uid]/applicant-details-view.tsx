@@ -21,11 +21,15 @@ import { Copy, Download, Check, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDate } from '@/lib/utils';
 import { Application } from '@/services/application/application.type';
+import {
+  formatMatchPercent,
+  overallMatchPercent,
+  partMatchPercent,
+} from '@/services/application/application.match';
 import { JobData } from '@/services/jobs/job.type';
 import {
   APPLICATION_MATCH_PART_ENUMS,
   MATCH_SCORE_BAND_FLOORS,
-  MATCH_SCORE_SCALE,
   QUERY_TYPE_ENUMS,
 } from '@rl/types';
 
@@ -112,34 +116,24 @@ export default function ApplicantDetailsView({
       : String(jobData.workingHours)
     : '8 Hours';
 
-  // Match scores arrive out of MATCH_SCORE_SCALE and show as percentages.
-  // `matchBreakdown` is absent until the ranking queue has scored the
-  // application, and a part's score is null when the job gave it nothing to
-  // compare; both show as "—" rather than as 0%.
+  // Not scored yet, and a part the job gave nothing to compare, both show as
+  // "—" rather than as 0%.
   const matchScore = applicationData?.matchScore;
-  const matchBreakdown = applicationData?.matchBreakdown;
-  const isScored = matchBreakdown != null && matchScore != null;
+  const overallScore = overallMatchPercent(applicationData);
+  const { VALUES, SKILLS, ROLE, LOCATION } = APPLICATION_MATCH_PART_ENUMS;
+  const valueMatchScore = partMatchPercent(applicationData, VALUES);
+  const skillsScore = partMatchPercent(applicationData, SKILLS);
+  const rolesScore = partMatchPercent(applicationData, ROLE);
+  const locationScore = partMatchPercent(applicationData, LOCATION);
 
-  const toPercent = (score: number | null | undefined): number | null =>
-    score == null ? null : Math.round((score / MATCH_SCORE_SCALE) * 100);
-  const partPercent = (key: APPLICATION_MATCH_PART_ENUMS) =>
-    toPercent(matchBreakdown?.find((part) => part.key === key)?.score);
-  const formatPercent = (percent: number | null) =>
-    percent == null ? '—' : `${percent}%`;
-
-  const overallScore = isScored ? toPercent(matchScore) : null;
-  const valueMatchScore = partPercent(APPLICATION_MATCH_PART_ENUMS.VALUES);
-  const skillsScore = partPercent(APPLICATION_MATCH_PART_ENUMS.SKILLS);
-  const rolesScore = partPercent(APPLICATION_MATCH_PART_ENUMS.ROLE);
-  const locationScore = partPercent(APPLICATION_MATCH_PART_ENUMS.LOCATION);
-
-  const alignment = !isScored
-    ? ALIGNMENT.unscored
-    : matchScore >= MATCH_SCORE_BAND_FLOORS.strong
-      ? ALIGNMENT.strong
-      : matchScore >= MATCH_SCORE_BAND_FLOORS.good
-        ? ALIGNMENT.good
-        : ALIGNMENT.weak;
+  const alignment =
+    overallScore == null || matchScore == null
+      ? ALIGNMENT.unscored
+      : matchScore >= MATCH_SCORE_BAND_FLOORS.strong
+        ? ALIGNMENT.strong
+        : matchScore >= MATCH_SCORE_BAND_FLOORS.good
+          ? ALIGNMENT.good
+          : ALIGNMENT.weak;
 
   // Semicircle arc calculation: R = 76, circumference = pi * R ≈ 238.76
   const ARC_RADIUS = 76;
@@ -509,7 +503,7 @@ export default function ApplicantDetailsView({
                   fontWeight="700"
                   className="select-none font-sans"
                 >
-                  {formatPercent(overallScore)}
+                  {formatMatchPercent(overallScore)}
                 </text>
               </svg>
             </div>
@@ -552,7 +546,7 @@ export default function ApplicantDetailsView({
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {formatPercent(valueMatchScore)}
+                    {formatMatchPercent(valueMatchScore)}
                   </span>
                 </div>
               </div>
@@ -570,7 +564,7 @@ export default function ApplicantDetailsView({
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {formatPercent(skillsScore)}
+                    {formatMatchPercent(skillsScore)}
                   </span>
                 </div>
               </div>
@@ -588,7 +582,7 @@ export default function ApplicantDetailsView({
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {formatPercent(rolesScore)}
+                    {formatMatchPercent(rolesScore)}
                   </span>
                 </div>
               </div>
@@ -606,7 +600,7 @@ export default function ApplicantDetailsView({
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {formatPercent(locationScore)}
+                    {formatMatchPercent(locationScore)}
                   </span>
                 </div>
               </div>

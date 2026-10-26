@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Application } from '@/services/application/application.type';
+import { overallMatchPercent } from '@/services/application/application.match';
 import { Avatar } from '@/components/ui/avatar';
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import moment from 'moment';
@@ -63,6 +64,8 @@ export function ApplicantCardContent({
   applicant: Application;
   handleProps?: HTMLAttributes<HTMLSpanElement>;
 }) {
+  const matchPercent = overallMatchPercent(applicant);
+
   return (
     <div className="bg-bg-gray-soft-primary p-spacing-2xl flex flex-col gap-spacing-4xl rounded-2xl border border-border-gray-secondary shadow-xs">
       {/* Top row */}
@@ -120,10 +123,11 @@ export function ApplicantCardContent({
         </div>
       </div>
 
-      {/* Applied date/time */}
+      {/* Match, and applied date/time */}
       <div className="flex items-center justify-between">
+        {/* Left empty until scored; it still holds the dates to the right. */}
         <span className=" text-label-sm font-label-sm-strong! text-text-gray-tertiary">
-          92% match
+          {matchPercent != null && `${matchPercent}% match`}
         </span>
         <div className=" flex gap-spacing-sm items-center">
           <span className="flex items-center gap-spacing-2xs bg-others-gray-gray-zero py-spacing-3xs px-spacing-md rounded-full border border-others-gray-light ">

@@ -3,6 +3,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn, formatDate } from '@/lib/utils';
 import { useInfiniteApplications } from '@/services/application/application.client';
 import { Application } from '@/services/application/application.type';
+import {
+  formatMatchPercent,
+  overallMatchPercent,
+} from '@/services/application/application.match';
 import { ColumnDef } from '@tanstack/react-table';
 import React, { useCallback } from 'react';
 import { TableSkeleton } from './table-skeleton';
@@ -49,12 +53,12 @@ export const userColumns: ColumnDef<Application>[] = [
     header: 'Rank ID',
   },
   {
-    accessorKey: 'value_matching',
-    header: 'Value matching',
+    accessorKey: 'matchScore',
+    header: 'Match',
     cell: ({ row }) => (
       <div className="flex items-center gap-spacing-xs">
         <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
-          {row?.original?.rank?.toFixed(2)}%
+          {formatMatchPercent(overallMatchPercent(row.original))}
         </span>
       </div>
     ),
