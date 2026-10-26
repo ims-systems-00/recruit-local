@@ -386,7 +386,7 @@ export default function JobDescription({ job }: { job: JobData }) {
           <div className="overflow-hidden bg-white">
             <Table>
               <TableHeader>
-                <TableRow className="border-border-gray-secondary bg-bg-gray-soft-secondary hover:bg-bg-gray-soft-primary">
+                <TableRow className="border-border-gray-secondary bg-bg-gray-soft-secondary">
                   <TableHead className="w-16 p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary"></TableHead>
                   <TableHead className="p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary">
                     Skills

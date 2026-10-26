@@ -369,14 +369,14 @@ export default function JobDescription({ job }: { job: JobData }) {
             <Table>
               <TableHeader>
                 <TableRow className="border-border-gray-secondary bg-bg-gray-soft-primary hover:bg-bg-gray-soft-primary">
-                  <TableHead className="w-16 px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary"></TableHead>
-                  <TableHead className="px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  <TableHead className="w-16 p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary"></TableHead>
+                  <TableHead className="p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary">
                     Skills
                   </TableHead>
-                  <TableHead className="w-48 px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  <TableHead className="w-48 p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary">
                     Required Level
                   </TableHead>
-                  <TableHead className="w-40 px-spacing-4xl py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  <TableHead className="w-40 p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary">
                     Requirements
                   </TableHead>
                 </TableRow>
@@ -389,16 +389,16 @@ export default function JobDescription({ job }: { job: JobData }) {
                       key={skill.id || index}
                       className=" border-none! hover:bg-bg-gray-soft-primary/40 transition-colors"
                     >
-                      <TableCell className="w-16 px-spacing-4xl py-spacing-md text-label-sm text-text-gray-secondary">
+                      <TableCell className="w-16 p-spacing-2xl text-label-sm text-text-gray-secondary">
                         {sl}
                       </TableCell>
-                      <TableCell className="px-spacing-4xl py-spacing-md text-label-sm text-text-gray-secondary">
+                      <TableCell className="p-spacing-2xl text-label-sm text-text-gray-secondary">
                         {skill.name}
                       </TableCell>
-                      <TableCell className="w-48 px-spacing-4xl py-spacing-md text-label-sm text-text-gray-secondary">
+                      <TableCell className="w-48 p-spacing-2xl text-label-sm text-text-gray-secondary">
                         {skill.level}
                       </TableCell>
-                      <TableCell className="w-40 px-spacing-4xl py-spacing-md">
+                      <TableCell className="w-40 p-spacing-2xl">
                         <span
                           className={cn(
                             'inline-flex items-center px-spacing-md py-0.5 rounded-full text-label-xs font-label-xs-strong!',
