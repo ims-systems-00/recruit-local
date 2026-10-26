@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Copy, Download, Check, Info } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatDate } from '@/lib/utils';
+import { formatDate, cn } from '@/lib/utils';
 import { Application } from '@/services/application/application.type';
 import { JobData } from '@/services/jobs/job.type';
 import { QUERY_TYPE_ENUMS } from '@rl/types';
@@ -50,6 +50,132 @@ const VALUE_BREAKDOWN_CATEGORIES = [
   { name: 'Purpose & Motivation', percentage: 60 },
 ];
 
+const APPLICANT_VALUES_DATA = [
+  {
+    category: 'Mindset',
+    matchPercentage: 70,
+    values: [
+      { name: 'Growth-oriented', matched: true },
+      { name: 'Entrepreneurial', matched: false },
+      { name: 'Proactive', matched: true },
+      { name: 'Resilient', matched: false },
+      { name: 'Problem solve', matched: true },
+    ],
+  },
+  {
+    category: 'Working Style',
+    matchPercentage: 60,
+    values: [
+      { name: 'Ownership mentality', matched: false },
+      { name: 'Collaborative', matched: true },
+      { name: 'independent', matched: false },
+      { name: 'Fast-paced', matched: true },
+      { name: 'Flexible', matched: false },
+    ],
+  },
+  {
+    category: 'Culture & Behavior',
+    matchPercentage: 88,
+    values: [
+      { name: 'Empathy', matched: false },
+      { name: 'Integrity', matched: false },
+      { name: 'Respect', matched: true },
+      { name: 'Transparency', matched: false },
+      { name: 'Supportive', matched: true },
+    ],
+  },
+  {
+    category: 'Leadership & Team Dynamics',
+    matchPercentage: 78,
+    values: [
+      { name: 'Mentorship', matched: true },
+      { name: 'Coaching culture', matched: false },
+      { name: 'Empowerment', matched: true },
+      { name: 'Flat hierarchy', matched: true },
+      { name: 'Transparent leadership', matched: true },
+    ],
+  },
+  {
+    category: 'Purpose & Motivation',
+    matchPercentage: 85,
+    values: [
+      { name: 'Career progression', matched: true },
+      { name: 'Work-life balance', matched: false },
+      { name: 'Financial growth', matched: true },
+      { name: 'Meaningful work', matched: true },
+      { name: 'Innovation', matched: true },
+    ],
+  },
+];
+
+const APPLICANT_SKILLS_DATA = [
+  {
+    id: 1,
+    name: 'Medication Administration',
+    level: 'Intermediate',
+  },
+  {
+    id: 2,
+    name: 'Manual handling',
+    level: 'Beginner',
+  },
+  {
+    id: 3,
+    name: 'Personal care',
+    level: 'Advance',
+  },
+  {
+    id: 4,
+    name: 'Dosage Calculation',
+    level: 'Beginner',
+  },
+  {
+    id: 5,
+    name: 'Prescription Management',
+    level: 'Beginner',
+  },
+  {
+    id: 6,
+    name: 'Pharmaceutical Dispensing',
+    level: 'Advance',
+  },
+];
+
+const ALL_SKILLS_MODAL_DATA = [
+  { id: 1, title: '1. Medication Administration', level: 'Intermediate' },
+  { id: 2, title: '2. Manual handling', level: 'Beginner' },
+  { id: 3, title: '3. Personal care', level: 'Advance' },
+  { id: 4, title: '4. Dosage Calculation', level: 'Beginner' },
+  { id: 5, title: '5. Prescription Management', level: 'Beginner' },
+  { id: 6, title: '5. Prescription Management', level: 'Advance' },
+  { id: 7, title: '5. Prescription Management', level: 'Beginner' },
+  { id: 8, title: '5. Prescription Management', level: 'Intermediate' },
+  { id: 9, title: '5. Prescription Management', level: 'Beginner' },
+  { id: 10, title: '5. Prescription Management', level: 'Advance' },
+];
+
+const SKILL_FILTER_TABS = [
+  'All',
+  'Beginner',
+  'Intermediate',
+  'Advance',
+] as const;
+type SkillFilterTab = (typeof SKILL_FILTER_TABS)[number];
+
+const getSkillBadgeStyles = (level: string) => {
+  switch (level.toLowerCase()) {
+    case 'intermediate':
+      return 'bg-[#FEFCE8] text-[#B45309] border border-[#FEF08A]';
+    case 'beginner':
+      return 'bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]';
+    case 'advance':
+    case 'advanced':
+      return 'bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]';
+    default:
+      return 'bg-bg-gray-soft-primary text-text-gray-secondary border border-border-gray-secondary';
+  }
+};
+
 export default function ApplicantDetailsView({
   jobId,
   applicantId: _applicantId,
@@ -58,6 +184,15 @@ export default function ApplicantDetailsView({
 }: ApplicantDetailsViewProps) {
   const [copied, setCopied] = useState(false);
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
+  const [isAllSkillsOpen, setIsAllSkillsOpen] = useState(false);
+  const [activeSkillTab, setActiveSkillTab] = useState<SkillFilterTab>('All');
+
+  const filteredSkills =
+    activeSkillTab === 'All'
+      ? ALL_SKILLS_MODAL_DATA
+      : ALL_SKILLS_MODAL_DATA.filter(
+          (skill) => skill.level.toLowerCase() === activeSkillTab.toLowerCase(),
+        );
 
   const applicantName = applicationData?.jobProfile?.name || 'Alifun Nahar';
   const statusLabel = applicationData?.status?.label || 'New applicant';
@@ -333,6 +468,106 @@ export default function ApplicantDetailsView({
                     ))}
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Values Section */}
+            <div className="space-y-spacing-2xl">
+              <h4 className="text-label-xl font-label-xl-strong! text-text-gray-primary">
+                Values
+              </h4>
+
+              {/* Matching Values Legend Banner */}
+              <div className="p-spacing-lg rounded-xl border border-border-gray-secondary bg-white flex items-center flex-wrap gap-x-spacing-sm gap-y-1">
+                <span className="size-2 rounded-full bg-bg-brand-solid-primary shrink-0" />
+                <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
+                  Matching Values
+                </span>
+                <span className="text-label-sm text-text-gray-tertiary">
+                  Pink dots highlight the values that align with your profile
+                  and responses.
+                </span>
+              </div>
+
+              {/* Value Category Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-spacing-xl">
+                {APPLICANT_VALUES_DATA.map((category, idx) => {
+                  const isLastOdd =
+                    idx === APPLICANT_VALUES_DATA.length - 1 &&
+                    APPLICANT_VALUES_DATA.length % 2 === 1;
+
+                  return (
+                    <div
+                      key={category.category}
+                      className={cn(
+                        'rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-xl shadow-xs',
+                        isLastOdd && 'md:col-span-2',
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-spacing-md">
+                        <h5 className="text-label-md font-label-md-strong! text-text-gray-primary">
+                          {category.category}
+                        </h5>
+                        <span className="px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong! text-text-brand-primary bg-bg-brand-soft-primary">
+                          {category.matchPercentage}% match
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-spacing-md">
+                        {category.values.map((v) => (
+                          <span
+                            key={v.name}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-border-gray-secondary bg-white px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-text-gray-secondary"
+                          >
+                            {v.matched && (
+                              <span className="size-1.5 rounded-full bg-bg-brand-solid-primary shrink-0" />
+                            )}
+                            {v.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Skills Section */}
+            <div className="space-y-spacing-2xl">
+              <div className="flex items-center justify-between">
+                <h4 className="text-label-xl font-label-xl-strong! text-text-gray-primary">
+                  Skills
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setIsAllSkillsOpen(true)}
+                  className="text-label-sm font-label-sm-strong! text-text-brand-primary hover:underline transition-colors cursor-pointer"
+                >
+                  View All Skills
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-xl">
+                {APPLICANT_SKILLS_DATA.map((skill) => (
+                  <div
+                    key={skill.id}
+                    className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-md shadow-xs"
+                  >
+                    <p className="text-label-md font-label-md-strong! text-text-gray-primary">
+                      {skill.id}. {skill.name}
+                    </p>
+                    <div>
+                      <span
+                        className={cn(
+                          'inline-flex items-center px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong!',
+                          getSkillBadgeStyles(skill.level),
+                        )}
+                      >
+                        {skill.level}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -698,6 +933,71 @@ export default function ApplicantDetailsView({
                   </span>
                 </div>
               </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View All Skills Dialog */}
+      <Dialog open={isAllSkillsOpen} onOpenChange={setIsAllSkillsOpen}>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-2xl sm:max-w-3xl bg-white p-spacing-2xl sm:p-spacing-3xl rounded-3xl border border-border-gray-secondary shadow-xl max-h-[85vh] flex flex-col gap-spacing-2xl">
+          <div className="space-y-spacing-2xl shrink-0">
+            <DialogHeader className="text-left space-y-0">
+              <DialogTitle className="text-label-xl sm:text-display-xs font-label-xl-strong! text-text-gray-primary">
+                All Skills
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                Complete list of skills and proficiencies assessed for this
+                applicant.
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-spacing-md flex-wrap">
+              {SKILL_FILTER_TABS.map((tab) => {
+                const isActive = activeSkillTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveSkillTab(tab)}
+                    className={cn(
+                      'px-spacing-xl py-spacing-xs rounded-xl text-label-sm font-label-sm-strong! transition-colors cursor-pointer border',
+                      isActive
+                        ? 'bg-bg-brand-solid-primary text-white border-transparent'
+                        : 'bg-white text-text-gray-secondary border-border-gray-secondary hover:bg-bg-gray-soft-primary hover:text-text-gray-primary',
+                    )}
+                  >
+                    {tab}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Scrollable Skills Grid */}
+          <div className="flex-1 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-xl">
+              {filteredSkills.map((skill) => (
+                <div
+                  key={skill.id}
+                  className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-md shadow-xs"
+                >
+                  <p className="text-label-md font-label-md-strong! text-text-gray-primary">
+                    {skill.title}
+                  </p>
+                  <div>
+                    <span
+                      className={cn(
+                        'inline-flex items-center px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong!',
+                        getSkillBadgeStyles(skill.level),
+                      )}
+                    >
+                      {skill.level}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </DialogContent>
