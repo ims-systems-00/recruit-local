@@ -479,6 +479,28 @@ export const moveItemOnBoard = async ({ itemId, targetStatusId, targetIndex }: I
   return Application.moveToPosition(itemId, targetStatusId, targetIndex);
 };
 
+/** Board order: how a column is read unless the caller asks for another sort. */
+export const BOARD_ORDER_SORT = "-rank";
+
+/** The default stage's order: best match first, and newest first among equal scores (the `_id` tie-break). */
+export const DEFAULT_STAGE_SORT = "-matchScore";
+
+/**
+ * The sort that board order means for one column.
+ *
+ * The default stage, where every new application lands, is a triage inbox: it
+ * is always read best match first, so a new applicant shows up in the right
+ * place as soon as they are ranked, whatever has been dragged around it. Every
+ * other stage is the recruiter's own and keeps the order they dragged it into.
+ */
+export const boardColumnSort = async (statusId: unknown): Promise<string> => {
+  const id = String(statusId ?? "");
+  if (!Types.ObjectId.isValid(id)) return BOARD_ORDER_SORT;
+
+  const isDefaultStage = await Status.exists({ _id: id, default: true, "deleteMarker.status": { $ne: true } });
+  return isDefaultStage ? DEFAULT_STAGE_SORT : BOARD_ORDER_SORT;
+};
+
 const OVERVIEW_RANGE_DAYS: Record<JobOverviewRange, number> = { week: 7, month: 30 };
 const DAY_MS = 24 * 60 * 60 * 1000;
 
