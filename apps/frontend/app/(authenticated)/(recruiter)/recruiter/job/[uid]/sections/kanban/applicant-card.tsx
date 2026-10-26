@@ -18,9 +18,15 @@ import Link from 'next/link';
 interface Props {
   applicant: Application;
   index: number;
+  /**
+   * In the default stage, which is read best match first: the card can still be
+   * dragged out, but is no drop target, so a drop lands on the column (placed
+   * by match) and no gap opens to suggest a slot that will not be kept.
+   */
+  placedByMatch?: boolean;
 }
 
-export function ApplicantCard({ applicant, index }: Props) {
+export function ApplicantCard({ applicant, index, placedByMatch }: Props) {
   const {
     attributes,
     listeners,
@@ -34,6 +40,7 @@ export function ApplicantCard({ applicant, index }: Props) {
       applicant,
       index,
     },
+    disabled: { droppable: Boolean(placedByMatch) },
   });
 
   const style = {

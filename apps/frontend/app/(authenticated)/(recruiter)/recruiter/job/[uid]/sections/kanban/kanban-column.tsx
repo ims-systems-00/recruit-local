@@ -12,6 +12,7 @@ import {
   Pencil,
   Trash2,
   GripVertical,
+  ArrowDownWideNarrow,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -38,15 +39,27 @@ const COLUMN_CLASS =
 export type OptimisticItem = { app: Application; index: number };
 
 /**
+ * The default stage's order, as the backend reads it: best match first, newest
+ * first among equal scores (`_id` descending — ids are time-ordered).
+ */
+const byBestMatch = (a: Application, b: Application) =>
+  (b.matchScore ?? 0) - (a.matchScore ?? 0) ||
+  (b._id > a._id ? 1 : b._id < a._id ? -1 : 0);
+
+/**
  * Server cards with in-flight moves applied: moved-out dropped, moved-in spliced
  * in at the index they were dropped on. The backend places a move the same way
  * — the column without the card, then insert at `targetIndex` — so the preview
  * matches the order the refetch brings back.
+ *
+ * The default stage ignores the drop index and places every card by match, so
+ * with `byMatch` the merged column is put back in that order instead.
  */
 export const mergeColumnApplications = (
   applications: Application[],
   optimisticItems: OptimisticItem[],
   removedIds: Set<string>,
+  byMatch = false,
 ) => {
   const merged = applications.filter(
     (a) =>
@@ -58,18 +71,20 @@ export const mergeColumnApplications = (
     .forEach(({ app, index }) =>
       merged.splice(Math.min(index, merged.length), 0, app),
     );
-  return merged;
+  return byMatch ? merged.sort(byBestMatch) : merged;
 };
 
 function ColumnHeader({
   title,
   count,
+  sortedByMatch,
   handleRef,
   handleProps,
   actions,
 }: {
   title: string;
   count: number;
+  sortedByMatch?: boolean;
   handleRef?: Ref<HTMLButtonElement>;
   handleProps?: HTMLAttributes<HTMLButtonElement>;
   actions: ReactNode;
@@ -92,6 +107,15 @@ function ColumnHeader({
         <span className=" py-spacing-3xs px-spacing-sm rounded-full border border-others-gray-light bg-others-gray-gray-zero text-label-xs font-label-xs-strong! text-others-gray-dark">
           {count}
         </span>
+        {sortedByMatch && (
+          <span
+            className="flex items-center gap-spacing-3xs text-label-xs font-label-xs-strong! text-text-gray-tertiary"
+            title="Sorted by best match. Move a card to another stage to take it forward."
+          >
+            <ArrowDownWideNarrow size={12} />
+            Best match
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-spacing-sm">{actions}</div>
     </div>
@@ -106,10 +130,12 @@ export function KanbanColumnPreview({
   title,
   applications,
   count,
+  isDefault,
 }: {
   title: string;
   applications: Application[];
   count: number;
+  isDefault?: boolean;
 }) {
   return (
     <div
@@ -121,6 +147,7 @@ export function KanbanColumnPreview({
       <ColumnHeader
         title={title}
         count={count}
+        sortedByMatch={isDefault}
         actions={
           <span className="text-fg-gray-secondary">
             <MoreHorizontal size={16} />
@@ -148,11 +175,14 @@ interface Props {
   jobId: string;
   optimisticItems: OptimisticItem[];
   removedIds: Set<string>;
+  /** The default stage: read best match first, so its cards are never reordered by hand. */
+  isDefault?: boolean;
 }
 
 export function KanbanColumn({
   id,
   title,
+  isDefault = false,
   // applicants,
   // onAddClick,
   // onEdit,
@@ -175,6 +205,7 @@ export function KanbanColumn({
     applications,
     optimisticItems,
     removedIds,
+    isDefault,
   );
 
   const { setNodeRef, isOver } = useDroppable({ id });
@@ -227,6 +258,7 @@ export function KanbanColumn({
         <ColumnHeader
           title={title}
           count={applications.length}
+          sortedByMatch={isDefault}
           handleRef={setActivatorNodeRef}
           handleProps={{ ...attributes, ...listeners }}
           actions={
@@ -279,6 +311,7 @@ export function KanbanColumn({
                 key={applicant._id}
                 applicant={applicant}
                 index={index}
+                placedByMatch={isDefault}
               />
             ))}
           </SortableContext>
