@@ -7,12 +7,13 @@ import { populateValuesQuery } from "../v1/modules/value/value.query";
 import { populateExperienceLevelQuery } from "../v1/modules/experience-level/experience-level.query";
 import {
   RankingContext,
+  RankingJob,
   RankingJobProfile,
   RankingResult,
   RankingTenant,
   runRankingPipeline,
 } from "../v1/modules/application/ranking/pipeline";
-import { IJobInput } from "../models/job.model";
+import { loadMatchProfile } from "../v1/modules/job/match/profile.service";
 
 export interface ApplicationRankingData {
   applicationId: string;
@@ -45,8 +46,9 @@ const findWithValues = async <T>(
  *
  * The pipeline itself is pure and synchronous; all this does is assemble the
  * context it needs — the candidate's profile, the job, the tenant that posted
- * it with both sides' values populated, and the application's own screening
- * answers — and hand it over.
+ * it with both sides' values populated, the application's own screening
+ * answers, and the profile once more in the shape the job match reads — and
+ * hand it over.
  *
  * The score is stored in `matchScore`, and `rank` is seeded to the same number
  * so a recruiter's board comes up best-match-first. From then on the board owns
@@ -73,17 +75,18 @@ const processApplicationRanking = async ({
   if (!jobProfileId || !jobId || !tenantId)
     return { skipped: "application is missing jobId, jobProfileId or tenantId" };
 
-  const [jobProfile, tenant, job] = await Promise.all([
+  const [jobProfile, matchProfile, tenant, job] = await Promise.all([
     findWithValues<RankingJobProfile>(JobProfile, jobProfileId, populateExperienceLevelQuery()),
+    loadMatchProfile(String(jobProfileId)),
     findWithValues<RankingTenant>(Tenant, String(tenantId)),
-    Job.findById(jobId).lean<IJobInput>(),
+    Job.findById(jobId).lean<RankingJob>(),
   ]);
 
-  if (!jobProfile) return { skipped: "job profile not found" };
+  if (!jobProfile || !matchProfile) return { skipped: "job profile not found" };
   if (!tenant) return { skipped: "tenant not found" };
   if (!job) return { skipped: "job not found" };
 
-  const context: RankingContext = { jobProfile, job, tenant, application };
+  const context: RankingContext = { jobProfile, matchProfile, job, tenant, application };
   const result = runRankingPipeline(context);
 
   await Application.updateOne({ _id: application._id }, { $set: { matchScore: result.score, rank: result.score } });

@@ -1,10 +1,15 @@
 import { JobProfileInput } from "../../../../models/job-profile.model";
 import { TenantInput } from "../../../../models/tenant.model";
-import { IJobInput } from "../../../../models/job.model";
+import { IJobDoc, IJobInput } from "../../../../models/job.model";
 import { ApplicationInput } from "../../../../models/application.model";
 import { MatchableValue, ValueMatchResult, matchValues } from "./matching/value";
 import { QuestionMatchResult, matchQuestionAnswers } from "./matching/valuebasedQuestion";
 import { ExperienceMatchResult, MatchableExperienceLevel, matchExperience } from "./matching/experience";
+import { SkillMatchResult, matchSkills } from "../../job/match/skill";
+import { RoleMatchResult, matchRole } from "../../job/match/role";
+import { LocationMatchResult, fromGeoJson, matchLocation } from "../../job/match/location";
+// Type-only: `job-match.ts` imports `runMatchers` from here, so a value import would be a cycle.
+import type { MatchProfile } from "../../job/match/job-match";
 
 /**
  * The ranking pipeline.
@@ -36,6 +41,9 @@ export type RankingJobProfile = Omit<WithPopulatedValues<JobProfileInput>, "expe
 
 export type RankingTenant = WithPopulatedValues<TenantInput>;
 
+/** The job as the ranking fetch reads it, with the geocoded point the location matcher measures from. */
+export type RankingJob = IJobInput & Pick<IJobDoc, "geo">;
+
 /**
  * The parts of the application a matcher may read. Narrow on purpose — widen it
  * as matchers claim fields, so the worker's `select` and this type stay in step.
@@ -45,15 +53,23 @@ export type RankingApplication = Pick<ApplicationInput, "answers">;
 /**
  * Everything a matcher may look at, assembled once per application being
  * ranked. Matchers read only the parts they need — the two `values` arrays, the
- * job's screening questions and the answers to them — so the fetch that builds
- * this should populate whatever the registered matchers actually consume and no
- * more.
+ * job's screening questions and the answers to them, both sides' skills, roles
+ * and locations — so the fetch that builds this should populate whatever the
+ * registered matchers actually consume and no more.
  */
 export interface RankingContext {
   /** The applying candidate's profile. */
   jobProfile: RankingJobProfile;
+  /**
+   * The same profile as the candidate's job match reads it (`loadMatchProfile`):
+   * catalogue skills, job titles, industries and work modes resolved to names,
+   * interests, and the geocoded address. Read through the same field spec so
+   * the skills, role and location matchers judge exactly what the candidate's
+   * own match does.
+   */
+  matchProfile: MatchProfile;
   /** The job applied to. */
-  job: IJobInput;
+  job: RankingJob;
   /** The tenant that posted the job — the recruiter side of every comparison. */
   tenant: RankingTenant;
   /** The application being scored — the candidate's own submission. */
@@ -180,10 +196,71 @@ export const experienceMatcher: RankingMatcher = {
 };
 
 /**
+ * How well the candidate's skills cover the job's, level by level — see
+ * `job/match/skill.ts` for the scoring. The matcher behind the candidate's own
+ * job match, so both sides of the platform judge skills alike.
+ *
+ * Weighted level with values, as the two are in the candidate's job match
+ * (`JOB_MATCH_WEIGHTS`). Not applicable when the job names no skills.
+ */
+export const skillMatcher: RankingMatcher = {
+  key: "skills",
+  label: "Skills",
+  weight: 2,
+  run: ({ job, matchProfile }) => {
+    const result: SkillMatchResult = matchSkills(job.skills, matchProfile.skills);
+    return { ratio: result.ratio, applicable: result.applicable, details: result };
+  },
+};
+
+/**
+ * Whether the job is the kind of role the candidate is after: the words of its
+ * title and category against the job titles, industries and interests on their
+ * profile — see `job/match/role.ts`.
+ */
+export const roleMatcher: RankingMatcher = {
+  key: "role",
+  label: "Role",
+  weight: 1,
+  run: ({ job, matchProfile }) => {
+    const result: RoleMatchResult = matchRole(
+      { title: job.title, category: job.category },
+      { jobTitles: matchProfile.jobTitles, industries: matchProfile.industries, interests: matchProfile.interests }
+    );
+    return { ratio: result.ratio, applicable: result.applicable, details: result };
+  },
+};
+
+/**
+ * Whether the job's workplace suits the candidate's preferred work modes and,
+ * once both sides are geocoded, whether they live close enough to get there —
+ * see `job/match/location.ts`.
+ */
+export const locationMatcher: RankingMatcher = {
+  key: "location",
+  label: "Location",
+  weight: 1,
+  run: ({ job, matchProfile }) => {
+    const result: LocationMatchResult = matchLocation(
+      { workplace: job.workplace, point: fromGeoJson(job.geo) },
+      { workModes: matchProfile.workModes, point: fromGeoJson(matchProfile.geo) }
+    );
+    return { ratio: result.ratio, applicable: result.applicable, details: result };
+  },
+};
+
+/**
  * The matchers, in the order their signals are reported. Order is presentation
  * only — the composite score is weight-driven and order-independent.
  */
-export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, questionMatcher, experienceMatcher];
+export const RANKING_PIPELINE: RankingMatcher[] = [
+  valueMatcher,
+  skillMatcher,
+  roleMatcher,
+  locationMatcher,
+  questionMatcher,
+  experienceMatcher,
+];
 
 /**
  * Stamped onto every stored ranking. Bump it whenever a change would make old
@@ -193,7 +270,7 @@ export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, questionMatcher
  * version are stale by definition and can be found and re-ranked with a single
  * query; without it there is no way to tell a fresh score from a legacy one.
  */
-export const RANKING_PIPELINE_VERSION = 4;
+export const RANKING_PIPELINE_VERSION = 5;
 
 /**
  * Runs every matcher against `context` and folds the applicable ones into a
