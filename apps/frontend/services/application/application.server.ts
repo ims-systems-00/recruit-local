@@ -38,6 +38,7 @@ export async function getApplications(
         clientSearch: params?.clientSearch,
         jobId: params?.jobId,
         statusId: params?.statusId,
+        sort: params?.sort,
       },
     });
 

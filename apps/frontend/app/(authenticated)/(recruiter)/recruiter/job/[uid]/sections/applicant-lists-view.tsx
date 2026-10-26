@@ -49,8 +49,15 @@ export const userColumns: ColumnDef<Application>[] = [
     ),
   },
   {
-    accessorKey: 'rank',
-    header: 'Rank ID',
+    // Position by match: the list is read best match first, so a row's place in
+    // it is its rank. Not scored yet sorts to the bottom and has no rank.
+    id: 'position',
+    header: 'Rank',
+    cell: ({ row }) => (
+      <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
+        {overallMatchPercent(row.original) == null ? '—' : `#${row.index + 1}`}
+      </span>
+    ),
   },
   {
     accessorKey: 'matchScore',
@@ -109,7 +116,7 @@ export const userColumns: ColumnDef<Application>[] = [
 ];
 export default function ApplicantListsView({ jobId }: { jobId: string }) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    useInfiniteApplications({ jobId });
+    useInfiniteApplications({ jobId, sort: '-matchScore' });
 
   const applications = data?.pages.flatMap((page) => page.docs) ?? [];
 

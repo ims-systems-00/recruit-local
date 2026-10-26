@@ -28,6 +28,8 @@ export type ApplicationListFilters = {
   limit?: number;
   clientSearch?: string;
   statusId?: string;
+  /** Unset: newest first, or board order for a column (`statusId`). */
+  sort?: '-matchScore' | '-createdAt' | '-rank';
 };
 
 // --- FRONTEND RESPONSE TYPES ---
