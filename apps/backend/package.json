@@ -25,6 +25,8 @@
     "backfill:keywords:dev": "env-cmd -f ./.env.dev ts-node ./src/scripts/backfill-keywords.ts",
     "backfill:embeddings:dev": "env-cmd -f ./.env.dev ts-node ./src/scripts/backfill-embeddings.ts",
     "backfill:geo:dev": "env-cmd -f ./.env.dev ts-node ./src/scripts/backfill-geo.ts",
+    "backfill:ranking:dev": "env-cmd -f ./.env.dev ts-node ./src/scripts/backfill-ranking.ts",
+    "backfill:ranking:prod": "node dist/src/scripts/backfill-ranking.js",
     "cleanup:job-feeds:dev": "env-cmd -f ./.env.dev ts-node ./src/scripts/cleanup-job-feeds.ts",
     "cleanup:job-feeds:prod": "node dist/src/scripts/cleanup-job-feeds.js",
     "search-indexes:dev": "env-cmd -f ./.env.dev ts-node ./src/scripts/ensure-search-indexes.ts",
