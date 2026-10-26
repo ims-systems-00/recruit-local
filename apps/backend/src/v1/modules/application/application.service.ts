@@ -38,7 +38,6 @@ import {
   IMoveBoardItemParams,
   IApplicationOverviewParams,
 } from "./application.interface";
-import * as statusService from "../status/status.service";
 
 export const list = async ({ query = {}, options, session, offset = 0 }: IListApplicationParams) => {
   const limit = options?.limit && options.limit > 0 ? options.limit : 10;
@@ -116,6 +115,30 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IApplicationGet
   return applications[0];
 };
 
+/**
+ * The stage a new application lands in: the job's default stage, the triage
+ * column the board reads best match first. Job creation seeds one and it cannot
+ * be deleted, so a job without one should not exist; if one does, its first
+ * column takes the application rather than the candidate being turned away.
+ */
+export const findArrivalStage = async (jobId: unknown, session?: ClientSession | null) => {
+  const jobStages = {
+    collectionName: modelNames.JOB,
+    collectionId: jobId,
+    "deleteMarker.status": { $ne: true },
+  };
+
+  return (
+    (await Status.findOne({ ...jobStages, default: true })
+      .select("_id")
+      .session(session || null)) ??
+    (await Status.findOne(jobStages)
+      .sort({ weight: 1, _id: 1 })
+      .select("_id")
+      .session(session || null))
+  );
+};
+
 export const create = async ({ payload, session }: IApplicationCreateParams) => {
   // 1. Validate Job Exists
   const job = await jobService.getOne({
@@ -179,15 +202,7 @@ export const create = async ({ payload, session }: IApplicationCreateParams) => 
   // 5. Clean payload and build document
   const { resumeStorage, caseStudyStorage, ...cleanPayload } = payload;
 
-  // get the default status for the job to set on the application
-  const defaultStatus = await statusService.getOne({
-    query: {
-      collectionName: modelNames.JOB,
-      collectionId: payload.jobId,
-    },
-    session,
-  });
-
+  const defaultStatus = await findArrivalStage(payload.jobId, session);
   if (!defaultStatus) throw new NotFoundException("Default status not found for the job.");
 
   const tenantId = job.tenantId;
