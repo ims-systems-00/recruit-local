@@ -671,60 +671,62 @@ export default function ApplicantDetailsView({
 
           {/* Right Column: Values and Potentials Card */}
           <div className="w-full xl:w-[380px] shrink-0 bg-white border border-border-gray-secondary rounded-2xl p-spacing-3xl space-y-spacing-3xl shadow-xs xl:sticky xl:top-6">
-            <h3 className="text-label-xl font-label-xl-strong! text-text-gray-primary">
-              Values and Potentials
-            </h3>
+            <div>
+              <h3 className="text-label-xl font-label-xl-strong! text-text-gray-primary">
+                Values and Potentials
+              </h3>
 
-            {/* Semicircular Gauge */}
-            <div className="w-full max-w-[240px] mx-auto flex flex-col items-center">
-              <svg
-                viewBox="0 0 200 120"
-                className="w-full h-auto overflow-visible"
-              >
-                {/* Background Track Arc */}
-                <path
-                  d="M 24 105 A 76 76 0 0 1 176 105"
-                  fill="none"
-                  stroke="#F1F3F5"
-                  strokeWidth="14"
-                  strokeLinecap="round"
-                />
-                {/* Active Brand Arc */}
-                <path
-                  d="M 24 105 A 76 76 0 0 1 176 105"
-                  fill="none"
-                  stroke="var(--colors-bg-brand-solid-primary, #E60076)"
-                  strokeWidth="14"
-                  strokeLinecap="round"
-                  strokeDasharray={ARC_LENGTH}
-                  strokeDashoffset={arcDashOffset}
-                  className="transition-all duration-700 ease-out"
-                />
-                {/* Overall Match Text */}
-                <text
-                  x="100"
-                  y="62"
-                  textAnchor="middle"
-                  fill="var(--colors-text-gray-tertiary, #667085)"
-                  fontSize="12"
-                  fontWeight="500"
-                  className="select-none font-sans"
+              {/* Semicircular Gauge */}
+              <div className="w-full max-w-[240px] mx-auto flex flex-col items-center">
+                <svg
+                  viewBox="0 0 200 120"
+                  className="w-full h-auto overflow-visible"
                 >
-                  Overall Match
-                </text>
-                {/* Overall Match Percentage */}
-                <text
-                  x="100"
-                  y="98"
-                  textAnchor="middle"
-                  fill="var(--colors-text-gray-primary, #101828)"
-                  fontSize="30"
-                  fontWeight="700"
-                  className="select-none font-sans"
-                >
-                  {overallScore}%
-                </text>
-              </svg>
+                  {/* Background Track Arc */}
+                  <path
+                    d="M 24 105 A 76 76 0 0 1 176 105"
+                    fill="none"
+                    stroke="#F1F3F5"
+                    strokeWidth="14"
+                    strokeLinecap="round"
+                  />
+                  {/* Active Brand Arc */}
+                  <path
+                    d="M 24 105 A 76 76 0 0 1 176 105"
+                    fill="none"
+                    stroke="var(--colors-bg-brand-solid-primary, #E60076)"
+                    strokeWidth="14"
+                    strokeLinecap="round"
+                    strokeDasharray={ARC_LENGTH}
+                    strokeDashoffset={arcDashOffset}
+                    className="transition-all duration-700 ease-out"
+                  />
+                  {/* Overall Match Text */}
+                  <text
+                    x="100"
+                    y="62"
+                    textAnchor="middle"
+                    fill="var(--colors-text-gray-tertiary, #667085)"
+                    fontSize="12"
+                    fontWeight="500"
+                    className="select-none font-sans"
+                  >
+                    Overall Match
+                  </text>
+                  {/* Overall Match Percentage */}
+                  <text
+                    x="100"
+                    y="98"
+                    textAnchor="middle"
+                    fill="var(--colors-text-gray-primary, #101828)"
+                    fontSize="30"
+                    fontWeight="700"
+                    className="select-none font-sans"
+                  >
+                    {overallScore}%
+                  </text>
+                </svg>
+              </div>
             </div>
 
             {/* Strong Alignment Status */}
