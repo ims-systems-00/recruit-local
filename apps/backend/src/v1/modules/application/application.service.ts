@@ -388,13 +388,14 @@ export const restore = async ({ query, session }: IApplicationGetParams) => {
  * the drag-and-drop route, and the agent's move tool.
  *
  * Returns the applications as loaded, so a caller that has already paid for the
- * read does not pay again.
+ * read does not pay again, and whether the column is the default stage, which
+ * decides how a card is placed in it (`placeInStage`).
  */
 export const assertStageOnBoard = async ({
   applicationIds,
   statusId,
   session,
-}: IApplicationMoveToStageParams): Promise<{ applications: any[]; jobId: string }> => {
+}: IApplicationMoveToStageParams): Promise<{ applications: any[]; jobId: string; isDefaultStage: boolean }> => {
   const ids = [...new Set(applicationIds.map(String))];
 
   if (ids.length === 0) throw new BadRequestException("No applications were given to move.");
@@ -433,31 +434,61 @@ export const assertStageOnBoard = async ({
     collectionId: new Types.ObjectId(jobId),
     "deleteMarker.status": { $ne: true },
   })
-    .select("_id label")
+    .select("_id label default")
     .session(session ?? null);
 
   if (!status) {
     throw new BadRequestException("That status is not a column on this job's board.");
   }
 
-  return { applications, jobId };
+  return { applications, jobId, isDefaultStage: Boolean(status.default) };
 };
 
 /**
- * Moves applications into a column, at the top of it.
+ * Puts one application into a column that `assertStageOnBoard` has cleared.
  *
- * Each application is moved by `moveToPosition`, which runs its own transaction,
- * so the batch is not atomic as a whole — but every reason a move could be
- * refused has already been checked by `assertStageOnBoard` above, so a partial
- * batch means the database went away mid-loop rather than an input being wrong.
- * Index 0 is the top of the column, which is where a card dropped by hand lands.
+ * The default stage is read best match first (`boardColumnSort`), so a card
+ * moved there takes its match position wherever it was dropped: only its stage
+ * changes, and its `rank` is reset to its `matchScore` in the same atomic
+ * write, so the column starts in match order should it stop being the default.
+ * There is no neighbour to place it against, so no column is rebalanced. Every
+ * other column keeps the drop position, through `moveToPosition`.
+ */
+const placeInStage = async (
+  applicationId: string,
+  statusId: string,
+  targetIndex: number,
+  isDefaultStage: boolean
+): Promise<{ success: boolean; rank: number; rebalanced: boolean }> => {
+  if (!isDefaultStage) return Application.moveToPosition(applicationId, statusId, targetIndex);
+
+  const placed = await Application.findOneAndUpdate(
+    { _id: new Types.ObjectId(applicationId) },
+    [{ $set: { statusId: new Types.ObjectId(statusId), rank: { $ifNull: ["$matchScore", 0] } } }],
+    { new: true, projection: { rank: 1 } }
+  ).lean();
+  if (!placed) throw new NotFoundException("Application not found.");
+
+  return { success: true, rank: placed.rank, rebalanced: false };
+};
+
+/**
+ * Moves applications into a column, at the top of it — or, in the default
+ * stage, at their match position (`placeInStage`).
+ *
+ * Each application is moved on its own write — `moveToPosition` runs its own
+ * transaction — so the batch is not atomic as a whole, but every reason a move
+ * could be refused has already been checked by `assertStageOnBoard` above, so a
+ * partial batch means the database went away mid-loop rather than an input
+ * being wrong. Index 0 is the top of the column, which is where a card dropped
+ * by hand lands.
  */
 export const moveToStage = async ({ applicationIds, statusId, session }: IApplicationMoveToStageParams) => {
-  const { applications } = await assertStageOnBoard({ applicationIds, statusId, session });
+  const { applications, isDefaultStage } = await assertStageOnBoard({ applicationIds, statusId, session });
 
   for (const application of applications) {
     try {
-      await Application.moveToPosition(String(application._id), String(statusId), 0);
+      await placeInStage(String(application._id), String(statusId), 0, isDefaultStage);
     } catch (error) {
       // The plugin throws bare `Error`s — a board locked to a non-rank sort
       // order is the one a caller can act on, and a 500 does not say so.
@@ -489,9 +520,9 @@ export const statusUpdate = async ({
 // Custom Action: Move Item on Board
 export const moveItemOnBoard = async ({ itemId, targetStatusId, targetIndex }: IMoveBoardItemParams) => {
   // Scoped first: the plugin would otherwise accept a column from another board.
-  await assertStageOnBoard({ applicationIds: [itemId], statusId: targetStatusId });
+  const { isDefaultStage } = await assertStageOnBoard({ applicationIds: [itemId], statusId: targetStatusId });
 
-  return Application.moveToPosition(itemId, targetStatusId, targetIndex);
+  return placeInStage(itemId, targetStatusId, targetIndex, isDefaultStage);
 };
 
 /** Board order: how a column is read unless the caller asks for another sort. */
