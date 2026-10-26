@@ -1,10 +1,10 @@
 import { JobProfileInput } from "../../../../models/job-profile.model";
-import { TenantInput } from "../../../../models/tenant.model";
 import { IJobDoc, IJobInput } from "../../../../models/job.model";
 import { ApplicationInput } from "../../../../models/application.model";
-import { MatchableValue, ValueMatchResult, matchValues } from "./matching/value";
+import { MatchableValue } from "./matching/value";
 import { QuestionMatchResult, matchQuestionAnswers } from "./matching/valuebasedQuestion";
 import { ExperienceMatchResult, MatchableExperienceLevel, matchExperience } from "./matching/experience";
+import { ValueMatchResult, matchValueScores } from "../../job/match/value";
 import { SkillMatchResult, matchSkills } from "../../job/match/skill";
 import { RoleMatchResult, matchRole } from "../../job/match/role";
 import { LocationMatchResult, fromGeoJson, matchLocation } from "../../job/match/location";
@@ -39,8 +39,6 @@ export type RankingJobProfile = Omit<WithPopulatedValues<JobProfileInput>, "expe
   experienceLevel?: MatchableExperienceLevel | null;
 };
 
-export type RankingTenant = WithPopulatedValues<TenantInput>;
-
 /** The job as the ranking fetch reads it, with the geocoded point the location matcher measures from. */
 export type RankingJob = IJobInput & Pick<IJobDoc, "geo">;
 
@@ -52,10 +50,10 @@ export type RankingApplication = Pick<ApplicationInput, "answers">;
 
 /**
  * Everything a matcher may look at, assembled once per application being
- * ranked. Matchers read only the parts they need — the two `values` arrays, the
- * job's screening questions and the answers to them, both sides' skills, roles
- * and locations — so the fetch that builds this should populate whatever the
- * registered matchers actually consume and no more.
+ * ranked. Matchers read only the parts they need — the job's values against the
+ * candidate's value scores, the job's screening questions and the answers to
+ * them, both sides' skills, roles and locations — so the fetch that builds this
+ * should populate whatever the registered matchers actually consume and no more.
  */
 export interface RankingContext {
   /** The applying candidate's profile. */
@@ -70,8 +68,6 @@ export interface RankingContext {
   matchProfile: MatchProfile;
   /** The job applied to. */
   job: RankingJob;
-  /** The tenant that posted the job — the recruiter side of every comparison. */
-  tenant: RankingTenant;
   /** The application being scored — the candidate's own submission. */
   application: RankingApplication;
 }
@@ -146,16 +142,22 @@ export interface RankingResult {
 }
 
 /**
- * How well the candidate's values line up with the values of the tenant that
- * posted the job. Both sides pick from the same shared `Value` catalog, so this
- * is exact set overlap — see `matching/value.ts` for the scoring.
+ * How well the candidate's values line up with the values this job lists. Each
+ * of the job's values earns the candidate's evaluated score in it, a small
+ * credit if they only selected it, or nothing — see `job/match/value.ts` for
+ * the scoring.
+ *
+ * The job's values rather than the organisation's, so a recruiter can tune what
+ * one role asks for. The job's `priority` on each value is not read, as in the
+ * candidate's own job match, so this part scores the same on both sides. Not
+ * applicable when the job lists no values.
  */
 export const valueMatcher: RankingMatcher = {
   key: "value",
   label: "Values",
   weight: 2,
-  run: ({ jobProfile, tenant }) => {
-    const result: ValueMatchResult = matchValues(jobProfile.values, tenant.values);
+  run: ({ job, matchProfile }) => {
+    const result: ValueMatchResult = matchValueScores(job.values, matchProfile.values, matchProfile.valueScores);
     return { ratio: result.ratio, applicable: result.applicable, details: result };
   },
 };
@@ -270,7 +272,7 @@ export const RANKING_PIPELINE: RankingMatcher[] = [
  * version are stale by definition and can be found and re-ranked with a single
  * query; without it there is no way to tell a fresh score from a legacy one.
  */
-export const RANKING_PIPELINE_VERSION = 5;
+export const RANKING_PIPELINE_VERSION = 6;
 
 /**
  * Runs every matcher against `context` and folds the applicable ones into a

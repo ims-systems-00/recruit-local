@@ -1,7 +1,7 @@
 import { Job as BullJob } from "bullmq";
 import { PipelineStage, Types } from "mongoose";
 import { ReusableQueue } from "./Queue";
-import { Application, Job, JobProfile, Tenant } from "../models";
+import { Application, Job, JobProfile } from "../models";
 import { matchQuery, excludeDeletedQuery } from "../common/query";
 import { populateValuesQuery } from "../v1/modules/value/value.query";
 import { populateExperienceLevelQuery } from "../v1/modules/experience-level/experience-level.query";
@@ -10,7 +10,6 @@ import {
   RankingJob,
   RankingJobProfile,
   RankingResult,
-  RankingTenant,
   runRankingPipeline,
 } from "../v1/modules/application/ranking/pipeline";
 import { loadMatchProfile } from "../v1/modules/job/match/profile.service";
@@ -20,15 +19,14 @@ export interface ApplicationRankingData {
 }
 
 /**
- * Loads a document by id with its `values` array populated into full value
- * documents, the same way the tenant and job-profile read paths do. Soft-deleted
- * values are excluded by `populateValuesQuery`, so a retired value cannot score.
+ * Loads a job profile by id with its `values` array populated into full value
+ * documents, the same way the job-profile read path does. Soft-deleted values
+ * are excluded by `populateValuesQuery`.
  *
- * `extraStages` covers what only one side needs — the job profile also resolves
- * its experience level, which the tenant has no equivalent of.
+ * `extraStages` adds what the matchers need on top — the experience level.
  */
 const findWithValues = async <T>(
-  model: typeof JobProfile | typeof Tenant,
+  model: typeof JobProfile,
   id: Types.ObjectId | string,
   extraStages: PipelineStage[] = []
 ): Promise<T | null> => {
@@ -45,10 +43,9 @@ const findWithValues = async <T>(
  * Scores one application against the job it was submitted to.
  *
  * The pipeline itself is pure and synchronous; all this does is assemble the
- * context it needs — the candidate's profile, the job, the tenant that posted
- * it with both sides' values populated, the application's own screening
- * answers, and the profile once more in the shape the job match reads — and
- * hand it over.
+ * context it needs — the candidate's profile, the job, the application's own
+ * screening answers, and the profile once more in the shape the job match
+ * reads — and hand it over.
  *
  * The score is stored in `matchScore`, and `rank` is seeded to the same number
  * so a recruiter's board comes up best-match-first. From then on the board owns
@@ -59,34 +56,31 @@ const findWithValues = async <T>(
  * /admin/queues.
  *
  * An unrankable application keeps the 0 it was created with. Those cases bail
- * out with a reason instead of throwing, since "this tenant set no values" is a
- * normal state, not a failure worth retrying into the DLQ.
+ * out with a reason instead of throwing, since "this job lists nothing to
+ * compare" is a normal state, not a failure worth retrying into the DLQ.
  */
 const processApplicationRanking = async ({
   applicationId,
 }: ApplicationRankingData): Promise<RankingResult | { skipped: string }> => {
   if (!Types.ObjectId.isValid(applicationId)) return { skipped: "invalid application id" };
 
-  const application = await Application.findById(applicationId).select("jobId jobProfileId tenantId answers").lean();
+  const application = await Application.findById(applicationId).select("jobId jobProfileId answers").lean();
   if (!application) return { skipped: "application not found" };
 
-  const { jobId, jobProfileId, tenantId } = application;
+  const { jobId, jobProfileId } = application;
   // An application with no profile attached has no candidate side to score.
-  if (!jobProfileId || !jobId || !tenantId)
-    return { skipped: "application is missing jobId, jobProfileId or tenantId" };
+  if (!jobProfileId || !jobId) return { skipped: "application is missing jobId or jobProfileId" };
 
-  const [jobProfile, matchProfile, tenant, job] = await Promise.all([
+  const [jobProfile, matchProfile, job] = await Promise.all([
     findWithValues<RankingJobProfile>(JobProfile, jobProfileId, populateExperienceLevelQuery()),
     loadMatchProfile(String(jobProfileId)),
-    findWithValues<RankingTenant>(Tenant, String(tenantId)),
     Job.findById(jobId).lean<RankingJob>(),
   ]);
 
   if (!jobProfile || !matchProfile) return { skipped: "job profile not found" };
-  if (!tenant) return { skipped: "tenant not found" };
   if (!job) return { skipped: "job not found" };
 
-  const context: RankingContext = { jobProfile, matchProfile, job, tenant, application };
+  const context: RankingContext = { jobProfile, matchProfile, job, application };
   const result = runRankingPipeline(context);
 
   await Application.updateOne({ _id: application._id }, { $set: { matchScore: result.score, rank: result.score } });
@@ -96,8 +90,8 @@ const processApplicationRanking = async ({
 
 /**
  * Ranks an application against its job off the request path. Applying is the
- * candidate's moment and should not wait on scoring, and a recruiter's values
- * can change long after the application landed — both are reasons the score is
+ * candidate's moment and should not wait on scoring, and a job's values can
+ * change long after the application landed — both are reasons the score is
  * computed here rather than inline.
  */
 export const applicationRankingQueue = new ReusableQueue<ApplicationRankingData>(
