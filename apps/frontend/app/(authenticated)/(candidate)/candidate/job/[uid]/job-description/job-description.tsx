@@ -16,15 +16,31 @@ import {
   PhoneCall,
   Globe,
 } from 'lucide-react';
+
 import moment from 'moment';
 import React from 'react';
 import InfoCard from './info-card';
-import { REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
+import {
+  JOB_SKILL_LEVEL_ENUMS,
+  JOB_SKILL_REQUIREMENT_ENUMS,
+  JobSkillResponseDto,
+  REQUIRED_DOCUMENTS_ENUMS,
+} from '@rl/types';
 import Image from 'next/image';
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 import RelatedAttachmentDefault from '@/public/images/related_attachment_default.png';
 import MapByAddress from '@/components/map-by-address';
 import DraftViewer from '@/components/draft-editor/draft-viewer';
+import { cn } from '@/lib/utils';
 
 const documentLabels: Record<REQUIRED_DOCUMENTS_ENUMS, string> = {
   [REQUIRED_DOCUMENTS_ENUMS.RESUME]: 'CV',
@@ -32,6 +48,25 @@ const documentLabels: Record<REQUIRED_DOCUMENTS_ENUMS, string> = {
   [REQUIRED_DOCUMENTS_ENUMS.PORTFOLIO]: 'Portfolio',
   [REQUIRED_DOCUMENTS_ENUMS.CERTIFICATES]: 'Certificates',
 };
+
+const DEFAULT_PREVIEW_SKILLS: JobSkillResponseDto[] = [
+  {
+    skill: {
+      _id: '1',
+      name: 'Medication Administration',
+    },
+    level: JOB_SKILL_LEVEL_ENUMS.INTERMEDIATE,
+    requirement: JOB_SKILL_REQUIREMENT_ENUMS.REQUIRED,
+  },
+  {
+    skill: {
+      _id: '2',
+      name: 'Manual handling',
+    },
+    level: JOB_SKILL_LEVEL_ENUMS.BEGINNER,
+    requirement: JOB_SKILL_REQUIREMENT_ENUMS.PREFERRED,
+  },
+];
 
 const formatDate = (date: string | Date, format = 'MMMM D, YYYY') => {
   if (!date) return '';
@@ -53,77 +88,262 @@ export default function JobDescription({ job }: { job: JobData }) {
   const weekendsText = job?.weekends?.length
     ? job.weekends.join(' and ')
     : null;
+
+  const overallScore = 85;
+  const valueMatchScore = 90;
+  const skillsScore = 80;
+  const rolesScore = 75;
+  const locationScore = 88;
+  const keyRespScore = 92;
+
+  const ARC_RADIUS = 76;
+  const ARC_LENGTH = Math.PI * ARC_RADIUS;
+  const arcDashOffset =
+    ARC_LENGTH * (1 - Math.min(Math.max(overallScore, 0), 100) / 100);
+
+  const hasCustomSkills = Boolean(job?.skills && job.skills.length > 0);
+
+  const skillsToRender = hasCustomSkills ? job.skills! : DEFAULT_PREVIEW_SKILLS;
+
   return (
     <>
       <div className=" space-y-spacing-4xl pb-10">
-        <div className=" grid grid-cols-3 gap-spacing-2xl">
-          {/* <InfoCard
+        <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-lg lg:gap-spacing-4xl">
+          <div className=" col-span-1 lg:col-span-2 grid md:grid-cols-2 gap-spacing-2xl">
+            {/* <InfoCard
             icon={<Briefcase size={20} />}
             title="Job Category"
             subtitle={job?.category || 'Tech Lead'}
           /> */}
 
-          {/* Workplace */}
-          <InfoCard
-            icon={<Building2 size={20} />}
-            title="Workplace"
-            subtitle={job?.workplace}
-          />
+            {/* Workplace */}
+            <InfoCard
+              icon={<Building2 size={20} />}
+              title="Workplace"
+              subtitle={job?.workplace}
+            />
 
-          {/* Employment Type */}
-          <InfoCard
-            icon={<Clock size={20} />}
-            title="Employment Type"
-            subtitle={job?.employmentType}
-          />
+            {/* Employment Type */}
+            <InfoCard
+              icon={<Clock size={20} />}
+              title="Employment Type"
+              subtitle={job?.employmentType}
+            />
 
-          {/* Salary */}
-          <InfoCard
-            icon={<DollarSign size={20} />}
-            title="Salary"
-            subtitle={formattedSalary}
-          />
+            {/* Salary */}
+            <InfoCard
+              icon={<DollarSign size={20} />}
+              title="Salary"
+              subtitle={formattedSalary}
+            />
 
-          <InfoCard
-            icon={<Clock size={20} />}
-            title="Working Period"
-            subtitle={job?.period}
-          />
+            <InfoCard
+              icon={<Clock size={20} />}
+              title="Working Period"
+              subtitle={job?.period}
+            />
 
-          {/* Year of Experience */}
-          <InfoCard
-            icon={<Sun size={20} />}
-            title="Years of Experience"
-            subtitle={job?.yearOfExperience}
-          />
+            {/* Year of Experience */}
+            <InfoCard
+              icon={<Sun size={20} />}
+              title="Years of Experience"
+              subtitle={job?.yearOfExperience}
+            />
 
-          {/* Vacancy */}
-          <InfoCard
-            icon={<Users size={20} />}
-            title="Number of Vacancy"
-            subtitle={job?.vacancy}
-          />
+            {/* Vacancy */}
+            <InfoCard
+              icon={<Users size={20} />}
+              title="Number of Vacancy"
+              subtitle={job?.vacancy}
+            />
 
-          {/* Working Day(s) per Week */}
-          <InfoCard
-            icon={<Calendar size={20} />}
-            title="Working Day(s) per Week"
-            subtitle={job?.workingDays}
-          />
+            {/* Working Day(s) per Week */}
+            <InfoCard
+              icon={<Calendar size={20} />}
+              title="Working Day(s) per Week"
+              subtitle={job?.workingDays}
+            />
 
-          {/* Weekends */}
-          <InfoCard
-            icon={<Moon size={20} />}
-            title="Weekends"
-            subtitle={weekendsText}
-          />
+            {/* Weekends */}
+            <InfoCard
+              icon={<Moon size={20} />}
+              title="Weekends"
+              subtitle={weekendsText}
+            />
 
-          {/* Working Hours */}
-          <InfoCard
-            icon={<Clock size={20} />}
-            title="Working Hours"
-            subtitle={workingHoursText}
-          />
+            {/* Working Hours */}
+            <InfoCard
+              icon={<Clock size={20} />}
+              title="Working Hours"
+              subtitle={workingHoursText}
+            />
+          </div>
+
+          {/* Right Column: Values and Potentials Card */}
+          <div className="w-full  bg-white border border-border-gray-secondary rounded-2xl p-spacing-3xl space-y-spacing-3xl shadow-xs">
+            <div>
+              <h3 className="text-label-xl font-label-xl-strong! text-text-gray-primary">
+                Values and Potentials
+              </h3>
+
+              {/* Semicircular Gauge */}
+              <div className="w-full max-w-[240px] mx-auto flex flex-col items-center">
+                <svg
+                  viewBox="0 0 200 120"
+                  className="w-full h-auto overflow-visible"
+                >
+                  {/* Background Track Arc */}
+                  <path
+                    d="M 24 105 A 76 76 0 0 1 176 105"
+                    fill="none"
+                    stroke="#F1F3F5"
+                    strokeWidth="14"
+                    strokeLinecap="round"
+                  />
+                  {/* Active Brand Arc */}
+                  <path
+                    d="M 24 105 A 76 76 0 0 1 176 105"
+                    fill="none"
+                    stroke="var(--colors-bg-brand-solid-primary, #E60076)"
+                    strokeWidth="14"
+                    strokeLinecap="round"
+                    strokeDasharray={ARC_LENGTH}
+                    strokeDashoffset={arcDashOffset}
+                    className="transition-all duration-700 ease-out"
+                  />
+                  {/* Overall Match Text */}
+                  <text
+                    x="100"
+                    y="72"
+                    textAnchor="middle"
+                    fill="var(--colors-text-gray-tertiary, #667085)"
+                    fontSize="10"
+                    fontWeight="500"
+                    className="select-none font-sans"
+                  >
+                    Overall Match
+                  </text>
+                  {/* Overall Match Percentage */}
+                  <text
+                    x="100"
+                    y="98"
+                    textAnchor="middle"
+                    fill="var(--colors-text-gray-primary, #101828)"
+                    fontSize="24"
+                    fontWeight="700"
+                    className="select-none font-sans"
+                  >
+                    {overallScore}%
+                  </text>
+                </svg>
+              </div>
+            </div>
+
+            {/* Strong Alignment Status */}
+            <div className="flex items-center gap-spacing-md">
+              <div className="size-5 rounded-full border-2 border-[#12B76A] flex items-center justify-center text-[#12B76A] shrink-0 font-bold text-xs select-none">
+                !
+              </div>
+              <span className="text-label-md font-label-md-strong! text-text-gray-primary">
+                Strong Alignment
+              </span>
+            </div>
+
+            {/* Breakdown Bars */}
+            <div className="space-y-spacing-xl">
+              {/* Value match */}
+              <div className="space-y-spacing-xs">
+                <div className="flex items-center gap-spacing-xs">
+                  <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Value match
+                  </span>
+                </div>
+                <div className="flex items-center gap-spacing-lg">
+                  <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
+                    <div
+                      className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
+                      style={{ width: `${valueMatchScore}%` }}
+                    />
+                  </div>
+                  <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
+                    {valueMatchScore}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Skills */}
+              <div className="space-y-spacing-xs">
+                <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  Skills
+                </span>
+                <div className="flex items-center gap-spacing-lg">
+                  <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
+                    <div
+                      className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
+                      style={{ width: `${skillsScore}%` }}
+                    />
+                  </div>
+                  <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
+                    {skillsScore}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Roles */}
+              <div className="space-y-spacing-xs">
+                <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  Roles
+                </span>
+                <div className="flex items-center gap-spacing-lg">
+                  <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
+                    <div
+                      className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
+                      style={{ width: `${rolesScore}%` }}
+                    />
+                  </div>
+                  <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
+                    {rolesScore}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Location */}
+              <div className="space-y-spacing-xs">
+                <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  Location
+                </span>
+                <div className="flex items-center gap-spacing-lg">
+                  <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
+                    <div
+                      className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
+                      style={{ width: `${locationScore}%` }}
+                    />
+                  </div>
+                  <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
+                    {locationScore}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Key responsibility */}
+              <div className="space-y-spacing-xs">
+                <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  Key responsibility
+                </span>
+                <div className="flex items-center gap-spacing-lg">
+                  <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
+                    <div
+                      className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
+                      style={{ width: `${keyRespScore}%` }}
+                    />
+                  </div>
+                  <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
+                    {keyRespScore}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-spacing-2xl">
@@ -157,6 +377,66 @@ export default function JobDescription({ job }: { job: JobData }) {
             Key Responsibilities
           </p>
           <DraftViewer content={job?.responsibility} />
+        </div>
+
+        {/* Skills & Requirements (bottom of Key Responsibilities) */}
+        <div className="space-y-spacing-2xl">
+          <p className="text-label-lg font-label-lg-strong! text-text-gray-primary">
+            Skills &amp; Requirements
+          </p>
+
+          <div className="overflow-hidden bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border-gray-secondary bg-bg-gray-soft-secondary">
+                  <TableHead className="w-16 p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary"></TableHead>
+                  <TableHead className="p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Skills
+                  </TableHead>
+                  <TableHead className="w-48 p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Required Level
+                  </TableHead>
+                  <TableHead className="w-40 p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Requirements
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {skillsToRender.map((skill, index) => {
+                  const sl = String(index + 1).padStart(2, '0');
+                  return (
+                    <TableRow
+                      key={skill.skill._id || index}
+                      className=" border-none! hover:bg-bg-gray-soft-primary/40 transition-colors"
+                    >
+                      <TableCell className="w-16 p-spacing-2xl text-label-sm text-text-gray-secondary">
+                        {sl}
+                      </TableCell>
+                      <TableCell className="p-spacing-2xl text-label-sm text-text-gray-secondary">
+                        {skill.skill.name}
+                      </TableCell>
+                      <TableCell className="w-48 p-spacing-2xl text-label-sm text-text-gray-secondary">
+                        {skill.level}
+                      </TableCell>
+                      <TableCell className="w-40 p-spacing-2xl">
+                        <span
+                          className={cn(
+                            'inline-flex items-center px-spacing-md py-0.5 rounded-full text-label-xs font-label-xs-strong!',
+                            skill.requirement ===
+                              JOB_SKILL_REQUIREMENT_ENUMS.REQUIRED
+                              ? 'bg-pink-50 text-pink-600 border border-pink-200'
+                              : 'bg-bg-gray-soft-secondary text-text-gray-secondary border border-border-gray-secondary',
+                          )}
+                        >
+                          {skill.requirement}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-border-gray-secondary p-spacing-4xl flex gap-spacing-lg items-center">
