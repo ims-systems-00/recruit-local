@@ -5,20 +5,15 @@ import {
   Calendar,
   Clock,
   DollarSign,
-  Briefcase,
   Users,
   Sun,
   Moon,
-  Cable,
   TriangleAlert,
-  Dot,
   Mailbox,
   PhoneCall,
-  Globe,
   Lock,
   Target,
 } from 'lucide-react';
-import moment from 'moment';
 import React from 'react';
 import {
   Table,
@@ -135,12 +130,6 @@ const PREVIEW_VALUE_CATEGORIES = [
     icon: <Target className="size-5 text-fg-gray-secondary" />,
   },
 ];
-
-const formatDate = (date: string | Date, format = 'MMMM D, YYYY') => {
-  if (!date) return '';
-
-  return moment(date).format(format);
-};
 
 export default function JobDescription({ job }: { job: JobData }) {
   const formattedSalary = job?.salary

@@ -5,19 +5,14 @@ import {
   Calendar,
   Clock,
   DollarSign,
-  Briefcase,
   Users,
   Sun,
   Moon,
-  Cable,
   TriangleAlert,
-  Dot,
   Mailbox,
   PhoneCall,
-  Globe,
 } from 'lucide-react';
 
-import moment from 'moment';
 import React from 'react';
 import InfoCard from './info-card';
 import {
@@ -83,12 +78,6 @@ const ALIGNMENT = {
 
 // The bands are on MATCH_SCORE_SCALE; a job match is a percentage.
 const bandFloorPercent = (floor: number) => (floor / MATCH_SCORE_SCALE) * 100;
-
-const formatDate = (date: string | Date, format = 'MMMM D, YYYY') => {
-  if (!date) return '';
-
-  return moment(date).format(format);
-};
 
 export default function JobDescription({ job }: { job: JobData }) {
   const formattedSalary = job?.salary
