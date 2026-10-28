@@ -589,12 +589,12 @@ export default function ApplicantDetailsView({
             </div>
 
             {/* Additional Queries Section */}
-            <div className="space-y-spacing-2xl">
-              <h4 className="text-label-xl font-label-xl-strong! text-text-gray-primary">
-                Additional Queries
-              </h4>
 
-              {Number(applicationData?.answers?.length) > 0 ? (
+            {Number(applicationData?.answers?.length) > 0 && (
+              <div className="space-y-spacing-2xl">
+                <h4 className="text-label-xl font-label-xl-strong! text-text-gray-primary">
+                  Additional Queries
+                </h4>
                 <div className="space-y-spacing-2xl">
                   {applicationData?.answers?.map((answer, idx) => (
                     <div
@@ -625,14 +625,8 @@ export default function ApplicantDetailsView({
                     </div>
                   ))}
                 </div>
-              ) : (
-                <textarea
-                  readOnly
-                  placeholder="Write your thoughts here"
-                  className="w-full min-h-32 p-spacing-xl rounded-xl border border-border-gray-primary bg-white text-text-gray-primary placeholder:text-text-gray-quaternary text-label-md font-label-md-base focus:outline-none resize-y"
-                />
-              )}
-            </div>
+              </div>
+            )}
 
             {/* State Expectation Section */}
             <div className="space-y-spacing-2xl">
