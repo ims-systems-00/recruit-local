@@ -43,10 +43,8 @@ type ApplicantDetailsViewProps = {
   applicationData?: Application | null;
 };
 
-const DEFAULT_COVER_LETTER =
-  'Dear Hiring Manager,I am excited to apply for the UI/UX Designer position at CreativeTech Ltd. With my background in user interface design, prototyping, and usability testing, I am confident I can create designs that enhance user experience and align with your company’s vision. I admire CreativeTech’s innovative approach to digital products and would be glad to bring my creativity and skills to your team.';
-
-const DEFAULT_PORTFOLIO_URL = 'www.designs/pias.com';
+// Shown in place of an application field the job seeker left empty.
+const NOT_PROVIDED = 'Not provided by the job seeker';
 
 // The label under the gauge: the overview's match bands, or not scored yet.
 const ALIGNMENT = {
@@ -115,20 +113,19 @@ export default function ApplicantDetailsView({
   const jobReference = jobData?.reference || 'JL - 01';
   const applicationReference = applicationData?.reference || 'XJ-487';
 
-  const coverLetterText = applicationData?.coverLetter || DEFAULT_COVER_LETTER;
+  // Empty when the job seeker left them out; their sections say so.
+  const coverLetterText = applicationData?.coverLetter ?? '';
 
-  const rawPortfolioUrl =
-    applicationData?.portfolioUrl || DEFAULT_PORTFOLIO_URL;
+  const rawPortfolioUrl = applicationData?.portfolioUrl ?? '';
   const cleanPortfolioUrl = rawPortfolioUrl.replace(/^https?:\/\//i, '');
   const fullPortfolioUrl = rawPortfolioUrl.startsWith('http')
     ? rawPortfolioUrl
     : `https://${rawPortfolioUrl}`;
 
-  const cvFileName =
-    applicationData?.resume?.storageInformation?.Name || 'resume_v3.pdf';
+  const cvFileName = applicationData?.resume?.storageInformation?.Name ?? '';
   const cvFileSize = '100KB';
 
-  // Optional on an application; the section is hidden when there are none.
+  // Optional on an application; the section says so when there are none.
   const caseStudiesList = (applicationData?.caseStudies ?? []).map((item) => ({
     name: item.storageInformation.Name,
     size: '100KB',
@@ -291,13 +288,18 @@ export default function ApplicantDetailsView({
               <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
                 Cover letter <span className="text-text-error-primary">*</span>
               </label>
-              <textarea
-                readOnly
-                value={coverLetterText}
-                placeholder="N/A"
-                rows={5}
-                className="w-full min-h-36 p-spacing-xl rounded-xl border border-border-gray-primary bg-white text-text-gray-primary text-label-md font-label-md-base leading-relaxed focus:outline-none resize-y"
-              />
+              {coverLetterText ? (
+                <textarea
+                  readOnly
+                  value={coverLetterText}
+                  rows={5}
+                  className="w-full min-h-36 p-spacing-xl rounded-xl border border-border-gray-primary bg-white text-text-gray-primary text-label-md font-label-md-base leading-relaxed focus:outline-none resize-y"
+                />
+              ) : (
+                <p className="text-label-sm text-text-gray-tertiary">
+                  {NOT_PROVIDED}
+                </p>
+              )}
             </div>
 
             {/* Application Package Section */}
@@ -315,29 +317,35 @@ export default function ApplicantDetailsView({
                       (Optional)
                     </span>
                   </label>
-                  <div className="flex items-center rounded-lg border border-border-gray-primary bg-white h-10 w-full overflow-hidden shadow-xs focus-within:ring-2 focus-within:ring-bg-brand-solid-primary/20">
-                    <div className="h-full px-spacing-xl flex items-center bg-bg-gray-soft-primary border-r border-border-gray-primary text-text-gray-quaternary text-label-sm font-normal select-none shrink-0">
-                      http://
+                  {rawPortfolioUrl ? (
+                    <div className="flex items-center rounded-lg border border-border-gray-primary bg-white h-10 w-full overflow-hidden shadow-xs focus-within:ring-2 focus-within:ring-bg-brand-solid-primary/20">
+                      <div className="h-full px-spacing-xl flex items-center bg-bg-gray-soft-primary border-r border-border-gray-primary text-text-gray-quaternary text-label-sm font-normal select-none shrink-0">
+                        http://
+                      </div>
+                      <input
+                        type="text"
+                        readOnly
+                        value={cleanPortfolioUrl}
+                        className="flex-1 px-spacing-xl text-label-sm font-label-sm-strong! text-text-gray-primary focus:outline-none bg-transparent truncate"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCopyUrl}
+                        className="px-spacing-xl text-fg-gray-tertiary hover:text-text-gray-primary transition-colors cursor-pointer shrink-0"
+                        title="Copy URL"
+                      >
+                        {copied ? (
+                          <Check size={16} className="text-text-success" />
+                        ) : (
+                          <Copy size={16} />
+                        )}
+                      </button>
                     </div>
-                    <input
-                      type="text"
-                      readOnly
-                      value={cleanPortfolioUrl}
-                      className="flex-1 px-spacing-xl text-label-sm font-label-sm-strong! text-text-gray-primary focus:outline-none bg-transparent truncate"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleCopyUrl}
-                      className="px-spacing-xl text-fg-gray-tertiary hover:text-text-gray-primary transition-colors cursor-pointer shrink-0"
-                      title="Copy URL"
-                    >
-                      {copied ? (
-                        <Check size={16} className="text-text-success" />
-                      ) : (
-                        <Copy size={16} />
-                      )}
-                    </button>
-                  </div>
+                  ) : (
+                    <p className="text-label-sm text-text-gray-tertiary">
+                      {NOT_PROVIDED}
+                    </p>
+                  )}
                 </div>
 
                 {/* CV */}
@@ -345,41 +353,47 @@ export default function ApplicantDetailsView({
                   <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
                     CV <span className="text-text-error-primary">*</span>
                   </label>
-                  <div className="w-full p-spacing-xl rounded-2xl border border-border-gray-secondary bg-white flex items-center justify-between gap-spacing-2xl shadow-xs">
-                    <div className="flex gap-spacing-lg items-center min-w-0">
-                      <div className="size-10 rounded-lg bg-[#FF3B30] flex flex-col items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-xs">
-                        PDF
+                  {cvFileName ? (
+                    <div className="w-full p-spacing-xl rounded-2xl border border-border-gray-secondary bg-white flex items-center justify-between gap-spacing-2xl shadow-xs">
+                      <div className="flex gap-spacing-lg items-center min-w-0">
+                        <div className="size-10 rounded-lg bg-[#FF3B30] flex flex-col items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-xs">
+                          PDF
+                        </div>
+                        <div className="space-y-spacing-3xs min-w-0">
+                          <p className="text-label-sm font-label-sm-strong! text-text-gray-primary truncate">
+                            {cvFileName}
+                          </p>
+                          <p className="text-label-xs text-text-gray-tertiary">
+                            {cvFileSize}
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-spacing-3xs min-w-0">
-                        <p className="text-label-sm font-label-sm-strong! text-text-gray-primary truncate">
-                          {cvFileName}
-                        </p>
-                        <p className="text-label-xs text-text-gray-tertiary">
-                          {cvFileSize}
-                        </p>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(cvFileName)}
+                        className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0"
+                        title="Download CV"
+                      >
+                        <Download size={16} />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDownload(cvFileName)}
-                      className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0"
-                      title="Download CV"
-                    >
-                      <Download size={16} />
-                    </button>
-                  </div>
+                  ) : (
+                    <p className="text-label-sm text-text-gray-tertiary">
+                      {NOT_PROVIDED}
+                    </p>
+                  )}
                 </div>
 
                 {/* Case Studies */}
-                {caseStudiesList.length > 0 && (
-                  <div className="space-y-spacing-xs">
-                    <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
-                      Case Studies{' '}
-                      <span className="text-text-gray-quaternary font-normal">
-                        (Optional)
-                      </span>
-                    </label>
+                <div className="space-y-spacing-xs">
+                  <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
+                    Case Studies{' '}
+                    <span className="text-text-gray-quaternary font-normal">
+                      (Optional)
+                    </span>
+                  </label>
 
+                  {caseStudiesList.length > 0 ? (
                     <div className="space-y-spacing-md">
                       {caseStudiesList.map((file, idx) => (
                         <div
@@ -410,8 +424,12 @@ export default function ApplicantDetailsView({
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-label-sm text-text-gray-tertiary">
+                      {NOT_PROVIDED}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
