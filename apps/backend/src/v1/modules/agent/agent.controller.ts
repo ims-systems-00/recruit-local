@@ -66,7 +66,7 @@ const runTurn = async ({
   session: ControllerParams["req"]["session"];
   pageContext?: AgentPageContextDto;
 }) => {
-  conversationService.assertFingerprintMatches(conversation, session);
+  await conversationService.reconcileFingerprint(conversation, session);
 
   const locked = await conversationService.claimRunLock(conversation._id as Types.ObjectId, session.user._id as string);
 

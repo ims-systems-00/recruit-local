@@ -17,7 +17,7 @@ import { ISession, AccessibilityPreferences, DEFAULT_ACCESSIBILITY_PREFERENCES }
 
 /**
  * The authorization-relevant slice of a session. Stored on the conversation and
- * re-checked on every turn — see `assertFingerprintMatches`.
+ * re-checked on every turn — see `reconcileFingerprint`.
  */
 export const fingerprintOf = (session: ISession): IAgentSessionFingerprint => ({
   userType: session.user?.type ?? "",
@@ -69,8 +69,13 @@ export const softDelete = async ({ query = {} }: IAgentConversationGetParams) =>
   return { conversation, deleted };
 };
 
+/** Unchanged, or set where it was missing — never dropped or swapped for another. */
+const unchangedOrGained = (stored: string | null | undefined, current: string | null): boolean =>
+  (stored ?? null) === null || stored === current;
+
 /**
- * Refuses to continue a conversation whose authorization context has changed.
+ * Refuses to continue a conversation whose authorization context has changed,
+ * except by gaining a tenant or job profile it started without.
  *
  * Stored tool output is already-sanitized JSON with no retained link to the
  * entity it came from, so it cannot be re-checked against a new ability.
@@ -78,20 +83,34 @@ export const softDelete = async ({ query = {} }: IAgentConversationGetParams) =>
  * data the user may no longer be entitled to. Refusing is the only sound
  * option, and the case is rare enough that forcing a new conversation is a fine
  * outcome.
+ *
+ * Gaining one is not rare: onboarding creates the tenant or job profile midway
+ * through a conversation that may have just helped fill in the form. It is also
+ * safe, because the read tools refuse an account that is missing either one
+ * (`rulesCollapsed`, `isAvailable`), so nothing stored before can be wider than
+ * what the account reads now. The fingerprint is re-stamped so a later switch is
+ * compared against the value gained.
  */
-export const assertFingerprintMatches = (conversation: IAgentConversationDoc, session: ISession): void => {
+export const reconcileFingerprint = async (conversation: IAgentConversationDoc, session: ISession): Promise<void> => {
   const current = fingerprintOf(session);
   const stored = conversation.sessionFingerprint;
 
-  const matches =
+  const compatible =
     stored?.userType === current.userType &&
-    (stored?.tenantId ?? null) === current.tenantId &&
-    (stored?.jobProfileId ?? null) === current.jobProfileId;
+    unchangedOrGained(stored?.tenantId, current.tenantId) &&
+    unchangedOrGained(stored?.jobProfileId, current.jobProfileId);
 
-  if (!matches) {
+  if (!compatible) {
     throw new ConflictException(
       "Your account context has changed since this conversation started. Please start a new conversation."
     );
+  }
+
+  const gained =
+    (stored.tenantId ?? null) !== current.tenantId || (stored.jobProfileId ?? null) !== current.jobProfileId;
+
+  if (gained) {
+    await AgentConversation.updateOne({ _id: conversation._id }, { $set: { sessionFingerprint: current } });
   }
 };
 
