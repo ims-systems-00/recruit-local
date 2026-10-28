@@ -147,7 +147,8 @@ export interface AgentPageActionDefDto {
    * `selections: [{ id, name }]`. The server then checks every id against that
    * catalog before the action reaches the page, so an id the model invented is
    * rejected back to the model (which corrects itself) instead of being ticked
-   * on nothing and saved. Never shown to the model.
+   * on nothing and saved. Other fields on a selection, such as a priority, are
+   * passed through unchecked for the page to validate. Never shown to the model.
    */
   catalog?: AgentPageActionCatalogDto;
 }
@@ -157,7 +158,8 @@ export type AgentCatalogKind =
   | 'industry'
   | 'experience_level'
   | 'work_mode'
-  | 'value';
+  | 'value'
+  | 'skill';
 
 export interface AgentPageActionCatalogDto {
   kind: AgentCatalogKind;
