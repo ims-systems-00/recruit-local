@@ -1,6 +1,6 @@
 import { Model, Types } from "mongoose";
 import { CANDIDATE_ONBOARDING_SEQUENCE, ONBOARDING_STEP_ENUMS, VALUE_TYPE_ENUM } from "@rl/types";
-import { ExperienceLevel, Industry, JobTitle, Value, WorkMode } from "../../../../models";
+import { ExperienceLevel, Industry, JobTitle, SkillCatalog, Value, WorkMode } from "../../../../models";
 
 /**
  * The catalogs a candidate picks from during personalisation, described once so
@@ -147,9 +147,13 @@ export const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}(
  * Values are searchable and page-selectable but deliberately not writable
  * through `set_profile_catalog`: they span five rounds stored in one array, and
  * each round's page already merges its own round into that array on save.
+ *
+ * Skills are the job form's skill catalogue, searchable and page-selectable for
+ * the same reason and equally not writable here: a job's skills carry a level
+ * and a requirement each, which only the job form sets.
  * ------------------------------------------------------------------------- */
 
-export const SEARCHABLE_KINDS = [...CATALOG_KINDS, "value"] as const;
+export const SEARCHABLE_KINDS = [...CATALOG_KINDS, "value", "skill"] as const;
 export type SearchableKind = (typeof SEARCHABLE_KINDS)[number];
 
 export const VALUE_TYPES = Object.values(VALUE_TYPE_ENUM);
@@ -162,7 +166,11 @@ const searchableFilter = (kind: SearchableKind, valueType?: string): Record<stri
   kind === "value" ? { ...selectableFilter, type: valueType } : selectableFilter;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const searchableModel = (kind: SearchableKind): Model<any> => (kind === "value" ? Value : CATALOGS[kind].model);
+const searchableModel = (kind: SearchableKind): Model<any> => {
+  if (kind === "value") return Value;
+  if (kind === "skill") return SkillCatalog;
+  return CATALOGS[kind].model;
+};
 
 /** Values call their display text `label`; the other catalogs call it `name`. */
 const displayField = (kind: SearchableKind) => (kind === "value" ? "label" : "name");

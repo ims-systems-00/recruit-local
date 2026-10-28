@@ -8,6 +8,7 @@ import {
   MongoQuery,
   fieldPatternMatcher,
 } from '@casl/ability';
+import { dropUnscopedRules } from './scoped-rules';
 
 import {
   ACCOUNT_TYPE_ENUMS,
@@ -97,7 +98,7 @@ export class PromptAbilityBuilder implements IAbilityBuilder {
       builder.can(AbilityAction.Manage, PromptAuthZEntity);
     }
 
-    return builder.build({
+    return dropUnscopedRules(builder).build({
       conditionsMatcher: buildMongoQueryMatcher(),
       fieldMatcher: fieldPatternMatcher,
     });

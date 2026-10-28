@@ -8,6 +8,7 @@ import {
   MongoQuery,
   fieldPatternMatcher,
 } from '@casl/ability';
+import { dropUnscopedRules } from './scoped-rules';
 
 import {
   ACCOUNT_TYPE_ENUMS,
@@ -114,7 +115,7 @@ export class StatusAbilityBuilder implements IAbilityBuilder {
     // Candidates get nothing: they never call the status module. The status on
     // their application reaches them populated through the application itself.
 
-    return builder.build({
+    return dropUnscopedRules(builder).build({
       conditionsMatcher: buildMongoQueryMatcher(),
       fieldMatcher: fieldPatternMatcher,
     });

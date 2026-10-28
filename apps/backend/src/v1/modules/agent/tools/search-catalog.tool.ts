@@ -1,10 +1,11 @@
 import Joi from "joi";
+import { JOB_SKILLS_MAX } from "@rl/types";
 import { AgentTool } from "./tool.types";
 import { CATALOGS, SEARCHABLE_KINDS, SearchableKind, VALUE_TYPES, searchOptions } from "./catalog.shared";
 
 /**
- * Looks up the fixed lists this platform is picked from during setup: job
- * titles, industries, experience levels, work modes and workplace values.
+ * Looks up the fixed lists this platform is picked from: job titles,
+ * industries, experience levels, work modes, workplace values and job skills.
  *
  * Exists so nothing downstream ever has to guess an id. The model finds real
  * rows here, and both `set_profile_catalog` and catalog-backed page actions
@@ -26,7 +27,11 @@ import { CATALOGS, SEARCHABLE_KINDS, SearchableKind, VALUE_TYPES, searchOptions 
 const MAX_LIMIT = 20;
 const DEFAULT_LIMIT = 10;
 
-const pluralOf = (kind: SearchableKind) => (kind === "value" ? "workplace values" : CATALOGS[kind].pluralLabel);
+const pluralOf = (kind: SearchableKind) => {
+  if (kind === "value") return "workplace values";
+  if (kind === "skill") return "skills";
+  return CATALOGS[kind].pluralLabel;
+};
 
 export const searchCatalogTool: AgentTool<{
   kind: SearchableKind;
@@ -36,9 +41,9 @@ export const searchCatalogTool: AgentTool<{
 }> = {
   name: "search_catalog",
   description:
-    "Search the platform's fixed option lists: job titles, industries, experience levels, work modes, and workplace " +
-    "values. Candidates pick from all of them when setting up their profile; employers choose workplace values for " +
-    "their organisation. Returns the options with their ids. " +
+    "Search the platform's fixed option lists: job titles, industries, experience levels, work modes, workplace " +
+    "values, and skills. Candidates pick from the first five when setting up their profile; employers choose " +
+    "workplace values for their organisation and jobs, and skills for a job. Returns the options with their ids. " +
     "Call this before selecting or setting any option, every time, in this conversation — never pass an id you did not " +
     "get from this tool, and never guess an id from the pattern of other ids. " +
     "Copy each id character by character from the option you mean: ids differ only in their last few characters, and " +
@@ -48,7 +53,7 @@ export const searchCatalogTool: AgentTool<{
     "Searching is not selecting. When the user asked you to find, suggest or recommend options, report the names " +
     "here and offer to select them — do not go on to select anything until they ask you to. " +
     "If more than one option could match what the user said, show them the options by name and ask which they mean. " +
-    "If nothing matches (catalog names are general roles, so a technology like 'MERN' will not appear), " +
+    "If nothing matches (job titles are general roles, so a technology like 'MERN' will not appear there), " +
     "search again with a broader word such as 'developer' before asking the user. " +
     "Omit `query` to list everything, which suits short lists like work modes and experience levels. " +
     "Workplace values are grouped into types, one type per setup round: pass `valueType` for kind 'value'.",
@@ -113,7 +118,9 @@ export const searchCatalogTool: AgentTool<{
       options,
       returned: options.length,
       total,
-      ...(input.kind === "value" ? {} : { selectionLimit: CATALOGS[input.kind].max }),
+      ...(input.kind === "value"
+        ? {}
+        : { selectionLimit: input.kind === "skill" ? JOB_SKILLS_MAX : CATALOGS[input.kind].max }),
       ...(total === 0
         ? { note: `No ${pluralOf(input.kind)} match that. Try a broader word, or omit the query to list them all.` }
         : total > options.length

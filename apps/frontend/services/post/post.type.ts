@@ -18,6 +18,7 @@ export type PostListFilters = {
   statusId?: string;
   type?: string;
   matched?: boolean;
+  tenantId?: string;
 };
 
 // API Response types

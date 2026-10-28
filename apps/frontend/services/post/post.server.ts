@@ -34,6 +34,7 @@ export async function getPosts(
         statusId: params?.statusId,
         type: params?.type,
         matched: params?.matched,
+        tenantId: params?.tenantId,
       },
       paramsSerializer: (params) =>
         qs.stringify(params, { arrayFormat: 'brackets' }),

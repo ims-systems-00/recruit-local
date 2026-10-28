@@ -8,6 +8,7 @@ import {
   MongoQuery,
   fieldPatternMatcher,
 } from '@casl/ability';
+import { dropUnscopedRules } from './scoped-rules';
 
 import {
   ACCOUNT_TYPE_ENUMS,
@@ -151,7 +152,7 @@ export class AgentAbilityBuilder implements IAbilityBuilder {
       });
     }
 
-    return builder.build({
+    return dropUnscopedRules(builder).build({
       conditionsMatcher: buildMongoQueryMatcher(),
       fieldMatcher: fieldPatternMatcher,
     });

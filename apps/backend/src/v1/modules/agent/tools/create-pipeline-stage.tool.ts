@@ -87,7 +87,10 @@ export const createPipelineStageTool: AgentTool<CreatePipelineStageInput> = {
   name: "create_pipeline_stage",
   description:
     "Add a new stage (board column) to a job's hiring pipeline — for example a Phone Screen stage between Applied " +
-    "and Interview. Call list_pipeline_stages first and only create a stage when none of the existing ones fits; " +
+    "and Interview. Only when the user asks for a stage or column on the hiring board: never as a way to change the " +
+    "job itself, such as its title or details. Those are edited on the job's form — use a page_ action if the page " +
+    "offers one, otherwise tell them to edit the job. " +
+    "Call list_pipeline_stages first and only create a stage when none of the existing ones fits; " +
     "a second stage meaning the same thing splits the board. The new stage is added at the end of the board and " +
     "starts empty — creating it moves nobody, so use move_applications afterwards if they asked for both. " +
     "Nothing is created on the first call: you get back a preview to show them, and you call this again with the " +

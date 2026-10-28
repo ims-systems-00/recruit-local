@@ -13,6 +13,8 @@ import { useUpdateJob } from '@/services/jobs/jobs.client';
 import CatalogueSkillPicker, {
   CatalogueSkillRow,
 } from '@/components/skills/catalogue-skill-picker';
+import { usePageContext } from '@/components/ai-chat/page-context';
+import { useJobSkillsAction } from './skills-requirements-fill';
 
 // A selected skill as this step edits it: the catalogue entry, plus the level
 // and requirement the job asks for.
@@ -47,6 +49,30 @@ export default function SkillsRequirementsStep({
   const [error, setError] = useState<string | null>(null);
 
   const { updateJob, isPending } = useUpdateJob();
+
+  usePageContext({
+    page: 'recruiter.job.edit.skills',
+    summary:
+      'Step 3 of editing a job post: the skills the job needs, each with a level and whether it ' +
+      'is required or preferred. The user presses Continue to save this step and move on.',
+    state: {
+      jobId: defaultValues._id,
+      // Names trimmed so twenty skills stay inside the server's size cap.
+      skills: skills.map(
+        (row) => `${row.name.slice(0, 40)} (${row.level}, ${row.requirement})`,
+      ),
+      limit: JOB_SKILLS_MAX,
+    },
+  });
+
+  // Lets Alice add skills. Saving is still Continue.
+  useJobSkillsAction({
+    skills,
+    setSkills: (rows) => {
+      setSkills(rows);
+      setError(null);
+    },
+  });
 
   // Back keeps unsaved picks in the wizard, as the other steps do; only
   // Continue saves.

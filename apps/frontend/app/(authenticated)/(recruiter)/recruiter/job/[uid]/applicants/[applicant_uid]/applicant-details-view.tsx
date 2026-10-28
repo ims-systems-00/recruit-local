@@ -33,6 +33,7 @@ import {
   JOB_SKILL_LEVEL_LABELS,
   MATCH_SCORE_BAND_FLOORS,
   QUERY_TYPE_ENUMS,
+  VALUE_TYPE_ENUM,
   VALUE_TYPE_LABELS,
 } from '@rl/types';
 
@@ -178,8 +179,8 @@ export default function ApplicantDetailsView({
   const rolesScore = partMatchPercent(applicationData, ROLE);
   const locationScore = partMatchPercent(applicationData, LOCATION);
 
-  // The values part split by value type, for the breakdown dialog and the
-  // values section: every type, null where the job lists no values of it.
+  // The values part split by value type, for the breakdown dialog and each
+  // value card's badge: every type, null where the job lists no values of it.
   // Empty until the application is ranked by a pipeline that stores the split.
   const valueCategories = (
     applicationData?.matchBreakdown?.find((part) => part.key === VALUES)
@@ -188,19 +189,35 @@ export default function ApplicantDetailsView({
     type: category.type,
     name: VALUE_TYPE_LABELS[category.type] ?? category.type,
     percentage: toMatchPercent(category.score),
-    values: category.values,
   }));
-  // One card per type the job lists values of. A ranking older than the
-  // per-value list has no `values` on any type, so nothing to show.
-  const valueCards = valueCategories.filter(
-    (category) => (category.values?.length ?? 0) > 0,
+
+  // The applicant's values, one card per type, each with its assessment score
+  // once evaluated and dotted where the job asks for it too.
+  const applicantValues = applicationData?.jobProfile?.values ?? [];
+  const valueScores = new Map(
+    (applicationData?.jobProfile?.valueScores ?? []).map((row) => [
+      row.value,
+      row.score,
+    ]),
   );
-  const valuesEmptyHint =
-    overallScore == null
-      ? 'Not scored yet'
-      : valueCategories.some((category) => category.values)
-        ? 'This job lists no values'
-        : 'Values available once this application is re-scored';
+  const jobValueIds = new Set(
+    (jobData?.values ?? []).map((row) => row.value._id),
+  );
+  const valueCards = Object.values(VALUE_TYPE_ENUM).map((type) => ({
+    type,
+    name: VALUE_TYPE_LABELS[type],
+    percentage:
+      valueCategories.find((category) => category.type === type)?.percentage ??
+      null,
+    values: applicantValues
+      .filter((value) => value.type === type)
+      .map((value) => ({
+        id: value._id,
+        label: value.label,
+        score: valueScores.get(value._id),
+        wanted: jobValueIds.has(value._id),
+      })),
+  }));
   const canShowBreakdown = valueCategories.some(
     (category) => category.percentage != null,
   );
@@ -467,13 +484,13 @@ export default function ApplicantDetailsView({
                 Values
               </h4>
 
-              {valueCards.length > 0 ? (
+              {applicantValues.length > 0 ? (
                 <>
                   {/* Matching Values Legend */}
                   <p className="flex items-center gap-spacing-sm text-label-sm text-text-gray-tertiary">
                     <span className="size-2 rounded-full bg-bg-brand-solid-primary shrink-0" />
-                    Pink dots highlight the values that align with your profile
-                    and responses.
+                    Pink dots mark the values this job is looking for.
+                    Percentages are the applicant&apos;s assessment scores.
                   </p>
 
                   {/* Value Category Cards Grid */}
@@ -495,24 +512,38 @@ export default function ApplicantDetailsView({
                             <h5 className="text-label-md font-label-md-strong! text-text-gray-primary">
                               {category.name}
                             </h5>
-                            <span className="px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong! text-text-brand-primary bg-bg-brand-soft-primary">
-                              {formatMatchPercent(category.percentage)} match
-                            </span>
+                            {/* Only where the job lists values of this type. */}
+                            {category.percentage != null && (
+                              <span className="px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong! text-text-brand-primary bg-bg-brand-soft-primary">
+                                {formatMatchPercent(category.percentage)} match
+                              </span>
+                            )}
                           </div>
 
-                          <div className="flex flex-wrap gap-spacing-md">
-                            {category.values?.map((v) => (
-                              <span
-                                key={v.value}
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-border-gray-secondary bg-white px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-text-gray-secondary"
-                              >
-                                {v.matched && (
-                                  <span className="size-1.5 rounded-full bg-bg-brand-solid-primary shrink-0" />
-                                )}
-                                {v.label}
-                              </span>
-                            ))}
-                          </div>
+                          {category.values.length > 0 ? (
+                            <div className="flex flex-wrap gap-spacing-md">
+                              {category.values.map((v) => (
+                                <span
+                                  key={v.id}
+                                  className="inline-flex items-center gap-1.5 rounded-xl border border-border-gray-secondary bg-white px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-text-gray-secondary"
+                                >
+                                  {v.wanted && (
+                                    <span className="size-1.5 rounded-full bg-bg-brand-solid-primary shrink-0" />
+                                  )}
+                                  {v.label}
+                                  {v.score !== undefined && (
+                                    <span className="text-text-brand-primary">
+                                      {v.score}%
+                                    </span>
+                                  )}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-label-sm text-text-gray-tertiary">
+                              None selected
+                            </p>
+                          )}
                         </div>
                       );
                     })}
@@ -520,7 +551,7 @@ export default function ApplicantDetailsView({
                 </>
               ) : (
                 <p className="text-label-sm text-text-gray-tertiary">
-                  {valuesEmptyHint}
+                  No values on this applicant&apos;s profile
                 </p>
               )}
             </div>

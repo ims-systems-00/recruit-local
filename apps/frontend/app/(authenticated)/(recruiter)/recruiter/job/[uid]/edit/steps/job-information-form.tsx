@@ -72,6 +72,13 @@ import {
 import LocationSelector, {
   LocationValue,
 } from '@/components/location-selector';
+import {
+  usePageAction,
+  usePageContext,
+} from '@/components/ai-chat/page-context';
+import { excerpt } from '@/components/ai-chat/page-state';
+import { AGENT_STAGGER_MS, prefersReducedMotion, wait } from '@/lib/motion';
+import { FILL_JOB_BASICS_ACTION, parseJobBasics } from './job-information-fill';
 
 export default function JobInformationForm({
   next,
@@ -101,7 +108,7 @@ export default function JobInformationForm({
         : undefined,
       workingHours: {
         startTime: defaultValues?.workingHours?.startTime,
-        endTime: defaultValues?.workingHours?.startTime,
+        endTime: defaultValues?.workingHours?.endTime,
       },
       aboutUs: defaultValues?.aboutUs,
       number: defaultValues?.number,
@@ -118,6 +125,62 @@ export default function JobInformationForm({
     control,
     formState: { errors },
   } = methods;
+
+  const values = methods.watch();
+
+  usePageContext({
+    page: 'recruiter.job.edit.basics',
+    summary:
+      'Step 1 of editing a job post: basic information and organisation contact details. ' +
+      'The user presses Continue to save this step and move on.',
+    state: {
+      jobId: defaultValues._id,
+      title: excerpt(values.title),
+      employmentType: values.employmentType ?? null,
+      workplace: values.workplace ?? null,
+      yearOfExperience: values.yearOfExperience ?? null,
+      vacancy: values.vacancy ?? null,
+      salary: values.salary ?? null,
+      period: values.period ?? null,
+      workingDays: values.workingDays ?? null,
+      weekends: values.weekends ?? [],
+      workingHours: values.workingHours ?? null,
+      // YYYY-MM-DD in the user's timezone, the shape the fill action takes.
+      endDate: values.endDate
+        ? new Date(values.endDate).toLocaleDateString('en-CA')
+        : null,
+      aboutUs: excerpt(values.aboutUs),
+      email: excerpt(values.email),
+      number: excerpt(values.number),
+      location: excerpt(values.location),
+      locationAdditionalInfo: excerpt(values.locationAdditionalInfo),
+    },
+  });
+
+  // Lets Alice fill this step in. Saving is still Continue.
+  usePageAction({
+    ...FILL_JOB_BASICS_ACTION,
+    handler: async (args) => {
+      const fills = parseJobBasics(args, {
+        workingDays: methods.getValues('workingDays'),
+      });
+
+      if (fills.length === 0) {
+        throw new Error(
+          "Alice didn't send anything to fill in. Try asking again.",
+        );
+      }
+
+      for (const [index, fill] of fills.entries()) {
+        fill.apply(methods.setValue);
+        if (index < fills.length - 1 && !prefersReducedMotion()) {
+          await wait(AGENT_STAGGER_MS);
+        }
+      }
+
+      return `Filled in ${fills.map((fill) => fill.label).join(', ')}.`;
+    },
+  });
 
   const onSubmit = async (data: JobInformationFormValues) => {
     const payload = {

@@ -3,10 +3,12 @@ import * as yup from 'yup';
 import { objectIdSchema, cursorPaginationSchema } from '@/services/shared';
 import { JobData } from '../jobs/job.type';
 import {
+  ApplicationJobProfileDto,
   ApplicationMatchPartDto,
   ProfileSkillResponseDto,
   QUERY_TYPE_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
+  ValueResponseDto,
 } from '@rl/types';
 
 export const awsStorageSchema = yup.object({
@@ -55,6 +57,10 @@ export const applicationSchema = yup.object({
     name: yup.string().required('Name is required'),
     // Single-application reads only.
     skills: yup.mixed<ProfileSkillResponseDto[]>().optional(),
+    values: yup.mixed<ValueResponseDto[]>().optional(),
+    valueScores: yup
+      .mixed<NonNullable<ApplicationJobProfileDto['valueScores']>>()
+      .optional(),
   }),
   currentSalary: yup.number().nullable().optional(),
   expectedSalary: yup.number().nullable().optional(),

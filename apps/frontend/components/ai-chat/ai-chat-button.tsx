@@ -27,7 +27,7 @@ export default function AiChatButton({
 
   return (
     <button
-      className=" fixed bottom-spacing-xl right-spacing-xl"
+      className=" fixed bottom-spacing-xl right-spacing-xl z-30"
       onClick={() => setIsOpen(true)}
       aria-label="Open Alice chat"
     >

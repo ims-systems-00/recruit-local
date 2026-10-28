@@ -57,7 +57,13 @@ export const readBoard = async (jobId: string, ctx: AgentToolContext): Promise<I
   const job = await readJobById(jobId, ctx.session);
 
   if (!job) {
-    throw new NotFoundException("No job with that id is available to this account. Use list_jobs to get a job id.");
+    // Says how to find the right id rather than pointing at list_jobs alone: on
+    // "this job", a list invites picking one, and the board would be the wrong one.
+    throw new NotFoundException(
+      "No job with that id is available to this account. If the user meant the job on their screen, use the " +
+        "jobId from the current page; if they named one, find it with list_jobs; otherwise ask them which job " +
+        "they mean. Never choose a job yourself."
+    );
   }
 
   const ability = new StatusAbilityBuilder(ctx.session).getAbility();

@@ -14,10 +14,24 @@ import PostItemSkeleton from './post-item-skeleton';
 import { useInfinitePosts } from '@/services/post';
 import { POST_TYPE_ENUMS } from '@rl/types';
 import PostItem from './post-item';
+import EmptyBox from '@/components/empty-box';
+import { useSession } from 'next-auth/react';
 
 const SCROLL_THRESHOLD = 80;
 
-export default function PostActivities({ carousel }: { carousel?: boolean }) {
+export default function PostActivities({
+  carousel,
+  tenantId,
+}: {
+  carousel?: boolean;
+  tenantId?: string;
+}) {
+  const { data: session } = useSession();
+  const isOwnCompany = Boolean(
+    tenantId && session?.user?.tenantId === tenantId,
+  );
+
+  // Waits for the company, so it never lists every company's posts unfiltered.
   const {
     fetchNextPage,
     hasNextPage,
@@ -25,7 +39,10 @@ export default function PostActivities({ carousel }: { carousel?: boolean }) {
     isLoading,
     isError,
     data,
-  } = useInfinitePosts({ type: POST_TYPE_ENUMS.POST });
+  } = useInfinitePosts(
+    { type: POST_TYPE_ENUMS.POST, tenantId },
+    Boolean(tenantId),
+  );
 
   const posts = data?.pages.flatMap((page) => page.docs) ?? [];
 
@@ -54,6 +71,21 @@ export default function PostActivities({ carousel }: { carousel?: boolean }) {
             <PostItemSkeleton key={`loading-${index}`} />
           ))}
         </div>
+      </PostLayout>
+    );
+  if (!isError && posts.length === 0)
+    return (
+      <PostLayout>
+        <EmptyBox
+          title={
+            isOwnCompany ? "You haven't posted anything yet" : 'No posts yet'
+          }
+          description={
+            isOwnCompany
+              ? 'Posts you share will show up here.'
+              : "This company hasn't shared any posts."
+          }
+        />
       </PostLayout>
     );
   if (carousel)

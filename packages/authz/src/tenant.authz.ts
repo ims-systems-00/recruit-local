@@ -8,6 +8,7 @@ import {
   MongoQuery,
   fieldPatternMatcher,
 } from '@casl/ability';
+import { dropUnscopedRules } from './scoped-rules';
 
 import {
   ACCOUNT_TYPE_ENUMS,
@@ -70,7 +71,11 @@ export const ALL_TENANT_FIELDS = [
 // `getAbility`, alongside — not instead of — the Manage grants, so
 // `permittedFieldsOf` unions them in on reads while `validateUpdatePayload`
 // still checks writes against `ALL_TENANT_FIELDS`.
-export const ALL_TENANT_READ_FIELDS = [...ALL_TENANT_FIELDS, 'completion', 'kycStatus'];
+export const ALL_TENANT_READ_FIELDS = [
+  ...ALL_TENANT_FIELDS,
+  'completion',
+  'kycStatus',
+];
 
 // Public read set — the fields ANY account type may read on ANY organisation
 // (candidates browsing orgs, employers viewing OTHER orgs). This is a trust
@@ -142,23 +147,37 @@ export class TenantAbilityBuilder implements IAbilityBuilder {
     );
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
-      builder.can(AbilityAction.Read, TenantAuthZEntity, ALL_TENANT_READ_FIELDS);
-      builder.can(AbilityAction.Manage, TenantAuthZEntity, ALL_TENANT_FIELDS);
-    }
-
-    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
       builder.can(
         AbilityAction.Read,
         TenantAuthZEntity,
         ALL_TENANT_READ_FIELDS,
-        { _id: this.session.tenantId },
       );
-      builder.can(AbilityAction.Manage, TenantAuthZEntity, ALL_TENANT_FIELDS, {
-        _id: this.session.tenantId,
-      });
+      builder.can(AbilityAction.Manage, TenantAuthZEntity, ALL_TENANT_FIELDS);
     }
 
-    return builder.build({
+    if (this.session.user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER) {
+      if (this.session.tenantId) {
+        builder.can(
+          AbilityAction.Read,
+          TenantAuthZEntity,
+          ALL_TENANT_READ_FIELDS,
+          { _id: this.session.tenantId },
+        );
+        builder.can(
+          AbilityAction.Manage,
+          TenantAuthZEntity,
+          ALL_TENANT_FIELDS,
+          { _id: this.session.tenantId },
+        );
+      } else {
+        // Onboarding: an employer without an organisation may create one. This
+        // used to ride on the Manage rule above, scoped to a tenantId they did
+        // not have yet — see `dropUnscopedRules`.
+        builder.can(AbilityAction.Create, TenantAuthZEntity, ALL_TENANT_FIELDS);
+      }
+    }
+
+    return dropUnscopedRules(builder).build({
       conditionsMatcher: buildMongoQueryMatcher(),
       fieldMatcher: fieldPatternMatcher,
     });

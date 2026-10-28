@@ -7,6 +7,7 @@ import {
   buildMongoQueryMatcher,
   MongoQuery,
 } from '@casl/ability';
+import { dropUnscopedRules } from './scoped-rules';
 
 import {
   ACCOUNT_TYPE_ENUMS,
@@ -60,7 +61,9 @@ export class EventRegistrationAbilityBuilder implements IAbilityBuilder {
 
     if (user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       builder.can(AbilityAction.Manage, EventRegistrationAuthZEntity);
-      return builder.build({ conditionsMatcher: buildMongoQueryMatcher() });
+      return dropUnscopedRules(builder).build({
+        conditionsMatcher: buildMongoQueryMatcher(),
+      });
     }
 
     if (user.type === ACCOUNT_TYPE_ENUMS.EMPLOYER && tenantId) {
@@ -69,7 +72,7 @@ export class EventRegistrationAbilityBuilder implements IAbilityBuilder {
     if (user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
     }
 
-    return builder.build({
+    return dropUnscopedRules(builder).build({
       conditionsMatcher: buildMongoQueryMatcher(),
     });
   }

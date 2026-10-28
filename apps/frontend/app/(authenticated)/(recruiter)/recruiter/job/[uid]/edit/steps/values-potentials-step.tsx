@@ -28,6 +28,8 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
 import { PriorityRanksDialog } from './modals/priority-ranks-dialog';
 import { ValueCatalogueDialog } from './modals/value-catalogue-dialog';
+import { usePageContext } from '@/components/ai-chat/page-context';
+import { useValuesCategoryAction } from './values-potentials-fill';
 
 // The value types, in the order the catalogue lists them.
 const CATEGORIES: VALUE_TYPE_ENUM[] = [
@@ -152,6 +154,30 @@ export default function ValuesPotentialsStep({
   };
 
   const isAtTotalMax = selectedValues.length >= JOB_VALUES_MAX_TOTAL;
+
+  usePageContext({
+    page: 'recruiter.job.edit.values',
+    summary:
+      'Step 4 of editing a job post: the workplace values the job looks for, in five categories, ' +
+      'each with a priority. The user presses Continue to save this step and move on.',
+    state: {
+      jobId: defaultValues._id,
+      // Names trimmed so 25 values stay inside the server's size cap.
+      selected: Object.fromEntries(
+        CATEGORIES.map((category) => [
+          category,
+          selectedValues
+            .filter((row) => row.category === category)
+            .map((row) => `${row.name.slice(0, 40)} (${row.priority})`),
+        ]),
+      ),
+      showing: activeCategory,
+      limits: {
+        perCategory: JOB_VALUES_MAX_PER_TYPE,
+        total: JOB_VALUES_MAX_TOTAL,
+      },
+    },
+  });
 
   const addValue = (value: ValueData) => {
     if (isValueSelected(value._id)) return;
@@ -560,6 +586,20 @@ export default function ValuesPotentialsStep({
         </Button>
       </div>
 
+      {/* Lets Alice choose values, one category at a time. Saving is still Continue. */}
+      {CATEGORIES.map((category) => (
+        <ValuesCategoryAction
+          key={category}
+          category={category}
+          selected={selectedValues}
+          setSelected={(update) => {
+            setSelectedValues(update);
+            setError(null);
+          }}
+          reveal={() => setActiveCategory(category)}
+        />
+      ))}
+
       {/* Dialog Modals */}
       <PriorityRanksDialog
         open={priorityDialogOpen}
@@ -571,4 +611,16 @@ export default function ValuesPotentialsStep({
       />
     </div>
   );
+}
+
+/**
+ * Registers Alice's action for one category and renders nothing — a component
+ * rather than a hook call per category, so the five stay in step with
+ * `CATEGORIES`.
+ */
+function ValuesCategoryAction(
+  props: Parameters<typeof useValuesCategoryAction>[0],
+) {
+  useValuesCategoryAction(props);
+  return null;
 }

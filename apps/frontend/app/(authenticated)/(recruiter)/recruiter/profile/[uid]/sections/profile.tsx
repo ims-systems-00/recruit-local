@@ -386,7 +386,7 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
     {
       value: 'activities',
       label: 'Activities',
-      component: <Activities />,
+      component: <Activities tenantId={tenantDetails?._id} />,
     },
     {
       value: 'saves',
