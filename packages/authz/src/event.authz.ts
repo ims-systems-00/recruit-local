@@ -7,6 +7,7 @@ import {
   buildMongoQueryMatcher,
   MongoQuery,
 } from '@casl/ability';
+import { dropUnscopedRules } from './scoped-rules';
 
 import {
   ACCOUNT_TYPE_ENUMS,
@@ -54,7 +55,9 @@ export class EventAbilityBuilder implements IAbilityBuilder {
     // --- Platform Admin: Manage Everything ---
     if (user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       builder.can(AbilityAction.Manage, EventAuthZEntity);
-      return builder.build({ conditionsMatcher: buildMongoQueryMatcher() });
+      return dropUnscopedRules(builder).build({
+        conditionsMatcher: buildMongoQueryMatcher(),
+      });
     }
 
     // --- Tenant Admin/Employer ---
@@ -79,7 +82,7 @@ export class EventAbilityBuilder implements IAbilityBuilder {
     // --- Candidates / Public Users ---
     // (Define logic for non-tenants here, e.g., read only if status is Published)
 
-    return builder.build({
+    return dropUnscopedRules(builder).build({
       conditionsMatcher: buildMongoQueryMatcher(),
     });
   }

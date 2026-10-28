@@ -8,6 +8,7 @@ import {
   MongoQuery,
   fieldPatternMatcher,
 } from '@casl/ability';
+import { dropUnscopedRules } from './scoped-rules';
 
 import {
   ACCOUNT_TYPE_ENUMS,
@@ -90,7 +91,7 @@ export class FavouriteAbilityBuilder implements IAbilityBuilder {
     // --- Platform Admin ---
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.PLATFORM_ADMIN) {
       builder.can(AbilityAction.Manage, FavouriteAuthZEntity);
-      return builder.build({
+      return dropUnscopedRules(builder).build({
         conditionsMatcher: buildMongoQueryMatcher(),
         fieldMatcher: fieldPatternMatcher,
       });
@@ -127,7 +128,7 @@ export class FavouriteAbilityBuilder implements IAbilityBuilder {
         });
       }
 
-      return builder.build({
+      return dropUnscopedRules(builder).build({
         conditionsMatcher: buildMongoQueryMatcher(),
         fieldMatcher: fieldPatternMatcher,
       });
@@ -164,13 +165,13 @@ export class FavouriteAbilityBuilder implements IAbilityBuilder {
         });
       }
 
-      return builder.build({
+      return dropUnscopedRules(builder).build({
         conditionsMatcher: buildMongoQueryMatcher(),
         fieldMatcher: fieldPatternMatcher,
       });
     }
 
-    return builder.build({
+    return dropUnscopedRules(builder).build({
       conditionsMatcher: buildMongoQueryMatcher(),
       fieldMatcher: fieldPatternMatcher,
     });

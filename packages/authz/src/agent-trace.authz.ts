@@ -7,6 +7,7 @@ import {
   buildMongoQueryMatcher,
   MongoQuery,
 } from '@casl/ability';
+import { dropUnscopedRules } from './scoped-rules';
 
 import {
   ACCOUNT_TYPE_ENUMS,
@@ -104,7 +105,7 @@ export class AgentTraceAbilityBuilder implements IAbilityBuilder {
       builder.can(AbilityAction.Manage, AgentTraceAuthZEntity);
     }
 
-    return builder.build({
+    return dropUnscopedRules(builder).build({
       conditionsMatcher: buildMongoQueryMatcher(),
     });
   }

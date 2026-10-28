@@ -7,6 +7,7 @@ import {
   buildMongoQueryMatcher,
   MongoQuery,
 } from '@casl/ability';
+import { dropUnscopedRules } from './scoped-rules';
 
 import {
   ACCOUNT_TYPE_ENUMS,
@@ -51,7 +52,7 @@ export class InvitationAbilityBuilder implements IAbilityBuilder {
       // builder.can(AbilityAction.Manage, InvitationAuthZEntity);
     }
 
-    return builder.build({
+    return dropUnscopedRules(builder).build({
       conditionsMatcher: buildMongoQueryMatcher(),
     });
   }
