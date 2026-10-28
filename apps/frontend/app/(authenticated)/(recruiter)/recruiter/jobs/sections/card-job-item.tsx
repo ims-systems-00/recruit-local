@@ -65,11 +65,15 @@ export default function CardJobItem({ job }: { job: JobData }) {
             <div className=" flex flex-col sm:flex-row items-start sm:items-center gap-spacing-xs">
               <div className="flex items-center gap-spacing-2xs text-text-gray-tertiary">
                 <MapPin className=" text-fg-gray-tertiary size-4" />
-                <p className="text-body-sm ">{job?.location || 'N/A'}</p>
+                <p className="text-body-sm line-clamp-1">
+                  {job?.location || 'N/A'}
+                </p>
               </div>
               <div className="flex items-center gap-spacing-2xs text-text-gray-tertiary">
                 <div className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-fg-gray-tertiary"></div>
-                <p className="text-body-sm ">{job?.employmentType || 'N/A'}</p>
+                <p className="text-body-sm whitespace-nowrap ">
+                  {job?.employmentType || 'N/A'}
+                </p>
               </div>
             </div>
           </div>
