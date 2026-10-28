@@ -48,12 +48,6 @@ const DEFAULT_COVER_LETTER =
 
 const DEFAULT_PORTFOLIO_URL = 'www.designs/pias.com';
 
-const DEFAULT_CASE_STUDIES = [
-  { name: 'customer_journey_v1.pdf', size: '100KB' },
-  { name: 'user_research_insights.pdf', size: '100KB' },
-  { name: 'ux_strategy_deck_2023.pdf', size: '100KB' },
-];
-
 // The label under the gauge: the overview's match bands, or not scored yet.
 const ALIGNMENT = {
   strong: { label: 'Strong Alignment', color: '#12B76A' },
@@ -134,13 +128,11 @@ export default function ApplicantDetailsView({
     applicationData?.resume?.storageInformation?.Name || 'resume_v3.pdf';
   const cvFileSize = '100KB';
 
-  const caseStudiesList =
-    applicationData?.caseStudies && applicationData.caseStudies.length > 0
-      ? applicationData.caseStudies.map((item) => ({
-          name: item.storageInformation.Name,
-          size: '100KB',
-        }))
-      : DEFAULT_CASE_STUDIES;
+  // Optional on an application; the section is hidden when there are none.
+  const caseStudiesList = (applicationData?.caseStudies ?? []).map((item) => ({
+    name: item.storageInformation.Name,
+    size: '100KB',
+  }));
 
   const workingDaysText =
     jobData?.workingDays != null ? `${jobData.workingDays} Days` : '5 Days';
@@ -379,45 +371,47 @@ export default function ApplicantDetailsView({
                 </div>
 
                 {/* Case Studies */}
-                <div className="space-y-spacing-xs">
-                  <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
-                    Case Studies{' '}
-                    <span className="text-text-gray-quaternary font-normal">
-                      (Optional)
-                    </span>
-                  </label>
+                {caseStudiesList.length > 0 && (
+                  <div className="space-y-spacing-xs">
+                    <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
+                      Case Studies{' '}
+                      <span className="text-text-gray-quaternary font-normal">
+                        (Optional)
+                      </span>
+                    </label>
 
-                  <div className="space-y-spacing-md">
-                    {caseStudiesList.map((file, idx) => (
-                      <div
-                        key={idx}
-                        className="w-full p-spacing-xl rounded-2xl border border-border-gray-secondary bg-white flex items-center justify-between gap-spacing-2xl shadow-xs"
-                      >
-                        <div className="flex gap-spacing-lg items-center min-w-0">
-                          <div className="size-10 rounded-lg bg-[#FF3B30] flex flex-col items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-xs">
-                            PDF
-                          </div>
-                          <div className="space-y-spacing-3xs min-w-0">
-                            <p className="text-label-sm font-label-sm-strong! text-text-gray-primary truncate">
-                              {file.name}
-                            </p>
-                            <p className="text-label-xs text-text-gray-tertiary">
-                              {file.size}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleDownload(file.name)}
-                          className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0"
-                          title="Download Case Study"
+                    <div className="space-y-spacing-md">
+                      {caseStudiesList.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="w-full p-spacing-xl rounded-2xl border border-border-gray-secondary bg-white flex items-center justify-between gap-spacing-2xl shadow-xs"
                         >
-                          <Download size={16} />
-                        </button>
-                      </div>
-                    ))}
+                          <div className="flex gap-spacing-lg items-center min-w-0">
+                            <div className="size-10 rounded-lg bg-[#FF3B30] flex flex-col items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-xs">
+                              PDF
+                            </div>
+                            <div className="space-y-spacing-3xs min-w-0">
+                              <p className="text-label-sm font-label-sm-strong! text-text-gray-primary truncate">
+                                {file.name}
+                              </p>
+                              <p className="text-label-xs text-text-gray-tertiary">
+                                {file.size}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(file.name)}
+                            className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0"
+                            title="Download Case Study"
+                          >
+                            <Download size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
