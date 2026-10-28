@@ -1,7 +1,7 @@
 import { VISIBILITY_ENUM } from './file-media';
 import { QUERY_TYPE_ENUMS } from './job';
-import { ProfileSkillResponseDto } from './job-profile';
-import { VALUE_TYPE_ENUM } from './value';
+import { ProfileSkillResponseDto, ValueScoreResponseDto } from './job-profile';
+import { VALUE_TYPE_ENUM, ValueResponseDto } from './value';
 
 /** Public HTTP shape of a single answer to a job's additional query. */
 export interface ApplicationAnswerResponseDto {
@@ -26,6 +26,16 @@ export interface ApplicationJobProfileDto {
   email?: string;
   /** The candidate's skills, in profile order. Single-application reads only. */
   skills?: ProfileSkillResponseDto[];
+  /** The candidate's values, as their profile shows them. Single-application reads only. */
+  values?: ValueResponseDto[];
+  /**
+   * The candidate's value assessment scores, one per evaluated value, without
+   * their answers or feedback. Single-application reads only.
+   */
+  valueScores?: Pick<
+    ValueScoreResponseDto,
+    'value' | 'score' | 'evaluatedAt'
+  >[];
 }
 
 /** Populated status summary attached to an application response. */

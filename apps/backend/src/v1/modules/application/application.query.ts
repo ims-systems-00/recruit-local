@@ -8,6 +8,7 @@ import { modelNames } from "../../../models/constants";
 import { ApplicationAbilityBuilder, ApplicationAuthZEntity } from "@rl/authz";
 import { VISIBILITY_ENUM } from "@rl/types";
 import { profileSkillsLookupQuery } from "../job-profile/job-profile.query";
+import { populateValuesQuery } from "../value/value.query";
 
 export const applicationProjectionQuery = (): PipelineStage[] => {
   const fieldsToExclude: (keyof IApplicationDoc | "__v")[] = ["__v"];
@@ -21,11 +22,15 @@ export const applicationProjectionQuery = (): PipelineStage[] => {
 };
 
 /**
- * `jobProfile` as `{ _id, name, email }`. `withSkills` adds the profile's skills,
- * each with its catalogue entry — for single-application reads, so list pages
- * don't carry every applicant's skills.
+ * `jobProfile` as `{ _id, name, email }`. `detailed` adds the profile's skills,
+ * each with its catalogue entry, and its values with their assessment scores —
+ * for single-application reads, so list pages don't carry every applicant's.
+ *
+ * Values are populated as the profile's own read populates them, so the
+ * recruiter sees the set the candidate does. A score keeps only its value,
+ * score and date; the candidate's assessment answers and feedback stay out.
  */
-export const populateJobProfileQuery = ({ withSkills = false }: { withSkills?: boolean } = {}): PipelineStage[] => [
+export const populateJobProfileQuery = ({ detailed = false }: { detailed?: boolean } = {}): PipelineStage[] => [
   {
     $lookup: {
       from: modelNames.JOB_PROFILE,
@@ -37,10 +42,18 @@ export const populateJobProfileQuery = ({ withSkills = false }: { withSkills?: b
           $project: {
             name: 1,
             email: 1,
-            ...(withSkills ? { skills: 1 } : {}),
+            ...(detailed
+              ? {
+                  skills: 1,
+                  values: 1,
+                  "valueScores.value": 1,
+                  "valueScores.score": 1,
+                  "valueScores.evaluatedAt": 1,
+                }
+              : {}),
           },
         },
-        ...(withSkills ? profileSkillsLookupQuery() : []),
+        ...(detailed ? [...profileSkillsLookupQuery(), ...populateValuesQuery()] : []),
       ] as PipelineStage.Lookup["$lookup"]["pipeline"],
       as: "jobProfile",
     },
