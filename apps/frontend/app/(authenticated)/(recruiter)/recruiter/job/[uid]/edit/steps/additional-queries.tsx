@@ -10,6 +10,20 @@ import PreviewQueryCard from './preview-query-card';
 import { AdditionalQuery, JobData } from '@/services/jobs/job.type';
 import { QUERY_TYPE_ENUMS } from '@rl/types';
 import { useUpdateJob } from '@/services/jobs/jobs.client';
+import {
+  usePageAction,
+  usePageContext,
+} from '@/components/ai-chat/page-context';
+import { AGENT_STAGGER_MS, prefersReducedMotion, wait } from '@/lib/motion';
+import {
+  ADD_JOB_QUESTIONS_ACTION,
+  parseQuestions,
+} from './additional-queries-fill';
+
+/** How much of each question Alice is shown, so the state stays small. */
+const QUESTION_LABEL_CHARS = 60;
+/** Most questions listed in the page state; the rest are only counted. */
+const MAX_LISTED_QUESTIONS = 10;
 
 export interface QueryOption {
   id: string;
@@ -52,6 +66,43 @@ export default function AdditionalQueries({
   const [isPreviewModeOn, setIsPreviewModeOn] = useState(false);
 
   const { updateJob, isPending } = useUpdateJob();
+
+  usePageContext({
+    page: 'recruiter.job.edit.questions',
+    summary:
+      'Step 5 of editing a job post: extra questions applicants answer when they apply, each with an ' +
+      'optional expected answer only the recruiter sees. The user presses Continue to save this step.',
+    state: {
+      jobId: defaultValues._id,
+      total: cards.length,
+      questions: cards
+        .slice(0, MAX_LISTED_QUESTIONS)
+        .map(
+          (card) =>
+            `${card.question.slice(0, QUESTION_LABEL_CHARS)} (${card.type}${card.isRequired ? ', required' : ''})`,
+        ),
+    },
+  });
+
+  // Lets Alice add questions. Saving is still Continue.
+  usePageAction({
+    ...ADD_JOB_QUESTIONS_ACTION,
+    handler: async (args) => {
+      const added = parseQuestions(args);
+
+      for (const [index, card] of added.entries()) {
+        setCards((prev) => [
+          ...prev.map((c) => ({ ...c, focused: false })),
+          card,
+        ]);
+        if (index < added.length - 1 && !prefersReducedMotion()) {
+          await wait(AGENT_STAGGER_MS);
+        }
+      }
+
+      return `Added ${added.length} question${added.length === 1 ? '' : 's'}.`;
+    },
+  });
 
   const addCard = (type: QUERY_TYPE_ENUMS) => {
     const newCard: QueryCard = {
