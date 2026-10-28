@@ -56,7 +56,7 @@ export default function JobDescription({ job }: { job: JobData }) {
   return (
     <>
       <div className=" space-y-spacing-4xl pb-10">
-        <div className=" grid grid-cols-3 gap-spacing-2xl">
+        <div className=" grid md:grid-cols-2 lg:grid-cols-3 gap-spacing-2xl">
           {/* <InfoCard
             icon={<Briefcase size={20} />}
             title="Job Category"

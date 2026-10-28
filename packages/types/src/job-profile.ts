@@ -1,5 +1,7 @@
 import { PROFICIENCY } from './enums';
 import { FileMediaRefDto } from './file-media';
+import { NamedCatalogResponseDto } from './catalog';
+import { JOB_SKILL_LEVEL_ENUMS } from './job';
 
 /**
  * Compact, public shape of the job profile (seeker) that owns another document
@@ -26,6 +28,19 @@ export interface language {
   proficiencyLevel: PROFICIENCY;
 }
 
+/** Most skills one profile may list. Shared so the form and the validator agree. */
+export const PROFILE_SKILLS_MAX = 20;
+
+/**
+ * Public HTTP shape of one of a profile's skills, with the catalogue entry
+ * populated. `level` is on the same scale a job asks for, so the two compare
+ * directly; there is no `requirement` — that is the employer's side.
+ */
+export interface ProfileSkillResponseDto {
+  skill: NamedCatalogResponseDto;
+  level: JOB_SKILL_LEVEL_ENUMS;
+}
+
 export enum JOB_PROFILE_STATUS_ENUM {
   VERIFIED = 'verified',
   UNVERIFIED = 'unverified',
@@ -42,4 +57,27 @@ export enum JOB_TITLE_ENUMS {
   HUMAN_RESOURCES = 'Human Resources',
   FINANCE_ANALYST = 'Finance Analyst',
   BUSINESS_ANALYST = 'Business Analyst',
+}
+
+/** One answered question, with the question text as it read when answered. */
+export interface IValueScoreAnswer {
+  key: string;
+  question: string;
+  answer: string;
+}
+
+/**
+ * A candidate's self-evaluation of one value, scored by the LLM. One entry per
+ * value on the profile; a retake replaces it.
+ *
+ * Employers reading a public profile see `value`, `score` and `evaluatedAt`
+ * only — the answers and feedback are the candidate's own.
+ */
+export interface ValueScoreResponseDto {
+  value: string;
+  /** 0–100, the mean of the per-question scores. */
+  score: number;
+  feedback?: string;
+  answers?: IValueScoreAnswer[];
+  evaluatedAt: string;
 }

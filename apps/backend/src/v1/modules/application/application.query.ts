@@ -7,6 +7,7 @@ import { AbilityAction } from "../../../types/ability";
 import { modelNames } from "../../../models/constants";
 import { ApplicationAbilityBuilder, ApplicationAuthZEntity } from "@rl/authz";
 import { VISIBILITY_ENUM } from "@rl/types";
+import { profileSkillsLookupQuery } from "../job-profile/job-profile.query";
 
 export const applicationProjectionQuery = (): PipelineStage[] => {
   const fieldsToExclude: (keyof IApplicationDoc | "__v")[] = ["__v"];
@@ -19,7 +20,12 @@ export const applicationProjectionQuery = (): PipelineStage[] => {
   return projectQuery(selectedFields);
 };
 
-export const populateJobProfileQuery = (): PipelineStage[] => [
+/**
+ * `jobProfile` as `{ _id, name, email }`. `withSkills` adds the profile's skills,
+ * each with its catalogue entry — for single-application reads, so list pages
+ * don't carry every applicant's skills.
+ */
+export const populateJobProfileQuery = ({ withSkills = false }: { withSkills?: boolean } = {}): PipelineStage[] => [
   {
     $lookup: {
       from: modelNames.JOB_PROFILE,
@@ -31,9 +37,11 @@ export const populateJobProfileQuery = (): PipelineStage[] => [
           $project: {
             name: 1,
             email: 1,
+            ...(withSkills ? { skills: 1 } : {}),
           },
         },
-      ],
+        ...(withSkills ? profileSkillsLookupQuery() : []),
+      ] as PipelineStage.Lookup["$lookup"]["pipeline"],
       as: "jobProfile",
     },
   },

@@ -13,12 +13,17 @@ import {
   toCursorPage,
 } from "../../../common/query";
 import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
-import { jobProfileProjectQuery, populateJobProfileKycStatusQuery } from "./job-profile.query";
+import {
+  jobProfileProjectQuery,
+  populateJobProfileKycStatusQuery,
+  profileSkillsLookupQuery,
+} from "./job-profile.query";
 import { recomputeProfileCompletion } from "./profile-completion.service";
 import { populateValuesQuery } from "../value/value.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { valueWeightUpdateQueue } from "../../../queue/valueWeightUpdateQueue";
 import { enqueueProfileKeywords } from "../../../queue/keywordUpdateQueue";
+import { enqueueProfileGeocode } from "../../../queue/geocodeQueue";
 import { modelNames } from "../../../models/constants";
 import {
   IJobProfileCreateParams,
@@ -95,6 +100,7 @@ export const list = async ({ query = {}, options, allowedFields, offset = 0 }: I
     ...populateNamedRefQuery(Industry, "industry"),
     ...populateNamedRefQuery(WorkMode, "workMode"),
     ...populateSingleNamedRefQuery(ExperienceLevel, "experienceLevel"),
+    ...profileSkillsLookupQuery(),
     ...populateFileMediaQuery("profileImageId", "profileImage"),
     ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
     ...jobProfileProjectQuery(allowedFields),
@@ -113,6 +119,7 @@ export const getOne = async ({ query = {}, allowedFields }: IJobProfileGetParams
     ...populateNamedRefQuery(Industry, "industry"),
     ...populateNamedRefQuery(WorkMode, "workMode"),
     ...populateSingleNamedRefQuery(ExperienceLevel, "experienceLevel"),
+    ...profileSkillsLookupQuery(),
     ...populateFileMediaQuery("profileImageId", "profileImage"),
     ...populateFileMediaQuery("coverPhotoId", "coverPhoto"),
     ...populateJobProfileKycStatusQuery(),
@@ -184,6 +191,7 @@ export const create = async ({ payload, allowedFields }: IJobProfileCreateParams
 
   // Rebuild match keywords off the request path.
   await enqueueProfileKeywords(jobProfileId);
+  if (cleanPayload.address) await enqueueProfileGeocode(jobProfileId);
 
   return getOne({
     query: { _id: jobProfileId } as any,
@@ -222,6 +230,17 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
 
   const { kycDocumentStorage, profileImageStorage, coverPhotoStorage, ...cleanPayload } = payload;
 
+  // A new `values` list also drops the scores of values no longer on it, so a
+  // deselected value does not keep a score. Values evaluated before Continue are
+  // in the list Continue sends, so their scores survive.
+  const pruneValueScores = Array.isArray(payload.values)
+    ? {
+        $pull: {
+          valueScores: { value: { $nin: payload.values.map((id) => new Types.ObjectId(String(id))) } },
+        },
+      }
+    : {};
+
   const updatedJobProfile = await JobProfile.findOneAndUpdate(
     { _id: jobProfile._id },
     {
@@ -230,6 +249,7 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
         kycDocumentId: updatedKycDocumentId,
         ...photoIds,
       },
+      ...pruneValueScores,
     },
     {
       new: true,
@@ -251,6 +271,8 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
 
   // Rebuild match keywords off the request path.
   await enqueueProfileKeywords(jobProfile._id);
+  // Only a sent address can have changed; the worker skips text it has already geocoded.
+  if (cleanPayload.address !== undefined) await enqueueProfileGeocode(jobProfile._id);
 
   return getOne({ query: { _id: jobProfile._id } as any, allowedFields });
 };

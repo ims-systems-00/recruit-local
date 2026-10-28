@@ -18,6 +18,8 @@ import {
   hybridSearchStages,
   jobAttachmentsLookupQuery,
   jobProjectionQuery,
+  jobSkillsLookupQuery,
+  jobValuesLookupQuery,
 } from "./job.query";
 import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
@@ -31,6 +33,7 @@ import {
 } from "./job.interface";
 import * as statusService from "../status/status.service";
 import { enqueueJobKeywords } from "../../../queue/keywordUpdateQueue";
+import { enqueueJobGeocode } from "../../../queue/geocodeQueue";
 
 /**
  * Helper to fetch tenant data for job autofill
@@ -58,6 +61,7 @@ export const list = async ({
   tenantId,
   jobProfileId,
   matchKeywords,
+  feedOrder,
   searchTerm,
   searchVector,
   searchPreFilter,
@@ -82,6 +86,20 @@ export const list = async ({
           },
         ]
       : []),
+    ...(feedOrder?.length
+      ? [
+          {
+            $addFields: {
+              feedRank: {
+                $indexOfArray: [
+                  feedOrder.filter((id) => Types.ObjectId.isValid(id)).map((id) => new Types.ObjectId(id)),
+                  "$_id",
+                ],
+              },
+            },
+          },
+        ]
+      : []),
 
     // In search mode $rankFusion already ordered the results, so `options.sort`
     // is unset and no $sort is emitted — any $sort here would throw that
@@ -89,10 +107,12 @@ export const list = async ({
     // has a total order to walk.
     ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset ?? 0, limit),
 
-    // Per-viewer flags, and nothing more — moved past the $limit so they join the
+    // Per-viewer flags and skill names — moved past the $limit so they join the
     // page instead of every matching job.
     ...alreadyAlliped(jobProfileId),
     ...alreadysaved(tenantId, jobProfileId),
+    ...jobSkillsLookupQuery(),
+    ...jobValuesLookupQuery(),
   ]);
 
   const mongoSession = getMongoSession(session);
@@ -118,6 +138,8 @@ export const getOne = async ({ query = {}, session, tenantId, jobProfileId }: IJ
     ...excludeDeletedQuery(),
     ...jobProjectionQuery(),
     ...jobAttachmentsLookupQuery(),
+    ...jobSkillsLookupQuery(),
+    ...jobValuesLookupQuery(),
     ...alreadyAlliped(jobProfileId),
     ...alreadysaved(tenantId, jobProfileId),
   ]);
@@ -138,6 +160,8 @@ export const listSoftDeleted = async ({ query = {}, options, session, offset = 0
     ...onlyDeletedQuery(),
     ...jobProjectionQuery(),
     ...cursorPageStages(options?.sort ? String(options.sort) : undefined, offset, limit),
+    ...jobSkillsLookupQuery(),
+    ...jobValuesLookupQuery(),
   ]);
 
   const mongoSession = getMongoSession(session);
@@ -152,6 +176,8 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IJobGetParams) 
     ...onlyDeletedQuery(),
     ...jobProjectionQuery(),
     ...jobAttachmentsLookupQuery(),
+    ...jobSkillsLookupQuery(),
+    ...jobValuesLookupQuery(),
   ]);
 
   const mongoSession = getMongoSession(session);
@@ -237,6 +263,13 @@ export const create = async ({ payload, session }: IJobCreateParams) => {
   });
 
   await enqueueJobKeywords(job.id);
+  if (job.location) await enqueueJobGeocode(job.id);
+
+  // Reads return each skill as `{ _id, name }` and each value as `{ _id, label,
+  // type }` (jobSkillsLookupQuery / jobValuesLookupQuery); match that.
+  if (job.skills?.length) await job.populate({ path: "skills.skill", select: "name" });
+  if (job.values?.length) await job.populate({ path: "values.value", select: "label type" });
+
   return job;
 };
 
@@ -293,6 +326,8 @@ export const update = async ({ query, payload, session }: IJobUpdateParams) => {
   if (!updatedJob) throw new NotFoundException("Job not found.");
 
   await enqueueJobKeywords((updatedJob as any)._id);
+  // Only a sent location can have changed; the worker skips text it has already geocoded.
+  if (cleanPayload.location !== undefined) await enqueueJobGeocode((updatedJob as any)._id);
 
   const jobResponse = await getOne({ query: { _id: (updatedJob as any)._id.toString() }, session });
   return jobResponse;

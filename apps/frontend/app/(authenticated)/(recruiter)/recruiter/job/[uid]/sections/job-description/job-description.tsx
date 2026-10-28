@@ -5,21 +5,33 @@ import {
   Calendar,
   Clock,
   DollarSign,
-  Briefcase,
   Users,
   Sun,
   Moon,
-  Cable,
   TriangleAlert,
-  Dot,
   Mailbox,
   PhoneCall,
-  Globe,
+  Lock,
+  Target,
 } from 'lucide-react';
-import moment from 'moment';
 import React from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import InfoCard from './info-card';
-import { REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
+import {
+  JOB_SKILL_LEVEL_LABELS,
+  JOB_SKILL_REQUIREMENT_ENUMS,
+  JOB_SKILL_REQUIREMENT_LABELS,
+  REQUIRED_DOCUMENTS_ENUMS,
+  VALUE_TYPE_ENUM,
+  VALUE_TYPE_LABELS,
+} from '@rl/types';
 import Image from 'next/image';
 
 import RelatedAttachmentDefault from '@/public/images/related_attachment_default.png';
@@ -27,6 +39,7 @@ import MapByAddress from '@/components/map-by-address';
 import PreviewQueryCard from '../../edit/steps/preview-query-card';
 import { QueryCard } from '../../edit/steps/additional-queries';
 import DraftViewer from '@/components/draft-editor/draft-viewer';
+import { cn } from '@/lib/utils';
 
 const documentLabels: Record<REQUIRED_DOCUMENTS_ENUMS, string> = {
   [REQUIRED_DOCUMENTS_ENUMS.RESUME]: 'CV',
@@ -35,11 +48,88 @@ const documentLabels: Record<REQUIRED_DOCUMENTS_ENUMS, string> = {
   [REQUIRED_DOCUMENTS_ENUMS.CERTIFICATES]: 'Certificates',
 };
 
-const formatDate = (date: string | Date, format = 'MMMM D, YYYY') => {
-  if (!date) return '';
-
-  return moment(date).format(format);
-};
+// Display order and icon per value type; names come from VALUE_TYPE_LABELS.
+const PREVIEW_VALUE_CATEGORIES = [
+  {
+    type: VALUE_TYPE_ENUM.CULTURE_AND_BEHAVIOR,
+    icon: (
+      <svg
+        className="size-5 text-fg-gray-secondary"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="m19 20-7-14-7 14h14Z" />
+        <path d="M12 6v14" />
+      </svg>
+    ),
+  },
+  {
+    type: VALUE_TYPE_ENUM.MINDSET,
+    icon: (
+      <svg
+        className="size-5 text-fg-gray-secondary"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 4v16" />
+        <path d="M12 12c-2.5-4-7-4-7 0s4 4.5 7 1" />
+        <path d="M12 13c-3.5 3-5 7-2 7s5-3.5 2-7" />
+        <path d="M12 12c2.5-4 7-4 7 0s-4 4.5-7 1" />
+        <path d="M12 13c3.5 3 5 7 2 7s-5-3.5-2-7" />
+      </svg>
+    ),
+  },
+  {
+    type: VALUE_TYPE_ENUM.WORKING_STYLE,
+    icon: (
+      <svg
+        className="size-5 text-fg-gray-secondary"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="5" r="2" />
+        <path d="m9 20 3-6 3 2 2 4" />
+        <path d="m6 16 3-4 3 1" />
+        <path d="m14 10 3-2" />
+      </svg>
+    ),
+  },
+  {
+    type: VALUE_TYPE_ENUM.LEADERSHIP,
+    icon: (
+      <svg
+        className="size-5 text-fg-gray-secondary"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="10" cy="8" r="4" />
+        <path d="M4 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+        <path d="M18 8a6 6 0 0 1 0 8" />
+        <path d="M20 6a9 9 0 0 1 0 12" />
+      </svg>
+    ),
+  },
+  {
+    type: VALUE_TYPE_ENUM.MOTIVATION,
+    icon: <Target className="size-5 text-fg-gray-secondary" />,
+  },
+];
 
 export default function JobDescription({ job }: { job: JobData }) {
   const formattedSalary = job?.salary
@@ -55,10 +145,18 @@ export default function JobDescription({ job }: { job: JobData }) {
   const weekendsText = job?.weekends?.length
     ? job.weekends.join(' and ')
     : null;
+  // The job's values, grouped by type; types with none are not shown.
+  const categoriesToRender = PREVIEW_VALUE_CATEGORIES.map((cat) => ({
+    ...cat,
+    values: (job?.values ?? []).filter((v) => v.value.type === cat.type),
+  })).filter((cat) => cat.values.length > 0);
+
+  const skillsToRender = job?.skills ?? [];
+
   return (
     <>
       <div className=" space-y-spacing-4xl pb-10">
-        <div className=" grid grid-cols-3 gap-spacing-2xl">
+        <div className=" grid md:grid-cols-2 lg:grid-cols-3 gap-spacing-2xl">
           {/* <InfoCard
             icon={<Briefcase size={20} />}
             title="Job Category"
@@ -154,11 +252,129 @@ export default function JobDescription({ job }: { job: JobData }) {
           </p>
           <DraftViewer content={job?.description} />
         </div>
+
+        {/* Values and Potentials (bottom of About the Role) */}
+        <div className="space-y-spacing-2xl">
+          <div className="flex items-center gap-spacing-sm">
+            <p className="text-label-lg font-label-lg-strong! text-text-gray-primary">
+              Values and Potentials
+            </p>
+            <span className="inline-flex items-center gap-1 px-spacing-sm py-0.5 rounded-full text-label-xs font-label-xs-strong! bg-pink-50 text-pink-600 border border-pink-200">
+              <Lock className="size-3 text-pink-600" />
+              Recruiters only
+            </span>
+          </div>
+
+          {categoriesToRender.length === 0 && (
+            <p className="text-body-sm text-text-gray-quaternary">
+              No values added yet.
+            </p>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-2xl">
+            {categoriesToRender.map((cat) => (
+              <div
+                key={cat.type}
+                className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-4xl space-y-spacing-4xl"
+              >
+                <div className="flex items-center gap-spacing-2xl">
+                  <div className="flex size-10 items-center justify-center rounded-lg border border-others-gray-light bg-others-gray-gray-zero">
+                    {cat.icon}
+                  </div>
+                  <p className="text-label-md font-label-md-strong! text-text-gray-primary">
+                    {VALUE_TYPE_LABELS[cat.type]}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-spacing-sm">
+                  {cat.values.map((v) => (
+                    <span
+                      key={v.value._id}
+                      className="inline-flex items-center rounded-lg border border-border-gray-secondary bg-white px-spacing-md py-spacing-xs text-label-xs font-label-xs-strong! text-text-gray-secondary"
+                    >
+                      {v.value.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="space-y-spacing-2xl">
           <p className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
             Key Responsibilities
           </p>
           <DraftViewer content={job?.responsibility} />
+        </div>
+
+        {/* Skills & Requirements (bottom of Key Responsibilities) */}
+        <div className="space-y-spacing-2xl">
+          <p className="text-label-lg font-label-lg-strong! text-text-gray-primary">
+            Skills &amp; Requirements
+          </p>
+
+          <div className="overflow-hidden bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border-gray-secondary bg-bg-gray-soft-primary hover:bg-bg-gray-soft-primary">
+                  <TableHead className="w-16 p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary"></TableHead>
+                  <TableHead className="p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Skills
+                  </TableHead>
+                  <TableHead className="w-48 p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Required Level
+                  </TableHead>
+                  <TableHead className="w-40 p-spacing-2xl text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                    Requirements
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {skillsToRender.length === 0 && (
+                  <TableRow className="border-none! hover:bg-transparent">
+                    <TableCell
+                      colSpan={4}
+                      className="p-8 text-center text-body-sm text-text-gray-quaternary"
+                    >
+                      No skills added yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {skillsToRender.map((skill, index) => {
+                  const sl = String(index + 1).padStart(2, '0');
+                  return (
+                    <TableRow
+                      key={skill.skill._id}
+                      className=" border-none! hover:bg-bg-gray-soft-primary/40 transition-colors"
+                    >
+                      <TableCell className="w-16 p-spacing-2xl text-label-sm text-text-gray-secondary">
+                        {sl}
+                      </TableCell>
+                      <TableCell className="p-spacing-2xl text-label-sm text-text-gray-secondary">
+                        {skill.skill.name}
+                      </TableCell>
+                      <TableCell className="w-48 p-spacing-2xl text-label-sm text-text-gray-secondary">
+                        {JOB_SKILL_LEVEL_LABELS[skill.level]}
+                      </TableCell>
+                      <TableCell className="w-40 p-spacing-2xl">
+                        <span
+                          className={cn(
+                            'inline-flex items-center px-spacing-md py-0.5 rounded-full text-label-xs font-label-xs-strong!',
+                            skill.requirement ===
+                              JOB_SKILL_REQUIREMENT_ENUMS.REQUIRED
+                              ? 'bg-pink-50 text-pink-600 border border-pink-200'
+                              : 'bg-bg-gray-soft-secondary text-text-gray-secondary border border-border-gray-secondary',
+                          )}
+                        >
+                          {JOB_SKILL_REQUIREMENT_LABELS[skill.requirement]}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-border-gray-secondary p-spacing-4xl flex gap-spacing-lg items-center">

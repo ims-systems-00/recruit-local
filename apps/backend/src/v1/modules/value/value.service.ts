@@ -1,7 +1,7 @@
 import { PipelineStage } from "mongoose";
-import { IListParams, ListQueryParams } from "@rl/types";
-import { ValueInput, Value } from "../../../models";
-import { NotFoundException } from "../../../common/helper";
+import { IListParams, ListQueryParams, ValueAssessmentResponseDto } from "@rl/types";
+import { ValueInput, Value, Job } from "../../../models";
+import { BadRequestException, ConflictException, NotFoundException } from "../../../common/helper";
 import {
   matchQuery,
   excludeDeletedQuery,
@@ -61,6 +61,16 @@ export const getOneSoftDeleted = async ({ query = {} }: IListValueParams) => {
   return results[0];
 };
 
+/**
+ * The live, active values among `ids` — what a job's `values` are checked
+ * against. An id missing from the result is unknown, deleted, or deactivated.
+ * `type` comes back for the per-type cap.
+ */
+export const findActiveByIds = (ids: string[]) =>
+  Value.find({ _id: { $in: ids }, isActive: true, "deleteMarker.status": { $ne: true } })
+    .select("_id type")
+    .lean();
+
 export const topThree = ({ query = {} }: IListValueParams) => {
   const pipeline: PipelineStage[] = [
     ...matchQuery(sanitizeQueryIds(query)),
@@ -71,6 +81,30 @@ export const topThree = ({ query = {} }: IListValueParams) => {
   ];
 
   return Value.aggregate(pipeline);
+};
+
+/**
+ * The self-evaluation questions for one active value.
+ *
+ * Throws 400 rather than 404 when the value exists but has no questions yet:
+ * the value is real, it just cannot be evaluated until content is seeded.
+ */
+export const getAssessment = async ({ id }: { id: string }): Promise<ValueAssessmentResponseDto> => {
+  const value = await Value.findOne({ _id: id, isActive: true, "deleteMarker.status": { $ne: true } })
+    .select("type label assessment")
+    .lean();
+  if (!value) throw new NotFoundException("Value not found.");
+  if (!value.assessment?.questions?.length) {
+    throw new BadRequestException("This value has no evaluation questions yet.");
+  }
+
+  return {
+    _id: String(value._id),
+    type: value.type,
+    label: value.label,
+    heading: value.assessment.heading,
+    questions: value.assessment.questions.map(({ key, text, placeholder }) => ({ key, text, placeholder })),
+  };
 };
 
 export const create = async (payload: ValueInput) => {
@@ -92,6 +126,18 @@ export const softRemove = async ({ query }: { query: IValueQueryParams }) => {
 
 export const hardRemove = async ({ query }: { query: IValueQueryParams }) => {
   const result = await getOneSoftDeleted({ query });
+
+  // Jobs hold their values as bare ids, so deleting a value outright would orphan
+  // them. Soft-deleted jobs count too: they can be restored. No race with a job
+  // adding it meanwhile — the value is already in the trash, and a job's values
+  // must be live entries.
+  const jobsUsingValue = await Job.countDocuments({ "values.value": result._id });
+  if (jobsUsingValue > 0) {
+    throw new ConflictException(
+      `This value is used by ${jobsUsingValue} job(s), so it cannot be permanently deleted. Leave it in the trash or deactivate it instead.`
+    );
+  }
+
   const deleted = await Value.findOneAndDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Value not found to delete.");
   return result;

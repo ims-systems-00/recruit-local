@@ -103,7 +103,11 @@ function Kanban({
     setColumns(
       [...statuses]
         .sort((a, b) => a.weight - b.weight)
-        .map((status) => ({ id: status._id, title: status.label })),
+        .map((status) => ({
+          id: status._id,
+          title: status.label,
+          isDefault: status.default,
+        })),
     );
   }, [statuses]);
 
@@ -354,6 +358,7 @@ function Kanban({
                   key={col.id}
                   id={col.id}
                   title={col.title}
+                  isDefault={col.isDefault}
                   // applicants={getColumnApplicants(col.id)}
                   // onAddClick={handleAddClick}
                   // onEdit={handleEdit}
@@ -373,10 +378,12 @@ function Kanban({
               <KanbanColumnPreview
                 title={activeColumn.title}
                 count={activeColumnApplications.length}
+                isDefault={activeColumn.isDefault}
                 applications={mergeColumnApplications(
                   activeColumnApplications,
                   optimisticMap[activeColumn.id] || [],
                   removedIds,
+                  activeColumn.isDefault,
                 )}
               />
             ) : activeApplicant ? (

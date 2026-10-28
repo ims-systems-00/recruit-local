@@ -11,7 +11,7 @@ import { ApiResponse } from '@/types/api';
 import { ValueListResponse } from './value.type';
 import { valueListResponseSchema } from './value.validation';
 import qs from 'qs';
-import { VALUE_TYPE_ENUM } from '@rl/types';
+import { ValueAssessmentResponseDto, VALUE_TYPE_ENUM } from '@rl/types';
 
 const API_ENDPOINT = '/values';
 
@@ -80,5 +80,28 @@ export async function getTopThreeValues(
   } catch (error) {
     console.log('error', error);
     return handleServerError(error, 'Failed to fetch values');
+  }
+}
+
+/**
+ * The self-evaluation questions for one value. Fails with the backend's message
+ * (e.g. "This value has no evaluation questions yet.") when it has none.
+ */
+export async function getValueAssessment(
+  id: string,
+): Promise<ApiResponse<ValueAssessmentResponseDto>> {
+  try {
+    const res = await axiosServer.get<{
+      assessment: ValueAssessmentResponseDto;
+      message?: string;
+    }>(`${API_ENDPOINT}/${id}/assessment`);
+
+    return {
+      success: true,
+      data: res.data.assessment,
+      message: res.data.message,
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to fetch evaluation questions');
   }
 }

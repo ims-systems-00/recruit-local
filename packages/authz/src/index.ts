@@ -17,6 +17,7 @@ export * from './education.authz';
 export * from './experience.authz';
 export * from './certification.authz';
 export * from './skill.authz';
+export * from './skill-catalog.authz';
 export * from './interest.authz';
 export * from './favourite.authz';
 export * from './file-media.authz';

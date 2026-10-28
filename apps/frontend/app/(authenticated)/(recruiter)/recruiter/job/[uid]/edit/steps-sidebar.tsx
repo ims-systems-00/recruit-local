@@ -22,6 +22,16 @@ const STEPS: Step[] = [
   },
   {
     number: 3,
+    title: 'Skills & Requirements',
+    subtitle: 'Structured Skills and Candidates are match on',
+  },
+  {
+    number: 4,
+    title: 'Values and Potentials',
+    subtitle: 'The Values in this role are ranked by priroty',
+  },
+  {
+    number: 5,
     title: 'Additional Queries',
     subtitle: 'Crafting Impactful Value-Based Interview Questions',
   },
@@ -29,11 +39,17 @@ const STEPS: Step[] = [
 
 interface StepsSidebarProps {
   currentStep: number;
+  className?: string;
 }
 
-export function StepsSidebar({ currentStep }: StepsSidebarProps) {
+export function StepsSidebar({ currentStep, className }: StepsSidebarProps) {
   return (
-    <div className="w-[312px] min-w-[312px] shrink-0 pt-spacing-4xl pl-spacing-4xl border-l border-border-gray-secondary">
+    <div
+      className={cn(
+        'w-[312px] min-w-[312px] shrink-0 pt-spacing-4xl pl-spacing-4xl border-l border-border-gray-secondary',
+        className,
+      )}
+    >
       <h2 className=" text-label-xl font-label-xl-strong! text-text-gray-primary mb-spacing-4xl">
         Steps
       </h2>

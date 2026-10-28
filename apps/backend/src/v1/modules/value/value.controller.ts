@@ -64,6 +64,22 @@ export const get = async ({ req }: ControllerParams) => {
   });
 };
 
+export const getAssessment = async ({ req }: ControllerParams) => {
+  const ability = new ValueAbilityBuilder(req.session).getAbility();
+  if (!ability.can(AbilityAction.Read, ValueAuthZEntity)) {
+    throw new UnauthorizedException("You are not authorized to read values.");
+  }
+
+  const assessment = await valueService.getAssessment({ id: req.params.id });
+
+  return new ApiResponse({
+    message: "Value assessment retrieved.",
+    statusCode: StatusCodes.OK,
+    data: assessment,
+    fieldName: "assessment",
+  });
+};
+
 export const create = async ({ req }: ControllerParams) => {
   const ability = new ValueAbilityBuilder(req.session).getAbility();
   if (!ability.can(AbilityAction.Create, ValueAuthZEntity)) {

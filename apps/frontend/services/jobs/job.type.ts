@@ -2,6 +2,9 @@ import { CursorPagination } from '@/types/api';
 import { DeleteMarker } from '../file-media/file-media.type';
 import {
   EMPLOYMENT_TYPE,
+  JobMatchPartDto,
+  JobSkillResponseDto,
+  JobValueResponseDto,
   PERIOD_ENUMS,
   QUERY_TYPE_ENUMS,
   WORKING_DAYS_ENUMS,
@@ -111,10 +114,20 @@ export interface JobData {
     src: string;
   }[];
   additionalQueries?: AdditionalQuery[];
+  skills?: JobSkillResponseDto[];
+  values?: JobValueResponseDto[];
+  // Wizard-only: the skills step's "Save for Future use" choice. Never sent.
+  saveSkillsForFuture?: boolean;
   createdAt: string;
   updatedAt: string;
   alreadySaved?: boolean;
   alreadyApplied?: boolean;
+  // The viewer's match against the job, 0-100. On the candidate job list
+  // (GET /jobs) and a single job; null when the profile has nothing to compare yet.
+  matchPercentage?: number | null;
+  // The parts behind matchPercentage, each 0-100. Single job only; null whenever
+  // matchPercentage is.
+  matchBreakdown?: JobMatchPartDto[] | null;
 }
 
 export type JobListResponse = {

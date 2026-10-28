@@ -2,6 +2,8 @@ import { StatusCodes } from "http-status-codes";
 import { ApiResponse, ControllerParams, UnauthorizedException } from "../../../common/helper";
 import * as jobProfileService from "./job-profile.service";
 import { recomputeProfileCompletion } from "./profile-completion.service";
+import * as valueScoreService from "./value-score.service";
+import * as valueService from "../value/value.service";
 import * as applicationService from "../application/application.service";
 import * as jobService from "../job/job.service";
 import { update as updateUser } from "../user";
@@ -24,7 +26,8 @@ import {
 import { runCursorList } from "../../../common/query";
 import { sanitizeDocument, sanitizeDocuments, validateUpdatePayload } from "../../../common/helper/authz";
 import { toValueResponseList } from "../value/value.dto";
-import { toNamedRefResponse, toNamedRefResponseList } from "./job-profile.dto";
+import { toNamedRefResponse, toNamedRefResponseList, toProfileSkillResponseList } from "./job-profile.dto";
+import { assertProfileSkills } from "./job-profile.assertions";
 
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_PROFILE_FIELDS,
@@ -54,6 +57,7 @@ const finalizeJobProfile = (doc: any) => {
   if (doc && Array.isArray(doc.jobTitle)) doc.jobTitle = toNamedRefResponseList(doc.jobTitle);
   if (doc && Array.isArray(doc.industry)) doc.industry = toNamedRefResponseList(doc.industry);
   if (doc && Array.isArray(doc.workMode)) doc.workMode = toNamedRefResponseList(doc.workMode);
+  if (doc && Array.isArray(doc.skills)) doc.skills = toProfileSkillResponseList(doc.skills);
   if (doc && doc.experienceLevel && typeof doc.experienceLevel === "object")
     doc.experienceLevel = toNamedRefResponse(doc.experienceLevel);
   // The raw photo ids are redundant with the populated objects' `_id` — expose
@@ -314,6 +318,8 @@ export const create = async ({ req }: ControllerParams) => {
   // Field-level check for creation payload
   validateUpdatePayload(req.body, ability, AbilityAction.Create, new JobProfileAuthZEntity(req.body));
 
+  await assertProfileSkills(req.body.skills);
+
   req.body.userId = req.session.user?._id;
 
   const jobProfile = await jobProfileService.create({
@@ -346,6 +352,8 @@ export const update = async ({ req }: ControllerParams) => {
   // Field-level payload validation
   validateUpdatePayload(req.body, ability, AbilityAction.Update, new JobProfileAuthZEntity(existingJobProfile));
 
+  await assertProfileSkills(req.body.skills);
+
   const jobProfile = await jobProfileService.update({
     query: { _id: req.params.id },
     payload: req.body,
@@ -356,6 +364,42 @@ export const update = async ({ req }: ControllerParams) => {
     statusCode: StatusCodes.OK,
     data: getSanitizedResponse(jobProfile, ability),
     fieldName: "jobProfile",
+  });
+};
+
+/**
+ * Scores the candidate's answers to one value's questions and saves the score on
+ * the profile, replacing any earlier one. Gated like `update`: whoever may edit
+ * the profile may evaluate on it. The score itself is server-computed and never
+ * accepted from the client.
+ */
+export const evaluateValue = async ({ req }: ControllerParams) => {
+  const ability = new JobProfileAbilityBuilder(req.session).getAbility();
+
+  const existingJobProfile = await jobProfileService.getOne({ query: { _id: req.params.id } });
+
+  if (!existingJobProfile || !ability.can(AbilityAction.Update, new JobProfileAuthZEntity(existingJobProfile))) {
+    throw new UnauthorizedException("You do not have permission to evaluate values on this job profile.");
+  }
+
+  const assessment = await valueService.getAssessment({ id: req.body.valueId });
+  const answers = valueScoreService.matchAnswers(assessment.questions, req.body.answers);
+
+  const { score, feedback } = await valueScoreService.evaluate({ value: assessment, answers });
+
+  const valueScore = await valueScoreService.save({
+    jobProfileId: existingJobProfile._id,
+    valueId: assessment._id,
+    score,
+    feedback,
+    answers,
+  });
+
+  return new ApiResponse({
+    message: "Value evaluated.",
+    statusCode: StatusCodes.OK,
+    data: valueScore,
+    fieldName: "valueScore",
   });
 };
 

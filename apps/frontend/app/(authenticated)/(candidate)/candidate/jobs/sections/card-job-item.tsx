@@ -53,11 +53,19 @@ export default function CardJobItem({
             /> */}
           </div>
           <div className=" space-y-spacing-2xs">
-            <Link href={`/candidate/job/${job?._id}`}>
-              <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-                {job?.title || 'N/A'}
-              </h4>
-            </Link>
+            <div className=" flex items-center gap-spacing-sm">
+              <Link href={`/candidate/job/${job?._id}`}>
+                <h4 className=" max-w-[100px] sm:max-w-[216px] truncate text-label-lg font-label-lg-strong! text-text-gray-primary">
+                  {job?.title || 'N/A'}
+                </h4>
+              </Link>
+              {/* Only the job list returns a match; saved and applied jobs don't. */}
+              {typeof job?.matchPercentage === 'number' && (
+                <span className=" whitespace-nowrap rounded-md text-label-xs font-label-xs-strong! text-others-brand-dark flex items-center justify-center py-spacing-3xs px-spacing-md bg-others-brand-brand-zero border border-others-brand-light">
+                  {job.matchPercentage}% Match
+                </span>
+              )}
+            </div>
             <div className=" flex items-center gap-spacing-2xs">
               <p className="text-label-sm capitalize text-text-gray-quaternary">
                 {job?.employmentType || 'N/A'}

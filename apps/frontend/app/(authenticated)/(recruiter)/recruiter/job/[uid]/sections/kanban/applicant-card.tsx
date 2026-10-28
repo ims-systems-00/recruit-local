@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Application } from '@/services/application/application.type';
+import { overallMatchPercent } from '@/services/application/application.match';
 import { Avatar } from '@/components/ui/avatar';
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import moment from 'moment';
@@ -17,9 +18,15 @@ import Link from 'next/link';
 interface Props {
   applicant: Application;
   index: number;
+  /**
+   * In the default stage, which is read best match first: the card can still be
+   * dragged out, but is no drop target, so a drop lands on the column (placed
+   * by match) and no gap opens to suggest a slot that will not be kept.
+   */
+  placedByMatch?: boolean;
 }
 
-export function ApplicantCard({ applicant, index }: Props) {
+export function ApplicantCard({ applicant, index, placedByMatch }: Props) {
   const {
     attributes,
     listeners,
@@ -33,6 +40,7 @@ export function ApplicantCard({ applicant, index }: Props) {
       applicant,
       index,
     },
+    disabled: { droppable: Boolean(placedByMatch) },
   });
 
   const style = {
@@ -63,6 +71,8 @@ export function ApplicantCardContent({
   applicant: Application;
   handleProps?: HTMLAttributes<HTMLSpanElement>;
 }) {
+  const matchPercent = overallMatchPercent(applicant);
+
   return (
     <div className="bg-bg-gray-soft-primary p-spacing-2xl flex flex-col gap-spacing-4xl rounded-2xl border border-border-gray-secondary shadow-xs">
       {/* Top row */}
@@ -92,13 +102,12 @@ export function ApplicantCardContent({
                 View Details
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
+            {/* <DropdownMenuItem>Edit</DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              // onClick={() => onDelete(applicant.id)}
             >
               Delete
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -121,10 +130,11 @@ export function ApplicantCardContent({
         </div>
       </div>
 
-      {/* Applied date/time */}
+      {/* Match, and applied date/time */}
       <div className="flex items-center justify-between">
+        {/* Left empty until scored; it still holds the dates to the right. */}
         <span className=" text-label-sm font-label-sm-strong! text-text-gray-tertiary">
-          Applied on
+          {matchPercent != null && `${matchPercent}% match`}
         </span>
         <div className=" flex gap-spacing-sm items-center">
           <span className="flex items-center gap-spacing-2xs bg-others-gray-gray-zero py-spacing-3xs px-spacing-md rounded-full border border-others-gray-light ">

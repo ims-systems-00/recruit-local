@@ -41,6 +41,10 @@ export const ALL_JOB_PROFILE_FIELDS = [
   'visibility',
   'status',
   'completion',
+  // Value self-evaluation scores. Server-computed by the evaluate endpoint, so
+  // readable but never client-writable (absent from CANDIDATE_MUTATION_FIELDS).
+  'valueScores',
+  'valueScores.*',
   // Server-computed from the owning User's account-level KYC status — readable,
   // never client-writable (absent from CANDIDATE_MUTATION_FIELDS below).
   'kycStatus',
@@ -82,6 +86,10 @@ const JOB_PROFILE_PUBLIC_READ_FIELDS = [
   'skills',
   'interests',
   'values',
+  // The score only — a candidate's answers and the feedback on them stay private.
+  'valueScores.value',
+  'valueScores.score',
+  'valueScores.evaluatedAt',
   'profileImageId',
   'coverPhotoId',
   'profileImage',

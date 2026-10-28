@@ -55,6 +55,15 @@ export const list = async ({ req }: ControllerParams) => {
     query: req.query,
     spec: applicationListQuerySpec,
     securityQuery: applicationRoleScopedSecurityQuery(ability),
+    // A column read in board order: the default stage is read best match first.
+    // Runs before the cursor guard is taken, so a page cursor keys on the sort
+    // actually used.
+    prepare: async ({ filter, options }) => {
+      if (options.sort === applicationService.BOARD_ORDER_SORT) {
+        options.sort = await applicationService.boardColumnSort(filter.statusId);
+      }
+      return {};
+    },
     fetch: ({ query, options, offset }) => applicationService.list({ query, options, offset }),
   });
 

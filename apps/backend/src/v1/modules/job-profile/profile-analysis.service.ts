@@ -93,13 +93,14 @@ const filledArr = (value: unknown): boolean => Array.isArray(value) && value.len
 // ---------------------------------------------------------------------------
 
 /**
- * The two rules that decide whether the profile is scoreable at all.
+ * The two rules behind the costliest gaps in a ranking.
  *
- * Both matchers they feed report `applicable: false` when their input is
- * missing, and the ranking pipeline then renormalizes the remaining weights. The
- * candidate is not scored badly — they are scored on less evidence, which is
- * worse, because the signal that would have distinguished them is simply not
- * there.
+ * With no values, the values part — weighted with skills as the heaviest —
+ * scores 0 on every job that lists values. With no experience level, the
+ * experience matcher reports `applicable: false` and the ranking pipeline
+ * renormalizes the remaining weights: the candidate is not scored badly there,
+ * they are scored on less evidence, which is worse, because the signal that
+ * would have distinguished them is simply not there.
  */
 const valuesRule: ProfileRule = {
   code: "no_values",
@@ -112,9 +113,9 @@ const valuesRule: ProfileRule = {
           problem: "No values are set on this profile.",
           fix: "Pick the values that describe how you like to work, from the profile's Values section.",
           impact:
-            "Values carry the most weight of any signal when an employer's board ranks applicants, and they are " +
-            "compared against the values the hiring organisation set. With none on record that comparison cannot " +
-            "run at all, so every application is scored on less evidence than a competing candidate's.",
+            "Values carry as much weight as skills, the most of any signal, when an employer ranks applicants, and " +
+            "they are compared against the values each job lists. With none on record, that part of your score is " +
+            "zero on every job that lists any, however well you would fit.",
         },
 };
 
@@ -265,13 +266,16 @@ const skillsRule: ProfileRule = {
   severity: "medium",
   section: "skills",
   run: ({ profile, counts }) => {
-    if (counts.skills >= MIN_SKILLS || filledStr(profile.skills)) return null;
+    // Counted as completion counts it: catalogue skills on the profile, or the
+    // free-text Skill rows the assistant still writes, whichever has more.
+    const added = Math.max(counts.skills, Array.isArray(profile.skills) ? profile.skills.length : 0);
+    if (added >= MIN_SKILLS) return null;
 
     return {
       problem:
-        counts.skills === 0
+        added === 0
           ? "No skills have been added."
-          : `Only ${counts.skills} skill${counts.skills === 1 ? "" : "s"} added, out of the ${MIN_SKILLS} needed.`,
+          : `Only ${added} skill${added === 1 ? "" : "s"} added, out of the ${MIN_SKILLS} needed.`,
       fix: `Add at least ${MIN_SKILLS} skills, naming the tools and disciplines you actually work in.`,
       impact:
         "Skills feed the keywords a job is matched against, so a thin list narrows which jobs can be recommended " +

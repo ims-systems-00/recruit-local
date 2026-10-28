@@ -1,5 +1,16 @@
 import { PipelineStage, Types } from "mongoose";
-import { projectQuery, ListQuerySpec, eq, gte, lt, lte, objectId, oneOf, range } from "../../../common/query";
+import {
+  projectQuery,
+  ListQuerySpec,
+  eq,
+  gte,
+  lt,
+  lte,
+  objectId,
+  oneOf,
+  range,
+  catalogueRowsLookupQuery,
+} from "../../../common/query";
 import { omit } from "lodash";
 import { IJobDoc, Job } from "../../../models";
 import { JobAbilityBuilder, JobAuthZEntity } from "@rl/authz";
@@ -72,6 +83,14 @@ export const jobAttachmentsLookupQuery = (): PipelineStage[] => {
     },
   ];
 };
+
+/** `skills[].skill` -> `{ _id, name }`, keeping each row's `level` and `requirement`. */
+export const jobSkillsLookupQuery = (): PipelineStage[] =>
+  catalogueRowsLookupQuery({ field: "skills", key: "skill", from: modelNames.SKILL_CATALOG, project: { name: 1 } });
+
+/** `values[].value` -> `{ _id, label, type }`, keeping each row's `priority`. `weight` is added by the DTO. */
+export const jobValuesLookupQuery = (): PipelineStage[] =>
+  catalogueRowsLookupQuery({ field: "values", key: "value", from: modelNames.VALUE, project: { label: 1, type: 1 } });
 
 export const alreadyAlliped = (jobProfileId?: string): PipelineStage[] => {
   if (!jobProfileId || !Types.ObjectId.isValid(jobProfileId)) {

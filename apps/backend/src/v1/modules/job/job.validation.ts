@@ -8,6 +8,11 @@ import {
   REQUIRED_DOCUMENTS_ENUMS,
   JOBS_STATUS_ENUMS,
   QUERY_TYPE_ENUMS,
+  JOB_SKILL_LEVEL_ENUMS,
+  JOB_SKILL_REQUIREMENT_ENUMS,
+  JOB_SKILLS_MAX,
+  JOB_VALUE_PRIORITY_ENUMS,
+  JOB_VALUES_MAX_TOTAL,
 } from "@rl/types";
 
 const awsStorageSchema = Joi.object({
@@ -47,6 +52,46 @@ const additionalQuerySchema = Joi.object({
   isRequired: Joi.boolean().default(false).label("Is Required"),
   expectedAnswer: Joi.string().optional().allow("").label("Expected Answer"),
 }).label("Additional Query");
+
+const jobSkillSchema = Joi.object({
+  skill: Joi.string().custom(objectIdValidation).required().label("Skill"),
+  level: Joi.string()
+    .valid(...Object.values(JOB_SKILL_LEVEL_ENUMS))
+    .required()
+    .label("Skill Level"),
+  requirement: Joi.string()
+    .valid(...Object.values(JOB_SKILL_REQUIREMENT_ENUMS))
+    .required()
+    .label("Skill Requirement"),
+}).label("Job Skill");
+
+// Shape only. Whether each `skill` is a live catalogue entry, and whether a job
+// being published has any skills at all, needs the database — the controller
+// checks both. An empty array is allowed: a draft may clear its skills.
+const jobSkillsSchema = Joi.array()
+  .items(jobSkillSchema)
+  .max(JOB_SKILLS_MAX)
+  .unique("skill")
+  .messages({ "array.unique": "Each skill can only be added once." })
+  .label("Skills");
+
+const jobValueSchema = Joi.object({
+  value: Joi.string().custom(objectIdValidation).required().label("Value"),
+  priority: Joi.string()
+    .valid(...Object.values(JOB_VALUE_PRIORITY_ENUMS))
+    .required()
+    .label("Value Priority"),
+}).label("Job Value");
+
+// Shape only, as for skills. The per-type cap (`JOB_VALUES_MAX_PER_TYPE`) needs
+// each value's `type` from the database, so the controller checks it along with
+// the values being live and a published job having any.
+const jobValuesSchema = Joi.array()
+  .items(jobValueSchema)
+  .max(JOB_VALUES_MAX_TOTAL)
+  .unique("value")
+  .messages({ "array.unique": "Each value can only be added once." })
+  .label("Values");
 
 export const createBodySchema = Joi.object({
   title: Joi.string().required().label("Title"),
@@ -101,6 +146,8 @@ export const createBodySchema = Joi.object({
   // --- NEW FIELDS ---
   formId: Joi.string().custom(objectIdValidation).optional().label("Form ID"),
   additionalQueries: Joi.array().items(additionalQuerySchema).optional().label("Additional Queries"),
+  skills: jobSkillsSchema.optional(),
+  values: jobValuesSchema.optional(),
 });
 
 export const updateBodySchema = Joi.object({
@@ -153,6 +200,8 @@ export const updateBodySchema = Joi.object({
   // --- NEW FIELDS ---
   formId: Joi.string().custom(objectIdValidation).optional().label("Form ID"),
   additionalQueries: Joi.array().items(additionalQuerySchema).optional().label("Additional Queries"),
+  skills: jobSkillsSchema.optional(),
+  values: jobValuesSchema.optional(),
 });
 
 export const idParamsSchema = Joi.object({

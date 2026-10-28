@@ -2,7 +2,12 @@ import * as yup from 'yup';
 
 import { objectIdSchema, cursorPaginationSchema } from '@/services/shared';
 import { JobData } from '../jobs/job.type';
-import { QUERY_TYPE_ENUMS, REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
+import {
+  ApplicationMatchPartDto,
+  ProfileSkillResponseDto,
+  QUERY_TYPE_ENUMS,
+  REQUIRED_DOCUMENTS_ENUMS,
+} from '@rl/types';
 
 export const awsStorageSchema = yup.object({
   Name: yup.string().required('Name is required'),
@@ -48,6 +53,8 @@ export const applicationSchema = yup.object({
     _id: objectIdSchema.required(),
     email: yup.string().required('Email is required'),
     name: yup.string().required('Name is required'),
+    // Single-application reads only.
+    skills: yup.mixed<ProfileSkillResponseDto[]>().optional(),
   }),
   currentSalary: yup.number().nullable().optional(),
   expectedSalary: yup.number().nullable().optional(),
@@ -58,6 +65,10 @@ export const applicationSchema = yup.object({
     label: yup.string().required('Status label is required'),
   }),
   rank: yup.number().nullable().optional(),
+  // Employers only, written by the ranking queue: out of 1000, with the parts
+  // behind it. `matchBreakdown` is absent until the application is ranked.
+  matchScore: yup.number().optional(),
+  matchBreakdown: yup.mixed<ApplicationMatchPartDto[]>().optional(),
   statusId: objectIdSchema.required(),
   reference: yup.string().nullable().optional(),
   resume: applicationFileSchema,

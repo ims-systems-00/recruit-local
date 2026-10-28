@@ -15,6 +15,9 @@ import { salaryUpdateQueue } from "../../../queue/salaryUpdateQueue";
 import { enqueueProfileFeedRebuild } from "../../../queue/profileFeedRebuildQueue";
 import { enqueueJobCleanup } from "../../../queue/jobCleanupQueue";
 import { readFeedIds } from "./feed.service";
+import { assertJobSkills, assertJobValues } from "./job.assertions";
+import { computeJobMatch, computeJobMatchBreakdown } from "./match/job-match";
+import { loadMatchProfile } from "./match/profile.service";
 import pick from "lodash/pick";
 
 const PUBLIC_JOB_FIELDS = [
@@ -49,7 +52,17 @@ const PUBLIC_JOB_DETAIL_FIELDS = [
   "attachments",
   "email",
   "number",
+  "skills",
+  "values",
 ];
+
+/**
+ * A value's `priority` (and the `weight` derived from it) is the employer's own
+ * ranking — CASL keeps it from candidates, so the public page drops it too.
+ * `pick` cannot reach into array rows, hence this.
+ */
+const withoutValuePriorities = <T extends { values?: unknown }>(job: T): T =>
+  Array.isArray(job.values) ? { ...job, values: job.values.map(({ value }: { value: unknown }) => ({ value })) } : job;
 
 const caslFieldOptions = {
   fieldsFrom: (rule: { fields?: string[] }) => rule.fields || ALL_JOB_FIELDS,
@@ -79,8 +92,9 @@ export const list = async ({ req }: ControllerParams) => {
   let searchTerm: string | undefined;
   let searchVector: number[] | undefined;
   let matchKeywords: string[] | undefined;
+  let feedOrder: string[] | undefined;
 
-  const { docs, pagination } = await runCursorList({
+  const listing = runCursorList({
     query: req.query,
     spec: jobListQuerySpec,
     securityQuery: jobRoleScopedSecurityQuery(ability),
@@ -97,16 +111,23 @@ export const list = async ({ req }: ControllerParams) => {
           // Ranking is the point of matched mode — sort best-match first. A search
           // term outranks it: $rankFusion already ordered those results, and any
           // trailing $sort would throw that ordering away.
-          options.sort = "-matchScore -createdAt";
-
-          // Narrow to the precomputed feed so Mongo scores/sorts only the already
+          //
+          // Narrow to the precomputed feed so Mongo sorts only the already
           // matched candidates instead of the whole collection. Skipped when there
           // is a search term: the feed is capped at 300 profile-matched ids, so
           // searching inside it hides every job outside the candidate's keywords.
           feedIds = await readFeedIds(req.session.jobProfileId);
-          // Cold/evicted feed → build it in the background; this request still
-          // matches over the full collection (correct, just not accelerated).
-          if (!feedIds.length) await enqueueProfileFeedRebuild(req.session.jobProfileId);
+          if (feedIds.length) {
+            // The feed is kept best match first by match percentage — the number
+            // on each card — so the list follows the feed's own order.
+            feedOrder = feedIds;
+            options.sort = "feedRank";
+          } else {
+            // Cold/evicted feed → build it in the background; this request ranks
+            // the full collection by keyword overlap instead (correct, coarser).
+            options.sort = "-matchScore -createdAt";
+            await enqueueProfileFeedRebuild(req.session.jobProfileId);
+          }
         }
       }
 
@@ -131,7 +152,9 @@ export const list = async ({ req }: ControllerParams) => {
         options,
         tenantId: req.session.tenantId,
         jobProfileId: req.session.jobProfileId,
-        matchKeywords,
+        // A warm feed's order replaces keyword overlap, so matchScore is not computed.
+        matchKeywords: feedOrder ? undefined : matchKeywords,
+        feedOrder,
         searchTerm,
         searchVector,
         searchPreFilter: jobSearchPreFilter(req.session),
@@ -143,8 +166,20 @@ export const list = async ({ req }: ControllerParams) => {
     // frontend is off offset paging.
   });
 
+  // The profile is read alongside the page, not after it. Both promises are
+  // awaited in the same tick they are created, so neither can reject unobserved.
+  const [{ docs, pagination }, matchProfile] = await Promise.all([listing, loadMatchProfile(req.session.jobProfileId)]);
+
+  // Only a viewer with a job profile has anything to be matched against; for
+  // everyone else the field is left off rather than sent as null. Scored before
+  // sanitizing, which keeps the field (it is in ALL_JOB_FIELDS) and strips the
+  // value priorities the matcher never reads anyway.
+  const scoredDocs = matchProfile
+    ? docs.map((doc) => ({ ...doc, matchPercentage: computeJobMatch(matchProfile, doc) }))
+    : docs;
+
   const sanitizedDocs = sanitizeDocuments<JobAuthZEntity>(
-    docs,
+    scoredDocs,
     ability,
     AbilityAction.Read,
     JobAuthZEntity,
@@ -164,18 +199,29 @@ export const get = async ({ req }: ControllerParams) => {
   const abilityBuilder = new JobAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
-  const job = await jobService.getOne({
-    query: { _id: req.params.id },
-    tenantId: req.session.tenantId,
-    jobProfileId: req.session.jobProfileId,
-  });
+  // Read alongside the job, as on the list.
+  const [job, matchProfile] = await Promise.all([
+    jobService.getOne({
+      query: { _id: req.params.id },
+      tenantId: req.session.tenantId,
+      jobProfileId: req.session.jobProfileId,
+    }),
+    loadMatchProfile(req.session.jobProfileId),
+  ]);
 
   // Always authorize against the instance if it exists
   if (!job || !ability.can(AbilityAction.Read, new JobAuthZEntity(job))) {
     throw new UnauthorizedException("You do not have permission to view this job.");
   }
 
-  const sanitized = getSanitizedJobResponse(job, ability);
+  // As on the list: only a viewer with a job profile is matched, and the fields
+  // are left off for everyone else. Scored before sanitizing.
+  const match = matchProfile ? computeJobMatchBreakdown(matchProfile, job) : null;
+  const scoredJob = matchProfile
+    ? { ...job, matchPercentage: match?.percentage ?? null, matchBreakdown: match?.parts ?? null }
+    : job;
+
+  const sanitized = getSanitizedJobResponse(scoredJob, ability);
 
   return new ApiResponse({
     message: "Job retrieved.",
@@ -196,6 +242,11 @@ export const create = async ({ req }: ControllerParams) => {
 
   // Field-level check for creation payload
   validateUpdatePayload(req.body, ability, AbilityAction.Create, new JobAuthZEntity(req.body));
+
+  // A new job is always a draft (`status` is not accepted on create), so these
+  // only check the skills and values it was sent.
+  await assertJobSkills({ skills: req.body.skills, publishing: false });
+  await assertJobValues({ values: req.body.values, publishing: false });
 
   const job = await jobService.create({
     payload: {
@@ -243,6 +294,19 @@ export const update = async ({ req }: ControllerParams) => {
 
   // Field-Level Check
   validateUpdatePayload(req.body, ability, AbilityAction.Update, authZEntity);
+
+  // Publishing is the move to `open`, not a repeat of it — re-sending `open` for
+  // a job that already is (an older one, say, listed before skills existed)
+  // must not start failing.
+  const publishing = req.body.status === JOBS_STATUS_ENUMS.OPEN && existingJob.status !== JOBS_STATUS_ENUMS.OPEN;
+  await assertJobSkills({
+    skills: req.body.skills ?? (publishing ? existingJob.skills : undefined),
+    publishing,
+  });
+  await assertJobValues({
+    values: req.body.values ?? (publishing ? existingJob.values : undefined),
+    publishing,
+  });
 
   const job = await jobService.update({
     query: { _id: req.params.id },
@@ -387,7 +451,7 @@ export const publicGet = async ({ req }: ControllerParams) => {
   return new ApiResponse({
     message: "Job retrieved.",
     statusCode: StatusCodes.OK,
-    data: toJobResponse(pick(job, PUBLIC_JOB_DETAIL_FIELDS)),
+    data: toJobResponse(withoutValuePriorities(pick(job, PUBLIC_JOB_DETAIL_FIELDS))),
     fieldName: "job",
   });
 };

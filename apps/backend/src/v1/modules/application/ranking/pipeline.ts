@@ -1,10 +1,15 @@
+import { APPLICATION_MATCH_PART_ENUMS, MATCH_SCORE_SCALE, VALUE_TYPE_ENUM } from "@rl/types";
 import { JobProfileInput } from "../../../../models/job-profile.model";
-import { TenantInput } from "../../../../models/tenant.model";
-import { IJobInput } from "../../../../models/job.model";
+import { IJobDoc, IJobInput } from "../../../../models/job.model";
 import { ApplicationInput } from "../../../../models/application.model";
-import { MatchableValue, ValueMatchResult, matchValues } from "./matching/value";
 import { QuestionMatchResult, matchQuestionAnswers } from "./matching/valuebasedQuestion";
 import { ExperienceMatchResult, MatchableExperienceLevel, matchExperience } from "./matching/experience";
+import { ValueMatchResult, matchValueScores } from "../../job/match/value";
+import { SkillMatchResult, matchSkills } from "../../job/match/skill";
+import { RoleMatchResult, matchRole } from "../../job/match/role";
+import { LocationMatchResult, fromGeoJson, matchLocation } from "../../job/match/location";
+// Type-only: `job-match.ts` imports `runMatchers` from here, so a value import would be a cycle.
+import type { MatchProfile } from "../../job/match/job-match";
 
 /**
  * The ranking pipeline.
@@ -12,12 +17,23 @@ import { ExperienceMatchResult, MatchableExperienceLevel, matchExperience } from
  * Ranking an application means asking several independent questions about how
  * well a candidate fits a job — do their values line up, their skills, their
  * salary expectation — and folding the answers into one number. Each of those
- * questions is a matcher in `matching/`, and this file is the ordered list of
+ * questions is a matcher — in `matching/`, or in `job/match/` for the parts the
+ * candidate's own job match scores too — and this file is the ordered list of
  * matchers plus the code that runs them.
  *
  * Adding a technique means writing it in `matching/` and appending one entry to
  * `RANKING_PIPELINE`. Nothing else changes.
  */
+
+/**
+ * A value document as `populateValuesQuery` returns it. Loose on purpose: `_id`
+ * may arrive as an `ObjectId` or as an already-stringified id.
+ */
+interface MatchableValue {
+  _id: unknown;
+  type?: VALUE_TYPE_ENUM | string;
+  weight?: number;
+}
 
 /**
  * A parent document read through `populateValuesQuery`, where the `values`
@@ -34,7 +50,8 @@ export type RankingJobProfile = Omit<WithPopulatedValues<JobProfileInput>, "expe
   experienceLevel?: MatchableExperienceLevel | null;
 };
 
-export type RankingTenant = WithPopulatedValues<TenantInput>;
+/** The job as the ranking fetch reads it, with the geocoded point the location matcher measures from. */
+export type RankingJob = IJobInput & Pick<IJobDoc, "geo">;
 
 /**
  * The parts of the application a matcher may read. Narrow on purpose — widen it
@@ -44,31 +61,39 @@ export type RankingApplication = Pick<ApplicationInput, "answers">;
 
 /**
  * Everything a matcher may look at, assembled once per application being
- * ranked. Matchers read only the parts they need — the two `values` arrays, the
- * job's screening questions and the answers to them — so the fetch that builds
- * this should populate whatever the registered matchers actually consume and no
- * more.
+ * ranked. Matchers read only the parts they need — the job's values against the
+ * candidate's value scores, the job's screening questions and the answers to
+ * them, both sides' skills, roles and locations — so the fetch that builds this
+ * should populate whatever the registered matchers actually consume and no more.
  */
 export interface RankingContext {
   /** The applying candidate's profile. */
   jobProfile: RankingJobProfile;
+  /**
+   * The same profile as the candidate's job match reads it (`loadMatchProfile`):
+   * catalogue skills, job titles, industries and work modes resolved to names,
+   * interests, and the geocoded address. Read through the same field spec so
+   * the skills, role and location matchers judge exactly what the candidate's
+   * own match does.
+   */
+  matchProfile: MatchProfile;
   /** The job applied to. */
-  job: IJobInput;
-  /** The tenant that posted the job — the recruiter side of every comparison. */
-  tenant: RankingTenant;
+  job: RankingJob;
   /** The application being scored — the candidate's own submission. */
   application: RankingApplication;
 }
 
 /**
- * The top of the ranking scale, and the only place the output range is decided.
- * Matchers report normalized ratios and know nothing about it, so moving this
- * moves every score with it and changes nothing else.
+ * The top of the ranking scale. Decided once, as `MATCH_SCORE_SCALE` in
+ * `@rl/types`, so the frontend reads stored scores on the same scale. Matchers
+ * report normalized ratios and know nothing about it, so moving it moves every
+ * score with it and changes nothing else.
  *
  * Changing it makes previously stored scores incomparable to new ones — bump
- * `RANKING_PIPELINE_VERSION` alongside it so stale rows can be found.
+ * `RANKING_PIPELINE_VERSION` alongside it so stale rows can be found, and move
+ * `MATCH_SCORE_BAND_FLOORS` with it.
  */
-export const RANKING_SCALE = 1000;
+export const RANKING_SCALE = MATCH_SCORE_SCALE;
 
 /** One matcher's answer. */
 export interface RankingSignal {
@@ -94,7 +119,12 @@ export interface RankingSignal {
   details: unknown;
 }
 
-export interface RankingMatcher {
+/**
+ * One matcher. `C` is what it reads — the application context by default, but
+ * the combiner below only ever passes it through, so another feature can score
+ * against a context of its own with the same weighting rules.
+ */
+export interface RankingMatcher<C = RankingContext> {
   key: string;
   label: string;
   /**
@@ -109,7 +139,7 @@ export interface RankingMatcher {
    * pipeline — a matcher that pre-scales would be averaged as if it were a
    * ratio and swamp every other signal.
    */
-  run: (context: RankingContext) => { ratio: number; applicable: boolean; details?: unknown };
+  run: (context: C) => { ratio: number; applicable: boolean; details?: unknown };
 }
 
 export interface RankingResult {
@@ -124,17 +154,26 @@ export interface RankingResult {
   signals: RankingSignal[];
 }
 
+// Each matcher's key is the part it scores, as stored in `matchBreakdown`.
+const { VALUES, SKILLS, ROLE, LOCATION, QUESTION, EXPERIENCE } = APPLICATION_MATCH_PART_ENUMS;
+
 /**
- * How well the candidate's values line up with the values of the tenant that
- * posted the job. Both sides pick from the same shared `Value` catalog, so this
- * is exact set overlap — see `matching/value.ts` for the scoring.
+ * How well the candidate's values line up with the values this job lists. Each
+ * of the job's values earns the candidate's evaluated score in it, a small
+ * credit if they only selected it, or nothing — see `job/match/value.ts` for
+ * the scoring.
+ *
+ * The job's values rather than the organisation's, so a recruiter can tune what
+ * one role asks for. The job's `priority` on each value is not read, as in the
+ * candidate's own job match, so this part scores the same on both sides. Not
+ * applicable when the job lists no values.
  */
 export const valueMatcher: RankingMatcher = {
-  key: "value",
+  key: VALUES,
   label: "Values",
   weight: 2,
-  run: ({ jobProfile, tenant }) => {
-    const result: ValueMatchResult = matchValues(jobProfile.values, tenant.values);
+  run: ({ job, matchProfile }) => {
+    const result: ValueMatchResult = matchValueScores(job.values, matchProfile.values, matchProfile.valueScores);
     return { ratio: result.ratio, applicable: result.applicable, details: result };
   },
 };
@@ -150,7 +189,7 @@ export const valueMatcher: RankingMatcher = {
  * other has nothing to work with.
  */
 export const questionMatcher: RankingMatcher = {
-  key: "question",
+  key: QUESTION,
   label: "Screening Questions",
   weight: 1,
   run: ({ job, application }) => {
@@ -165,7 +204,7 @@ export const questionMatcher: RankingMatcher = {
  * under the requirement far more harshly than being over it.
  */
 export const experienceMatcher: RankingMatcher = {
-  key: "experience",
+  key: EXPERIENCE,
   label: "Experience",
   weight: 1,
   run: ({ job, jobProfile }) => {
@@ -175,37 +214,96 @@ export const experienceMatcher: RankingMatcher = {
 };
 
 /**
+ * How well the candidate's skills cover the job's, level by level — see
+ * `job/match/skill.ts` for the scoring. The matcher behind the candidate's own
+ * job match, so both sides of the platform judge skills alike.
+ *
+ * Weighted level with values, as the two are in the candidate's job match
+ * (`JOB_MATCH_WEIGHTS`). Not applicable when the job names no skills.
+ */
+export const skillMatcher: RankingMatcher = {
+  key: SKILLS,
+  label: "Skills",
+  weight: 2,
+  run: ({ job, matchProfile }) => {
+    const result: SkillMatchResult = matchSkills(job.skills, matchProfile.skills);
+    return { ratio: result.ratio, applicable: result.applicable, details: result };
+  },
+};
+
+/**
+ * Whether the job is the kind of role the candidate is after: the words of its
+ * title and category against the job titles, industries and interests on their
+ * profile — see `job/match/role.ts`.
+ */
+export const roleMatcher: RankingMatcher = {
+  key: ROLE,
+  label: "Role",
+  weight: 1,
+  run: ({ job, matchProfile }) => {
+    const result: RoleMatchResult = matchRole(
+      { title: job.title, category: job.category },
+      { jobTitles: matchProfile.jobTitles, industries: matchProfile.industries, interests: matchProfile.interests }
+    );
+    return { ratio: result.ratio, applicable: result.applicable, details: result };
+  },
+};
+
+/**
+ * Whether the job's workplace suits the candidate's preferred work modes and,
+ * once both sides are geocoded, whether they live close enough to get there —
+ * see `job/match/location.ts`.
+ */
+export const locationMatcher: RankingMatcher = {
+  key: LOCATION,
+  label: "Location",
+  weight: 1,
+  run: ({ job, matchProfile }) => {
+    const result: LocationMatchResult = matchLocation(
+      { workplace: job.workplace, point: fromGeoJson(job.geo) },
+      { workModes: matchProfile.workModes, point: fromGeoJson(matchProfile.geo) }
+    );
+    return { ratio: result.ratio, applicable: result.applicable, details: result };
+  },
+};
+
+/**
  * The matchers, in the order their signals are reported. Order is presentation
  * only — the composite score is weight-driven and order-independent.
  */
-export const RANKING_PIPELINE: RankingMatcher[] = [valueMatcher, questionMatcher, experienceMatcher];
+export const RANKING_PIPELINE: RankingMatcher[] = [
+  valueMatcher,
+  skillMatcher,
+  roleMatcher,
+  locationMatcher,
+  questionMatcher,
+  experienceMatcher,
+];
 
 /**
  * Stamped onto every stored ranking. Bump it whenever a change would make old
  * scores incomparable to new ones — adding or removing a matcher, retuning a
- * weight, changing `RANKING_SCALE`, changing how a matcher scores. Stored
- * rankings carrying an older
- * version are stale by definition and can be found and re-ranked with a single
- * query; without it there is no way to tell a fresh score from a legacy one.
+ * weight, changing `RANKING_SCALE`, changing how a matcher scores — and
+ * whenever `matchBreakdown` gains something older rankings lack, so the
+ * backfill fills it in. Stored rankings carrying an older version are stale by
+ * definition and can be found and re-ranked with a single query; without it
+ * there is no way to tell a fresh score from a legacy one.
  */
-export const RANKING_PIPELINE_VERSION = 4;
+export const RANKING_PIPELINE_VERSION = 8;
 
 /**
- * Runs every matcher in the pipeline and folds the applicable ones into a
+ * Runs every matcher against `context` and folds the applicable ones into a
  * single score out of `scale`.
  *
  * Matchers are synchronous and read-only: the context is fetched once by the
- * caller and every matcher works off it, so ranking a page of applications
- * costs one query set, not one per candidate.
+ * caller and every matcher works off it, so scoring a page of documents costs
+ * one query set, not one per document.
  *
- * `scale` is injectable for testing; production callers should leave it alone
- * so `RANKING_SCALE` stays the single answer to "what is a score out of?".
+ * Generic over the context so a feature other than application ranking can
+ * reuse the weighting rules — renormalize over applicable matchers, round once
+ * — with matchers and a scale of its own.
  */
-export const runRankingPipeline = (
-  context: RankingContext,
-  matchers: RankingMatcher[] = RANKING_PIPELINE,
-  scale: number = RANKING_SCALE
-): RankingResult => {
+export const runMatchers = <C>(context: C, matchers: RankingMatcher<C>[], scale: number): RankingResult => {
   const outcomes = matchers.map((matcher) => ({ matcher, outcome: matcher.run(context) }));
 
   // Only applicable matchers with a positive weight can move the score.
@@ -242,3 +340,15 @@ export const runRankingPipeline = (
 
   return { ratio, score: Math.round(ratio * scale), scale, applicable: true, signals };
 };
+
+/**
+ * Ranks one application: the registered pipeline, out of `RANKING_SCALE`.
+ *
+ * `scale` is injectable for testing; production callers should leave it alone
+ * so `RANKING_SCALE` stays the single answer to "what is a score out of?".
+ */
+export const runRankingPipeline = (
+  context: RankingContext,
+  matchers: RankingMatcher[] = RANKING_PIPELINE,
+  scale: number = RANKING_SCALE
+): RankingResult => runMatchers(context, matchers, scale);

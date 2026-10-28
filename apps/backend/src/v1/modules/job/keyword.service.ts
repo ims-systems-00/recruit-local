@@ -25,27 +25,51 @@ export const getProfileKeywords = async (jobProfileId: string): Promise<string[]
 };
 
 /**
- * Recompute a Job's keywords[] from its own text/enum fields. Union with any
- * existing keywords so recruiter-entered tags are preserved.
+ * Recompute a Job's keywords[] from its own text/enum fields and its skills.
+ * Union with any existing keywords so recruiter-entered tags are preserved.
+ *
+ * Skills are catalogue refs, so they are resolved to names first — the same move
+ * as a profile's refs below — which is what lets a job's skills meet a profile's
+ * in the shared vocabulary. A hard-deleted entry populates as null and simply
+ * adds nothing.
  */
 export const recomputeJobKeywords = async (id: string) => {
-  const job = await Job.findById(id).lean();
+  const job = await Job.findById(id)
+    .populate<{ skills: { skill: { name?: string } | null }[] }>({ path: "skills.skill", select: "name" })
+    .lean();
   if (!job) return;
-  const keywords = buildKeywords([job.title, job.category, job.employmentType, job.workplace, ...(job.keywords ?? [])]);
+
+  const skillNames = (job.skills ?? []).map((row) => row.skill?.name);
+
+  const keywords = buildKeywords([
+    job.title,
+    job.category,
+    job.employmentType,
+    job.workplace,
+    ...skillNames,
+    ...(job.keywords ?? []),
+  ]);
   await Job.findByIdAndUpdate(id, { $set: { keywords } });
 };
 
 /**
  * Recompute a JobProfile's keywords[]. The profile stores its strongest match
- * signals as catalog refs (jobTitle/industry/workMode), so resolve them to names
- * first — that is what lets a profile intersect a job whose fields are free text.
+ * signals as catalog refs (jobTitle/industry/workMode, and each skill row's
+ * `skill`), so resolve them to names first — that is what lets a profile
+ * intersect a job whose fields are free text.
  */
 export const recomputeProfileKeywords = async (id: string) => {
   const profile = await JobProfile.findById(id)
-    .populate<{ jobTitle: { name?: string }[]; industry: { name?: string }[]; workMode: { name?: string }[] }>([
+    .populate<{
+      jobTitle: { name?: string }[];
+      industry: { name?: string }[];
+      workMode: { name?: string }[];
+      skills: { skill: { name?: string } | null }[];
+    }>([
       { path: "jobTitle", select: "name" },
       { path: "industry", select: "name" },
       { path: "workMode", select: "name" },
+      { path: "skills.skill", select: "name" },
     ])
     .lean();
   if (!profile) return;
@@ -54,6 +78,10 @@ export const recomputeProfileKeywords = async (id: string) => {
     (ref) => ref?.name
   );
 
-  const keywords = buildKeywords([...refNames, profile.skills, profile.interests, ...(profile.keywords ?? [])]);
+  // A hard-deleted catalogue entry populates as null and adds nothing. A profile
+  // not yet migrated still holds the old free-text string, which is skipped.
+  const skillNames = Array.isArray(profile.skills) ? profile.skills.map((row) => row.skill?.name) : [];
+
+  const keywords = buildKeywords([...refNames, ...skillNames, profile.interests, ...(profile.keywords ?? [])]);
   await JobProfile.findByIdAndUpdate(id, { $set: { keywords } });
 };
