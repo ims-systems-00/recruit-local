@@ -14,13 +14,17 @@ import { POST_TYPE_ENUMS } from '@rl/types';
 
 type ArticleActivitiesProps = {
   carousel?: boolean;
+  /** The company whose profile is open. */
+  tenantId?: string;
 };
 
 const SCROLL_THRESHOLD = 80;
 
 export default function ArticleActivities({
   carousel,
+  tenantId,
 }: ArticleActivitiesProps) {
+  // Waits for the company, so it never lists every company's articles unfiltered.
   const {
     fetchNextPage,
     hasNextPage,
@@ -28,7 +32,10 @@ export default function ArticleActivities({
     isLoading,
     isError,
     data,
-  } = useInfinitePosts({ type: POST_TYPE_ENUMS.ARTICLE });
+  } = useInfinitePosts(
+    { type: POST_TYPE_ENUMS.ARTICLE, tenantId },
+    Boolean(tenantId),
+  );
 
   const posts = data?.pages.flatMap((page) => page.docs) ?? [];
 

@@ -23,7 +23,8 @@ const tabs = [
   },
 ];
 
-export default function Activities() {
+/** `tenantId` is the company whose profile is open, not the viewer's own. */
+export default function Activities({ tenantId }: { tenantId?: string }) {
   const [activeTab, setActiveTab] = useState(tabs[0].value);
 
   const handleTabClick = (value: string) => {
@@ -52,9 +53,13 @@ export default function Activities() {
           ))}
         </div>
       </div>
-      {activeTab === 'all' && <AllActivities />}
-      {activeTab === POST_TYPE_ENUMS.POST && <PostActivities />}
-      {activeTab === POST_TYPE_ENUMS.ARTICLE && <ArticleActivities />}
+      {activeTab === 'all' && <AllActivities tenantId={tenantId} />}
+      {activeTab === POST_TYPE_ENUMS.POST && (
+        <PostActivities tenantId={tenantId} />
+      )}
+      {activeTab === POST_TYPE_ENUMS.ARTICLE && (
+        <ArticleActivities tenantId={tenantId} />
+      )}
     </div>
   );
 }

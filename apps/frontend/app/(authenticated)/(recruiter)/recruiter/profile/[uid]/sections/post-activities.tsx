@@ -17,7 +17,14 @@ import PostItem from './post-item';
 
 const SCROLL_THRESHOLD = 80;
 
-export default function PostActivities({ carousel }: { carousel?: boolean }) {
+export default function PostActivities({
+  carousel,
+  tenantId,
+}: {
+  carousel?: boolean;
+  tenantId?: string;
+}) {
+  // Waits for the company, so it never lists every company's posts unfiltered.
   const {
     fetchNextPage,
     hasNextPage,
@@ -25,7 +32,10 @@ export default function PostActivities({ carousel }: { carousel?: boolean }) {
     isLoading,
     isError,
     data,
-  } = useInfinitePosts({ type: POST_TYPE_ENUMS.POST });
+  } = useInfinitePosts(
+    { type: POST_TYPE_ENUMS.POST, tenantId },
+    Boolean(tenantId),
+  );
 
   const posts = data?.pages.flatMap((page) => page.docs) ?? [];
 
