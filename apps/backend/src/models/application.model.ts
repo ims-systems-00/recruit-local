@@ -15,11 +15,22 @@ export interface IApplicationAnswer {
   answer: string | string[] | number | boolean;
 }
 
+/** One of the job's values, and whether the candidate matched it when the application was ranked. */
+export interface IApplicationValueMatch {
+  value: Types.ObjectId;
+  /** The value's catalogue label at ranking time. */
+  label: string;
+  /** True when the candidate earned any credit in the value — evaluated above 0, or selected. */
+  matched: boolean;
+}
+
 /** The values part of `matchScore` for one value type. */
 export interface IApplicationValueCategory {
   type: VALUE_TYPE_ENUM;
   /** Out of `RANKING_SCALE`; null when the job lists no values of this type. */
   score: number | null;
+  /** The job's values of this type, in the job's order. Absent on rankings older than pipeline version 8. */
+  values?: IApplicationValueMatch[];
 }
 
 /** One part of `matchScore`. */
@@ -90,10 +101,21 @@ const answerSchema = new Schema<IApplicationAnswer>(
   { _id: false }
 );
 
+const valueMatchSchema = new Schema<IApplicationValueMatch>(
+  {
+    value: { type: Schema.Types.ObjectId, ref: modelNames.VALUE, required: true },
+    label: { type: String, required: true },
+    matched: { type: Boolean, required: true },
+  },
+  { _id: false }
+);
+
 const valueCategorySchema = new Schema<IApplicationValueCategory>(
   {
     type: { type: String, enum: Object.values(VALUE_TYPE_ENUM), required: true },
     score: { type: Number, default: null },
+    // undefined rather than [] keeps an older ranking's categories telling "not stored" from "none".
+    values: { type: [valueMatchSchema], default: undefined },
   },
   { _id: false }
 );

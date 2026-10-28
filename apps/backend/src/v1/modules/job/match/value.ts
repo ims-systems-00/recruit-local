@@ -48,6 +48,13 @@ export interface ValueMatchResult {
   applicable: boolean;
 }
 
+/** One of the job's values and the credit the candidate earns in it. */
+export interface ValueCredit {
+  id: string;
+  /** 0-1: the evaluated score, `CLAIMED_VALUE_CREDIT`, or 0. */
+  credit: number;
+}
+
 /** Ids of the values the candidate selected. Anything that is not an array reads as none. */
 const indexSelected = (values: unknown): Set<string> => {
   const ids = new Set<string>();
@@ -73,6 +80,33 @@ const indexScores = (valueScores: unknown): Map<string, number> => {
 };
 
 /**
+ * The credit a candidate earns in each of a job's values, in the job's order.
+ * Inputs as `matchValueScores`, which averages these.
+ */
+export const creditValues = (
+  jobValues: unknown,
+  profileValues: unknown,
+  profileValueScores: unknown
+): ValueCredit[] => {
+  const selected = indexSelected(profileValues);
+  const scores = indexScores(profileValueScores);
+  const seen = new Set<string>();
+  const credits: ValueCredit[] = [];
+
+  for (const row of Array.isArray(jobValues) ? (jobValues as MatchableJobValueRow[]) : []) {
+    const id = refId(row?.value);
+    // A row with no value id is skipped rather than counted as a miss, and a
+    // repeated value counts once.
+    if (id === null || seen.has(id)) continue;
+    seen.add(id);
+
+    credits.push({ id, credit: scores.get(id) ?? (selected.has(id) ? CLAIMED_VALUE_CREDIT : 0) });
+  }
+
+  return credits;
+};
+
+/**
  * Scores how well a candidate's values line up with a job's.
  *
  * All three inputs are typed `unknown` because a stored document cannot be
@@ -87,24 +121,11 @@ export const matchValueScores = (
   profileValues: unknown,
   profileValueScores: unknown
 ): ValueMatchResult => {
-  const selected = indexSelected(profileValues);
-  const scores = indexScores(profileValueScores);
-  const seen = new Set<string>();
+  const credits = creditValues(jobValues, profileValues, profileValueScores);
+  if (credits.length === 0) return { ratio: 0, applicable: false };
 
-  let total = 0;
-
-  for (const row of Array.isArray(jobValues) ? (jobValues as MatchableJobValueRow[]) : []) {
-    const id = refId(row?.value);
-    // A row with no value id is skipped rather than counted as a miss, and a
-    // repeated value counts once.
-    if (id === null || seen.has(id)) continue;
-    seen.add(id);
-
-    total += scores.get(id) ?? (selected.has(id) ? CLAIMED_VALUE_CREDIT : 0);
-  }
-
-  if (seen.size === 0) return { ratio: 0, applicable: false };
-  return { ratio: total / seen.size, applicable: true };
+  const total = credits.reduce((sum, { credit }) => sum + credit, 0);
+  return { ratio: total / credits.length, applicable: true };
 };
 
 // Runnable check for the scoring rules. No database or Redis is touched.

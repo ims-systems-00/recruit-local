@@ -72,11 +72,30 @@ export enum APPLICATION_MATCH_PART_ENUMS {
   EXPERIENCE = 'experience',
 }
 
+/** One of the job's values, and whether the candidate matched it. */
+export interface ApplicationValueMatchDto {
+  /** The value's catalogue id. */
+  value: string;
+  /** The value's catalogue label when the application was ranked. */
+  label: string;
+  /**
+   * True when the candidate earns any credit in the value: evaluated it with a
+   * score above 0, or selected it without evaluating it.
+   */
+  matched: boolean;
+}
+
 /** The values part of an application's `matchScore`, for one value type. */
 export interface ApplicationValueCategoryDto {
   type: VALUE_TYPE_ENUM;
   /** Out of 1000, like `matchScore`. `null` when the job lists no values of this type. */
   score: number | null;
+  /**
+   * The job's values of this type, in the job's order. Empty when the job lists
+   * none of this type; absent on an application ranked before this was stored,
+   * until it is re-ranked.
+   */
+  values?: ApplicationValueMatchDto[];
 }
 
 /** One part of an application's `matchScore`, as the application-ranking queue stored it. */

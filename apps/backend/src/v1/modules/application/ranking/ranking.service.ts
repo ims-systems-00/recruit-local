@@ -45,19 +45,19 @@ const findWithValues = async <T>(
 };
 
 /**
- * The type of each of the job's values, by value id, for the per-type split of
- * the values part. Soft-deleted catalogue entries keep their type.
+ * The type and label of each of the job's values, by value id, for the per-type
+ * split of the values part. Soft-deleted catalogue entries keep both.
  */
-const loadValueTypes = async (jobValues: unknown): Promise<Map<string, string>> => {
+const loadValueCatalogue = async (jobValues: unknown): Promise<Map<string, { type: string; label: string }>> => {
   const ids = (Array.isArray(jobValues) ? jobValues : [])
     .map((row) => refId(row?.value))
     .filter((id): id is string => id !== null && Types.ObjectId.isValid(id));
   if (!ids.length) return new Map();
 
   const values = await Value.find({ _id: { $in: ids } })
-    .select("type")
+    .select("type label")
     .lean();
-  return new Map(values.map((value) => [String(value._id), value.type]));
+  return new Map(values.map((value) => [String(value._id), { type: value.type, label: value.label }]));
 };
 
 /**
@@ -132,13 +132,22 @@ export const rankApplication = async (
   const context: RankingContext = { jobProfile, matchProfile, job, application };
   const result = runRankingPipeline(context);
 
-  const valueTypes = await loadValueTypes(job.values);
-  const valueCategories = matchValueCategories(job.values, matchProfile.values, matchProfile.valueScores, (id) =>
-    valueTypes.get(id)
-  ).map(({ type, ratio, applicable }) => ({
+  const valueCatalogue = await loadValueCatalogue(job.values);
+  const valueCategories = matchValueCategories(
+    job.values,
+    matchProfile.values,
+    matchProfile.valueScores,
+    (id) => valueCatalogue.get(id)?.type
+  ).map(({ type, ratio, applicable, values }) => ({
     type,
     // Scaled and rounded the way the pipeline scales each signal's display score.
     score: applicable ? Math.round(ratio * result.scale) : null,
+    // Only values with a known type reach a category, so each one is in the catalogue.
+    values: values.map(({ id, matched }) => ({
+      value: new Types.ObjectId(id),
+      label: valueCatalogue.get(id)?.label ?? "",
+      matched,
+    })),
   }));
 
   await Application.updateOne(

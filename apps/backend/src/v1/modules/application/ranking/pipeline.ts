@@ -289,7 +289,7 @@ export const RANKING_PIPELINE: RankingMatcher[] = [
  * definition and can be found and re-ranked with a single query; without it
  * there is no way to tell a fresh score from a legacy one.
  */
-export const RANKING_PIPELINE_VERSION = 7;
+export const RANKING_PIPELINE_VERSION = 8;
 
 /**
  * Runs every matcher against `context` and folds the applicable ones into a

@@ -1,6 +1,6 @@
 import assert from "assert";
 import { VALUE_TYPE_ENUM } from "@rl/types";
-import { MatchableJobValueRow, matchValueScores } from "../../../job/match/value";
+import { MatchableJobValueRow, creditValues, matchValueScores } from "../../../job/match/value";
 import { refId } from "../../../job/match/ref-id";
 
 /**
@@ -14,6 +14,10 @@ import { refId } from "../../../job/match/ref-id";
  * back to the values part. A job value whose catalogue entry has no known type
  * (hard-deleted since) counts toward the values part but toward no type.
  *
+ * Each type also lists the job's values of it, matched where the candidate
+ * earns any credit in the value — the same credit the score averages, so a
+ * type scores above 0 exactly when one of its values is matched.
+ *
  * Pure and synchronous — the caller resolves each value's type.
  */
 
@@ -23,6 +27,8 @@ export interface ValueCategoryMatch {
   ratio: number;
   /** False when the job lists no values of this type. */
   applicable: boolean;
+  /** The job's values of this type, in the job's order. Empty when not applicable. */
+  values: { id: string; matched: boolean }[];
 }
 
 /**
@@ -47,12 +53,13 @@ export const matchValueCategories = (
   };
 
   return Object.values(VALUE_TYPE_ENUM).map((type) => {
-    const { ratio, applicable } = matchValueScores(
-      rows.filter((row) => rowType(row) === type),
-      profileValues,
-      profileValueScores
-    );
-    return { type, ratio, applicable };
+    const typeRows = rows.filter((row) => rowType(row) === type);
+    const { ratio, applicable } = matchValueScores(typeRows, profileValues, profileValueScores);
+    const values = creditValues(typeRows, profileValues, profileValueScores).map(({ id, credit }) => ({
+      id,
+      matched: credit > 0,
+    }));
+    return { type, ratio, applicable, values };
   });
 };
 
@@ -80,6 +87,29 @@ const demo = () => {
   assert(close(of(MINDSET).ratio, (0.8 + 0) / 2), "mindset: growth 0.8, curious missing");
   assert(close(of(WORKING_STYLE).ratio, 0.6), "working style: collab 0.6");
   assert(!of(LEADERSHIP).applicable, "a type the job lists nothing of is not applicable");
+
+  assert.deepStrictEqual(
+    of(MINDSET).values,
+    [
+      { id: "growth", matched: true },
+      { id: "curious", matched: false },
+    ],
+    "mindset lists the job's mindset values in order: growth evaluated, curious missing"
+  );
+  assert.deepStrictEqual(of(LEADERSHIP).values, [], "a type the job lists nothing of lists no values");
+  assert(
+    result.every((category) => category.values.every(({ id }) => id !== "retired")),
+    "a value with no known type is in no type's list"
+  );
+  const firstMindsetMatch = (valueScores: unknown) =>
+    matchValueCategories([{ value: "growth" }], ["growth"], valueScores, () => MINDSET).find(
+      (category) => category.type === MINDSET
+    )!.values[0].matched;
+  assert(firstMindsetMatch([]), "a value selected but not evaluated is matched");
+  assert(
+    !firstMindsetMatch([{ value: "growth", score: 0 }]),
+    "a value evaluated at 0 is not matched, even if selected"
+  );
 
   // Weighted by count, the typed rows average back to the values part over the same rows.
   const typed = job.filter((row) => types[row.value]);
