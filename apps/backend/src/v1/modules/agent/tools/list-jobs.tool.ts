@@ -6,7 +6,7 @@ import { sanitizeDocuments } from "../../../../common/helper/authz";
 import * as jobService from "../../job/job.service";
 import { jobRoleScopedSecurityQuery } from "../../job/job.query";
 import { AgentTool, AgentToolContext } from "./tool.types";
-import { escapeRegex, present, JOB_SUMMARY_FIELDS } from "./tool.shared";
+import { escapeRegex, present, rulesCollapsed, JOB_SUMMARY_FIELDS } from "./tool.shared";
 
 const MAX_LIMIT = 25;
 const DEFAULT_LIMIT = 10;
@@ -99,6 +99,12 @@ export const listJobsTool: AgentTool<ListJobsInput> = {
 
     if (!ability.can(AbilityAction.Read, JobAuthZEntity)) {
       throw new ForbiddenException("You are not authorized to read jobs.");
+    }
+
+    // An employer with no organisation yet has a tenant rule with nothing to
+    // match on, which would scope this query to every tenant's jobs.
+    if (rulesCollapsed(ability, JobAuthZEntity)) {
+      throw new ForbiddenException("This account is not finished being set up, so its jobs cannot be read yet.");
     }
 
     const filter = {
