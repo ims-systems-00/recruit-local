@@ -61,64 +61,6 @@ const ALIGNMENT = {
   unscored: { label: 'Not scored yet', color: '#98A2B3' },
 };
 
-const APPLICANT_VALUES_DATA = [
-  {
-    category: 'Mindset',
-    matchPercentage: 70,
-    values: [
-      { name: 'Growth-oriented', matched: true },
-      { name: 'Entrepreneurial', matched: false },
-      { name: 'Proactive', matched: true },
-      { name: 'Resilient', matched: false },
-      { name: 'Problem solve', matched: true },
-    ],
-  },
-  {
-    category: 'Working Style',
-    matchPercentage: 60,
-    values: [
-      { name: 'Ownership mentality', matched: false },
-      { name: 'Collaborative', matched: true },
-      { name: 'independent', matched: false },
-      { name: 'Fast-paced', matched: true },
-      { name: 'Flexible', matched: false },
-    ],
-  },
-  {
-    category: 'Culture & Behavior',
-    matchPercentage: 88,
-    values: [
-      { name: 'Empathy', matched: false },
-      { name: 'Integrity', matched: false },
-      { name: 'Respect', matched: true },
-      { name: 'Transparency', matched: false },
-      { name: 'Supportive', matched: true },
-    ],
-  },
-  {
-    category: 'Leadership & Team Dynamics',
-    matchPercentage: 78,
-    values: [
-      { name: 'Mentorship', matched: true },
-      { name: 'Coaching culture', matched: false },
-      { name: 'Empowerment', matched: true },
-      { name: 'Flat hierarchy', matched: true },
-      { name: 'Transparent leadership', matched: true },
-    ],
-  },
-  {
-    category: 'Purpose & Motivation',
-    matchPercentage: 85,
-    values: [
-      { name: 'Career progression', matched: true },
-      { name: 'Work-life balance', matched: false },
-      { name: 'Financial growth', matched: true },
-      { name: 'Meaningful work', matched: true },
-      { name: 'Innovation', matched: true },
-    ],
-  },
-];
-
 const APPLICANT_SKILLS_DATA = [
   {
     id: 1,
@@ -255,9 +197,9 @@ export default function ApplicantDetailsView({
   const rolesScore = partMatchPercent(applicationData, ROLE);
   const locationScore = partMatchPercent(applicationData, LOCATION);
 
-  // The values part split by value type, for the breakdown dialog: every type,
-  // null where the job lists no values of it. Empty until the application is
-  // ranked by a pipeline that stores the split.
+  // The values part split by value type, for the breakdown dialog and the
+  // values section: every type, null where the job lists no values of it.
+  // Empty until the application is ranked by a pipeline that stores the split.
   const valueCategories = (
     applicationData?.matchBreakdown?.find((part) => part.key === VALUES)
       ?.categories ?? []
@@ -265,7 +207,19 @@ export default function ApplicantDetailsView({
     type: category.type,
     name: VALUE_TYPE_LABELS[category.type] ?? category.type,
     percentage: toMatchPercent(category.score),
+    values: category.values,
   }));
+  // One card per type the job lists values of. A ranking older than the
+  // per-value list has no `values` on any type, so nothing to show.
+  const valueCards = valueCategories.filter(
+    (category) => (category.values?.length ?? 0) > 0,
+  );
+  const valuesEmptyHint =
+    overallScore == null
+      ? 'Not scored yet'
+      : valueCategories.some((category) => category.values)
+        ? 'This job lists no values'
+        : 'Values available once this application is re-scored';
   const canShowBreakdown = valueCategories.some(
     (category) => category.percentage != null,
   );
@@ -509,59 +463,67 @@ export default function ApplicantDetailsView({
                 Values
               </h4>
 
-              {/* Matching Values Legend Banner */}
-              <div className="p-spacing-lg rounded-xl border border-border-gray-secondary bg-white flex items-center flex-wrap gap-x-spacing-sm gap-y-1">
-                <span className="size-2 rounded-full bg-bg-brand-solid-primary shrink-0" />
-                <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
-                  Matching Values
-                </span>
-                <span className="text-label-sm text-text-gray-tertiary">
-                  Pink dots highlight the values that align with your profile
-                  and responses.
-                </span>
-              </div>
+              {valueCards.length > 0 ? (
+                <>
+                  {/* Matching Values Legend Banner */}
+                  <div className="p-spacing-lg rounded-xl border border-border-gray-secondary bg-white flex items-center flex-wrap gap-x-spacing-sm gap-y-1">
+                    <span className="size-2 rounded-full bg-bg-brand-solid-primary shrink-0" />
+                    <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
+                      Matching Values
+                    </span>
+                    <span className="text-label-sm text-text-gray-tertiary">
+                      Pink dots highlight the values that align with your
+                      profile and responses.
+                    </span>
+                  </div>
 
-              {/* Value Category Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-spacing-xl">
-                {APPLICANT_VALUES_DATA.map((category, idx) => {
-                  const isLastOdd =
-                    idx === APPLICANT_VALUES_DATA.length - 1 &&
-                    APPLICANT_VALUES_DATA.length % 2 === 1;
+                  {/* Value Category Cards Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-spacing-xl">
+                    {valueCards.map((category, idx) => {
+                      const isLastOdd =
+                        idx === valueCards.length - 1 &&
+                        valueCards.length % 2 === 1;
 
-                  return (
-                    <div
-                      key={category.category}
-                      className={cn(
-                        'rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-xl shadow-xs',
-                        isLastOdd && 'md:col-span-2',
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-spacing-md">
-                        <h5 className="text-label-md font-label-md-strong! text-text-gray-primary">
-                          {category.category}
-                        </h5>
-                        <span className="px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong! text-text-brand-primary bg-bg-brand-soft-primary">
-                          {category.matchPercentage}% match
-                        </span>
-                      </div>
+                      return (
+                        <div
+                          key={category.type}
+                          className={cn(
+                            'rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-xl shadow-xs',
+                            isLastOdd && 'md:col-span-2',
+                          )}
+                        >
+                          <div className="flex items-center justify-between gap-spacing-md">
+                            <h5 className="text-label-md font-label-md-strong! text-text-gray-primary">
+                              {category.name}
+                            </h5>
+                            <span className="px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong! text-text-brand-primary bg-bg-brand-soft-primary">
+                              {formatMatchPercent(category.percentage)} match
+                            </span>
+                          </div>
 
-                      <div className="flex flex-wrap gap-spacing-md">
-                        {category.values.map((v) => (
-                          <span
-                            key={v.name}
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-border-gray-secondary bg-white px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-text-gray-secondary"
-                          >
-                            {v.matched && (
-                              <span className="size-1.5 rounded-full bg-bg-brand-solid-primary shrink-0" />
-                            )}
-                            {v.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                          <div className="flex flex-wrap gap-spacing-md">
+                            {category.values?.map((v) => (
+                              <span
+                                key={v.value}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-border-gray-secondary bg-white px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-text-gray-secondary"
+                              >
+                                {v.matched && (
+                                  <span className="size-1.5 rounded-full bg-bg-brand-solid-primary shrink-0" />
+                                )}
+                                {v.label}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <p className="text-label-sm text-text-gray-tertiary">
+                  {valuesEmptyHint}
+                </p>
+              )}
             </div>
 
             {/* Skills Section */}
