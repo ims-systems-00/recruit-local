@@ -1,5 +1,6 @@
 import { VISIBILITY_ENUM } from './file-media';
 import { QUERY_TYPE_ENUMS } from './job';
+import { ProfileSkillResponseDto } from './job-profile';
 import { VALUE_TYPE_ENUM } from './value';
 
 /** Public HTTP shape of a single answer to a job's additional query. */
@@ -23,6 +24,8 @@ export interface ApplicationJobProfileDto {
   _id: string;
   name?: string;
   email?: string;
+  /** The candidate's skills, in profile order. Single-application reads only. */
+  skills?: ProfileSkillResponseDto[];
 }
 
 /** Populated status summary attached to an application response. */

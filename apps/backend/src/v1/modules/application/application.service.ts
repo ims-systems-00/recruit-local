@@ -64,7 +64,7 @@ export const getOne = async ({ query = {}, session }: IApplicationGetParams) => 
   const aggregate = Application.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
-    ...populateJobProfileQuery(),
+    ...populateJobProfileQuery({ withSkills: true }),
     ...populateFilesQuery(),
     ...populateStatusQuery(),
     ...populateAnswerQueriesQuery(),
@@ -100,7 +100,7 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IApplicationGet
   const aggregate = Application.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
-    ...populateJobProfileQuery(),
+    ...populateJobProfileQuery({ withSkills: true }),
     ...populateStatusQuery(),
     ...populateFilesQuery(),
     ...populateAnswerQueriesQuery(),

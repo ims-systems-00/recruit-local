@@ -4,6 +4,7 @@ import { objectIdSchema, cursorPaginationSchema } from '@/services/shared';
 import { JobData } from '../jobs/job.type';
 import {
   ApplicationMatchPartDto,
+  ProfileSkillResponseDto,
   QUERY_TYPE_ENUMS,
   REQUIRED_DOCUMENTS_ENUMS,
 } from '@rl/types';
@@ -52,6 +53,8 @@ export const applicationSchema = yup.object({
     _id: objectIdSchema.required(),
     email: yup.string().required('Email is required'),
     name: yup.string().required('Name is required'),
+    // Single-application reads only.
+    skills: yup.mixed<ProfileSkillResponseDto[]>().optional(),
   }),
   currentSalary: yup.number().nullable().optional(),
   expectedSalary: yup.number().nullable().optional(),

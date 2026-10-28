@@ -30,6 +30,8 @@ import {
 import { JobData } from '@/services/jobs/job.type';
 import {
   APPLICATION_MATCH_PART_ENUMS,
+  JOB_SKILL_LEVEL_ENUMS,
+  JOB_SKILL_LEVEL_LABELS,
   MATCH_SCORE_BAND_FLOORS,
   QUERY_TYPE_ENUMS,
   VALUE_TYPE_LABELS,
@@ -61,59 +63,15 @@ const ALIGNMENT = {
   unscored: { label: 'Not scored yet', color: '#98A2B3' },
 };
 
-const APPLICANT_SKILLS_DATA = [
-  {
-    id: 1,
-    name: 'Medication Administration',
-    level: 'Intermediate',
-  },
-  {
-    id: 2,
-    name: 'Manual handling',
-    level: 'Beginner',
-  },
-  {
-    id: 3,
-    name: 'Personal care',
-    level: 'Advance',
-  },
-  {
-    id: 4,
-    name: 'Dosage Calculation',
-    level: 'Beginner',
-  },
-  {
-    id: 5,
-    name: 'Prescription Management',
-    level: 'Beginner',
-  },
-  {
-    id: 6,
-    name: 'Pharmaceutical Dispensing',
-    level: 'Advance',
-  },
-];
+// How many of the applicant's skills the page shows; the dialog shows them all.
+const SKILLS_PREVIEW_COUNT = 6;
 
-const ALL_SKILLS_MODAL_DATA = [
-  { id: 1, title: '1. Medication Administration', level: 'Intermediate' },
-  { id: 2, title: '2. Manual handling', level: 'Beginner' },
-  { id: 3, title: '3. Personal care', level: 'Advance' },
-  { id: 4, title: '4. Dosage Calculation', level: 'Beginner' },
-  { id: 5, title: '5. Prescription Management', level: 'Beginner' },
-  { id: 6, title: '5. Prescription Management', level: 'Advance' },
-  { id: 7, title: '5. Prescription Management', level: 'Beginner' },
-  { id: 8, title: '5. Prescription Management', level: 'Intermediate' },
-  { id: 9, title: '5. Prescription Management', level: 'Beginner' },
-  { id: 10, title: '5. Prescription Management', level: 'Advance' },
+// 'all', then every level, lowest first.
+type SkillFilterTab = 'all' | JOB_SKILL_LEVEL_ENUMS;
+const SKILL_FILTER_TABS: SkillFilterTab[] = [
+  'all',
+  ...Object.values(JOB_SKILL_LEVEL_ENUMS),
 ];
-
-const SKILL_FILTER_TABS = [
-  'All',
-  'Beginner',
-  'Intermediate',
-  'Advance',
-] as const;
-type SkillFilterTab = (typeof SKILL_FILTER_TABS)[number];
 
 const getSkillBadgeStyles = (level: string) => {
   switch (level.toLowerCase()) {
@@ -138,14 +96,21 @@ export default function ApplicantDetailsView({
   const [copied, setCopied] = useState(false);
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
   const [isAllSkillsOpen, setIsAllSkillsOpen] = useState(false);
-  const [activeSkillTab, setActiveSkillTab] = useState<SkillFilterTab>('All');
+  const [activeSkillTab, setActiveSkillTab] = useState<SkillFilterTab>('all');
 
+  // Numbered by their place on the profile, which a filtered list keeps.
+  const applicantSkills = (applicationData?.jobProfile?.skills ?? []).map(
+    (row, idx) => ({
+      id: row.skill._id,
+      number: idx + 1,
+      name: row.skill.name,
+      level: row.level,
+    }),
+  );
   const filteredSkills =
-    activeSkillTab === 'All'
-      ? ALL_SKILLS_MODAL_DATA
-      : ALL_SKILLS_MODAL_DATA.filter(
-          (skill) => skill.level.toLowerCase() === activeSkillTab.toLowerCase(),
-        );
+    activeSkillTab === 'all'
+      ? applicantSkills
+      : applicantSkills.filter((skill) => skill.level === activeSkillTab);
 
   const applicantName = applicationData?.jobProfile?.name || 'Alifun Nahar';
   const statusLabel = applicationData?.status?.label || 'New applicant';
@@ -532,37 +497,47 @@ export default function ApplicantDetailsView({
                 <h4 className="text-label-xl font-label-xl-strong! text-text-gray-primary">
                   Skills
                 </h4>
-                <button
-                  type="button"
-                  onClick={() => setIsAllSkillsOpen(true)}
-                  className="text-label-sm font-label-sm-strong! text-text-brand-primary hover:underline transition-colors cursor-pointer"
-                >
-                  View All Skills
-                </button>
+                {applicantSkills.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAllSkillsOpen(true)}
+                    className="text-label-sm font-label-sm-strong! text-text-brand-primary hover:underline transition-colors cursor-pointer"
+                  >
+                    View All Skills
+                  </button>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-xl">
-                {APPLICANT_SKILLS_DATA.map((skill) => (
-                  <div
-                    key={skill.id}
-                    className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-md shadow-xs"
-                  >
-                    <p className="text-label-md font-label-md-strong! text-text-gray-primary">
-                      {skill.id}. {skill.name}
-                    </p>
-                    <div>
-                      <span
-                        className={cn(
-                          'inline-flex items-center px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong!',
-                          getSkillBadgeStyles(skill.level),
-                        )}
+              {applicantSkills.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-xl">
+                  {applicantSkills
+                    .slice(0, SKILLS_PREVIEW_COUNT)
+                    .map((skill) => (
+                      <div
+                        key={skill.id}
+                        className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-md shadow-xs"
                       >
-                        {skill.level}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                        <p className="text-label-md font-label-md-strong! text-text-gray-primary">
+                          {skill.number}. {skill.name}
+                        </p>
+                        <div>
+                          <span
+                            className={cn(
+                              'inline-flex items-center px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong!',
+                              getSkillBadgeStyles(skill.level),
+                            )}
+                          >
+                            {JOB_SKILL_LEVEL_LABELS[skill.level]}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <p className="text-label-sm text-text-gray-tertiary">
+                  This applicant lists no skills
+                </p>
+              )}
             </div>
 
             {/* Additional Queries Section */}
@@ -970,7 +945,7 @@ export default function ApplicantDetailsView({
                         : 'bg-white text-text-gray-secondary border-border-gray-secondary hover:bg-bg-gray-soft-primary hover:text-text-gray-primary',
                     )}
                   >
-                    {tab}
+                    {tab === 'all' ? 'All' : JOB_SKILL_LEVEL_LABELS[tab]}
                   </button>
                 );
               })}
@@ -979,28 +954,34 @@ export default function ApplicantDetailsView({
 
           {/* Scrollable Skills Grid */}
           <div className="flex-1 overflow-y-auto pr-1">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-xl">
-              {filteredSkills.map((skill) => (
-                <div
-                  key={skill.id}
-                  className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-md shadow-xs"
-                >
-                  <p className="text-label-md font-label-md-strong! text-text-gray-primary">
-                    {skill.title}
-                  </p>
-                  <div>
-                    <span
-                      className={cn(
-                        'inline-flex items-center px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong!',
-                        getSkillBadgeStyles(skill.level),
-                      )}
-                    >
-                      {skill.level}
-                    </span>
+            {filteredSkills.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-xl">
+                {filteredSkills.map((skill) => (
+                  <div
+                    key={skill.id}
+                    className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-md shadow-xs"
+                  >
+                    <p className="text-label-md font-label-md-strong! text-text-gray-primary">
+                      {skill.number}. {skill.name}
+                    </p>
+                    <div>
+                      <span
+                        className={cn(
+                          'inline-flex items-center px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong!',
+                          getSkillBadgeStyles(skill.level),
+                        )}
+                      >
+                        {JOB_SKILL_LEVEL_LABELS[skill.level]}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-label-sm text-text-gray-tertiary">
+                No skills at this level
+              </p>
+            )}
           </div>
         </DialogContent>
       </Dialog>
