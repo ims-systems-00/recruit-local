@@ -1,5 +1,5 @@
 import assert from "assert";
-import { JOB_MATCH_PART_ENUMS, JOB_MATCH_WEIGHTS } from "@rl/types";
+import { JOB_MATCH_PART_ENUMS, JOB_MATCH_WEIGHTS, JobMatchPartDto } from "@rl/types";
 import { RankingMatcher, runMatchers } from "../../application/ranking/pipeline";
 import { matchSkills } from "./skill";
 import { matchValueScores } from "./value";
@@ -127,15 +127,36 @@ const hasAnythingToCompare = (profile: MatchProfile) =>
   hasText(profile.interests) ||
   hasRows(profile.workModes);
 
+/** A candidate's match against one job, with the part scores behind it. */
+export interface JobMatch {
+  /** 0-100. */
+  percentage: number;
+  /** Each part alone, 0-100, in `JOB_MATCH_PART_ENUMS` order. */
+  parts: JobMatchPartDto[];
+}
+
+/**
+ * The candidate's match against one job with each part's own score, or `null`
+ * when their profile states none of skills, values, roles, interests or work
+ * modes yet.
+ */
+export const computeJobMatchBreakdown = (profile: MatchProfile, job: MatchJob): JobMatch | null => {
+  if (!hasAnythingToCompare(profile)) return null;
+  const result = runMatchers({ profile, job }, JOB_MATCHERS, JOB_MATCH_SCALE);
+  if (!result.applicable) return null;
+  return {
+    percentage: result.score,
+    // Every matcher is keyed by its part, and each signal's display score is out of JOB_MATCH_SCALE.
+    parts: result.signals.map(({ key, score }) => ({ key: key as JOB_MATCH_PART_ENUMS, percentage: score })),
+  };
+};
+
 /**
  * The candidate's match against one job, 0-100, or `null` when their profile
  * states none of skills, values, roles, interests or work modes yet.
  */
-export const computeJobMatch = (profile: MatchProfile, job: MatchJob): number | null => {
-  if (!hasAnythingToCompare(profile)) return null;
-  const result = runMatchers({ profile, job }, JOB_MATCHERS, JOB_MATCH_SCALE);
-  return result.applicable ? result.score : null;
-};
+export const computeJobMatch = (profile: MatchProfile, job: MatchJob): number | null =>
+  computeJobMatchBreakdown(profile, job)?.percentage ?? null;
 
 // Runnable check for the combination rules. No database or Redis is touched.
 // Run with: pnpm --filter @rl/backend exec ts-node src/v1/modules/job/match/job-match.ts
@@ -172,6 +193,20 @@ const demo = () => {
 
   // Skills 3.7/6, values 1.71/4, role 1, location 1 (no coordinates) at 35/35/15/15.
   assert(computeJobMatch(profile, job) === 67, "worked example without distance is 67");
+  assert.deepStrictEqual(
+    computeJobMatchBreakdown(profile, job),
+    {
+      percentage: 67,
+      parts: [
+        { key: SKILLS, percentage: 62 },
+        { key: VALUES, percentage: 43 },
+        { key: ROLE, percentage: 100 },
+        { key: LOCATION, percentage: 100 },
+      ],
+    },
+    "worked example parts: each part alone, rounded"
+  );
+  assert(computeJobMatchBreakdown({}, job) === null, "an empty profile has no breakdown");
 
   // The wrong role loses the role share, and nothing else.
   assert(computeJobMatch({ ...profile, jobTitles: ["Barista"] }, job) === 52, "the wrong role scores 0 on role");

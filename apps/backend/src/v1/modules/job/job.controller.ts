@@ -16,7 +16,7 @@ import { enqueueProfileFeedRebuild } from "../../../queue/profileFeedRebuildQueu
 import { enqueueJobCleanup } from "../../../queue/jobCleanupQueue";
 import { readFeedIds } from "./feed.service";
 import { assertJobSkills, assertJobValues } from "./job.assertions";
-import { computeJobMatch } from "./match/job-match";
+import { computeJobMatch, computeJobMatchBreakdown } from "./match/job-match";
 import { loadMatchProfile } from "./match/profile.service";
 import pick from "lodash/pick";
 
@@ -199,18 +199,29 @@ export const get = async ({ req }: ControllerParams) => {
   const abilityBuilder = new JobAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
-  const job = await jobService.getOne({
-    query: { _id: req.params.id },
-    tenantId: req.session.tenantId,
-    jobProfileId: req.session.jobProfileId,
-  });
+  // Read alongside the job, as on the list.
+  const [job, matchProfile] = await Promise.all([
+    jobService.getOne({
+      query: { _id: req.params.id },
+      tenantId: req.session.tenantId,
+      jobProfileId: req.session.jobProfileId,
+    }),
+    loadMatchProfile(req.session.jobProfileId),
+  ]);
 
   // Always authorize against the instance if it exists
   if (!job || !ability.can(AbilityAction.Read, new JobAuthZEntity(job))) {
     throw new UnauthorizedException("You do not have permission to view this job.");
   }
 
-  const sanitized = getSanitizedJobResponse(job, ability);
+  // As on the list: only a viewer with a job profile is matched, and the fields
+  // are left off for everyone else. Scored before sanitizing.
+  const match = matchProfile ? computeJobMatchBreakdown(matchProfile, job) : null;
+  const scoredJob = matchProfile
+    ? { ...job, matchPercentage: match?.percentage ?? null, matchBreakdown: match?.parts ?? null }
+    : job;
+
+  const sanitized = getSanitizedJobResponse(scoredJob, ability);
 
   return new ApiResponse({
     message: "Job retrieved.",
