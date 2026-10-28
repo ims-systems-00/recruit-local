@@ -9,7 +9,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -21,8 +20,21 @@ import { Copy, Download, Check, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDate, cn } from '@/lib/utils';
 import { Application } from '@/services/application/application.type';
+import {
+  formatMatchPercent,
+  overallMatchPercent,
+  partMatchPercent,
+  toMatchPercent,
+} from '@/services/application/application.match';
 import { JobData } from '@/services/jobs/job.type';
-import { QUERY_TYPE_ENUMS } from '@rl/types';
+import {
+  APPLICATION_MATCH_PART_ENUMS,
+  JOB_SKILL_LEVEL_ENUMS,
+  JOB_SKILL_LEVEL_LABELS,
+  MATCH_SCORE_BAND_FLOORS,
+  QUERY_TYPE_ENUMS,
+  VALUE_TYPE_LABELS,
+} from '@rl/types';
 
 type ApplicantDetailsViewProps = {
   jobId: string;
@@ -31,136 +43,38 @@ type ApplicantDetailsViewProps = {
   applicationData?: Application | null;
 };
 
-const DEFAULT_COVER_LETTER =
-  'Dear Hiring Manager,I am excited to apply for the UI/UX Designer position at CreativeTech Ltd. With my background in user interface design, prototyping, and usability testing, I am confident I can create designs that enhance user experience and align with your company’s vision. I admire CreativeTech’s innovative approach to digital products and would be glad to bring my creativity and skills to your team.';
+// Shown in place of an application field the job seeker left empty.
+const NOT_PROVIDED = 'Not provided by the job seeker';
 
-const DEFAULT_PORTFOLIO_URL = 'www.designs/pias.com';
+// The label under the gauge: the overview's match bands, or not scored yet.
+const ALIGNMENT = {
+  strong: { label: 'Strong Alignment', color: '#12B76A' },
+  good: { label: 'Good Alignment', color: '#F79009' },
+  weak: { label: 'Weak Alignment', color: '#F04438' },
+  unscored: { label: 'Not scored yet', color: '#98A2B3' },
+};
 
-const DEFAULT_CASE_STUDIES = [
-  { name: 'customer_journey_v1.pdf', size: '100KB' },
-  { name: 'user_research_insights.pdf', size: '100KB' },
-  { name: 'ux_strategy_deck_2023.pdf', size: '100KB' },
+// How many of the applicant's skills the page shows; the dialog shows them all.
+const SKILLS_PREVIEW_COUNT = 6;
+
+// `JOB_SKILL_LEVEL_ENUMS` is declared lowest to highest, so its order is the rank.
+const SKILL_LEVEL_RANK = Object.fromEntries(
+  Object.values(JOB_SKILL_LEVEL_ENUMS).map((level, rank) => [level, rank]),
+) as Record<JOB_SKILL_LEVEL_ENUMS, number>;
+
+// 'all', the skills that match the job, then every level, lowest first.
+type SkillFilterTab = 'all' | 'matched' | JOB_SKILL_LEVEL_ENUMS;
+const SKILL_FILTER_TABS: SkillFilterTab[] = [
+  'all',
+  'matched',
+  ...Object.values(JOB_SKILL_LEVEL_ENUMS),
 ];
-
-const VALUE_BREAKDOWN_CATEGORIES = [
-  { name: 'Mindset', percentage: 75 },
-  { name: 'Working Style', percentage: 90 },
-  { name: 'Culture & Behavior', percentage: 60 },
-  { name: 'Leadership & Team Dynamics', percentage: 80 },
-  { name: 'Purpose & Motivation', percentage: 60 },
-];
-
-const APPLICANT_VALUES_DATA = [
-  {
-    category: 'Mindset',
-    matchPercentage: 70,
-    values: [
-      { name: 'Growth-oriented', matched: true },
-      { name: 'Entrepreneurial', matched: false },
-      { name: 'Proactive', matched: true },
-      { name: 'Resilient', matched: false },
-      { name: 'Problem solve', matched: true },
-    ],
-  },
-  {
-    category: 'Working Style',
-    matchPercentage: 60,
-    values: [
-      { name: 'Ownership mentality', matched: false },
-      { name: 'Collaborative', matched: true },
-      { name: 'independent', matched: false },
-      { name: 'Fast-paced', matched: true },
-      { name: 'Flexible', matched: false },
-    ],
-  },
-  {
-    category: 'Culture & Behavior',
-    matchPercentage: 88,
-    values: [
-      { name: 'Empathy', matched: false },
-      { name: 'Integrity', matched: false },
-      { name: 'Respect', matched: true },
-      { name: 'Transparency', matched: false },
-      { name: 'Supportive', matched: true },
-    ],
-  },
-  {
-    category: 'Leadership & Team Dynamics',
-    matchPercentage: 78,
-    values: [
-      { name: 'Mentorship', matched: true },
-      { name: 'Coaching culture', matched: false },
-      { name: 'Empowerment', matched: true },
-      { name: 'Flat hierarchy', matched: true },
-      { name: 'Transparent leadership', matched: true },
-    ],
-  },
-  {
-    category: 'Purpose & Motivation',
-    matchPercentage: 85,
-    values: [
-      { name: 'Career progression', matched: true },
-      { name: 'Work-life balance', matched: false },
-      { name: 'Financial growth', matched: true },
-      { name: 'Meaningful work', matched: true },
-      { name: 'Innovation', matched: true },
-    ],
-  },
-];
-
-const APPLICANT_SKILLS_DATA = [
-  {
-    id: 1,
-    name: 'Medication Administration',
-    level: 'Intermediate',
-  },
-  {
-    id: 2,
-    name: 'Manual handling',
-    level: 'Beginner',
-  },
-  {
-    id: 3,
-    name: 'Personal care',
-    level: 'Advance',
-  },
-  {
-    id: 4,
-    name: 'Dosage Calculation',
-    level: 'Beginner',
-  },
-  {
-    id: 5,
-    name: 'Prescription Management',
-    level: 'Beginner',
-  },
-  {
-    id: 6,
-    name: 'Pharmaceutical Dispensing',
-    level: 'Advance',
-  },
-];
-
-const ALL_SKILLS_MODAL_DATA = [
-  { id: 1, title: '1. Medication Administration', level: 'Intermediate' },
-  { id: 2, title: '2. Manual handling', level: 'Beginner' },
-  { id: 3, title: '3. Personal care', level: 'Advance' },
-  { id: 4, title: '4. Dosage Calculation', level: 'Beginner' },
-  { id: 5, title: '5. Prescription Management', level: 'Beginner' },
-  { id: 6, title: '5. Prescription Management', level: 'Advance' },
-  { id: 7, title: '5. Prescription Management', level: 'Beginner' },
-  { id: 8, title: '5. Prescription Management', level: 'Intermediate' },
-  { id: 9, title: '5. Prescription Management', level: 'Beginner' },
-  { id: 10, title: '5. Prescription Management', level: 'Advance' },
-];
-
-const SKILL_FILTER_TABS = [
-  'All',
-  'Beginner',
-  'Intermediate',
-  'Advance',
-] as const;
-type SkillFilterTab = (typeof SKILL_FILTER_TABS)[number];
+const skillTabLabel = (tab: SkillFilterTab) =>
+  tab === 'all'
+    ? 'All'
+    : tab === 'matched'
+      ? 'Matched'
+      : JOB_SKILL_LEVEL_LABELS[tab];
 
 const getSkillBadgeStyles = (level: string) => {
   switch (level.toLowerCase()) {
@@ -185,14 +99,37 @@ export default function ApplicantDetailsView({
   const [copied, setCopied] = useState(false);
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
   const [isAllSkillsOpen, setIsAllSkillsOpen] = useState(false);
-  const [activeSkillTab, setActiveSkillTab] = useState<SkillFilterTab>('All');
+  const [activeSkillTab, setActiveSkillTab] = useState<SkillFilterTab>('all');
 
+  // The level the job asks for in each of its skills, by skill id.
+  const jobSkillLevels = new Map(
+    (jobData?.skills ?? []).map((row) => [row.skill._id, row.level]),
+  );
+  // Matched where the job asks for the skill and the applicant meets its level,
+  // the case the ranking gives full credit. Matched skills come first, each
+  // group in profile order, and are numbered in that order, which a filtered
+  // list keeps.
+  const applicantSkills = (applicationData?.jobProfile?.skills ?? [])
+    .map((row) => {
+      const jobLevel = jobSkillLevels.get(row.skill._id);
+      return {
+        id: row.skill._id,
+        name: row.skill.name,
+        level: row.level,
+        matched:
+          jobLevel != null &&
+          SKILL_LEVEL_RANK[row.level] >= SKILL_LEVEL_RANK[jobLevel],
+      };
+    })
+    .sort((a, b) => Number(b.matched) - Number(a.matched))
+    .map((skill, idx) => ({ ...skill, number: idx + 1 }));
+  const hasMatchedSkills = applicantSkills.some((skill) => skill.matched);
   const filteredSkills =
-    activeSkillTab === 'All'
-      ? ALL_SKILLS_MODAL_DATA
-      : ALL_SKILLS_MODAL_DATA.filter(
-          (skill) => skill.level.toLowerCase() === activeSkillTab.toLowerCase(),
-        );
+    activeSkillTab === 'all'
+      ? applicantSkills
+      : activeSkillTab === 'matched'
+        ? applicantSkills.filter((skill) => skill.matched)
+        : applicantSkills.filter((skill) => skill.level === activeSkillTab);
 
   const applicantName = applicationData?.jobProfile?.name || 'Alifun Nahar';
   const statusLabel = applicationData?.status?.label || 'New applicant';
@@ -204,26 +141,23 @@ export default function ApplicantDetailsView({
   const jobReference = jobData?.reference || 'JL - 01';
   const applicationReference = applicationData?.reference || 'XJ-487';
 
-  const coverLetterText = applicationData?.coverLetter || DEFAULT_COVER_LETTER;
+  // Empty when the job seeker left them out; their sections say so.
+  const coverLetterText = applicationData?.coverLetter ?? '';
 
-  const rawPortfolioUrl =
-    applicationData?.portfolioUrl || DEFAULT_PORTFOLIO_URL;
+  const rawPortfolioUrl = applicationData?.portfolioUrl ?? '';
   const cleanPortfolioUrl = rawPortfolioUrl.replace(/^https?:\/\//i, '');
   const fullPortfolioUrl = rawPortfolioUrl.startsWith('http')
     ? rawPortfolioUrl
     : `https://${rawPortfolioUrl}`;
 
-  const cvFileName =
-    applicationData?.resume?.storageInformation?.Name || 'resume_v3.pdf';
+  const cvFileName = applicationData?.resume?.storageInformation?.Name ?? '';
   const cvFileSize = '100KB';
 
-  const caseStudiesList =
-    applicationData?.caseStudies && applicationData.caseStudies.length > 0
-      ? applicationData.caseStudies.map((item) => ({
-          name: item.storageInformation.Name,
-          size: '100KB',
-        }))
-      : DEFAULT_CASE_STUDIES;
+  // Optional on an application; the section says so when there are none.
+  const caseStudiesList = (applicationData?.caseStudies ?? []).map((item) => ({
+    name: item.storageInformation.Name,
+    size: '100KB',
+  }));
 
   const workingDaysText =
     jobData?.workingDays != null ? `${jobData.workingDays} Days` : '5 Days';
@@ -234,31 +168,64 @@ export default function ApplicantDetailsView({
       : String(jobData.workingHours)
     : '8 Hours';
 
-  // Overall match & breakdown scores
-  // Backend rank/matchScore is stored on a 0-1000 scale (RANKING_SCALE = 1000).
-  // If raw score > 100, convert it to 0-100 percentage.
-  const rawScore =
-    (applicationData as unknown as { matchScore?: number })?.matchScore ??
-    applicationData?.rank;
+  // Not scored yet, and a part the job gave nothing to compare, both show as
+  // "—" rather than as 0%.
+  const matchScore = applicationData?.matchScore;
+  const overallScore = overallMatchPercent(applicationData);
+  const { VALUES, SKILLS, ROLE, LOCATION } = APPLICATION_MATCH_PART_ENUMS;
+  const valueMatchScore = partMatchPercent(applicationData, VALUES);
+  const skillsScore = partMatchPercent(applicationData, SKILLS);
+  const rolesScore = partMatchPercent(applicationData, ROLE);
+  const locationScore = partMatchPercent(applicationData, LOCATION);
 
-  const normalizeScore = (raw: number | null | undefined): number => {
-    if (raw == null) return 90;
-    const score = raw > 100 ? raw / 10 : raw;
-    return Math.min(Math.max(Math.round(score), 0), 100);
-  };
+  // The values part split by value type, for the breakdown dialog and the
+  // values section: every type, null where the job lists no values of it.
+  // Empty until the application is ranked by a pipeline that stores the split.
+  const valueCategories = (
+    applicationData?.matchBreakdown?.find((part) => part.key === VALUES)
+      ?.categories ?? []
+  ).map((category) => ({
+    type: category.type,
+    name: VALUE_TYPE_LABELS[category.type] ?? category.type,
+    percentage: toMatchPercent(category.score),
+    values: category.values,
+  }));
+  // One card per type the job lists values of. A ranking older than the
+  // per-value list has no `values` on any type, so nothing to show.
+  const valueCards = valueCategories.filter(
+    (category) => (category.values?.length ?? 0) > 0,
+  );
+  const valuesEmptyHint =
+    overallScore == null
+      ? 'Not scored yet'
+      : valueCategories.some((category) => category.values)
+        ? 'This job lists no values'
+        : 'Values available once this application is re-scored';
+  const canShowBreakdown = valueCategories.some(
+    (category) => category.percentage != null,
+  );
+  const breakdownHint = canShowBreakdown
+    ? 'See breakdown'
+    : overallScore == null
+      ? 'Not scored yet'
+      : valueCategories.length === 0
+        ? 'Breakdown available once this application is re-scored'
+        : 'This job lists no values to break down';
 
-  const overallScore = normalizeScore(rawScore);
-  const valueMatchScore = overallScore;
-  const skillsScore = overallScore;
-  const rolesScore = Math.max(10, overallScore - 10);
-  const locationScore = overallScore;
-  const keyRespScore = overallScore;
+  const alignment =
+    overallScore == null || matchScore == null
+      ? ALIGNMENT.unscored
+      : matchScore >= MATCH_SCORE_BAND_FLOORS.strong
+        ? ALIGNMENT.strong
+        : matchScore >= MATCH_SCORE_BAND_FLOORS.good
+          ? ALIGNMENT.good
+          : ALIGNMENT.weak;
 
   // Semicircle arc calculation: R = 76, circumference = pi * R ≈ 238.76
   const ARC_RADIUS = 76;
   const ARC_LENGTH = Math.PI * ARC_RADIUS;
   const arcDashOffset =
-    ARC_LENGTH * (1 - Math.min(Math.max(overallScore, 0), 100) / 100);
+    ARC_LENGTH * (1 - Math.min(Math.max(overallScore ?? 0, 0), 100) / 100);
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(fullPortfolioUrl);
@@ -349,13 +316,18 @@ export default function ApplicantDetailsView({
               <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
                 Cover letter <span className="text-text-error-primary">*</span>
               </label>
-              <textarea
-                readOnly
-                value={coverLetterText}
-                placeholder="N/A"
-                rows={5}
-                className="w-full min-h-36 p-spacing-xl rounded-xl border border-border-gray-primary bg-white text-text-gray-primary text-label-md font-label-md-base leading-relaxed focus:outline-none resize-y"
-              />
+              {coverLetterText ? (
+                <textarea
+                  readOnly
+                  value={coverLetterText}
+                  rows={5}
+                  className="w-full min-h-36 p-spacing-xl rounded-xl border border-border-gray-primary bg-white text-text-gray-primary text-label-md font-label-md-base leading-relaxed focus:outline-none resize-y"
+                />
+              ) : (
+                <p className="text-label-sm text-text-gray-tertiary">
+                  {NOT_PROVIDED}
+                </p>
+              )}
             </div>
 
             {/* Application Package Section */}
@@ -373,29 +345,35 @@ export default function ApplicantDetailsView({
                       (Optional)
                     </span>
                   </label>
-                  <div className="flex items-center rounded-lg border border-border-gray-primary bg-white h-10 w-full overflow-hidden shadow-xs focus-within:ring-2 focus-within:ring-bg-brand-solid-primary/20">
-                    <div className="h-full px-spacing-xl flex items-center bg-bg-gray-soft-primary border-r border-border-gray-primary text-text-gray-quaternary text-label-sm font-normal select-none shrink-0">
-                      http://
+                  {rawPortfolioUrl ? (
+                    <div className="flex items-center rounded-lg border border-border-gray-primary bg-white h-10 w-full overflow-hidden shadow-xs focus-within:ring-2 focus-within:ring-bg-brand-solid-primary/20">
+                      <div className="h-full px-spacing-xl flex items-center bg-bg-gray-soft-primary border-r border-border-gray-primary text-text-gray-quaternary text-label-sm font-normal select-none shrink-0">
+                        http://
+                      </div>
+                      <input
+                        type="text"
+                        readOnly
+                        value={cleanPortfolioUrl}
+                        className="flex-1 px-spacing-xl text-label-sm font-label-sm-strong! text-text-gray-primary focus:outline-none bg-transparent truncate"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCopyUrl}
+                        className="px-spacing-xl text-fg-gray-tertiary hover:text-text-gray-primary transition-colors cursor-pointer shrink-0"
+                        title="Copy URL"
+                      >
+                        {copied ? (
+                          <Check size={16} className="text-text-success" />
+                        ) : (
+                          <Copy size={16} />
+                        )}
+                      </button>
                     </div>
-                    <input
-                      type="text"
-                      readOnly
-                      value={cleanPortfolioUrl}
-                      className="flex-1 px-spacing-xl text-label-sm font-label-sm-strong! text-text-gray-primary focus:outline-none bg-transparent truncate"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleCopyUrl}
-                      className="px-spacing-xl text-fg-gray-tertiary hover:text-text-gray-primary transition-colors cursor-pointer shrink-0"
-                      title="Copy URL"
-                    >
-                      {copied ? (
-                        <Check size={16} className="text-text-success" />
-                      ) : (
-                        <Copy size={16} />
-                      )}
-                    </button>
-                  </div>
+                  ) : (
+                    <p className="text-label-sm text-text-gray-tertiary">
+                      {NOT_PROVIDED}
+                    </p>
+                  )}
                 </div>
 
                 {/* CV */}
@@ -403,29 +381,35 @@ export default function ApplicantDetailsView({
                   <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
                     CV <span className="text-text-error-primary">*</span>
                   </label>
-                  <div className="w-full p-spacing-xl rounded-2xl border border-border-gray-secondary bg-white flex items-center justify-between gap-spacing-2xl shadow-xs">
-                    <div className="flex gap-spacing-lg items-center min-w-0">
-                      <div className="size-10 rounded-lg bg-[#FF3B30] flex flex-col items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-xs">
-                        PDF
+                  {cvFileName ? (
+                    <div className="w-full p-spacing-xl rounded-2xl border border-border-gray-secondary bg-white flex items-center justify-between gap-spacing-2xl shadow-xs">
+                      <div className="flex gap-spacing-lg items-center min-w-0">
+                        <div className="size-10 rounded-lg bg-[#FF3B30] flex flex-col items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-xs">
+                          PDF
+                        </div>
+                        <div className="space-y-spacing-3xs min-w-0">
+                          <p className="text-label-sm font-label-sm-strong! text-text-gray-primary truncate">
+                            {cvFileName}
+                          </p>
+                          <p className="text-label-xs text-text-gray-tertiary">
+                            {cvFileSize}
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-spacing-3xs min-w-0">
-                        <p className="text-label-sm font-label-sm-strong! text-text-gray-primary truncate">
-                          {cvFileName}
-                        </p>
-                        <p className="text-label-xs text-text-gray-tertiary">
-                          {cvFileSize}
-                        </p>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(cvFileName)}
+                        className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0"
+                        title="Download CV"
+                      >
+                        <Download size={16} />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDownload(cvFileName)}
-                      className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0"
-                      title="Download CV"
-                    >
-                      <Download size={16} />
-                    </button>
-                  </div>
+                  ) : (
+                    <p className="text-label-sm text-text-gray-tertiary">
+                      {NOT_PROVIDED}
+                    </p>
+                  )}
                 </div>
 
                 {/* Case Studies */}
@@ -437,36 +421,42 @@ export default function ApplicantDetailsView({
                     </span>
                   </label>
 
-                  <div className="space-y-spacing-md">
-                    {caseStudiesList.map((file, idx) => (
-                      <div
-                        key={idx}
-                        className="w-full p-spacing-xl rounded-2xl border border-border-gray-secondary bg-white flex items-center justify-between gap-spacing-2xl shadow-xs"
-                      >
-                        <div className="flex gap-spacing-lg items-center min-w-0">
-                          <div className="size-10 rounded-lg bg-[#FF3B30] flex flex-col items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-xs">
-                            PDF
-                          </div>
-                          <div className="space-y-spacing-3xs min-w-0">
-                            <p className="text-label-sm font-label-sm-strong! text-text-gray-primary truncate">
-                              {file.name}
-                            </p>
-                            <p className="text-label-xs text-text-gray-tertiary">
-                              {file.size}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleDownload(file.name)}
-                          className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0"
-                          title="Download Case Study"
+                  {caseStudiesList.length > 0 ? (
+                    <div className="space-y-spacing-md">
+                      {caseStudiesList.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="w-full p-spacing-xl rounded-2xl border border-border-gray-secondary bg-white flex items-center justify-between gap-spacing-2xl shadow-xs"
                         >
-                          <Download size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                          <div className="flex gap-spacing-lg items-center min-w-0">
+                            <div className="size-10 rounded-lg bg-[#FF3B30] flex flex-col items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-xs">
+                              PDF
+                            </div>
+                            <div className="space-y-spacing-3xs min-w-0">
+                              <p className="text-label-sm font-label-sm-strong! text-text-gray-primary truncate">
+                                {file.name}
+                              </p>
+                              <p className="text-label-xs text-text-gray-tertiary">
+                                {file.size}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(file.name)}
+                            className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0"
+                            title="Download Case Study"
+                          >
+                            <Download size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-label-sm text-text-gray-tertiary">
+                      {NOT_PROVIDED}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -477,59 +467,62 @@ export default function ApplicantDetailsView({
                 Values
               </h4>
 
-              {/* Matching Values Legend Banner */}
-              <div className="p-spacing-lg rounded-xl border border-border-gray-secondary bg-white flex items-center flex-wrap gap-x-spacing-sm gap-y-1">
-                <span className="size-2 rounded-full bg-bg-brand-solid-primary shrink-0" />
-                <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
-                  Matching Values
-                </span>
-                <span className="text-label-sm text-text-gray-tertiary">
-                  Pink dots highlight the values that align with your profile
-                  and responses.
-                </span>
-              </div>
+              {valueCards.length > 0 ? (
+                <>
+                  {/* Matching Values Legend */}
+                  <p className="flex items-center gap-spacing-sm text-label-sm text-text-gray-tertiary">
+                    <span className="size-2 rounded-full bg-bg-brand-solid-primary shrink-0" />
+                    Pink dots highlight the values that align with your profile
+                    and responses.
+                  </p>
 
-              {/* Value Category Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-spacing-xl">
-                {APPLICANT_VALUES_DATA.map((category, idx) => {
-                  const isLastOdd =
-                    idx === APPLICANT_VALUES_DATA.length - 1 &&
-                    APPLICANT_VALUES_DATA.length % 2 === 1;
+                  {/* Value Category Cards Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-spacing-xl">
+                    {valueCards.map((category, idx) => {
+                      const isLastOdd =
+                        idx === valueCards.length - 1 &&
+                        valueCards.length % 2 === 1;
 
-                  return (
-                    <div
-                      key={category.category}
-                      className={cn(
-                        'rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-xl shadow-xs',
-                        isLastOdd && 'md:col-span-2',
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-spacing-md">
-                        <h5 className="text-label-md font-label-md-strong! text-text-gray-primary">
-                          {category.category}
-                        </h5>
-                        <span className="px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong! text-text-brand-primary bg-bg-brand-soft-primary">
-                          {category.matchPercentage}% match
-                        </span>
-                      </div>
+                      return (
+                        <div
+                          key={category.type}
+                          className={cn(
+                            'rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-xl shadow-xs',
+                            isLastOdd && 'md:col-span-2',
+                          )}
+                        >
+                          <div className="flex items-center justify-between gap-spacing-md">
+                            <h5 className="text-label-md font-label-md-strong! text-text-gray-primary">
+                              {category.name}
+                            </h5>
+                            <span className="px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong! text-text-brand-primary bg-bg-brand-soft-primary">
+                              {formatMatchPercent(category.percentage)} match
+                            </span>
+                          </div>
 
-                      <div className="flex flex-wrap gap-spacing-md">
-                        {category.values.map((v) => (
-                          <span
-                            key={v.name}
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-border-gray-secondary bg-white px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-text-gray-secondary"
-                          >
-                            {v.matched && (
-                              <span className="size-1.5 rounded-full bg-bg-brand-solid-primary shrink-0" />
-                            )}
-                            {v.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                          <div className="flex flex-wrap gap-spacing-md">
+                            {category.values?.map((v) => (
+                              <span
+                                key={v.value}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-border-gray-secondary bg-white px-spacing-md py-spacing-3xs text-label-sm font-label-sm-strong! text-text-gray-secondary"
+                              >
+                                {v.matched && (
+                                  <span className="size-1.5 rounded-full bg-bg-brand-solid-primary shrink-0" />
+                                )}
+                                {v.label}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <p className="text-label-sm text-text-gray-tertiary">
+                  {valuesEmptyHint}
+                </p>
+              )}
             </div>
 
             {/* Skills Section */}
@@ -538,37 +531,61 @@ export default function ApplicantDetailsView({
                 <h4 className="text-label-xl font-label-xl-strong! text-text-gray-primary">
                   Skills
                 </h4>
-                <button
-                  type="button"
-                  onClick={() => setIsAllSkillsOpen(true)}
-                  className="text-label-sm font-label-sm-strong! text-text-brand-primary hover:underline transition-colors cursor-pointer"
-                >
-                  View All Skills
-                </button>
+                {applicantSkills.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAllSkillsOpen(true)}
+                    className="text-label-sm font-label-sm-strong! text-text-brand-primary hover:underline transition-colors cursor-pointer"
+                  >
+                    View All Skills
+                  </button>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-xl">
-                {APPLICANT_SKILLS_DATA.map((skill) => (
-                  <div
-                    key={skill.id}
-                    className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-md shadow-xs"
-                  >
-                    <p className="text-label-md font-label-md-strong! text-text-gray-primary">
-                      {skill.id}. {skill.name}
-                    </p>
-                    <div>
-                      <span
-                        className={cn(
-                          'inline-flex items-center px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong!',
-                          getSkillBadgeStyles(skill.level),
-                        )}
+              {hasMatchedSkills && (
+                <p className="flex items-center gap-spacing-sm text-label-sm text-text-gray-tertiary">
+                  <span className="size-2 rounded-full bg-bg-brand-solid-primary shrink-0" />
+                  Pink dots mark skills that meet this job&apos;s required
+                  level.
+                </p>
+              )}
+
+              {applicantSkills.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-xl">
+                  {applicantSkills
+                    .slice(0, SKILLS_PREVIEW_COUNT)
+                    .map((skill) => (
+                      <div
+                        key={skill.id}
+                        className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-md shadow-xs"
                       >
-                        {skill.level}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                        <p className="flex items-center gap-1.5 text-label-md font-label-md-strong! text-text-gray-primary">
+                          {skill.matched && (
+                            <span
+                              className="size-1.5 rounded-full bg-bg-brand-solid-primary shrink-0"
+                              aria-label="Matches this job"
+                            />
+                          )}
+                          {skill.number}. {skill.name}
+                        </p>
+                        <div>
+                          <span
+                            className={cn(
+                              'inline-flex items-center px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong!',
+                              getSkillBadgeStyles(skill.level),
+                            )}
+                          >
+                            {JOB_SKILL_LEVEL_LABELS[skill.level]}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <p className="text-label-sm text-text-gray-tertiary">
+                  This applicant lists no skills
+                </p>
+              )}
             </div>
 
             {/* Additional Queries Section */}
@@ -723,19 +740,22 @@ export default function ApplicantDetailsView({
                     fontWeight="700"
                     className="select-none font-sans"
                   >
-                    {overallScore}%
+                    {formatMatchPercent(overallScore)}
                   </text>
                 </svg>
               </div>
             </div>
 
-            {/* Strong Alignment Status */}
+            {/* Alignment Status */}
             <div className="flex items-center gap-spacing-md">
-              <div className="size-5 rounded-full border-2 border-[#12B76A] flex items-center justify-center text-[#12B76A] shrink-0 font-bold text-xs select-none">
+              <div
+                className="size-5 rounded-full border-2 flex items-center justify-center shrink-0 font-bold text-xs select-none"
+                style={{ borderColor: alignment.color, color: alignment.color }}
+              >
                 !
               </div>
               <span className="text-label-md font-label-md-strong! text-text-gray-primary">
-                Strong Alignment
+                {alignment.label}
               </span>
             </div>
 
@@ -747,11 +767,18 @@ export default function ApplicantDetailsView({
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
                     Value match
                   </span>
+                  {/* aria-disabled rather than disabled: a disabled button shows
+                      no tooltip in some browsers, and the tooltip says why. */}
                   <button
                     type="button"
-                    onClick={() => setIsBreakdownOpen(true)}
-                    className="text-text-gray-quaternary hover:text-text-brand-primary transition-colors cursor-pointer"
-                    title="See breakdown"
+                    onClick={() => canShowBreakdown && setIsBreakdownOpen(true)}
+                    aria-disabled={!canShowBreakdown}
+                    className={
+                      canShowBreakdown
+                        ? 'text-text-gray-quaternary hover:text-text-brand-primary transition-colors cursor-pointer'
+                        : 'text-text-gray-quaternary opacity-50 cursor-not-allowed'
+                    }
+                    title={breakdownHint}
                   >
                     <Info size={14} />
                   </button>
@@ -760,11 +787,11 @@ export default function ApplicantDetailsView({
                   <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
                     <div
                       className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${valueMatchScore}%` }}
+                      style={{ width: `${valueMatchScore ?? 0}%` }}
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {valueMatchScore}%
+                    {formatMatchPercent(valueMatchScore)}
                   </span>
                 </div>
               </div>
@@ -778,11 +805,11 @@ export default function ApplicantDetailsView({
                   <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
                     <div
                       className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${skillsScore}%` }}
+                      style={{ width: `${skillsScore ?? 0}%` }}
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {skillsScore}%
+                    {formatMatchPercent(skillsScore)}
                   </span>
                 </div>
               </div>
@@ -796,11 +823,11 @@ export default function ApplicantDetailsView({
                   <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
                     <div
                       className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${rolesScore}%` }}
+                      style={{ width: `${rolesScore ?? 0}%` }}
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {rolesScore}%
+                    {formatMatchPercent(rolesScore)}
                   </span>
                 </div>
               </div>
@@ -814,29 +841,11 @@ export default function ApplicantDetailsView({
                   <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
                     <div
                       className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${locationScore}%` }}
+                      style={{ width: `${locationScore ?? 0}%` }}
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {locationScore}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Key responsibility */}
-              <div className="space-y-spacing-xs">
-                <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Key responsibility
-                </span>
-                <div className="flex items-center gap-spacing-lg">
-                  <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
-                    <div
-                      className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${keyRespScore}%` }}
-                    />
-                  </div>
-                  <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {keyRespScore}%
+                    {formatMatchPercent(locationScore)}
                   </span>
                 </div>
               </div>
@@ -857,7 +866,8 @@ export default function ApplicantDetailsView({
                 Values and Potentials breakdown
               </DialogTitle>
               <DialogDescription className="text-label-sm font-label-sm-base text-text-gray-tertiary">
-                See how each value contributes to the overall match score.
+                How the candidate&apos;s values match the values this job lists,
+                by type.
               </DialogDescription>
             </div>
           </DialogHeader>
@@ -899,15 +909,16 @@ export default function ApplicantDetailsView({
 
                     {/* 5 Bars */}
                     <div className="absolute inset-0 flex items-end justify-around px-1 sm:px-4">
-                      {VALUE_BREAKDOWN_CATEGORIES.map((item) => (
+                      {/* A type the job lists no values of keeps its slot, with no bar. */}
+                      {valueCategories.map((item) => (
                         <div
-                          key={item.name}
+                          key={item.type}
                           className="flex flex-col items-center h-full justify-end"
                         >
                           <div
                             className="w-7 sm:w-11 bg-[#FACFE5] rounded-t-sm sm:rounded-t-md transition-all duration-500 hover:brightness-95"
-                            style={{ height: `${item.percentage}%` }}
-                            title={`${item.name}: ${item.percentage}%`}
+                            style={{ height: `${item.percentage ?? 0}%` }}
+                            title={`${item.name}: ${formatMatchPercent(item.percentage)}`}
                           />
                         </div>
                       ))}
@@ -918,10 +929,22 @@ export default function ApplicantDetailsView({
                 {/* X-axis labels below the bars */}
                 <div className="flex pt-3 pl-8">
                   <div className="w-full flex justify-around px-1 sm:px-4">
-                    {VALUE_BREAKDOWN_CATEGORIES.map((item) => (
-                      <div key={item.name} className="w-12 sm:w-16 text-center">
-                        <span className="text-[10px] sm:text-label-xs font-label-xs-strong! text-text-gray-secondary leading-tight block">
+                    {valueCategories.map((item) => (
+                      <div key={item.type} className="w-12 sm:w-16 text-center">
+                        <span
+                          className={`text-[10px] sm:text-label-xs font-label-xs-strong! leading-tight block ${
+                            item.percentage == null
+                              ? 'text-text-gray-quaternary'
+                              : 'text-text-gray-secondary'
+                          }`}
+                          title={
+                            item.percentage == null
+                              ? 'This job lists no values of this type'
+                              : undefined
+                          }
+                        >
                           {item.name}
+                          {item.percentage == null && ' —'}
                         </span>
                       </div>
                     ))}
@@ -970,7 +993,7 @@ export default function ApplicantDetailsView({
                         : 'bg-white text-text-gray-secondary border-border-gray-secondary hover:bg-bg-gray-soft-primary hover:text-text-gray-primary',
                     )}
                   >
-                    {tab}
+                    {skillTabLabel(tab)}
                   </button>
                 );
               })}
@@ -979,28 +1002,42 @@ export default function ApplicantDetailsView({
 
           {/* Scrollable Skills Grid */}
           <div className="flex-1 overflow-y-auto pr-1">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-xl">
-              {filteredSkills.map((skill) => (
-                <div
-                  key={skill.id}
-                  className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-md shadow-xs"
-                >
-                  <p className="text-label-md font-label-md-strong! text-text-gray-primary">
-                    {skill.title}
-                  </p>
-                  <div>
-                    <span
-                      className={cn(
-                        'inline-flex items-center px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong!',
-                        getSkillBadgeStyles(skill.level),
+            {filteredSkills.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-xl">
+                {filteredSkills.map((skill) => (
+                  <div
+                    key={skill.id}
+                    className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-md shadow-xs"
+                  >
+                    <p className="flex items-center gap-1.5 text-label-md font-label-md-strong! text-text-gray-primary">
+                      {skill.matched && (
+                        <span
+                          className="size-1.5 rounded-full bg-bg-brand-solid-primary shrink-0"
+                          aria-label="Matches this job"
+                        />
                       )}
-                    >
-                      {skill.level}
-                    </span>
+                      {skill.number}. {skill.name}
+                    </p>
+                    <div>
+                      <span
+                        className={cn(
+                          'inline-flex items-center px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong!',
+                          getSkillBadgeStyles(skill.level),
+                        )}
+                      >
+                        {JOB_SKILL_LEVEL_LABELS[skill.level]}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-label-sm text-text-gray-tertiary">
+                {activeSkillTab === 'matched'
+                  ? 'No skills match this job'
+                  : 'No skills at this level'}
+              </p>
+            )}
           </div>
         </DialogContent>
       </Dialog>

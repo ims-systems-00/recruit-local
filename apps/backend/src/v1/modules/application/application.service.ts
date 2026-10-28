@@ -5,6 +5,7 @@ import {
   JobOverviewRange,
   JobOverviewResponseDto,
   JobOverviewStageDto,
+  MATCH_SCORE_BAND_FLOORS,
   VISIBILITY_ENUM,
 } from "@rl/types";
 import { BadRequestException, NotFoundException } from "../../../common/helper";
@@ -37,7 +38,6 @@ import {
   IMoveBoardItemParams,
   IApplicationOverviewParams,
 } from "./application.interface";
-import * as statusService from "../status/status.service";
 
 export const list = async ({ query = {}, options, session, offset = 0 }: IListApplicationParams) => {
   const limit = options?.limit && options.limit > 0 ? options.limit : 10;
@@ -64,7 +64,7 @@ export const getOne = async ({ query = {}, session }: IApplicationGetParams) => 
   const aggregate = Application.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...excludeDeletedQuery(),
-    ...populateJobProfileQuery(),
+    ...populateJobProfileQuery({ withSkills: true }),
     ...populateFilesQuery(),
     ...populateStatusQuery(),
     ...populateAnswerQueriesQuery(),
@@ -100,7 +100,7 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IApplicationGet
   const aggregate = Application.aggregate([
     ...matchQuery(sanitizeQueryIds(query)),
     ...onlyDeletedQuery(),
-    ...populateJobProfileQuery(),
+    ...populateJobProfileQuery({ withSkills: true }),
     ...populateStatusQuery(),
     ...populateFilesQuery(),
     ...populateAnswerQueriesQuery(),
@@ -113,6 +113,30 @@ export const getOneSoftDeleted = async ({ query = {}, session }: IApplicationGet
 
   if (applications.length === 0) throw new NotFoundException("Application not found in trash.");
   return applications[0];
+};
+
+/**
+ * The stage a new application lands in: the job's default stage, the triage
+ * column the board reads best match first. Job creation seeds one and it cannot
+ * be deleted, so a job without one should not exist; if one does, its first
+ * column takes the application rather than the candidate being turned away.
+ */
+export const findArrivalStage = async (jobId: unknown, session?: ClientSession | null) => {
+  const jobStages = {
+    collectionName: modelNames.JOB,
+    collectionId: jobId,
+    "deleteMarker.status": { $ne: true },
+  };
+
+  return (
+    (await Status.findOne({ ...jobStages, default: true })
+      .select("_id")
+      .session(session || null)) ??
+    (await Status.findOne(jobStages)
+      .sort({ weight: 1, _id: 1 })
+      .select("_id")
+      .session(session || null))
+  );
 };
 
 export const create = async ({ payload, session }: IApplicationCreateParams) => {
@@ -178,15 +202,7 @@ export const create = async ({ payload, session }: IApplicationCreateParams) => 
   // 5. Clean payload and build document
   const { resumeStorage, caseStudyStorage, ...cleanPayload } = payload;
 
-  // get the default status for the job to set on the application
-  const defaultStatus = await statusService.getOne({
-    query: {
-      collectionName: modelNames.JOB,
-      collectionId: payload.jobId,
-    },
-    session,
-  });
-
+  const defaultStatus = await findArrivalStage(payload.jobId, session);
   if (!defaultStatus) throw new NotFoundException("Default status not found for the job.");
 
   const tenantId = job.tenantId;
@@ -372,13 +388,14 @@ export const restore = async ({ query, session }: IApplicationGetParams) => {
  * the drag-and-drop route, and the agent's move tool.
  *
  * Returns the applications as loaded, so a caller that has already paid for the
- * read does not pay again.
+ * read does not pay again, and whether the column is the default stage, which
+ * decides how a card is placed in it (`placeInStage`).
  */
 export const assertStageOnBoard = async ({
   applicationIds,
   statusId,
   session,
-}: IApplicationMoveToStageParams): Promise<{ applications: any[]; jobId: string }> => {
+}: IApplicationMoveToStageParams): Promise<{ applications: any[]; jobId: string; isDefaultStage: boolean }> => {
   const ids = [...new Set(applicationIds.map(String))];
 
   if (ids.length === 0) throw new BadRequestException("No applications were given to move.");
@@ -417,31 +434,61 @@ export const assertStageOnBoard = async ({
     collectionId: new Types.ObjectId(jobId),
     "deleteMarker.status": { $ne: true },
   })
-    .select("_id label")
+    .select("_id label default")
     .session(session ?? null);
 
   if (!status) {
     throw new BadRequestException("That status is not a column on this job's board.");
   }
 
-  return { applications, jobId };
+  return { applications, jobId, isDefaultStage: Boolean(status.default) };
 };
 
 /**
- * Moves applications into a column, at the top of it.
+ * Puts one application into a column that `assertStageOnBoard` has cleared.
  *
- * Each application is moved by `moveToPosition`, which runs its own transaction,
- * so the batch is not atomic as a whole — but every reason a move could be
- * refused has already been checked by `assertStageOnBoard` above, so a partial
- * batch means the database went away mid-loop rather than an input being wrong.
- * Index 0 is the top of the column, which is where a card dropped by hand lands.
+ * The default stage is read best match first (`boardColumnSort`), so a card
+ * moved there takes its match position wherever it was dropped: only its stage
+ * changes, and its `rank` is reset to its `matchScore` in the same atomic
+ * write, so the column starts in match order should it stop being the default.
+ * There is no neighbour to place it against, so no column is rebalanced. Every
+ * other column keeps the drop position, through `moveToPosition`.
+ */
+const placeInStage = async (
+  applicationId: string,
+  statusId: string,
+  targetIndex: number,
+  isDefaultStage: boolean
+): Promise<{ success: boolean; rank: number; rebalanced: boolean }> => {
+  if (!isDefaultStage) return Application.moveToPosition(applicationId, statusId, targetIndex);
+
+  const placed = await Application.findOneAndUpdate(
+    { _id: new Types.ObjectId(applicationId) },
+    [{ $set: { statusId: new Types.ObjectId(statusId), rank: { $ifNull: ["$matchScore", 0] } } }],
+    { new: true, projection: { rank: 1 } }
+  ).lean();
+  if (!placed) throw new NotFoundException("Application not found.");
+
+  return { success: true, rank: placed.rank, rebalanced: false };
+};
+
+/**
+ * Moves applications into a column, at the top of it — or, in the default
+ * stage, at their match position (`placeInStage`).
+ *
+ * Each application is moved on its own write — `moveToPosition` runs its own
+ * transaction — so the batch is not atomic as a whole, but every reason a move
+ * could be refused has already been checked by `assertStageOnBoard` above, so a
+ * partial batch means the database went away mid-loop rather than an input
+ * being wrong. Index 0 is the top of the column, which is where a card dropped
+ * by hand lands.
  */
 export const moveToStage = async ({ applicationIds, statusId, session }: IApplicationMoveToStageParams) => {
-  const { applications } = await assertStageOnBoard({ applicationIds, statusId, session });
+  const { applications, isDefaultStage } = await assertStageOnBoard({ applicationIds, statusId, session });
 
   for (const application of applications) {
     try {
-      await Application.moveToPosition(String(application._id), String(statusId), 0);
+      await placeInStage(String(application._id), String(statusId), 0, isDefaultStage);
     } catch (error) {
       // The plugin throws bare `Error`s — a board locked to a non-rank sort
       // order is the one a caller can act on, and a 500 does not say so.
@@ -473,16 +520,35 @@ export const statusUpdate = async ({
 // Custom Action: Move Item on Board
 export const moveItemOnBoard = async ({ itemId, targetStatusId, targetIndex }: IMoveBoardItemParams) => {
   // Scoped first: the plugin would otherwise accept a column from another board.
-  await assertStageOnBoard({ applicationIds: [itemId], statusId: targetStatusId });
+  const { isDefaultStage } = await assertStageOnBoard({ applicationIds: [itemId], statusId: targetStatusId });
 
-  return Application.moveToPosition(itemId, targetStatusId, targetIndex);
+  return placeInStage(itemId, targetStatusId, targetIndex, isDefaultStage);
+};
+
+/** Board order: how a column is read unless the caller asks for another sort. */
+export const BOARD_ORDER_SORT = "-rank";
+
+/** The default stage's order: best match first, and newest first among equal scores (the `_id` tie-break). */
+export const DEFAULT_STAGE_SORT = "-matchScore";
+
+/**
+ * The sort that board order means for one column.
+ *
+ * The default stage, where every new application lands, is a triage inbox: it
+ * is always read best match first, so a new applicant shows up in the right
+ * place as soon as they are ranked, whatever has been dragged around it. Every
+ * other stage is the recruiter's own and keeps the order they dragged it into.
+ */
+export const boardColumnSort = async (statusId: unknown): Promise<string> => {
+  const id = String(statusId ?? "");
+  if (!Types.ObjectId.isValid(id)) return BOARD_ORDER_SORT;
+
+  const isDefaultStage = await Status.exists({ _id: id, default: true, "deleteMarker.status": { $ne: true } });
+  return isDefaultStage ? DEFAULT_STAGE_SORT : BOARD_ORDER_SORT;
 };
 
 const OVERVIEW_RANGE_DAYS: Record<JobOverviewRange, number> = { week: 7, month: 30 };
 const DAY_MS = 24 * 60 * 60 * 1000;
-/** `matchScore` band floors on the 0–RANKING_SCALE (1000) scale. */
-const MATCH_SCORE_STRONG = 700;
-const MATCH_SCORE_GOOD = 400;
 
 /** `YYYY-MM-DD` of `date` as seen in `tz` — the same key `$dateToString` produces. */
 const dayKeyInTz = (date: Date, tz: string) =>
@@ -561,8 +627,8 @@ export const getOverview = async ({
                   _id: {
                     $switch: {
                       branches: [
-                        { case: { $gte: ["$matchScore", MATCH_SCORE_STRONG] }, then: "strong" },
-                        { case: { $gte: ["$matchScore", MATCH_SCORE_GOOD] }, then: "good" },
+                        { case: { $gte: ["$matchScore", MATCH_SCORE_BAND_FLOORS.strong] }, then: "strong" },
+                        { case: { $gte: ["$matchScore", MATCH_SCORE_BAND_FLOORS.good] }, then: "good" },
                       ],
                       default: "weak",
                     },

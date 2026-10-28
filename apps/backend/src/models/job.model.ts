@@ -4,6 +4,7 @@ import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { softDeletePlugin, ISoftDeleteDoc, ISoftDeleteModel } from "./plugins/soft-delete.plugin";
 import { modelNames } from "./constants";
 import { boardSettingsSchema, IBoardSettings } from "./schema/board-settings.schema";
+import { geoPointSchema, IGeoPoint } from "./schema/geo-point.schema";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import { automaticReferencePlugin, IAutomaticReferenceDoc } from "./plugins/automatic-reference.plugin";
@@ -89,6 +90,10 @@ export interface IJobDoc
   embedding?: number[];
   embeddingUpdatedAt?: Date;
   totalApplications?: number;
+  /** Where `location` is on the map, set by the geocode queue. Not in ALL_JOB_FIELDS, so never returned to clients. */
+  geo?: IGeoPoint;
+  /** The `location` text `geo` was computed from, so an unchanged location is not geocoded again. */
+  geocodedFrom?: string;
 }
 
 export interface IJobModel
@@ -179,6 +184,9 @@ const jobSchema = new Schema<IJobDoc>(
     // select, so jobProjectionQuery() excludes it explicitly.
     embedding: { type: [Number], select: false, default: undefined },
     embeddingUpdatedAt: { type: Date },
+    // Written only by the geocode queue, from `location`.
+    geo: { type: geoPointSchema },
+    geocodedFrom: { type: String },
     totalApplications: { type: Number, default: 0 },
     additionalQueries: [additionalQuerySchema],
     skills: [jobSkillSchema],

@@ -16,7 +16,7 @@ import { enqueueProfileFeedRebuild } from "../../../queue/profileFeedRebuildQueu
 import { enqueueJobCleanup } from "../../../queue/jobCleanupQueue";
 import { readFeedIds } from "./feed.service";
 import { assertJobSkills, assertJobValues } from "./job.assertions";
-import { computeJobMatch } from "./match/job-match";
+import { computeJobMatch, computeJobMatchBreakdown } from "./match/job-match";
 import { loadMatchProfile } from "./match/profile.service";
 import pick from "lodash/pick";
 
@@ -92,6 +92,7 @@ export const list = async ({ req }: ControllerParams) => {
   let searchTerm: string | undefined;
   let searchVector: number[] | undefined;
   let matchKeywords: string[] | undefined;
+  let feedOrder: string[] | undefined;
 
   const listing = runCursorList({
     query: req.query,
@@ -110,16 +111,23 @@ export const list = async ({ req }: ControllerParams) => {
           // Ranking is the point of matched mode — sort best-match first. A search
           // term outranks it: $rankFusion already ordered those results, and any
           // trailing $sort would throw that ordering away.
-          options.sort = "-matchScore -createdAt";
-
-          // Narrow to the precomputed feed so Mongo scores/sorts only the already
+          //
+          // Narrow to the precomputed feed so Mongo sorts only the already
           // matched candidates instead of the whole collection. Skipped when there
           // is a search term: the feed is capped at 300 profile-matched ids, so
           // searching inside it hides every job outside the candidate's keywords.
           feedIds = await readFeedIds(req.session.jobProfileId);
-          // Cold/evicted feed → build it in the background; this request still
-          // matches over the full collection (correct, just not accelerated).
-          if (!feedIds.length) await enqueueProfileFeedRebuild(req.session.jobProfileId);
+          if (feedIds.length) {
+            // The feed is kept best match first by match percentage — the number
+            // on each card — so the list follows the feed's own order.
+            feedOrder = feedIds;
+            options.sort = "feedRank";
+          } else {
+            // Cold/evicted feed → build it in the background; this request ranks
+            // the full collection by keyword overlap instead (correct, coarser).
+            options.sort = "-matchScore -createdAt";
+            await enqueueProfileFeedRebuild(req.session.jobProfileId);
+          }
         }
       }
 
@@ -144,7 +152,9 @@ export const list = async ({ req }: ControllerParams) => {
         options,
         tenantId: req.session.tenantId,
         jobProfileId: req.session.jobProfileId,
-        matchKeywords,
+        // A warm feed's order replaces keyword overlap, so matchScore is not computed.
+        matchKeywords: feedOrder ? undefined : matchKeywords,
+        feedOrder,
         searchTerm,
         searchVector,
         searchPreFilter: jobSearchPreFilter(req.session),
@@ -189,18 +199,29 @@ export const get = async ({ req }: ControllerParams) => {
   const abilityBuilder = new JobAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
-  const job = await jobService.getOne({
-    query: { _id: req.params.id },
-    tenantId: req.session.tenantId,
-    jobProfileId: req.session.jobProfileId,
-  });
+  // Read alongside the job, as on the list.
+  const [job, matchProfile] = await Promise.all([
+    jobService.getOne({
+      query: { _id: req.params.id },
+      tenantId: req.session.tenantId,
+      jobProfileId: req.session.jobProfileId,
+    }),
+    loadMatchProfile(req.session.jobProfileId),
+  ]);
 
   // Always authorize against the instance if it exists
   if (!job || !ability.can(AbilityAction.Read, new JobAuthZEntity(job))) {
     throw new UnauthorizedException("You do not have permission to view this job.");
   }
 
-  const sanitized = getSanitizedJobResponse(job, ability);
+  // As on the list: only a viewer with a job profile is matched, and the fields
+  // are left off for everyone else. Scored before sanitizing.
+  const match = matchProfile ? computeJobMatchBreakdown(matchProfile, job) : null;
+  const scoredJob = matchProfile
+    ? { ...job, matchPercentage: match?.percentage ?? null, matchBreakdown: match?.parts ?? null }
+    : job;
+
+  const sanitized = getSanitizedJobResponse(scoredJob, ability);
 
   return new ApiResponse({
     message: "Job retrieved.",

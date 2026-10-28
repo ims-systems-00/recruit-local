@@ -3,7 +3,15 @@ import { Types } from "mongoose";
 import { JOBS_STATUS_ENUMS } from "@rl/types";
 import { ReusableQueue } from "./Queue";
 import { Job, JobProfile } from "../models";
-import { keywordOverlap, rebuildFeed } from "../v1/modules/job/feed.service";
+import { rebuildFeed } from "../v1/modules/job/feed.service";
+import { computeJobMatch } from "../v1/modules/job/match/job-match";
+import {
+  MATCH_JOB_SELECT,
+  MATCH_PROFILE_POPULATE,
+  MATCH_PROFILE_SELECT,
+  MatchProfilePopulated,
+  toMatchProfile,
+} from "../v1/modules/job/match/fields";
 
 export interface ProfileFeedRebuildData {
   profileId: string;
@@ -13,17 +21,25 @@ export interface ProfileFeedRebuildData {
  * Rebuilds one profile's matched-jobs feed from scratch. Runs when the profile's
  * keywords change (retro-match: pick up jobs posted before this edit) and as the
  * lazy build when the jobs list finds an empty feed.
+ *
+ * Keywords pick which jobs are considered — open jobs sharing at least one with
+ * the profile — and each is scored by its match percentage, the same number the
+ * job list shows. A profile with nothing the matchers compare scores every job
+ * `null`, and so gets an empty feed.
  */
 const processProfileFeedRebuild = async ({ profileId }: ProfileFeedRebuildData) => {
   if (!Types.ObjectId.isValid(profileId)) return;
 
-  const profile = await JobProfile.findById(profileId).select("keywords").lean();
+  const profile = await JobProfile.findById(profileId)
+    .select(`keywords ${MATCH_PROFILE_SELECT}`)
+    .populate<MatchProfilePopulated>(MATCH_PROFILE_POPULATE)
+    .lean();
   const profileKeywords = profile?.keywords ?? [];
-  if (!profileKeywords.length) {
+  if (!profile || !profileKeywords.length) {
     await rebuildFeed(profileId, []);
     return;
   }
-  const kwSet = new Set(profileKeywords);
+  const matchProfile = toMatchProfile(profile);
 
   const scored: { jobId: string; score: number }[] = [];
   const cursor = Job.find({
@@ -31,13 +47,13 @@ const processProfileFeedRebuild = async ({ profileId }: ProfileFeedRebuildData) 
     "deleteMarker.status": { $ne: true },
     keywords: { $in: profileKeywords },
   })
-    .select("keywords")
+    .select(MATCH_JOB_SELECT)
     .lean()
     .cursor();
 
   for await (const job of cursor) {
-    const score = keywordOverlap(job.keywords, kwSet);
-    if (score > 0) scored.push({ jobId: job._id.toString(), score });
+    const score = computeJobMatch(matchProfile, job);
+    if (score !== null && score > 0) scored.push({ jobId: job._id.toString(), score });
   }
 
   await rebuildFeed(profileId, scored);

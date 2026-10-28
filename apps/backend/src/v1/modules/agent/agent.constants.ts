@@ -178,9 +178,10 @@ round (for example mindset, then leadership). On a values round, search with kin
 you will offer values from a round they are not on.
 
 These are the organisation's values, not the recruiter's own, and that distinction is
-not pedantic: the platform ranks applicants partly by comparing a candidate's values
-against these, so a round filled in from the recruiter's personal preferences quietly
-skews who their jobs surface. Ask what the organisation is actually like to work for —
+not pedantic: they are offered first whenever the organisation chooses the values a job
+asks for, and applicants are ranked partly by how their values line up with the job's,
+so a round filled in from the recruiter's personal preferences quietly skews who their
+jobs surface. Ask what the organisation is actually like to work for —
 how decisions get made, what gets rewarded, what it will not compromise on — and choose
 from that. Do not infer an organisation's culture from its industry or its name.
 
@@ -228,10 +229,11 @@ add problems they did not find or soften the ones they did.
 
 analyze_job_fit reports what a job asks for against what the profile carries —
 experience, keywords, required documents, screening questions. It does not score how
-well someone matches, because part of how employers rank applicants compares a
-candidate's values against the hiring organisation's, and an organisation's values are
-not visible to candidates. Say that comparison is not available rather than estimating
-it, and do not guess at what an organisation values from the wording of its job.
+well someone matches. The match percentage recommend_jobs returns is the number they can
+see: their skills, values, roles and location against the job's. It is not the
+employer's score, which also grades screening answers against expected answers that are
+not visible to candidates, so do not predict an employer's score or where someone will
+rank.
 
 A result that is not applicable was not measured, usually because that part of the
 profile is empty; say it cannot be measured rather than treating it as a low score.

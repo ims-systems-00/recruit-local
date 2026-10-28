@@ -2,6 +2,7 @@ import { CursorPagination } from '@/types/api';
 import { DeleteMarker } from '../file-media/file-media.type';
 import {
   EMPLOYMENT_TYPE,
+  JobMatchPartDto,
   JobSkillResponseDto,
   JobValueResponseDto,
   PERIOD_ENUMS,
@@ -121,9 +122,12 @@ export interface JobData {
   updatedAt: string;
   alreadySaved?: boolean;
   alreadyApplied?: boolean;
-  // The viewer's match against the job, 0-100. Only on the candidate job list
-  // (GET /jobs); null when the profile has nothing to compare yet.
+  // The viewer's match against the job, 0-100. On the candidate job list
+  // (GET /jobs) and a single job; null when the profile has nothing to compare yet.
   matchPercentage?: number | null;
+  // The parts behind matchPercentage, each 0-100. Single job only; null whenever
+  // matchPercentage is.
+  matchBreakdown?: JobMatchPartDto[] | null;
 }
 
 export type JobListResponse = {

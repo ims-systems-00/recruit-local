@@ -5,27 +5,26 @@ import {
   Calendar,
   Clock,
   DollarSign,
-  Briefcase,
   Users,
   Sun,
   Moon,
-  Cable,
   TriangleAlert,
-  Dot,
   Mailbox,
   PhoneCall,
-  Globe,
 } from 'lucide-react';
 
-import moment from 'moment';
 import React from 'react';
 import InfoCard from './info-card';
 import {
+  JOB_MATCH_PART_ENUMS,
   JOB_SKILL_LEVEL_ENUMS,
   JOB_SKILL_REQUIREMENT_ENUMS,
   JobSkillResponseDto,
+  MATCH_SCORE_BAND_FLOORS,
+  MATCH_SCORE_SCALE,
   REQUIRED_DOCUMENTS_ENUMS,
 } from '@rl/types';
+import { formatMatchPercent } from '@/services/application/application.match';
 import Image from 'next/image';
 
 import {
@@ -68,11 +67,17 @@ const DEFAULT_PREVIEW_SKILLS: JobSkillResponseDto[] = [
   },
 ];
 
-const formatDate = (date: string | Date, format = 'MMMM D, YYYY') => {
-  if (!date) return '';
-
-  return moment(date).format(format);
+// The label under the gauge: the applicant view's match bands, or nothing to
+// compare yet.
+const ALIGNMENT = {
+  strong: { label: 'Strong Alignment', color: '#12B76A' },
+  good: { label: 'Good Alignment', color: '#F79009' },
+  weak: { label: 'Weak Alignment', color: '#F04438' },
+  unscored: { label: 'Not scored yet', color: '#98A2B3' },
 };
+
+// The bands are on MATCH_SCORE_SCALE; a job match is a percentage.
+const bandFloorPercent = (floor: number) => (floor / MATCH_SCORE_SCALE) * 100;
 
 export default function JobDescription({ job }: { job: JobData }) {
   const formattedSalary = job?.salary
@@ -89,17 +94,29 @@ export default function JobDescription({ job }: { job: JobData }) {
     ? job.weekends.join(' and ')
     : null;
 
-  const overallScore = 85;
-  const valueMatchScore = 90;
-  const skillsScore = 80;
-  const rolesScore = 75;
-  const locationScore = 88;
-  const keyRespScore = 92;
+  // The viewer's match, and each part of it, 0-100. Null while their profile
+  // has nothing to compare, and shown as "—".
+  const overallScore = job?.matchPercentage ?? null;
+  const partScore = (key: JOB_MATCH_PART_ENUMS) =>
+    job?.matchBreakdown?.find((part) => part.key === key)?.percentage ?? null;
+  const valueMatchScore = partScore(JOB_MATCH_PART_ENUMS.VALUES);
+  const skillsScore = partScore(JOB_MATCH_PART_ENUMS.SKILLS);
+  const rolesScore = partScore(JOB_MATCH_PART_ENUMS.ROLE);
+  const locationScore = partScore(JOB_MATCH_PART_ENUMS.LOCATION);
+
+  const alignment =
+    overallScore == null
+      ? ALIGNMENT.unscored
+      : overallScore >= bandFloorPercent(MATCH_SCORE_BAND_FLOORS.strong)
+        ? ALIGNMENT.strong
+        : overallScore >= bandFloorPercent(MATCH_SCORE_BAND_FLOORS.good)
+          ? ALIGNMENT.good
+          : ALIGNMENT.weak;
 
   const ARC_RADIUS = 76;
   const ARC_LENGTH = Math.PI * ARC_RADIUS;
   const arcDashOffset =
-    ARC_LENGTH * (1 - Math.min(Math.max(overallScore, 0), 100) / 100);
+    ARC_LENGTH * (1 - Math.min(Math.max(overallScore ?? 0, 0), 100) / 100);
 
   const hasCustomSkills = Boolean(job?.skills && job.skills.length > 0);
 
@@ -233,19 +250,22 @@ export default function JobDescription({ job }: { job: JobData }) {
                     fontWeight="700"
                     className="select-none font-sans"
                   >
-                    {overallScore}%
+                    {formatMatchPercent(overallScore)}
                   </text>
                 </svg>
               </div>
             </div>
 
-            {/* Strong Alignment Status */}
+            {/* Alignment Status */}
             <div className="flex items-center gap-spacing-md">
-              <div className="size-5 rounded-full border-2 border-[#12B76A] flex items-center justify-center text-[#12B76A] shrink-0 font-bold text-xs select-none">
+              <div
+                className="size-5 rounded-full border-2 flex items-center justify-center shrink-0 font-bold text-xs select-none"
+                style={{ borderColor: alignment.color, color: alignment.color }}
+              >
                 !
               </div>
               <span className="text-label-md font-label-md-strong! text-text-gray-primary">
-                Strong Alignment
+                {alignment.label}
               </span>
             </div>
 
@@ -262,11 +282,11 @@ export default function JobDescription({ job }: { job: JobData }) {
                   <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
                     <div
                       className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${valueMatchScore}%` }}
+                      style={{ width: `${valueMatchScore ?? 0}%` }}
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {valueMatchScore}%
+                    {formatMatchPercent(valueMatchScore)}
                   </span>
                 </div>
               </div>
@@ -280,11 +300,11 @@ export default function JobDescription({ job }: { job: JobData }) {
                   <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
                     <div
                       className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${skillsScore}%` }}
+                      style={{ width: `${skillsScore ?? 0}%` }}
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {skillsScore}%
+                    {formatMatchPercent(skillsScore)}
                   </span>
                 </div>
               </div>
@@ -298,11 +318,11 @@ export default function JobDescription({ job }: { job: JobData }) {
                   <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
                     <div
                       className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${rolesScore}%` }}
+                      style={{ width: `${rolesScore ?? 0}%` }}
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {rolesScore}%
+                    {formatMatchPercent(rolesScore)}
                   </span>
                 </div>
               </div>
@@ -316,29 +336,11 @@ export default function JobDescription({ job }: { job: JobData }) {
                   <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
                     <div
                       className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${locationScore}%` }}
+                      style={{ width: `${locationScore ?? 0}%` }}
                     />
                   </div>
                   <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {locationScore}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Key responsibility */}
-              <div className="space-y-spacing-xs">
-                <span className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Key responsibility
-                </span>
-                <div className="flex items-center gap-spacing-lg">
-                  <div className="flex-1 h-2 rounded-full bg-bg-gray-soft-quaternary overflow-hidden">
-                    <div
-                      className="h-full bg-bg-brand-solid-primary rounded-full transition-all duration-500"
-                      style={{ width: `${keyRespScore}%` }}
-                    />
-                  </div>
-                  <span className="text-label-sm font-label-sm-strong! text-text-gray-tertiary w-9 text-right shrink-0">
-                    {keyRespScore}%
+                    {formatMatchPercent(locationScore)}
                   </span>
                 </div>
               </div>

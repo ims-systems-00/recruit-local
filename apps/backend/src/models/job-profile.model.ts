@@ -15,6 +15,7 @@ import {
 import { userOwnedPlugin, IUserOwnedInput } from "./plugins/userOwned.plugin";
 import { IBaseDoc } from "./interfaces/base.interface";
 import { completionMongooseDefinition } from "./templates/completion.template";
+import { geoPointSchema, IGeoPoint } from "./schema/geo-point.schema";
 
 export interface IValueScore {
   value: Types.ObjectId;
@@ -60,6 +61,14 @@ export interface JobProfileInput extends IUserOwnedInput {
 export interface IJobProfileDoc extends JobProfileInput, ISoftDeleteDoc, IBaseDoc {
   visibility: VISIBILITY;
   completion?: StoredCompletion;
+  /**
+   * Where `address` is on the map, set by the geocode queue. A candidate's home,
+   * so it stays server-side: it is not in ALL_JOB_PROFILE_FIELDS, and the lookups
+   * that join profiles into other responses project named fields only.
+   */
+  geo?: IGeoPoint;
+  /** The `address` text `geo` was computed from, so an unchanged address is not geocoded again. */
+  geocodedFrom?: string;
 }
 
 interface IJobProfileModel
@@ -169,6 +178,9 @@ const jobProfileSchema = new Schema<IJobProfileDoc>(
       default: ONBOARDING_STEP_ENUMS.NOT_STARTED,
     },
     completion: { type: completionMongooseDefinition, default: () => ({}) },
+    // Written only by the geocode queue, from `address`.
+    geo: { type: geoPointSchema },
+    geocodedFrom: { type: String },
   },
   {
     timestamps: true,

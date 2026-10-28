@@ -1,15 +1,15 @@
 import { Types } from "mongoose";
 import { JobProfile } from "../../../../models";
 import { MatchProfile } from "./job-match";
+import { MATCH_PROFILE_POPULATE, MATCH_PROFILE_SELECT, MatchProfilePopulated, toMatchProfile } from "./fields";
 
 /**
  * The candidate's side of a job match, read once per request.
  *
  * Read straight off the document rather than through the job-profile `getOne`
- * aggregation, which resolves half a dozen lookups this does not need. Only the
- * fields the matchers compare are selected — `valueScores` without its answers
- * and feedback text — and the work-mode refs are resolved to names, which is
- * what the location matcher compares against a job's `workplace`.
+ * aggregation, which resolves half a dozen lookups this does not need. Which
+ * fields are read and how they are shaped lives in `./fields.ts`, shared with
+ * the feed workers.
  *
  * Returns `null` rather than throwing on a missing, soft-deleted or malformed
  * id, so a stale session lists jobs without a match instead of failing.
@@ -18,16 +18,9 @@ export const loadMatchProfile = async (jobProfileId?: string): Promise<MatchProf
   if (!jobProfileId || !Types.ObjectId.isValid(jobProfileId)) return null;
 
   const profile = await JobProfile.findOne({ _id: jobProfileId, "deleteMarker.status": { $ne: true } })
-    .select("skills values valueScores.value valueScores.score workMode")
-    .populate<{ workMode: { name?: string }[] }>({ path: "workMode", select: "name" })
+    .select(MATCH_PROFILE_SELECT)
+    .populate<MatchProfilePopulated>(MATCH_PROFILE_POPULATE)
     .lean();
 
-  if (!profile) return null;
-
-  return {
-    skills: profile.skills,
-    values: profile.values,
-    valueScores: profile.valueScores,
-    workModes: (profile.workMode ?? []).map((mode) => mode?.name),
-  };
+  return profile ? toMatchProfile(profile) : null;
 };

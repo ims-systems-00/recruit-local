@@ -16,6 +16,7 @@ import { postFanoutQueue } from "../queue/postFanoutQueue";
 import { postFeedRebuildQueue } from "../queue/postFeedRebuildQueue";
 import { applicationRankingQueue } from "../queue/applicationRankingQueue";
 import { jobCleanupQueue } from "../queue/jobCleanupQueue";
+import { geocodeQueue } from "../queue/geocodeQueue";
 import { emailQueue } from "../v1/modules/email/core/email.queue";
 
 /**
@@ -50,6 +51,7 @@ export const initBullBoard = () => {
       new BullMQAdapter(postFeedRebuildQueue.queue),
       new BullMQAdapter(applicationRankingQueue.queue),
       new BullMQAdapter(jobCleanupQueue.queue),
+      new BullMQAdapter(geocodeQueue.queue),
       new BullMQAdapter(emailQueue.queue),
     ],
     serverAdapter: serverAdapter,

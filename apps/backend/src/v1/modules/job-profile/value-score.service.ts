@@ -10,6 +10,7 @@ import { JobProfile, IValueScore } from "../../../models";
 import { BadRequestException, ServiceUnavailableException, logger } from "../../../common/helper";
 import { llm, AGENT_MODEL } from "../agent/llm/client";
 import { resolvePrompt } from "../prompt/prompt.resolver";
+import { enqueueProfileFeedRebuild } from "../../../queue/profileFeedRebuildQueue";
 import {
   DEFAULT_VALUE_SCORE_SYSTEM_PROMPT,
   VALUE_SCORE_FEEDBACK_MAX_LENGTH,
@@ -176,6 +177,11 @@ export const save = async ({
     );
     if (pushed.matchedCount === 0) await replace();
   }
+
+  // A value score counts toward the job match but not toward the profile's
+  // keywords, so the keyword-update chain that rebuilds the feed after a
+  // profile edit never sees this write.
+  await enqueueProfileFeedRebuild(_id);
 
   return {
     value: value.toString(),

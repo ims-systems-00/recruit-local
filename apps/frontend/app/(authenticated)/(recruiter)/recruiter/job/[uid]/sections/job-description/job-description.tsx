@@ -1,24 +1,19 @@
 'use client';
-import { JobData, JobSkillItem } from '@/services/jobs/job.type';
+import { JobData } from '@/services/jobs/job.type';
 import {
   Building2,
   Calendar,
   Clock,
   DollarSign,
-  Briefcase,
   Users,
   Sun,
   Moon,
-  Cable,
   TriangleAlert,
-  Dot,
   Mailbox,
   PhoneCall,
-  Globe,
   Lock,
   Target,
 } from 'lucide-react';
-import moment from 'moment';
 import React from 'react';
 import {
   Table,
@@ -29,7 +24,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import InfoCard from './info-card';
-import { REQUIRED_DOCUMENTS_ENUMS } from '@rl/types';
+import {
+  JOB_SKILL_LEVEL_LABELS,
+  JOB_SKILL_REQUIREMENT_ENUMS,
+  JOB_SKILL_REQUIREMENT_LABELS,
+  REQUIRED_DOCUMENTS_ENUMS,
+  VALUE_TYPE_ENUM,
+  VALUE_TYPE_LABELS,
+} from '@rl/types';
 import Image from 'next/image';
 
 import RelatedAttachmentDefault from '@/public/images/related_attachment_default.png';
@@ -46,10 +48,10 @@ const documentLabels: Record<REQUIRED_DOCUMENTS_ENUMS, string> = {
   [REQUIRED_DOCUMENTS_ENUMS.CERTIFICATES]: 'Certificates',
 };
 
+// Display order and icon per value type; names come from VALUE_TYPE_LABELS.
 const PREVIEW_VALUE_CATEGORIES = [
   {
-    id: 'culture-and-behavior',
-    name: 'Culture & Behavior',
+    type: VALUE_TYPE_ENUM.CULTURE_AND_BEHAVIOR,
     icon: (
       <svg
         className="size-5 text-fg-gray-secondary"
@@ -64,16 +66,9 @@ const PREVIEW_VALUE_CATEGORIES = [
         <path d="M12 6v14" />
       </svg>
     ),
-    defaultValues: [
-      { name: 'Empathy' },
-      { name: 'Integrity' },
-      { name: 'Respect' },
-      { name: 'Transparency' },
-    ],
   },
   {
-    id: 'mindset',
-    name: 'Mindset',
+    type: VALUE_TYPE_ENUM.MINDSET,
     icon: (
       <svg
         className="size-5 text-fg-gray-secondary"
@@ -91,17 +86,9 @@ const PREVIEW_VALUE_CATEGORIES = [
         <path d="M12 13c3.5 3 5 7 2 7s-5-3.5-2-7" />
       </svg>
     ),
-    defaultValues: [
-      { name: 'Growth-oriented' },
-      { name: 'Entrepreneurial' },
-      { name: 'Proactive' },
-      { name: 'Resilient' },
-      { name: 'Problem solve' },
-    ],
   },
   {
-    id: 'working-style',
-    name: 'Working Style',
+    type: VALUE_TYPE_ENUM.WORKING_STYLE,
     icon: (
       <svg
         className="size-5 text-fg-gray-secondary"
@@ -118,15 +105,9 @@ const PREVIEW_VALUE_CATEGORIES = [
         <path d="m14 10 3-2" />
       </svg>
     ),
-    defaultValues: [
-      { name: 'Ownership mentality' },
-      { name: 'Collaborative' },
-      { name: 'independent' },
-    ],
   },
   {
-    id: 'leadership',
-    name: 'Leadership & Team Dynamics',
+    type: VALUE_TYPE_ENUM.LEADERSHIP,
     icon: (
       <svg
         className="size-5 text-fg-gray-secondary"
@@ -143,40 +124,12 @@ const PREVIEW_VALUE_CATEGORIES = [
         <path d="M20 6a9 9 0 0 1 0 12" />
       </svg>
     ),
-    defaultValues: [
-      { name: 'Mentorship' },
-      { name: 'Coaching culture' },
-      { name: 'Empowerment' },
-    ],
   },
   {
-    id: 'motivation',
-    name: 'Purpose & Motivation',
+    type: VALUE_TYPE_ENUM.MOTIVATION,
     icon: <Target className="size-5 text-fg-gray-secondary" />,
-    defaultValues: [{ name: 'Career progression' }],
   },
 ];
-
-const DEFAULT_PREVIEW_SKILLS: JobSkillItem[] = [
-  {
-    id: '1',
-    name: 'Medication Administration',
-    level: 'Intermediate',
-    requirement: 'Required',
-  },
-  {
-    id: '2',
-    name: 'Manual handling',
-    level: 'Beginner',
-    requirement: 'Preferred',
-  },
-];
-
-const formatDate = (date: string | Date, format = 'MMMM D, YYYY') => {
-  if (!date) return '';
-
-  return moment(date).format(format);
-};
 
 export default function JobDescription({ job }: { job: JobData }) {
   const formattedSalary = job?.salary
@@ -192,24 +145,13 @@ export default function JobDescription({ job }: { job: JobData }) {
   const weekendsText = job?.weekends?.length
     ? job.weekends.join(' and ')
     : null;
-  const hasCustomValues = Boolean(job?.values && job.values.length > 0);
+  // The job's values, grouped by type; types with none are not shown.
+  const categoriesToRender = PREVIEW_VALUE_CATEGORIES.map((cat) => ({
+    ...cat,
+    values: (job?.values ?? []).filter((v) => v.value.type === cat.type),
+  })).filter((cat) => cat.values.length > 0);
 
-  const categoriesToRender = PREVIEW_VALUE_CATEGORIES.map((cat) => {
-    const matched =
-      job?.values?.filter(
-        (v) =>
-          v.category === cat.id ||
-          v.category?.toLowerCase() === cat.name.toLowerCase(),
-      ) || [];
-    return {
-      ...cat,
-      values: hasCustomValues ? matched : cat.defaultValues,
-    };
-  }).filter((cat) => cat.values.length > 0);
-
-  const hasCustomSkills = Boolean(job?.skills && job.skills.length > 0);
-
-  const skillsToRender = hasCustomSkills ? job.skills! : DEFAULT_PREVIEW_SKILLS;
+  const skillsToRender = job?.skills ?? [];
 
   return (
     <>
@@ -323,10 +265,16 @@ export default function JobDescription({ job }: { job: JobData }) {
             </span>
           </div>
 
+          {categoriesToRender.length === 0 && (
+            <p className="text-body-sm text-text-gray-quaternary">
+              No values added yet.
+            </p>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-2xl">
             {categoriesToRender.map((cat) => (
               <div
-                key={cat.id}
+                key={cat.type}
                 className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-4xl space-y-spacing-4xl"
               >
                 <div className="flex items-center gap-spacing-2xl">
@@ -334,16 +282,16 @@ export default function JobDescription({ job }: { job: JobData }) {
                     {cat.icon}
                   </div>
                   <p className="text-label-md font-label-md-strong! text-text-gray-primary">
-                    {cat.name}
+                    {VALUE_TYPE_LABELS[cat.type]}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-spacing-sm">
-                  {cat.values.map((v, idx) => (
+                  {cat.values.map((v) => (
                     <span
-                      key={idx}
+                      key={v.value._id}
                       className="inline-flex items-center rounded-lg border border-border-gray-secondary bg-white px-spacing-md py-spacing-xs text-label-xs font-label-xs-strong! text-text-gray-secondary"
                     >
-                      {v.name}
+                      {v.value.label}
                     </span>
                   ))}
                 </div>
@@ -382,32 +330,43 @@ export default function JobDescription({ job }: { job: JobData }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {skillsToRender.length === 0 && (
+                  <TableRow className="border-none! hover:bg-transparent">
+                    <TableCell
+                      colSpan={4}
+                      className="p-8 text-center text-body-sm text-text-gray-quaternary"
+                    >
+                      No skills added yet.
+                    </TableCell>
+                  </TableRow>
+                )}
                 {skillsToRender.map((skill, index) => {
                   const sl = String(index + 1).padStart(2, '0');
                   return (
                     <TableRow
-                      key={skill.id || index}
+                      key={skill.skill._id}
                       className=" border-none! hover:bg-bg-gray-soft-primary/40 transition-colors"
                     >
                       <TableCell className="w-16 p-spacing-2xl text-label-sm text-text-gray-secondary">
                         {sl}
                       </TableCell>
                       <TableCell className="p-spacing-2xl text-label-sm text-text-gray-secondary">
-                        {skill.name}
+                        {skill.skill.name}
                       </TableCell>
                       <TableCell className="w-48 p-spacing-2xl text-label-sm text-text-gray-secondary">
-                        {skill.level}
+                        {JOB_SKILL_LEVEL_LABELS[skill.level]}
                       </TableCell>
                       <TableCell className="w-40 p-spacing-2xl">
                         <span
                           className={cn(
                             'inline-flex items-center px-spacing-md py-0.5 rounded-full text-label-xs font-label-xs-strong!',
-                            skill.requirement === 'Required'
+                            skill.requirement ===
+                              JOB_SKILL_REQUIREMENT_ENUMS.REQUIRED
                               ? 'bg-pink-50 text-pink-600 border border-pink-200'
                               : 'bg-bg-gray-soft-secondary text-text-gray-secondary border border-border-gray-secondary',
                           )}
                         >
-                          {skill.requirement}
+                          {JOB_SKILL_REQUIREMENT_LABELS[skill.requirement]}
                         </span>
                       </TableCell>
                     </TableRow>

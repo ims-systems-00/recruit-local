@@ -1,5 +1,7 @@
 import { VISIBILITY_ENUM } from './file-media';
 import { QUERY_TYPE_ENUMS } from './job';
+import { ProfileSkillResponseDto } from './job-profile';
+import { VALUE_TYPE_ENUM } from './value';
 
 /** Public HTTP shape of a single answer to a job's additional query. */
 export interface ApplicationAnswerResponseDto {
@@ -22,6 +24,8 @@ export interface ApplicationJobProfileDto {
   _id: string;
   name?: string;
   email?: string;
+  /** The candidate's skills, in profile order. Single-application reads only. */
+  skills?: ProfileSkillResponseDto[];
 }
 
 /** Populated status summary attached to an application response. */
@@ -47,6 +51,76 @@ export interface ApplicationFileDto {
   };
 }
 
+/** What an application's `matchScore`, and each part's `score`, is out of. */
+export const MATCH_SCORE_SCALE = 1000;
+
+/**
+ * The lowest `matchScore` in each band, on `MATCH_SCORE_SCALE`. Anything below
+ * `good` is weak. The job overview counts applications by these, and the
+ * applicant view labels one by them.
+ */
+export const MATCH_SCORE_BAND_FLOORS = { strong: 700, good: 400 } as const;
+
+/**
+ * The parts an application's `matchScore` is ranked on. The first four line up
+ * with `JOB_MATCH_PART_ENUMS`, the candidate's own match against a job.
+ */
+export enum APPLICATION_MATCH_PART_ENUMS {
+  VALUES = 'values',
+  SKILLS = 'skills',
+  ROLE = 'role',
+  LOCATION = 'location',
+  /** How the candidate answered the job's screening questions. */
+  QUESTION = 'question',
+  EXPERIENCE = 'experience',
+}
+
+/** One of the job's values, and whether the candidate matched it. */
+export interface ApplicationValueMatchDto {
+  /** The value's catalogue id. */
+  value: string;
+  /** The value's catalogue label when the application was ranked. */
+  label: string;
+  /**
+   * True when the candidate earns any credit in the value: evaluated it with a
+   * score above 0, or selected it without evaluating it.
+   */
+  matched: boolean;
+}
+
+/** The values part of an application's `matchScore`, for one value type. */
+export interface ApplicationValueCategoryDto {
+  type: VALUE_TYPE_ENUM;
+  /** Out of 1000, like `matchScore`. `null` when the job lists no values of this type. */
+  score: number | null;
+  /**
+   * The job's values of this type, in the job's order. Empty when the job lists
+   * none of this type; absent on an application ranked before this was stored,
+   * until it is re-ranked.
+   */
+  values?: ApplicationValueMatchDto[];
+}
+
+/** One part of an application's `matchScore`, as the application-ranking queue stored it. */
+export interface ApplicationMatchPartDto {
+  key: APPLICATION_MATCH_PART_ENUMS;
+  /**
+   * This part alone, out of 1000 like `matchScore`. `null` when the job gave it
+   * nothing to compare (no skills, no values, no screening questions), so it
+   * was left out of `matchScore` rather than counted as 0.
+   */
+  score: number | null;
+  /** Share of `matchScore` this part carried, 0-1. 0 when `score` is null. */
+  influence: number;
+  /**
+   * The `values` part only: its score split by value type, every type in
+   * `VALUE_TYPE_ENUM` order. Weighted by how many of the job's values each type
+   * holds, they average back to the part's `score`, give or take rounding and
+   * any value since removed from the catalogue.
+   */
+  categories?: ApplicationValueCategoryDto[];
+}
+
 /**
  * Public HTTP shape of an Application.
  *
@@ -67,6 +141,12 @@ export interface ApplicationResponseDto {
   statusId?: string | null;
   rank?: number;
   matchScore?: number;
+  /**
+   * The parts behind `matchScore`, in ranking order. Employers only, like
+   * `matchScore`. Absent until the application is ranked, which is how an
+   * unranked application's `matchScore` of 0 is told apart from a real 0.
+   */
+  matchBreakdown?: ApplicationMatchPartDto[];
   coverLetter?: string;
   resumeId?: string | null;
   caseStudyId?: string[];
@@ -103,7 +183,7 @@ export interface JobOverviewStageDto {
   count: number;
 }
 
-/** Applications bucketed by `matchScore` (out of 1000): strong >= 700, good 400-699, weak < 400. */
+/** Applications bucketed by `matchScore`, at `MATCH_SCORE_BAND_FLOORS`. */
 export interface JobOverviewMatchScoreDto {
   strong: number;
   good: number;

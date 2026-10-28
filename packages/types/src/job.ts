@@ -170,6 +170,8 @@ export interface JobValueResponseDto {
 export enum JOB_MATCH_PART_ENUMS {
   SKILLS = 'skills',
   VALUES = 'values',
+  /** Whether the job is the kind of role the candidate is after. */
+  ROLE = 'role',
   LOCATION = 'location',
 }
 
@@ -179,10 +181,18 @@ export enum JOB_MATCH_PART_ENUMS {
  * (a job with no skills, a candidate with no work mode), scores 0.
  */
 export const JOB_MATCH_WEIGHTS: Record<JOB_MATCH_PART_ENUMS, number> = {
-  [JOB_MATCH_PART_ENUMS.SKILLS]: 40,
-  [JOB_MATCH_PART_ENUMS.VALUES]: 40,
-  [JOB_MATCH_PART_ENUMS.LOCATION]: 20,
+  [JOB_MATCH_PART_ENUMS.SKILLS]: 35,
+  [JOB_MATCH_PART_ENUMS.VALUES]: 35,
+  [JOB_MATCH_PART_ENUMS.ROLE]: 15,
+  [JOB_MATCH_PART_ENUMS.LOCATION]: 15,
 };
+
+/** One part of a candidate's match against a job. */
+export interface JobMatchPartDto {
+  key: JOB_MATCH_PART_ENUMS;
+  /** This part alone, 0-100. It counts toward `matchPercentage` at its `JOB_MATCH_WEIGHTS` weight. */
+  percentage: number;
+}
 
 /**
  * Public HTTP shape of a Job.
@@ -238,10 +248,16 @@ export interface JobResponseDto {
   alreadySavedId?: string | null;
   /**
    * How well the viewer's job profile fits this job, 0-100, weighted by
-   * `JOB_MATCH_WEIGHTS`. Only on the job list, and only for a viewer with a job
-   * profile. `null` while the profile has no skills, values or work modes yet.
+   * `JOB_MATCH_WEIGHTS`. On the job list and single-job reads, and only for a
+   * viewer with a job profile. `null` while the profile has no skills, values
+   * or work modes yet.
    */
   matchPercentage?: number | null;
+  /**
+   * The parts behind `matchPercentage`, in `JOB_MATCH_PART_ENUMS` order.
+   * Single-job reads only, alongside `matchPercentage`, and `null` whenever it is.
+   */
+  matchBreakdown?: JobMatchPartDto[] | null;
   createdAt?: string; // ISO
   updatedAt?: string; // ISO
 }

@@ -8,10 +8,40 @@ import { jobProfilePlugin, JobProfileInput } from "./plugins/jobProfile.plugin";
 import { boardablePlugin, IBoardableInput, IBoardableModel } from "./plugins/boardable.plugin";
 import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugins/tenant-data.plugin";
 import { automaticReferencePlugin, IAutomaticReferenceDoc } from "./plugins/automatic-reference.plugin";
+import { APPLICATION_MATCH_PART_ENUMS, VALUE_TYPE_ENUM } from "@rl/types";
 
 export interface IApplicationAnswer {
   queryId: Types.ObjectId;
   answer: string | string[] | number | boolean;
+}
+
+/** One of the job's values, and whether the candidate matched it when the application was ranked. */
+export interface IApplicationValueMatch {
+  value: Types.ObjectId;
+  /** The value's catalogue label at ranking time. */
+  label: string;
+  /** True when the candidate earned any credit in the value — evaluated above 0, or selected. */
+  matched: boolean;
+}
+
+/** The values part of `matchScore` for one value type. */
+export interface IApplicationValueCategory {
+  type: VALUE_TYPE_ENUM;
+  /** Out of `RANKING_SCALE`; null when the job lists no values of this type. */
+  score: number | null;
+  /** The job's values of this type, in the job's order. Absent on rankings older than pipeline version 8. */
+  values?: IApplicationValueMatch[];
+}
+
+/** One part of `matchScore`. */
+export interface IApplicationMatchPart {
+  key: APPLICATION_MATCH_PART_ENUMS;
+  /** Out of `RANKING_SCALE`, like `matchScore`; null when the job gave this part nothing to compare. */
+  score: number | null;
+  /** Share of `matchScore` this part carried, 0-1. */
+  influence: number;
+  /** The values part only: its score split by value type. */
+  categories?: IApplicationValueCategory[];
 }
 
 export interface ApplicationInput extends JobProfileInput, IBoardableInput, TenantInput {
@@ -32,6 +62,17 @@ export interface ApplicationInput extends JobProfileInput, IBoardableInput, Tena
    * board rewrites it on every move and rebalance — this is the copy that lasts.
    */
   matchScore?: number;
+  /**
+   * The parts behind `matchScore`, written with it. Absent until the
+   * application is ranked, so an unranked 0 can be told apart from a real one.
+   */
+  matchBreakdown?: IApplicationMatchPart[];
+  /**
+   * The `RANKING_PIPELINE_VERSION` that wrote `matchScore` and `matchBreakdown`. Anything older is
+   * stale and can be found and re-ranked with one query. Never returned to
+   * clients — not in `ALL_APPLICATION_FIELDS`.
+   */
+  rankingVersion?: number;
 }
 
 export interface IApplicationDoc
@@ -56,6 +97,36 @@ const answerSchema = new Schema<IApplicationAnswer>(
       type: Schema.Types.Mixed,
       required: true,
     },
+  },
+  { _id: false }
+);
+
+const valueMatchSchema = new Schema<IApplicationValueMatch>(
+  {
+    value: { type: Schema.Types.ObjectId, ref: modelNames.VALUE, required: true },
+    label: { type: String, required: true },
+    matched: { type: Boolean, required: true },
+  },
+  { _id: false }
+);
+
+const valueCategorySchema = new Schema<IApplicationValueCategory>(
+  {
+    type: { type: String, enum: Object.values(VALUE_TYPE_ENUM), required: true },
+    score: { type: Number, default: null },
+    // undefined rather than [] keeps an older ranking's categories telling "not stored" from "none".
+    values: { type: [valueMatchSchema], default: undefined },
+  },
+  { _id: false }
+);
+
+const matchPartSchema = new Schema<IApplicationMatchPart>(
+  {
+    key: { type: String, enum: Object.values(APPLICATION_MATCH_PART_ENUMS), required: true },
+    score: { type: Number, default: null },
+    influence: { type: Number, required: true },
+    // Only the values part has categories; undefined keeps the others free of an empty [].
+    categories: { type: [valueCategorySchema], default: undefined },
   },
   { _id: false }
 );
@@ -87,6 +158,9 @@ const applicationSchema = new Schema<IApplicationDoc>(
     currentSalary: { type: Number },
     expectedSalary: { type: Number },
     matchScore: { type: Number, default: 0 },
+    // Mongoose defaults arrays to []; undefined keeps "not ranked yet" absent.
+    matchBreakdown: { type: [matchPartSchema], default: undefined },
+    rankingVersion: { type: Number },
   },
   {
     timestamps: true,
