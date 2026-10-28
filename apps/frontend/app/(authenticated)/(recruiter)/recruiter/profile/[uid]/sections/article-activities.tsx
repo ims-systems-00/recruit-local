@@ -11,6 +11,8 @@ import { useCallback } from 'react';
 import { useInfinitePosts } from '@/services/post';
 import ArticleItemSkeleton from './article-item-skeleton';
 import { POST_TYPE_ENUMS } from '@rl/types';
+import EmptyBox from '@/components/empty-box';
+import { useSession } from 'next-auth/react';
 
 type ArticleActivitiesProps = {
   carousel?: boolean;
@@ -24,6 +26,11 @@ export default function ArticleActivities({
   carousel,
   tenantId,
 }: ArticleActivitiesProps) {
+  const { data: session } = useSession();
+  const isOwnCompany = Boolean(
+    tenantId && session?.user?.tenantId === tenantId,
+  );
+
   // Waits for the company, so it never lists every company's articles unfiltered.
   const {
     fetchNextPage,
@@ -64,6 +71,23 @@ export default function ArticleActivities({
             <ArticleItemSkeleton key={`loading-${index}`} />
           ))}
         </div>
+      </ArticleLayout>
+    );
+  if (!isError && posts.length === 0)
+    return (
+      <ArticleLayout>
+        <EmptyBox
+          title={
+            isOwnCompany
+              ? "You haven't published any articles yet"
+              : 'No articles yet'
+          }
+          description={
+            isOwnCompany
+              ? 'Articles you publish will show up here.'
+              : "This company hasn't published any articles."
+          }
+        />
       </ArticleLayout>
     );
   if (carousel)
