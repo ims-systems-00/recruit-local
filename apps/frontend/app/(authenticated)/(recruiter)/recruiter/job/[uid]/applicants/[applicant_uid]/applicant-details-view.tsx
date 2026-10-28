@@ -57,12 +57,24 @@ const ALIGNMENT = {
 // How many of the applicant's skills the page shows; the dialog shows them all.
 const SKILLS_PREVIEW_COUNT = 6;
 
-// 'all', then every level, lowest first.
-type SkillFilterTab = 'all' | JOB_SKILL_LEVEL_ENUMS;
+// `JOB_SKILL_LEVEL_ENUMS` is declared lowest to highest, so its order is the rank.
+const SKILL_LEVEL_RANK = Object.fromEntries(
+  Object.values(JOB_SKILL_LEVEL_ENUMS).map((level, rank) => [level, rank]),
+) as Record<JOB_SKILL_LEVEL_ENUMS, number>;
+
+// 'all', the skills that match the job, then every level, lowest first.
+type SkillFilterTab = 'all' | 'matched' | JOB_SKILL_LEVEL_ENUMS;
 const SKILL_FILTER_TABS: SkillFilterTab[] = [
   'all',
+  'matched',
   ...Object.values(JOB_SKILL_LEVEL_ENUMS),
 ];
+const skillTabLabel = (tab: SkillFilterTab) =>
+  tab === 'all'
+    ? 'All'
+    : tab === 'matched'
+      ? 'Matched'
+      : JOB_SKILL_LEVEL_LABELS[tab];
 
 const getSkillBadgeStyles = (level: string) => {
   switch (level.toLowerCase()) {
@@ -89,19 +101,35 @@ export default function ApplicantDetailsView({
   const [isAllSkillsOpen, setIsAllSkillsOpen] = useState(false);
   const [activeSkillTab, setActiveSkillTab] = useState<SkillFilterTab>('all');
 
-  // Numbered by their place on the profile, which a filtered list keeps.
-  const applicantSkills = (applicationData?.jobProfile?.skills ?? []).map(
-    (row, idx) => ({
-      id: row.skill._id,
-      number: idx + 1,
-      name: row.skill.name,
-      level: row.level,
-    }),
+  // The level the job asks for in each of its skills, by skill id.
+  const jobSkillLevels = new Map(
+    (jobData?.skills ?? []).map((row) => [row.skill._id, row.level]),
   );
+  // Matched where the job asks for the skill and the applicant meets its level,
+  // the case the ranking gives full credit. Matched skills come first, each
+  // group in profile order, and are numbered in that order, which a filtered
+  // list keeps.
+  const applicantSkills = (applicationData?.jobProfile?.skills ?? [])
+    .map((row) => {
+      const jobLevel = jobSkillLevels.get(row.skill._id);
+      return {
+        id: row.skill._id,
+        name: row.skill.name,
+        level: row.level,
+        matched:
+          jobLevel != null &&
+          SKILL_LEVEL_RANK[row.level] >= SKILL_LEVEL_RANK[jobLevel],
+      };
+    })
+    .sort((a, b) => Number(b.matched) - Number(a.matched))
+    .map((skill, idx) => ({ ...skill, number: idx + 1 }));
+  const hasMatchedSkills = applicantSkills.some((skill) => skill.matched);
   const filteredSkills =
     activeSkillTab === 'all'
       ? applicantSkills
-      : applicantSkills.filter((skill) => skill.level === activeSkillTab);
+      : activeSkillTab === 'matched'
+        ? applicantSkills.filter((skill) => skill.matched)
+        : applicantSkills.filter((skill) => skill.level === activeSkillTab);
 
   const applicantName = applicationData?.jobProfile?.name || 'Alifun Nahar';
   const statusLabel = applicationData?.status?.label || 'New applicant';
@@ -441,17 +469,12 @@ export default function ApplicantDetailsView({
 
               {valueCards.length > 0 ? (
                 <>
-                  {/* Matching Values Legend Banner */}
-                  <div className="p-spacing-lg rounded-xl border border-border-gray-secondary bg-white flex items-center flex-wrap gap-x-spacing-sm gap-y-1">
+                  {/* Matching Values Legend */}
+                  <p className="flex items-center gap-spacing-sm text-label-sm text-text-gray-tertiary">
                     <span className="size-2 rounded-full bg-bg-brand-solid-primary shrink-0" />
-                    <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
-                      Matching Values
-                    </span>
-                    <span className="text-label-sm text-text-gray-tertiary">
-                      Pink dots highlight the values that align with your
-                      profile and responses.
-                    </span>
-                  </div>
+                    Pink dots highlight the values that align with your profile
+                    and responses.
+                  </p>
 
                   {/* Value Category Cards Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-spacing-xl">
@@ -519,6 +542,14 @@ export default function ApplicantDetailsView({
                 )}
               </div>
 
+              {hasMatchedSkills && (
+                <p className="flex items-center gap-spacing-sm text-label-sm text-text-gray-tertiary">
+                  <span className="size-2 rounded-full bg-bg-brand-solid-primary shrink-0" />
+                  Pink dots mark skills that meet this job&apos;s required
+                  level.
+                </p>
+              )}
+
               {applicantSkills.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-xl">
                   {applicantSkills
@@ -528,7 +559,13 @@ export default function ApplicantDetailsView({
                         key={skill.id}
                         className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-md shadow-xs"
                       >
-                        <p className="text-label-md font-label-md-strong! text-text-gray-primary">
+                        <p className="flex items-center gap-1.5 text-label-md font-label-md-strong! text-text-gray-primary">
+                          {skill.matched && (
+                            <span
+                              className="size-1.5 rounded-full bg-bg-brand-solid-primary shrink-0"
+                              aria-label="Matches this job"
+                            />
+                          )}
                           {skill.number}. {skill.name}
                         </p>
                         <div>
@@ -956,7 +993,7 @@ export default function ApplicantDetailsView({
                         : 'bg-white text-text-gray-secondary border-border-gray-secondary hover:bg-bg-gray-soft-primary hover:text-text-gray-primary',
                     )}
                   >
-                    {tab === 'all' ? 'All' : JOB_SKILL_LEVEL_LABELS[tab]}
+                    {skillTabLabel(tab)}
                   </button>
                 );
               })}
@@ -972,7 +1009,13 @@ export default function ApplicantDetailsView({
                     key={skill.id}
                     className="rounded-2xl border border-border-gray-secondary bg-white p-spacing-xl sm:p-spacing-2xl space-y-spacing-md shadow-xs"
                   >
-                    <p className="text-label-md font-label-md-strong! text-text-gray-primary">
+                    <p className="flex items-center gap-1.5 text-label-md font-label-md-strong! text-text-gray-primary">
+                      {skill.matched && (
+                        <span
+                          className="size-1.5 rounded-full bg-bg-brand-solid-primary shrink-0"
+                          aria-label="Matches this job"
+                        />
+                      )}
                       {skill.number}. {skill.name}
                     </p>
                     <div>
@@ -990,7 +1033,9 @@ export default function ApplicantDetailsView({
               </div>
             ) : (
               <p className="text-label-sm text-text-gray-tertiary">
-                No skills at this level
+                {activeSkillTab === 'matched'
+                  ? 'No skills match this job'
+                  : 'No skills at this level'}
               </p>
             )}
           </div>
