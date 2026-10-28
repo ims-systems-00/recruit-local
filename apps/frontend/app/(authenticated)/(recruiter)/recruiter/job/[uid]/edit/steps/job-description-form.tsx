@@ -41,6 +41,17 @@ import AttachmentForm, { UploadedFile } from './attachment-form';
 import { useDeleteFileStorage } from '@/services/file-storage';
 import AttachmentItem from './attachment-item';
 import DraftEditor from '@/components/draft-editor/draft-editor';
+import {
+  usePageAction,
+  usePageContext,
+} from '@/components/ai-chat/page-context';
+import { excerpt } from '@/components/ai-chat/page-state';
+import { AGENT_STAGGER_MS, prefersReducedMotion, wait } from '@/lib/motion';
+import {
+  draftToText,
+  FILL_JOB_DESCRIPTION_ACTION,
+  parseJobDescription,
+} from './job-description-fill';
 const REQUIRED_DOCUMENTS_OPTIONS = [
   {
     id: REQUIRED_DOCUMENTS_ENUMS.RESUME,
@@ -99,6 +110,43 @@ export default function JobDescriptionForm({
   const selectedDocs = watch('requiredDocuments') || [];
 
   const attachments = watch('attachmentsStorage') || [];
+
+  usePageContext({
+    page: 'recruiter.job.edit.description',
+    summary:
+      'Step 2 of editing a job post: the role description, key responsibilities, attachments ' +
+      'and required documents. The user presses Continue to save this step and move on.',
+    state: {
+      jobId: defaultValues._id,
+      description: excerpt(draftToText(watch('description'))),
+      responsibility: excerpt(draftToText(watch('responsibility'))),
+      attachments: attachments.length,
+      requiredDocuments: selectedDocs,
+    },
+  });
+
+  // Lets Alice fill this step in. Saving is still Continue.
+  usePageAction({
+    ...FILL_JOB_DESCRIPTION_ACTION,
+    handler: async (args) => {
+      const fills = parseJobDescription(args);
+
+      if (fills.length === 0) {
+        throw new Error(
+          "Alice didn't send anything to fill in. Try asking again.",
+        );
+      }
+
+      for (const [index, fill] of fills.entries()) {
+        fill.apply(setValue);
+        if (index < fills.length - 1 && !prefersReducedMotion()) {
+          await wait(AGENT_STAGGER_MS);
+        }
+      }
+
+      return `Filled in ${fills.map((fill) => fill.label).join(', ')}.`;
+    },
+  });
 
   const toggleDocument = (value: REQUIRED_DOCUMENTS_ENUMS) => {
     const exists = selectedDocs.includes(value);

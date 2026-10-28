@@ -127,7 +127,9 @@ const normalizeName = (value: string): string => value.trim().toLowerCase().repl
  * On failure the model gets a message it can act on in the same run — search,
  * then retry — which is why this is an error result and not a silent drop.
  * On success names are replaced with the catalog's own, which is now only
- * canonicalisation: they have already been checked to agree.
+ * canonicalisation: they have already been checked to agree. Anything else on a
+ * selection — a priority, a level — is kept, and is as unchecked as any other
+ * page-action argument: the page's handler validates it.
  */
 const verifyCatalogSelections = async (
   action: AgentPageActionDefDto,
@@ -182,7 +184,13 @@ const verifyCatalogSelections = async (
     };
   }
 
-  return { ok: true, args: { ...args, selections: rows } };
+  const canonical = selections.map((item, index) => ({
+    ...(item as Record<string, unknown>),
+    id: ids[index],
+    name: nameById.get(ids[index]) as string,
+  }));
+
+  return { ok: true, args: { ...args, selections: canonical } };
 };
 
 /**

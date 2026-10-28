@@ -108,7 +108,7 @@ export default function JobInformationForm({
         : undefined,
       workingHours: {
         startTime: defaultValues?.workingHours?.startTime,
-        endTime: defaultValues?.workingHours?.startTime,
+        endTime: defaultValues?.workingHours?.endTime,
       },
       aboutUs: defaultValues?.aboutUs,
       number: defaultValues?.number,
