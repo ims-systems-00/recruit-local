@@ -56,7 +56,9 @@ const parseDate = (value: unknown): Date | undefined => {
 const endAfter = (startDate: Date, endDate?: Date) => (endDate && endDate >= startDate ? endDate : undefined);
 
 const parseEmploymentType = (value: unknown): EMPLOYMENT_TYPE | undefined => {
-  const key = asText(value)?.toLowerCase().replace(/[\s_-]+/g, "");
+  const key = asText(value)
+    ?.toLowerCase()
+    .replace(/[\s_-]+/g, "");
   return key ? EMPLOYMENT_TYPE_ALIASES[key] : undefined;
 };
 
