@@ -28,7 +28,7 @@ export default function ApplicantAvatarStack({
         <Avatar
           key={applicant._id}
           title={applicant.name}
-          className=" size-6 -ml-1.5 first:ml-0 border border-white text-body-xs"
+          className=" size-6 -ml-1.5 first:ml-0 border border-white"
         >
           {applicant.profileImage?.src && (
             <AvatarImage
@@ -36,14 +36,17 @@ export default function ApplicantAvatarStack({
               alt={applicant.name || 'Applicant'}
             />
           )}
-          <AvatarFallback>
+          {/* The fallback's own `bg-muted` is not a token here, so it would render transparent. */}
+          <AvatarFallback className=" bg-bg-brand-soft-primary text-text-brand-primary text-label-xs font-label-xs-strong!">
             {applicant.name?.charAt(0).toUpperCase() || '?'}
           </AvatarFallback>
         </Avatar>
       ))}
       {remaining > 0 && (
-        <Avatar className="-ml-1.5 size-6 bg-gray-200 border border-white text-body-xs">
-          <AvatarFallback>{formatRemaining(remaining)}</AvatarFallback>
+        <Avatar className="-ml-1.5 size-6 border border-white">
+          <AvatarFallback className=" bg-bg-gray-soft-tertiary text-text-gray-secondary text-label-xs font-label-xs-strong!">
+            {formatRemaining(remaining)}
+          </AvatarFallback>
         </Avatar>
       )}
     </div>

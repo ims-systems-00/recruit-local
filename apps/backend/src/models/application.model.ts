@@ -192,5 +192,7 @@ applicationSchema.index({ resumeId: 1 });
 applicationSchema.index({ reference: 1 });
 // Best-match-first over one job's applications, independent of board order.
 applicationSchema.index({ jobId: 1, matchScore: -1 });
+// A job's newest applications, for the employer job list's `applicantPreview`.
+applicationSchema.index({ jobId: 1, appliedAt: -1, _id: -1 });
 
 export const Application = model<IApplicationDoc, IApplicationModel>(modelNames.APPLICATION, applicationSchema);
