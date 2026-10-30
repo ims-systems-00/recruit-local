@@ -42,8 +42,8 @@ export const populateExperienceLevelQuery = (): PipelineStage[] => {
  */
 export const experienceLevelListQuerySpec: ListQuerySpec = {
   filters: {},
-  sortable: ["createdAt", "name", "updatedAt"],
-  defaultSort: "createdAt",
+  sortable: ["minYears", "createdAt", "name", "updatedAt"],
+  defaultSort: "minYears",
   // Kept from the old MongoQuery contract so no frontend call site has to change.
   searchKey: "clientSearch",
   searchFields: ["name", "description"],
