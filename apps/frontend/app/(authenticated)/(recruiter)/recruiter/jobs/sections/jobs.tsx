@@ -31,11 +31,11 @@ import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { JOBS_STATUS_ENUMS } from '@rl/types';
 import { Badge } from '@/components/ui/badge';
 import { JobData } from '@/services/jobs/job.type';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 import { TableSkeleton } from './table-skeleton';
 import Link from 'next/link';
 import JobAction from './job-action';
+import ApplicantAvatarStack from './applicant-avatar-stack';
 
 export function getJobStatusBadgeClass(status: string) {
   switch (status) {
@@ -133,20 +133,10 @@ export const userColumns: ColumnDef<JobData>[] = [
     header: 'Applicants',
     cell: ({ row }) => {
       return (
-        <div className="flex items-center">
-          {[1, 2, 3, 4].map((item) => (
-            <Avatar
-              key={item}
-              className=" size-6 -ml-1.5 first:ml-0 border border-white"
-            >
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-          ))}
-          <Avatar className="-ml-1.5 size-6 bg-gray-200 border border-white text-body-xs">
-            <AvatarFallback>+7</AvatarFallback>
-          </Avatar>
-        </div>
+        <ApplicantAvatarStack
+          applicants={row?.original?.applicantPreview}
+          total={row?.original?.totalApplications}
+        />
       );
     },
   },

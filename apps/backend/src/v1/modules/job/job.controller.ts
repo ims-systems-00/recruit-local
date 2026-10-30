@@ -159,6 +159,9 @@ export const list = async ({ req }: ControllerParams) => {
         searchVector,
         searchPreFilter: jobSearchPreFilter(req.session),
         offset,
+        // Asked of the same rules that sanitize the response, so a viewer who may
+        // not read who applied (a candidate) never has it joined in the first place.
+        withApplicantPreview: ability.can(AbilityAction.Read, JobAuthZEntity, "applicantPreview"),
       }),
 
     // Legacy `?page=` only. In search mode this counts everything matching the

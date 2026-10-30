@@ -1,5 +1,6 @@
 import {
   AdditionalQueryResponseDto,
+  JobApplicantPreviewDto,
   JobResponseDto,
   JobSkillResponseDto,
   JobValueResponseDto,
@@ -39,6 +40,17 @@ const toJobValue = (row: Record<string, unknown>): JobValueResponseDto => {
   };
 };
 
+// Built field by field rather than spread, so nothing about an applicant but
+// their profile id, name and photo URL can ride along on a job.
+const toApplicantPreview = (row: Record<string, unknown>): JobApplicantPreviewDto => {
+  const image = row.profileImage as { src?: string | null } | undefined;
+  return {
+    _id: String(row._id),
+    ...(row.name != null ? { name: String(row.name) } : {}),
+    ...(image ? { profileImage: { src: image.src ?? null } } : {}),
+  };
+};
+
 /**
  * Serializes a (possibly partial) sanitized job into its public HTTP shape.
  * stays absent. ObjectIds become strings, dates become ISO strings, and
@@ -75,6 +87,9 @@ export const toJobResponse = (doc: unknown): JobResponseDto => {
   }
   if (has(d, "values") && Array.isArray(d.values)) {
     d.values = d.values.map((row) => toJobValue(row as Record<string, unknown>));
+  }
+  if (has(d, "applicantPreview") && Array.isArray(d.applicantPreview)) {
+    d.applicantPreview = d.applicantPreview.map((row) => toApplicantPreview(row as Record<string, unknown>));
   }
 
   return d as JobResponseDto;

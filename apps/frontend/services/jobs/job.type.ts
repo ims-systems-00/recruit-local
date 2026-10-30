@@ -2,6 +2,7 @@ import { CursorPagination } from '@/types/api';
 import { DeleteMarker } from '../file-media/file-media.type';
 import {
   EMPLOYMENT_TYPE,
+  JobApplicantPreviewDto,
   JobMatchPartDto,
   JobSkillResponseDto,
   JobValueResponseDto,
@@ -48,6 +49,9 @@ export interface JobData {
   aboutUs: string;
   reference: string;
   totalApplications: number;
+  // The latest applicants, newest first, at most 4. Employer job list only —
+  // never sent to a candidate.
+  applicantPreview?: JobApplicantPreviewDto[];
 
   startDate: string; // ISO date string
   endDate: string; // ISO date string

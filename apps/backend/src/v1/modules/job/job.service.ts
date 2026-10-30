@@ -15,6 +15,7 @@ import { sanitizeQueryIds } from "../../../common/helper/sanitizeQueryIds";
 import {
   alreadyAlliped,
   alreadysaved,
+  applicantPreviewLookupQuery,
   hybridSearchStages,
   jobAttachmentsLookupQuery,
   jobProjectionQuery,
@@ -66,6 +67,7 @@ export const list = async ({
   searchVector,
   searchPreFilter,
   offset,
+  withApplicantPreview,
 }: IJobListParams) => {
   const limit = options?.limit && options.limit > 0 ? options.limit : 10;
 
@@ -113,6 +115,7 @@ export const list = async ({
     ...alreadysaved(tenantId, jobProfileId),
     ...jobSkillsLookupQuery(),
     ...jobValuesLookupQuery(),
+    ...(withApplicantPreview ? applicantPreviewLookupQuery() : []),
   ]);
 
   const mongoSession = getMongoSession(session);

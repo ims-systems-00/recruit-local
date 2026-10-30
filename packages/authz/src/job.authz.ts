@@ -71,6 +71,10 @@ export const ALL_JOB_FIELDS = [
   'keywords',
   'reference',
   'totalApplications',
+  // The job's latest few applicants (name and photo) for the avatar stack on the
+  // employer's job cards. Server-derived and read-only — absent from
+  // EMPLOYER_CREATE_FIELDS/EMPLOYER_UPDATE_FIELDS.
+  'applicantPreview',
 
   // --- Forms & Queries ---
   'formId',
@@ -153,6 +157,8 @@ const CANDIDATE_READ_FIELDS = omitFields([
   // The employer's ranking of its values. Candidates scoring their own values
   // could otherwise tune their answers to whatever a job marks Essential.
   'values.priority',
+  // Who else applied. A candidate must never see the other applicants.
+  'applicantPreview',
 ]);
 
 const EMPLOYER_UPDATE_FIELDS = [...EMPLOYER_CREATE_FIELDS, 'status'];
