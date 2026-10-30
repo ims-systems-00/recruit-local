@@ -1,11 +1,18 @@
 import { StatusCodes } from "http-status-codes";
-import { ApiResponse, BadRequestException, ControllerParams, UnauthorizedException } from "../../../common/helper";
+import {
+  ApiResponse,
+  BadRequestException,
+  ControllerParams,
+  UnauthorizedException,
+  logger,
+} from "../../../common/helper";
 import { CvAbilityBuilder, CvAuthZEntity } from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import { Types } from "mongoose";
 import * as cvService from "./cv.service";
 import * as cvExtractService from "./cv-extract.service";
 import { matchCvEntities } from "./cv-match.service";
+import { importCvIntoProfile, normalizeCvForProfile } from "./cv-profile-import";
 import { cvListQuerySpec, cvRoleScopedSecurityQuery } from "./cv.query";
 import { runCursorList } from "../../../common/query";
 import { assertCanReadJobProfile, assertProfileScopedListAccess } from "../job-profile/job-profile.access";
@@ -212,6 +219,38 @@ export const extract = async ({ req }: ControllerParams) => {
   });
 };
 
+/**
+ * Fills the candidate's empty About, experience and education from the CV.
+ * Onboarding must not stall on it, so a failure is logged and swallowed.
+ */
+const importIntoProfile = async (
+  owner: { userId: Types.ObjectId; jobProfileId: Types.ObjectId },
+  extracted: Record<string, unknown>
+) => {
+  try {
+    const data = normalizeCvForProfile(extracted);
+    const imported = await importCvIntoProfile({ ...owner, data });
+    // `found` against `imported` separates "the CV had none" from "the profile
+    // already had some", which a bare `summary: false` cannot.
+    logger.info("[extractAndCreate] Imported CV into profile", {
+      jobProfileId: String(owner.jobProfileId),
+      found: {
+        summary: !!data.summary,
+        experience: data.experience.length,
+        education: data.education.length,
+        skills: data.skills.length,
+        interests: !!data.interests,
+      },
+      imported,
+    });
+  } catch (error) {
+    logger.error("[extractAndCreate] Profile import failed", {
+      jobProfileId: String(owner.jobProfileId),
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+};
+
 export const extractAndCreate = async ({ req }: ControllerParams) => {
   const abilityBuilder = new CvAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
@@ -229,15 +268,12 @@ export const extractAndCreate = async ({ req }: ControllerParams) => {
   const rawExtracted = (await cvExtractService.extractFromResume({ resumeStorage })) as Record<string, unknown>;
   const { jobTitles: _jt, industries: _ind, workModes: _wm, experienceLevels: _el, ...extractedData } = rawExtracted;
 
+  const owner = { jobProfileId: new Types.ObjectId(jobProfileId), userId: new Types.ObjectId(userId) };
+
   const [cv, matched] = await Promise.all([
-    cvService.create({
-      payload: {
-        jobProfileId: new Types.ObjectId(jobProfileId),
-        userId: new Types.ObjectId(userId),
-        resumeStorage,
-      },
-    }),
+    cvService.create({ payload: { ...owner, resumeStorage } }),
     matchCvEntities(rawExtracted as Record<string, string[]>),
+    importIntoProfile(owner, rawExtracted),
   ]);
 
   return new ApiResponse({
