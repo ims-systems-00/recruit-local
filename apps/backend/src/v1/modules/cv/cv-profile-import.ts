@@ -88,11 +88,16 @@ const parseDate = (value: unknown): Date | undefined => {
     .replace(/\s+/g, " ");
   if (!text) return undefined;
   const parsed = moment.utc(text, DATE_FORMATS, true);
-  return parsed.isValid() ? parsed.toDate() : undefined;
+  // Noon, not midnight: the page shows dates in the viewer's time zone, and noon
+  // UTC is the same calendar day from UTC−11 to UTC+11. At midnight, "Jan 2021"
+  // reads as Dec 31, 2020 anywhere west of UTC.
+  return parsed.isValid() ? parsed.hour(12).toDate() : undefined;
 };
 
-// An end before the start is a misread; the row is kept without it.
-const endAfter = (startDate: Date, endDate?: Date) => (endDate && endDate >= startDate ? endDate : undefined);
+// An end before the start is a misread; the row is kept without it. With no
+// start there is nothing to compare, so the end stands.
+const endAfter = (startDate: Date | undefined, endDate?: Date) =>
+  endDate && (!startDate || endDate >= startDate) ? endDate : undefined;
 
 const parseEmploymentType = (value: unknown): EMPLOYMENT_TYPE | undefined => {
   const key = asText(value)
@@ -124,15 +129,14 @@ const toExperience = (row: Record<string, unknown>): IExperience | undefined => 
 const toEducation = (row: Record<string, unknown>): IEducation | undefined => {
   const institution = asText(row.institution);
   const degree = asText(row.degree);
-  const fieldOfStudy = asText(row.fieldOfStudy);
-  const startDate = parseDate(row.startDate);
   // Required by the Education model; a row without them would fail the save.
-  if (!institution || !degree || !fieldOfStudy || !startDate) return undefined;
+  if (!institution || !degree) return undefined;
 
+  const startDate = parseDate(row.startDate);
   return {
     institution,
     degree,
-    fieldOfStudy,
+    fieldOfStudy: asText(row.fieldOfStudy),
     startDate,
     // "Present" does not parse, so a course still running is left without an end.
     endDate: endAfter(startDate, parseDate(row.endDate)),
