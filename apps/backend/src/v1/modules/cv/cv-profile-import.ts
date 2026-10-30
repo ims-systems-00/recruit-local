@@ -1,8 +1,14 @@
 import moment from "moment";
 import { Types } from "mongoose";
-import { EMPLOYMENT_TYPE, IEducation, IExperience } from "@rl/types";
-import { Education, Experience, JobProfile } from "../../../models";
+import { EMPLOYMENT_TYPE, IEducation, IExperience, JOB_SKILL_LEVEL_ENUMS } from "@rl/types";
+import { Education, Experience, JobProfile, normalizeSkillName } from "../../../models";
 import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
+
+/** A skill as the CV names it, matched to a catalogue entry by name when saved. */
+export interface CvSkill {
+  name: string;
+  level: JOB_SKILL_LEVEL_ENUMS;
+}
 
 /**
  * The parts of an extracted CV that belong on the candidate's profile, in the
@@ -13,6 +19,8 @@ export interface CvProfileData {
   summary?: string;
   experience: IExperience[];
   education: IEducation[];
+  skills: CvSkill[];
+  interests?: string;
 }
 
 // Parsed strictly, so "Spring 2020" is dropped rather than guessed at. No
@@ -33,6 +41,31 @@ const EMPLOYMENT_TYPE_ALIASES: Record<string, EMPLOYMENT_TYPE> = {
   internship: EMPLOYMENT_TYPE.INTERN,
 };
 
+// The prompt asks for the catalogue's own words; the rest catch a level the CV
+// states itself and the model passes through. Anything else is intermediate.
+const SKILL_LEVEL_ALIASES: Record<string, JOB_SKILL_LEVEL_ENUMS> = {
+  beginner: JOB_SKILL_LEVEL_ENUMS.BEGINNER,
+  basic: JOB_SKILL_LEVEL_ENUMS.BEGINNER,
+  elementary: JOB_SKILL_LEVEL_ENUMS.BEGINNER,
+  familiar: JOB_SKILL_LEVEL_ENUMS.BEGINNER,
+  novice: JOB_SKILL_LEVEL_ENUMS.BEGINNER,
+  intermediate: JOB_SKILL_LEVEL_ENUMS.INTERMEDIATE,
+  competent: JOB_SKILL_LEVEL_ENUMS.INTERMEDIATE,
+  good: JOB_SKILL_LEVEL_ENUMS.INTERMEDIATE,
+  moderate: JOB_SKILL_LEVEL_ENUMS.INTERMEDIATE,
+  advanced: JOB_SKILL_LEVEL_ENUMS.ADVANCED,
+  expert: JOB_SKILL_LEVEL_ENUMS.ADVANCED,
+  fluent: JOB_SKILL_LEVEL_ENUMS.ADVANCED,
+  native: JOB_SKILL_LEVEL_ENUMS.ADVANCED,
+  proficient: JOB_SKILL_LEVEL_ENUMS.ADVANCED,
+};
+
+// The enum is declared lowest to highest, so its order ranks the levels.
+const SKILL_LEVEL_ORDER = Object.values(JOB_SKILL_LEVEL_ENUMS);
+
+// The most Alice may write into the field, which is the only limit it has.
+const INTERESTS_MAX_CHARS = 1000;
+
 const asText = (value: unknown): string | undefined => {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
@@ -41,6 +74,10 @@ const asText = (value: unknown): string | undefined => {
 
 const asRows = (value: unknown): Record<string, unknown>[] =>
   Array.isArray(value) ? value.filter((row): row is Record<string, unknown> => !!row && typeof row === "object") : [];
+
+// A bare "React" counts the same as { name: "React" }.
+const asNamedRows = (value: unknown) =>
+  asRows(Array.isArray(value) ? value.map((item) => (typeof item === "string" ? { name: item } : item)) : value);
 
 const parseDate = (value: unknown): Date | undefined => {
   const text = asText(value)
@@ -101,6 +138,43 @@ const toEducation = (row: Record<string, unknown>): IEducation | undefined => {
   };
 };
 
+const parseSkillLevel = (value: unknown): JOB_SKILL_LEVEL_ENUMS =>
+  SKILL_LEVEL_ALIASES[asText(value)?.toLowerCase() ?? ""] ?? JOB_SKILL_LEVEL_ENUMS.INTERMEDIATE;
+
+const toSkills = (value: unknown): CvSkill[] => {
+  const byName = new Map<string, CvSkill>();
+  for (const row of asNamedRows(value)) {
+    // "React (5 years)" -> "React": the prompt asks for bare names, this catches the rest.
+    const name = asText(row.name)?.replace(/\s*\([^)]*\)$/, "");
+    if (!name) continue;
+
+    const level = parseSkillLevel(row.proficiencyLevel);
+    const key = normalizeSkillName(name);
+    const seen = byName.get(key);
+    // Listed twice, say under "Languages" and "Tools": the higher level wins.
+    if (!seen || SKILL_LEVEL_ORDER.indexOf(level) > SKILL_LEVEL_ORDER.indexOf(seen.level)) {
+      byName.set(key, { name: seen?.name ?? name, level });
+    }
+  }
+  return [...byName.values()];
+};
+
+const toInterests = (value: unknown): string | undefined => {
+  const seen = new Set<string>();
+  let joined = "";
+  for (const row of asNamedRows(value)) {
+    const name = asText(row.name);
+    if (!name || seen.has(name.toLowerCase())) continue;
+
+    const next = joined ? `${joined}, ${name}` : name;
+    // Whole items only: the first one that would run past the limit ends the list.
+    if (next.length > INTERESTS_MAX_CHARS) break;
+    seen.add(name.toLowerCase());
+    joined = next;
+  }
+  return joined || undefined;
+};
+
 export const normalizeCvForProfile = (extracted: Record<string, unknown>): CvProfileData => ({
   summary: asText(extracted.summary),
   experience: asRows(extracted.experience)
@@ -109,6 +183,8 @@ export const normalizeCvForProfile = (extracted: Record<string, unknown>): CvPro
   education: asRows(extracted.education)
     .map(toEducation)
     .filter((row): row is IEducation => !!row),
+  skills: toSkills(extracted.skills),
+  interests: toInterests(extracted.interests),
 });
 
 const NOT_DELETED = { "deleteMarker.status": { $ne: true } };

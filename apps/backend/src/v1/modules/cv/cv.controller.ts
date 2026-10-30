@@ -234,7 +234,13 @@ const importIntoProfile = async (
     // already had some", which a bare `summary: false` cannot.
     logger.info("[extractAndCreate] Imported CV into profile", {
       jobProfileId: String(owner.jobProfileId),
-      found: { summary: !!data.summary, experience: data.experience.length, education: data.education.length },
+      found: {
+        summary: !!data.summary,
+        experience: data.experience.length,
+        education: data.education.length,
+        skills: data.skills.length,
+        interests: !!data.interests,
+      },
       imported,
     });
   } catch (error) {
