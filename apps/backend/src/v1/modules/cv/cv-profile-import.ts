@@ -1,8 +1,10 @@
 import moment from "moment";
 import { Types } from "mongoose";
-import { EMPLOYMENT_TYPE, IEducation, IExperience, JOB_SKILL_LEVEL_ENUMS } from "@rl/types";
-import { Education, Experience, JobProfile, normalizeSkillName } from "../../../models";
+import { EMPLOYMENT_TYPE, IEducation, IExperience, JOB_SKILL_LEVEL_ENUMS, PROFILE_SKILLS_MAX } from "@rl/types";
+import { Education, Experience, IProfileSkill, JobProfile, normalizeSkillName } from "../../../models";
 import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
+import { enqueueProfileKeywords } from "../../../queue/keywordUpdateQueue";
+import * as skillCatalogService from "../skill-catalog/skill-catalog.service";
 
 /** A skill as the CV names it, matched to a catalogue entry by name when saved. */
 export interface CvSkill {
@@ -189,6 +191,30 @@ export const normalizeCvForProfile = (extracted: Record<string, unknown>): CvPro
 
 const NOT_DELETED = { "deleteMarker.status": { $ne: true } };
 
+// Missing, null or blank text.
+const BLANK_TEXT = { $not: /\S/ };
+
+// Missing, null or an empty list. A profile still holding the old free-text
+// skills string matches neither, so it is left alone.
+const NO_SKILLS = { $or: [{ skills: null }, { skills: { $size: 0 } }] };
+
+/**
+ * Only CV skills already in the catalogue: candidates cannot add entries. Kept
+ * in the CV's order and cut to the profile's limit after matching, so a skill
+ * the catalogue lacks never takes the place of one it has.
+ */
+const toProfileSkills = async (skills: CvSkill[]): Promise<IProfileSkill[]> => {
+  if (!skills.length) return [];
+  const entries = await skillCatalogService.findActiveByNames(skills.map(({ name }) => name));
+  const idByName = new Map(entries.map(({ _id, normalizedName }) => [normalizedName, _id]));
+  return skills
+    .flatMap(({ name, level }) => {
+      const skill = idByName.get(normalizeSkillName(name));
+      return skill ? [{ skill, level }] : [];
+    })
+    .slice(0, PROFILE_SKILLS_MAX);
+};
+
 /**
  * Fills the profile's empty sections from a CV, never overwriting what the
  * candidate already has. Each section is filled only while it is empty, so a
@@ -205,15 +231,16 @@ export const importCvIntoProfile = async ({
   data: CvProfileData;
 }) => {
   const owner = { userId, jobProfileId };
+  // The emptiness check sits in the filter, so it and the write are one step.
+  const fillProfile = (empty: object, set: object) =>
+    JobProfile.updateOne({ _id: jobProfileId, userId, ...empty }, { $set: set });
 
-  const [summaryResult, hasExperience, hasEducation] = await Promise.all([
-    data.summary
-      ? JobProfile.updateOne(
-          // `$not: /\S/` matches a summary that is missing, null or blank.
-          { _id: jobProfileId, userId, summary: { $not: /\S/ } },
-          { $set: { summary: data.summary } }
-        )
-      : null,
+  const skills = await toProfileSkills(data.skills);
+
+  const [summaryResult, skillsResult, interestsResult, hasExperience, hasEducation] = await Promise.all([
+    data.summary ? fillProfile({ summary: BLANK_TEXT }, { summary: data.summary }) : null,
+    skills.length ? fillProfile(NO_SKILLS, { skills }) : null,
+    data.interests ? fillProfile({ interests: BLANK_TEXT }, { interests: data.interests }) : null,
     Experience.exists({ ...owner, ...NOT_DELETED }),
     Education.exists({ ...owner, ...NOT_DELETED }),
   ]);
@@ -231,10 +258,14 @@ export const importCvIntoProfile = async ({
     summary: !!summaryResult?.modifiedCount,
     experience: experience.length,
     education: education.length,
+    skills: skillsResult?.modifiedCount ? skills.length : 0,
+    interests: !!interestsResult?.modifiedCount,
   };
 
   // Once for the whole import, rather than once per row as the row services do.
-  if (imported.summary || imported.experience || imported.education) await enqueueProfileCompletion(userId);
+  if (Object.values(imported).some(Boolean)) await enqueueProfileCompletion(userId);
+  // Match keywords are built from a profile's skills and interests, among others.
+  if (imported.skills || imported.interests) await enqueueProfileKeywords(jobProfileId);
 
   return imported;
 };

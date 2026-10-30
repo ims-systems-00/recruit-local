@@ -1,5 +1,6 @@
+import { Types } from "mongoose";
 import { IListParams, ListQueryParams } from "@rl/types";
-import { SkillCatalogInput, SkillCatalog, Job, JobProfile } from "../../../models";
+import { SkillCatalogInput, SkillCatalog, Job, JobProfile, normalizeSkillName } from "../../../models";
 import { ConflictException, NotFoundException } from "../../../common/helper";
 import {
   matchQuery,
@@ -90,6 +91,20 @@ export const findActiveByIds = (ids: string[]) =>
   SkillCatalog.find({ _id: { $in: ids }, isActive: true, "deleteMarker.status": { $ne: true } })
     .select("_id name")
     .lean();
+
+/**
+ * The live, active entries named one of `names`, compared the way the catalogue
+ * compares names: case and spacing aside, but otherwise exact, so "Java" never
+ * finds "JavaScript".
+ */
+export const findActiveByNames = (names: string[]) =>
+  SkillCatalog.find({
+    normalizedName: { $in: names.map(normalizeSkillName) },
+    isActive: true,
+    "deleteMarker.status": { $ne: true },
+  })
+    .select("_id normalizedName")
+    .lean<{ _id: Types.ObjectId; normalizedName: string }[]>();
 
 export const create = (payload: SkillCatalogInput) =>
   withDuplicateNameAsConflict(() => new SkillCatalog(payload).save());
