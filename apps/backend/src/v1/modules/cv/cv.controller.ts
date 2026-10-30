@@ -228,10 +228,14 @@ const importIntoProfile = async (
   extracted: Record<string, unknown>
 ) => {
   try {
-    const imported = await importCvIntoProfile({ ...owner, data: normalizeCvForProfile(extracted) });
+    const data = normalizeCvForProfile(extracted);
+    const imported = await importCvIntoProfile({ ...owner, data });
+    // `found` against `imported` separates "the CV had none" from "the profile
+    // already had some", which a bare `summary: false` cannot.
     logger.info("[extractAndCreate] Imported CV into profile", {
       jobProfileId: String(owner.jobProfileId),
-      ...imported,
+      found: { summary: !!data.summary, experience: data.experience.length, education: data.education.length },
+      imported,
     });
   } catch (error) {
     logger.error("[extractAndCreate] Profile import failed", {
