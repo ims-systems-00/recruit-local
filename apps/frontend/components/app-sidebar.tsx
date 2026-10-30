@@ -180,7 +180,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter className=" gap-spacing-2xl p-spacing-0 pb-spacing-sm">
-        <NavProjects items={footerNavs} />
+        {/* <NavProjects items={footerNavs} /> */}
+        <NavProjects items={[]} />
         <NavUser />
       </SidebarFooter>
       <SidebarRail />

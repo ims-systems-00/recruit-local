@@ -50,11 +50,11 @@ export default async function JobDetailsPage({ params }: PageProps) {
       component: <Applicants jobId={jobData._id} jobTitle={jobData.title} />,
     },
 
-    {
-      value: 'interview-schedule',
-      label: 'Interview Schedule',
-      component: <InterviewSchedule />,
-    },
+    // {
+    //   value: 'interview-schedule',
+    //   label: 'Interview Schedule',
+    //   component: <InterviewSchedule />,
+    // },
   ];
 
   return (

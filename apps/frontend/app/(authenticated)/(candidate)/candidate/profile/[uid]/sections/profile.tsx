@@ -214,13 +214,13 @@ export default function Profile({
       ),
       editable: false,
     },
-    {
-      value: 'taken-tests',
-      label: 'Taken Tests',
-      component: <TakenTests />,
-      editable: false,
-      hideForAnotherUser: true,
-    },
+    // {
+    //   value: 'taken-tests',
+    //   label: 'Taken Tests',
+    //   component: <TakenTests />,
+    //   editable: false,
+    //   hideForAnotherUser: true,
+    // },
 
     {
       value: 'applied',
