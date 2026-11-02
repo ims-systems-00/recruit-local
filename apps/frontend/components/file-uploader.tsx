@@ -5,6 +5,7 @@ import {
   useDropzone,
   type Accept,
   type DropzoneRootProps,
+  type FileRejection,
 } from 'react-dropzone';
 
 import { useDirectUpload, useGetUploadUrl } from '@/services/file-storage';
@@ -44,6 +45,17 @@ type FileUploaderProps = {
    * Default: PRIVATE
    */
   storageType?: VISIBILITY_ENUM;
+
+  /**
+   * Largest file accepted, in bytes. Checked before uploading.
+   * Default: no limit
+   */
+  maxSize?: number;
+
+  /**
+   * Files refused for their type or size; they are never uploaded.
+   */
+  onReject?: (rejections: FileRejection[]) => void;
 };
 
 export default function FileUploader({
@@ -52,6 +64,8 @@ export default function FileUploader({
   multiple = false,
   enableDropzone = false,
   storageType = VISIBILITY_ENUM.PRIVATE,
+  maxSize,
+  onReject,
   accept = {
     'image/*': ['.jpg', '.jpeg', '.png', '.svg', '.webp'],
   },
@@ -88,6 +102,9 @@ export default function FileUploader({
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
+      // Every file was rejected; `onReject` has them.
+      if (!acceptedFiles.length) return;
+
       setLoading(true);
 
       try {
@@ -103,8 +120,10 @@ export default function FileUploader({
 
   const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected: onReject,
     multiple,
     accept,
+    maxSize,
 
     // We always open manually.
     noClick: true,

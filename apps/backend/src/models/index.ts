@@ -16,6 +16,7 @@ export * from "./response-template.model";
 export * from "./job-profile.model";
 export * from "./education.model";
 export * from "./certification.model";
+export * from "./training.model";
 export * from "./experience.model";
 export * from "./skill.model";
 export * from "./interest.model";
