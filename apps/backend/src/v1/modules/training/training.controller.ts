@@ -80,6 +80,34 @@ export const get = async ({ req }: ControllerParams) => {
   });
 };
 
+/**
+ * Signed links to the certificate and its preview. Gated exactly like `get`, plus
+ * the `certificate` field itself: whoever may see the training's certificate may
+ * open it, and nobody else — unlike the generic file-storage view link.
+ */
+export const certificateUrl = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new TrainingAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  const training = await trainingService.getOne({ query: { _id: req.params.id } });
+  const authZEntity = training && new TrainingAuthZEntity(training);
+
+  if (!authZEntity || !ability.can(AbilityAction.Read, authZEntity, "certificate")) {
+    throw new UnauthorizedException("You do not have permission to view this certificate.");
+  }
+
+  if (String(training.jobProfileId) !== req.session.jobProfileId) {
+    await assertCanReadJobProfile(req.session, String(training.jobProfileId));
+  }
+
+  return new ApiResponse({
+    message: "Certificate links signed.",
+    statusCode: StatusCodes.OK,
+    data: await trainingService.signCertificate(training),
+    fieldName: "certificate",
+  });
+};
+
 export const create = async ({ req }: ControllerParams) => {
   const abilityBuilder = new TrainingAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();

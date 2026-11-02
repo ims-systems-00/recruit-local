@@ -23,8 +23,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { getSignedViewUrl, useGetViewUrl } from '@/services/file-storage';
-import { TrainingData, useSoftDeleteTraining } from '@/services/training';
+import {
+  TrainingData,
+  useSoftDeleteTraining,
+  useTrainingCertificateUrls,
+} from '@/services/training';
 
 // Dates are saved as a calendar day at UTC midnight, so the UTC year is the
 // one the candidate picked in any timezone.
@@ -51,18 +54,21 @@ const formatSkills = (skills: string[]) => {
  * The certificate's preview image. Certificates sit in private storage, so
  * the preview is shown through a short-lived signed URL.
  */
-function CertificateThumbnail({ thumbnailKey }: { thumbnailKey?: string }) {
-  const { viewUrl } = useGetViewUrl({ fileKey: thumbnailKey ?? '' });
+function CertificateThumbnail({
+  thumbnailUrl,
+}: {
+  thumbnailUrl?: string | null;
+}) {
   const [failed, setFailed] = useState(false);
 
   // No preview yet (still generating, or none made) or it failed to load.
-  if (!viewUrl || failed) {
+  if (!thumbnailUrl || failed) {
     return <FileText className="text-others-brand-dark size-6" />;
   }
 
   return (
     <Image
-      src={viewUrl}
+      src={thumbnailUrl}
       alt="Certificate preview"
       fill
       unoptimized
@@ -84,23 +90,27 @@ export default function TrainingItem({
   const [openDeleteAlertDialog, setOpenDeleteAlertDialog] = useState(false);
   const { softDeleteTraining, isLoading } = useSoftDeleteTraining();
 
-  const certificate = training.certificate;
-  const certificateKey = certificate?.storageInformation?.Key;
+  const hasCertificate = !!training.certificate?.storageInformation?.Key;
   const skillNames = (training.skills ?? []).map((skill) => skill.name);
   const skillsSummary = formatSkills(skillNames);
 
+  // Links are signed by the training's own endpoint, which checks the viewer
+  // may read this training.
+  const { certificateUrls, refetch: refetchCertificateUrls } =
+    useTrainingCertificateUrls(training._id, hasCertificate);
+
   const openCertificate = async () => {
-    if (!certificateKey) return;
     // Opened before the await: Safari blocks a tab opened after one.
     const tab = window.open('', '_blank');
     if (tab) tab.opener = null;
 
-    const response = await getSignedViewUrl({ fileKey: certificateKey });
-    if (response.success && tab) {
-      tab.location.href = response.data;
+    // Fetched fresh, so a page left open past the links' expiry still works.
+    const { data, error } = await refetchCertificateUrls();
+    if (data?.url && tab) {
+      tab.location.href = data.url;
     } else {
       tab?.close();
-      toast.error(response.message || 'Could not open the certificate');
+      toast.error(error?.message || 'Could not open the certificate');
     }
   };
 
@@ -109,7 +119,7 @@ export default function TrainingItem({
       <div className="bg-bg-gray-soft-primary rounded-2xl border border-border-gray-secondary shadow-xs p-spacing-4xl">
         <div className=" flex justify-between items-start gap-spacing-4xl">
           <div className=" flex flex-col sm:flex-row gap-spacing-2xs sm:gap-spacing-2xl min-w-0">
-            {certificateKey ? (
+            {hasCertificate ? (
               <button
                 type="button"
                 onClick={openCertificate}
@@ -117,7 +127,7 @@ export default function TrainingItem({
                 className=" relative shrink-0 w-18 h-13 overflow-hidden rounded-lg bg-others-brand-brand-zero border border-others-brand-light flex items-center justify-center cursor-pointer"
               >
                 <CertificateThumbnail
-                  thumbnailKey={certificate?.thumbnail?.Key}
+                  thumbnailUrl={certificateUrls?.thumbnailUrl}
                 />
               </button>
             ) : (

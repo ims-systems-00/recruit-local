@@ -9,6 +9,8 @@ import {
   TrainingListBackendResponse,
   TrainingItemBackendResponse,
   TrainingListFilters,
+  TrainingCertificateUrls,
+  TrainingCertificateUrlsBackendResponse,
 } from './training.type';
 import { ApiResponse } from '@/types/api';
 import {
@@ -72,6 +74,28 @@ export async function getTrainingById(
     };
   } catch (error) {
     return handleServerError(error, 'Failed to fetch training');
+  }
+}
+
+// Certificates sit in private storage; the backend signs links only for
+// someone allowed to read the training.
+export async function getTrainingCertificateUrls(
+  id: string,
+): Promise<ApiResponse<TrainingCertificateUrls>> {
+  try {
+    await trainingIdParamsSchema.validate({ id });
+
+    const res = await axiosServer.get<TrainingCertificateUrlsBackendResponse>(
+      `${API_ENDPOINT}/${id}/certificate-url`,
+    );
+
+    return {
+      success: true,
+      data: res.data.certificate,
+      message: res.data.message,
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to open the certificate');
   }
 }
 

@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import {
   getTrainings,
   getTrainingById,
+  getTrainingCertificateUrls,
   createTraining,
   updateTraining,
   softDeleteTraining,
@@ -23,6 +24,7 @@ import type {
   TrainingData,
   TrainingListResponse,
   TrainingListFilters,
+  TrainingCertificateUrls,
 } from './training.type';
 
 const errorMessage = (error: unknown, fallback: string) =>
@@ -36,6 +38,8 @@ export const trainingKeys = {
     [...trainingKeys.lists(), filters] as const,
   details: () => [...trainingKeys.all, 'detail'] as const,
   detail: (id: string) => [...trainingKeys.details(), id] as const,
+  certificate: (id: string) =>
+    [...trainingKeys.detail(id), 'certificate'] as const,
 };
 
 // Hook to fetch list of trainings with cursor-based infinite scroll
@@ -87,6 +91,28 @@ export function useTraining(id: string) {
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,
+    refetch: query.refetch,
+  };
+}
+
+// Hook to fetch signed links to a training's certificate and preview
+export function useTrainingCertificateUrls(id: string, enabled = true) {
+  const query = useQuery<TrainingCertificateUrls, Error>({
+    queryKey: trainingKeys.certificate(id),
+    queryFn: async () => {
+      const response = await getTrainingCertificateUrls(id);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+    enabled: enabled && !!id,
+  });
+
+  return {
+    certificateUrls: query.data,
+    isLoading: query.isLoading,
+    isError: query.isError,
     refetch: query.refetch,
   };
 }

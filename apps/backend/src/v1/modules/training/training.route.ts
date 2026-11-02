@@ -1,6 +1,6 @@
 import express from "express";
 
-import { list, get, create, update, softRemove, hardRemove, restore } from "./training.controller";
+import { list, get, certificateUrl, create, update, softRemove, hardRemove, restore } from "./training.controller";
 import { handleController } from "../../../common/helper";
 import { parseBody, validate, validateQuery } from "../../../common/middlewares";
 import { createBodySchema, updateBodySchema, idParamsSchema, listQuerySchema } from "./training.validation";
@@ -12,6 +12,7 @@ const validateParams = validate("params");
 // Bodies use `parseBody`: the schemas trim text and drop an enrolled training's end date.
 router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
+router.get("/:id/certificate-url", validateParams(idParamsSchema), handleController(certificateUrl));
 router.post("/", parseBody(createBodySchema), handleController(create));
 router.put("/:id", validateParams(idParamsSchema), parseBody(updateBodySchema), handleController(update));
 router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemove));

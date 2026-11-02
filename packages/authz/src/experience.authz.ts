@@ -114,10 +114,15 @@ export class ExperienceAbilityBuilder implements IAbilityBuilder {
 
     // --- Candidate (owns their experience records via jobProfileId) ---
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+      // Scoped like the rules below: a candidate adds experience to their own
+      // profile only, never to one named in someone else's request body.
       builder.can(
         AbilityAction.Create,
         ExperienceAuthZEntity,
         CANDIDATE_CREATE_FIELDS,
+        {
+          jobProfileId: this.session.jobProfileId,
+        },
       );
 
       builder.can(AbilityAction.Read, ExperienceAuthZEntity, READ_FIELDS, {

@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { ApiResponse, ControllerParams } from "../../../common/helper";
+import { ApiResponse, ControllerParams, ForbiddenException } from "../../../common/helper";
 import { S3Client } from "@aws-sdk/client-s3";
 import { FileManager } from "../../../common/helper/file-manager";
 
@@ -23,7 +23,8 @@ export const getSignedUrlForUpload = async ({ req }: ControllerParams) => {
   }
 
   const fileManager = new FileManager(s3Client);
-  const results = await fileManager.getSignedUrlForUpload(filename!, bucket!);
+  // Stored under the uploader's id, so the view link below can tell whose file a key is.
+  const results = await fileManager.getSignedUrlForUpload(filename!, bucket!, String(req.session.user?._id));
   const viewSrc = baseUrl ? baseUrl + results.metaInfo.Key : null;
 
   return new ApiResponse({
@@ -33,8 +34,18 @@ export const getSignedUrlForUpload = async ({ req }: ControllerParams) => {
     fieldName: "fileStorage",
   });
 };
+/**
+ * Signs a view link for one of the caller's own uploads only — any key they
+ * name would otherwise let them read anyone's private file. A file that belongs
+ * to a record is opened through that record's endpoint instead (a training's
+ * `certificate-url`), which checks who may read the record.
+ */
 export const getSignedUrlForView = async ({ req }: ControllerParams) => {
   const filekey = req.header("x-file-key");
+  if (!filekey || !filekey.startsWith(`${req.session.user?._id}/`)) {
+    throw new ForbiddenException("You can only view files you uploaded.");
+  }
+
   const fileManager = new FileManager(s3Client);
   const results = await fileManager.getSignedUrlForView({
     Key: filekey!,

@@ -103,8 +103,10 @@ export const create = async ({ req }: ControllerParams) => {
   const abilityBuilder = new CvAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
-  if (!ability.can(AbilityAction.Create, CvAuthZEntity)) {
-    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create a CV.`);
+  // Row-level: against the profile named in the body. Unlike the other profile
+  // modules there is no field-level check here to catch someone else's profile.
+  if (!ability.can(AbilityAction.Create, new CvAuthZEntity(req.body))) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create a CV on this profile.`);
   }
 
   const userId = req.session.user?._id;

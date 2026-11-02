@@ -57,3 +57,18 @@ export type TrainingListResponse = {
   docs: TrainingData[];
   pagination: CursorPagination;
 };
+
+/**
+ * Short-lived signed links to a training's certificate and its preview image.
+ * `thumbnailUrl` is null until the preview has been generated.
+ */
+export type TrainingCertificateUrls = {
+  url: string;
+  thumbnailUrl: string | null;
+};
+
+export type TrainingCertificateUrlsBackendResponse = {
+  success: boolean;
+  certificate: TrainingCertificateUrls;
+  message?: string;
+};

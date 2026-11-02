@@ -14,7 +14,11 @@ import { AwsStorageTemplate } from "../../../models/templates/aws-storage.templa
 import * as FileMediaService from "../file-media/file-media.service";
 import * as skillCatalogService from "../skill-catalog/skill-catalog.service";
 import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
+import { s3Client } from "../../../.config/s3.config";
+import { FileInformation, FileManager } from "../../../common/helper/file-manager";
 import { populateTrainingCertificateQuery, populateTrainingSkillsQuery, trainingProjectQuery } from "./training.query";
+
+const fileManager = new FileManager(s3Client);
 
 type IListTrainingParams = IListParams<TrainingInput> & { offset?: number };
 type ITrainingQueryParams = ListQueryParams<TrainingInput>;
@@ -52,15 +56,39 @@ const assertSkillsAvailable = async (skills: unknown[] = [], keep: string[] = []
   }
 };
 
+// PRIVATE: the upload lands in the private bucket, so a public `src` URL would
+// point at a file that is not there. It is opened through `signCertificate`.
 const createCertificate = (trainingId: Types.ObjectId, storage: AwsStorageTemplate) =>
   FileMediaService.create({
     payload: {
       collectionName: modelNames.TRAINING,
       collectionDocument: trainingId,
       storageInformation: storage,
-      visibility: VISIBILITY_ENUM.PUBLIC,
+      visibility: VISIBILITY_ENUM.PRIVATE,
     },
   });
+
+type CertificateFiles = { storageInformation?: FileInformation; thumbnail?: FileInformation } | null;
+
+const signFile = async (file?: FileInformation) =>
+  file?.Bucket && file.Key ? (await fileManager.getSignedUrlForView(file)).signedUrl : null;
+
+/**
+ * Short-lived links to a training's certificate and its preview image. Both sit
+ * in private storage, so this is the way to open them; the caller checks that
+ * the training may be read first. `thumbnailUrl` is null until the preview has
+ * been generated.
+ */
+export const signCertificate = async (training: { certificate?: CertificateFiles }) => {
+  const certificate = training.certificate;
+  if (!certificate?.storageInformation?.Key) throw new NotFoundException("This training has no certificate.");
+
+  const [url, thumbnailUrl] = await Promise.all([
+    signFile(certificate.storageInformation),
+    signFile(certificate.thumbnail),
+  ]);
+  return { url, thumbnailUrl };
+};
 
 // Runs after the training itself is saved or deleted, so a failed cleanup is
 // logged rather than failing the request.
