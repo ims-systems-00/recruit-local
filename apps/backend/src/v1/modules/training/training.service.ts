@@ -13,6 +13,7 @@ import { modelNames } from "../../../models/constants";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 import * as FileMediaService from "../file-media/file-media.service";
 import * as skillCatalogService from "../skill-catalog/skill-catalog.service";
+import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 import { populateTrainingCertificateQuery, populateTrainingSkillsQuery, trainingProjectQuery } from "./training.query";
 
 type IListTrainingParams = IListParams<TrainingInput> & { offset?: number };
@@ -133,6 +134,10 @@ export const create = async ({ payload }: { payload: WithCertificate<TrainingInp
   });
   await training.save();
 
+  // Having a training counts toward profile completion. Only create, soft
+  // delete and restore change whether the candidate has one; edits do not.
+  await enqueueProfileCompletion(training.userId);
+
   // Read back through the same stages as every other read, so the response
   // carries skill names and the certificate rather than bare ids.
   return getOne({ query: { _id: String(trainingId) } });
@@ -175,7 +180,9 @@ export const update = async ({
 export const softRemove = async ({ query }: { query: ITrainingQueryParams }) => {
   const { deleted } = await Training.softDelete(sanitizeQueryIds(query));
   if (!deleted) throw new NotFoundException("Training not found to delete.");
-  return getOneSoftDeleted({ query });
+  const result = await getOneSoftDeleted({ query });
+  await enqueueProfileCompletion(result?.userId);
+  return result;
 };
 
 export const hardRemove = async ({ query }: { query: ITrainingQueryParams }) => {
@@ -189,5 +196,7 @@ export const hardRemove = async ({ query }: { query: ITrainingQueryParams }) => 
 export const restore = async ({ query }: { query: ITrainingQueryParams }) => {
   const { restored } = await Training.restore(sanitizeQueryIds(query));
   if (!restored) throw new NotFoundException("Training not found in trash.");
-  return getOne({ query });
+  const result = await getOne({ query });
+  await enqueueProfileCompletion(result?.userId);
+  return result;
 };

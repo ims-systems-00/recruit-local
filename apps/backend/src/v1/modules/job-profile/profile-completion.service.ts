@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { JobProfile, Experience, Education, Skill, Certification, CV } from "../../../models";
+import { JobProfile, Experience, Education, Skill, Certification, Training, CV } from "../../../models";
 import { PROFILE_COMPLETION_SECTIONS, CV_STATUS_ENUM, StoredCompletion } from "@rl/types";
 import { computeCompletion } from "@rl/utils";
 
@@ -13,7 +13,7 @@ const filledRef = (v: unknown): boolean => v != null && String(v).trim().length 
  * Recompute and persist the completion of a candidate's job profile.
  *
  * Completion spans the JobProfile document, the user's photo, and several
- * related collections (experience/education/skills/certifications/CV), so this
+ * related collections (experience/education/skills/certifications/trainings/CV), so this
  * is the single place those inputs are gathered. It is called synchronously by
  * the job-profile service on its own writes, and asynchronously (via
  * profileCompletionUpdateQueue) when a related record changes.
@@ -31,11 +31,12 @@ export const recomputeProfileCompletion = async (userId: string | Types.ObjectId
   // Active (not soft-deleted) records owned by this user.
   const activeFilter = { userId: uid, "deleteMarker.status": { $ne: true } };
 
-  const [experienceCount, educationCount, skillCount, certificationCount, cvDoc] = await Promise.all([
+  const [experienceCount, educationCount, skillCount, certificationCount, trainingCount, cvDoc] = await Promise.all([
     Experience.countDocuments(activeFilter),
     Education.countDocuments(activeFilter),
     Skill.countDocuments(activeFilter),
     Certification.countDocuments(activeFilter),
+    Training.countDocuments(activeFilter),
     CV.findOne({
       ...activeFilter,
       $or: [{ status: CV_STATUS_ENUM.PUBLISHED }, { resumeId: { $ne: null } }],
@@ -60,7 +61,8 @@ export const recomputeProfileCompletion = async (userId: string | Types.ObjectId
     // assistant's add_skills tool still writes — whichever source has more.
     skills: Math.max(skillCount, countArr(jobProfile.skills)) >= 3,
     cv: Boolean(cvDoc),
-    certifications: certificationCount > 0,
+    // One "Certifications & trainings" item: either kind of record ticks it.
+    certifications: certificationCount > 0 || trainingCount > 0,
     profileValues: filledArr(jobProfile.values),
     languages: filledArr(jobProfile.languages),
   };

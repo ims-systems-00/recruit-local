@@ -83,11 +83,13 @@ export const PROFILE_COMPLETION_SECTIONS: CompletionSection[] = [
   { key: "education", label: "Education", weight: 10, fields: [{ key: "education", label: "Education" }] },
   { key: "skills", label: "Skills", weight: 10, fields: [{ key: "skills", label: "Skills" }] },
   { key: "cv", label: "CV / résumé", weight: 10, fields: [{ key: "cv", label: "CV / résumé" }] },
+  // Ticked by a certification or a training. The key stays "certifications" so
+  // completions already stored keep scoring the same.
   {
     key: "certifications",
-    label: "Certifications",
+    label: "Certifications & trainings",
     weight: 5,
-    fields: [{ key: "certifications", label: "Certifications" }],
+    fields: [{ key: "certifications", label: "Certifications & trainings" }],
   },
   { key: "values", label: "Values", weight: 5, fields: [{ key: "profileValues", label: "Values" }] },
   { key: "languages", label: "Languages", weight: 5, fields: [{ key: "languages", label: "Languages" }] },
