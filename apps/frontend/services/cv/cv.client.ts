@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import {
   getCvs,
   getCvById,
+  getCvResumeUrls,
   createCv,
   updateCv,
   softDeleteCv,
@@ -29,6 +30,7 @@ import type {
   CvListCursorFilters,
   ExtractAndCreateCvInput,
   CvExtractionData,
+  CvResumeUrls,
 } from './cv.type';
 import { experienceLevelKeys } from '../experience-level/experience-level.client';
 
@@ -41,6 +43,7 @@ export const cvKeys = {
   list: (filters: CvListFilters) => [...cvKeys.lists(), filters] as const,
   details: () => [...cvKeys.all, 'detail'] as const,
   detail: (id: string) => [...cvKeys.details(), id] as const,
+  resume: (id: string) => [...cvKeys.detail(id), 'resume'] as const,
 };
 
 export function useCvs(filters: CvListFilters = {}) {
@@ -80,6 +83,26 @@ export function useCv(id: string) {
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,
+    refetch: query.refetch,
+  };
+}
+
+// Signed links to a CV's resume file and its preview image.
+export function useCvResumeUrls(id: string, enabled = true) {
+  const query = useQuery<CvResumeUrls, Error>({
+    queryKey: cvKeys.resume(id),
+    queryFn: async () => {
+      const response = await getCvResumeUrls(id);
+      if (!response.success) throw new Error(response.message);
+      return response.data as CvResumeUrls;
+    },
+    enabled: enabled && !!id,
+  });
+
+  return {
+    resumeUrls: query.data,
+    isLoading: query.isLoading,
+    isError: query.isError,
     refetch: query.refetch,
   };
 }
