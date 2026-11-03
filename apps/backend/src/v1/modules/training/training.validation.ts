@@ -56,7 +56,8 @@ export const updateBodySchema = Joi.object({
       otherwise: Joi.date(),
     }),
   }).label("End Date"),
-  certificateStorage: awsStorageSchema.optional().label("Certificate File Data"),
+  // A new upload replaces the certificate; null removes it; absent keeps it.
+  certificateStorage: awsStorageSchema.allow(null).optional().label("Certificate File Data"),
 });
 
 export const idParamsSchema = Joi.object({

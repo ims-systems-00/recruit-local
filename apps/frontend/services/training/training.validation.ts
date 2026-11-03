@@ -93,7 +93,8 @@ export const trainingUpdateSchema = yup.object({
   isCurrentlyEnrolled: yup.boolean().optional(),
   startDate: yup.string().optional(),
   endDate: endDateSchema(false),
-  certificateStorage: awsStorageSchema.optional(),
+  // A new upload replaces the certificate; null removes it; absent keeps it.
+  certificateStorage: awsStorageSchema.nullable().optional(),
 });
 
 export const trainingIdParamsSchema = yup.object({

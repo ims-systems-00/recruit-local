@@ -181,7 +181,7 @@ Content-Type: application/json
 }
 
 ### attach a certificate — upload via /file-storage first and paste its Name/Bucket/Key
-### expect: `certificate.src` in the GET below
+### expect: `certificate` in the GET below; open it via certificate-url
 PUT {{host}}/trainings/{{trainingId}}
 x-auth-access-token: {{token}}
 Content-Type: application/json
@@ -193,6 +193,19 @@ Content-Type: application/json
 ### read one
 GET {{host}}/trainings/{{trainingId}}
 x-auth-access-token: {{token}}
+
+### signed links to the certificate and its preview
+GET {{host}}/trainings/{{trainingId}}/certificate-url
+x-auth-access-token: {{token}}
+
+### remove the certificate -> 200, `certificateId: null`; certificate-url then 404
+PUT {{host}}/trainings/{{trainingId}}
+x-auth-access-token: {{token}}
+Content-Type: application/json
+
+{
+  "certificateStorage": null
+}
 
 ###############################################################################
 # Delete / restore

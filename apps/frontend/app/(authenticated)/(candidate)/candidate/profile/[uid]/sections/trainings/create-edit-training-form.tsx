@@ -190,7 +190,16 @@ export default function CreateEditTrainingForm({
   const isCurrentlyEnrolled = watch('isCurrentlyEnrolled');
   const startDate = watch('startDate');
   const uploadedCertificate = watch('certificateStorage');
-  const savedCertificate = defaultValues?.certificate?.storageInformation;
+  // Removing the saved certificate only takes it off the form; Save sends the
+  // removal, so closing without saving keeps it.
+  const [isSavedCertificateRemoved, setIsSavedCertificateRemoved] =
+    useState(false);
+  const savedCertificate = isSavedCertificateRemoved
+    ? undefined
+    : defaultValues?.certificate?.storageInformation;
+  // Save waits for the certificate: sent mid-upload, the training would be
+  // saved without it.
+  const [isUploadingCertificate, setIsUploadingCertificate] = useState(false);
   const isSaving = isCreatingTraining || isUpdatingTraining;
 
   const close = () => {
@@ -199,13 +208,20 @@ export default function CreateEditTrainingForm({
   };
 
   const onSubmit = async (data: TrainingFormValues) => {
+    // Enter in a text field submits even with Save disabled.
+    if (isUploadingCertificate) return;
+
     // The form holds picked entries for the chips; the API takes their ids.
     const payload = { ...data, skills: data.skills.map((skill) => skill._id) };
 
     if (defaultValues?._id) {
       await updateTraining({
         id: defaultValues._id,
-        payload,
+        // null removes the saved certificate; a new upload replaces it anyway.
+        payload:
+          isSavedCertificateRemoved && !data.certificateStorage
+            ? { ...payload, certificateStorage: null }
+            : payload,
         onSuccessCallback: close,
       });
     } else {
@@ -216,8 +232,8 @@ export default function CreateEditTrainingForm({
     }
   };
 
-  // Only a file uploaded in this form is deleted from storage; a saved
-  // certificate is replaced by uploading a new one.
+  // Only a file uploaded in this form is deleted from storage straight away; a
+  // saved certificate is removed by the server when the training is saved.
   const removeUploadedCertificate = async (file: UploadedFile) => {
     const res = await deleteFile({ fileKey: file.Key });
     if (res?.success) {
@@ -400,6 +416,7 @@ export default function CreateEditTrainingForm({
                   }
                   accept={CERTIFICATE_ACCEPT}
                   maxSize={CERTIFICATE_MAX_BYTES}
+                  onUploadingChange={setIsUploadingCertificate}
                 >
                   {({ open, disabled, loading }) => (
                     <div className="flex items-center justify-between gap-spacing-lg p-spacing-lg rounded-lg border border-border-gray-primary shadow-xs">
@@ -446,8 +463,7 @@ export default function CreateEditTrainingForm({
                           Key: savedCertificate.Key,
                         }}
                         isDeleting={false}
-                        onDelete={() => undefined}
-                        isViewing
+                        onDelete={() => setIsSavedCertificateRemoved(true)}
                       />
                       <p className="text-label-xs text-text-gray-tertiary">
                         Uploading a new file replaces this certificate.
@@ -471,10 +487,14 @@ export default function CreateEditTrainingForm({
             </Button>
             <Button
               type="submit"
-              disabled={isSaving || isDeletingFile}
+              disabled={isSaving || isDeletingFile || isUploadingCertificate}
               className=" cursor-pointer bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"
             >
-              {isSaving ? 'Saving...' : 'Save'}
+              {isUploadingCertificate
+                ? 'Uploading...'
+                : isSaving
+                  ? 'Saving...'
+                  : 'Save'}
             </Button>
           </div>
         </div>

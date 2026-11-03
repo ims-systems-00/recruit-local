@@ -8,7 +8,7 @@ import {
   toCursorPage,
 } from "../../../common/query";
 import { BadRequestException, NotFoundException, logger, sanitizeQueryIds } from "../../../common/helper";
-import { Training, TrainingInput } from "../../../models";
+import { FileMedia, Training, TrainingInput } from "../../../models";
 import { modelNames } from "../../../models/constants";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 import * as FileMediaService from "../file-media/file-media.service";
@@ -25,7 +25,8 @@ type ITrainingQueryParams = ListQueryParams<TrainingInput>;
 
 // `certificateStorage` is the uploaded file's S3 location; it becomes a FileMedia
 // and only its id is stored on the training.
-type WithCertificate<T> = T & { certificateStorage?: AwsStorageTemplate };
+// On update, null removes the certificate.
+type WithCertificate<T> = T & { certificateStorage?: AwsStorageTemplate | null };
 
 const readStages = () => [
   ...trainingProjectQuery(),
@@ -53,6 +54,28 @@ const assertSkillsAvailable = async (skills: unknown[] = [], keep: string[] = []
     throw new BadRequestException(
       `These skills are not in the skill catalogue or are no longer available: ${unavailable.join(", ")}`
     );
+  }
+};
+
+/**
+ * The date rules create enforces in Joi, applied to the training as it will be
+ * after an edit — saved values merged with the changes. Joi alone can only
+ * compare dates sent in the same request, so an edit sending just an end date,
+ * or un-ticking "currently enrolled", would otherwise go unchecked.
+ */
+const assertDatesAfterUpdate = (
+  existing: Pick<TrainingInput, "isCurrentlyEnrolled" | "startDate" | "endDate">,
+  changes: Partial<TrainingInput>
+) => {
+  const isCurrentlyEnrolled = changes.isCurrentlyEnrolled ?? existing.isCurrentlyEnrolled;
+  if (isCurrentlyEnrolled) return;
+
+  const startDate = changes.startDate ?? existing.startDate;
+  const endDate = changes.endDate ?? existing.endDate;
+
+  if (!endDate) throw new BadRequestException("End Date is required unless currently enrolled.");
+  if (new Date(endDate) < new Date(startDate)) {
+    throw new BadRequestException("End Date must be on or after the Start Date");
   }
 };
 
@@ -88,6 +111,21 @@ export const signCertificate = async (training: { certificate?: CertificateFiles
     signFile(certificate.thumbnail),
   ]);
   return { url, thumbnailUrl };
+};
+
+/**
+ * Undoes the certificate record made for a write that then failed, so no record
+ * is left pointing at a training that was never saved. Only the record: the
+ * uploaded file stays, because the form still holds it and sends it again on a
+ * retry — `FileMediaService.hardDelete` would delete the file too.
+ */
+const discardCertificateRecord = async (certificate: { _id: unknown } | null) => {
+  if (!certificate) return;
+  try {
+    await FileMedia.deleteOne({ _id: certificate._id });
+  } catch (error) {
+    logger.error(`Failed to discard certificate record ${certificate._id}`, error);
+  }
 };
 
 // Runs after the training itself is saved or deleted, so a failed cleanup is
@@ -160,7 +198,12 @@ export const create = async ({ payload }: { payload: WithCertificate<TrainingInp
     _id: trainingId,
     certificateId: certificate?._id ?? null,
   });
-  await training.save();
+  try {
+    await training.save();
+  } catch (error) {
+    await discardCertificateRecord(certificate);
+    throw error;
+  }
 
   // Having a training counts toward profile completion. Only create, soft
   // delete and restore change whether the candidate has one; edits do not.
@@ -183,25 +226,42 @@ export const update = async ({
 
   const existingSkillIds = (existing.skills ?? []).map((skill: { _id: unknown }) => String(skill._id));
   await assertSkillsAvailable(changes.skills, existingSkillIds);
+  // Before the certificate is stored, so a rejected edit leaves no file behind.
+  assertDatesAfterUpdate(existing, changes);
 
   // An enrolled training has no end date: clear the stored one, not just any in this request.
   const clearEndDate = changes.isCurrentlyEnrolled === true;
   if (clearEndDate) delete changes.endDate;
 
   const certificate = certificateStorage ? await createCertificate(existing._id, certificateStorage) : null;
+  const removeCertificate = certificateStorage === null;
 
-  const updatedTraining = await Training.findOneAndUpdate(
-    { _id: existing._id },
-    {
-      $set: { ...changes, ...(certificate && { certificateId: certificate._id }) },
-      ...(clearEndDate && { $unset: { endDate: 1 } }),
-    },
-    { new: true }
-  );
-  if (!updatedTraining) throw new NotFoundException("Training not found.");
+  let updatedTraining;
+  try {
+    updatedTraining = await Training.findOneAndUpdate(
+      { _id: existing._id },
+      {
+        $set: {
+          ...changes,
+          ...(certificate && { certificateId: certificate._id }),
+          ...(removeCertificate && { certificateId: null }),
+        },
+        ...(clearEndDate && { $unset: { endDate: 1 } }),
+      },
+      { new: true }
+    );
+  } catch (error) {
+    await discardCertificateRecord(certificate);
+    throw error;
+  }
+  if (!updatedTraining) {
+    await discardCertificateRecord(certificate);
+    throw new NotFoundException("Training not found.");
+  }
 
-  // Only once the training points at the new file is the old one safe to delete.
-  if (certificate) await deleteCertificate(existing.certificateId);
+  // Only once the training points at the new file (or at none) is the old one
+  // safe to delete.
+  if (certificate || removeCertificate) await deleteCertificate(existing.certificateId);
   return getOne({ query: { _id: String(existing._id) } });
 };
 

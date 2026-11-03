@@ -1,5 +1,5 @@
 import { IListParams, VISIBILITY_ENUM } from "@rl/types";
-import { CertificationInput, Certification } from "../../../models";
+import { CertificationInput, Certification, FileMedia } from "../../../models";
 import { NotFoundException } from "../../../common/helper";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 import {
@@ -77,6 +77,21 @@ export const getSoftDeletedOne = async ({ query }: ICertificationGetParams) => {
   return certification[0];
 };
 
+/**
+ * Undoes the image record made for a write that then failed, so no record is
+ * left pointing at a certification that was never saved. Only the record: the
+ * uploaded file stays for a retry — `FileMediaService.hardDelete` would delete
+ * the file too.
+ */
+const discardImageRecord = async (imageId: Types.ObjectId | null) => {
+  if (!imageId) return;
+  try {
+    await FileMedia.deleteOne({ _id: imageId });
+  } catch (error) {
+    console.error(`Failed to discard image record ${imageId}`, error);
+  }
+};
+
 export const create = async ({ payload }: ICertificationCreateParams) => {
   const certificationId = new Types.ObjectId();
   let imageId = null;
@@ -102,7 +117,12 @@ export const create = async ({ payload }: ICertificationCreateParams) => {
     imageId: imageId,
   });
 
-  certification = await certification.save();
+  try {
+    certification = await certification.save();
+  } catch (error) {
+    await discardImageRecord(imageId);
+    throw error;
+  }
 
   await enqueueProfileCompletion(certification.userId);
   return certification;
@@ -113,6 +133,7 @@ export const update = async ({ query, payload }: ICertificationUpdateParams) => 
   const certification = await getOne({ query: sanitizedQuery });
 
   let updatedImageId = certification.imageId;
+  let newImageId: Types.ObjectId | null = null;
 
   if (payload.imageStorage) {
     const newFileMedia = await FileMediaService.create({
@@ -124,34 +145,44 @@ export const update = async ({ query, payload }: ICertificationUpdateParams) => 
       },
     });
 
-    updatedImageId = newFileMedia._id;
-
-    if (certification.imageId) {
-      try {
-        await FileMediaService.hardDelete({
-          query: { _id: certification.imageId.toString() },
-        });
-      } catch (error) {
-        console.error(
-          `Failed to delete old image ${certification.imageId} for Certification ${certification._id}`,
-          error
-        );
-      }
-    }
+    newImageId = newFileMedia._id as Types.ObjectId;
+    updatedImageId = newImageId;
   }
 
   const { imageStorage, ...cleanPayload } = payload;
 
-  const updatedCertification = await Certification.findOneAndUpdate(
-    { _id: certification._id },
-    {
-      $set: {
-        ...cleanPayload,
-        imageId: updatedImageId,
+  let updatedCertification;
+  try {
+    updatedCertification = await Certification.findOneAndUpdate(
+      { _id: certification._id },
+      {
+        $set: {
+          ...cleanPayload,
+          imageId: updatedImageId,
+        },
       },
-    },
-    { new: true }
-  );
+      { new: true }
+    );
+  } catch (error) {
+    await discardImageRecord(newImageId);
+    throw error;
+  }
+
+  // Only once the certification points at the new image is the old one safe to
+  // delete — deleted before the save, a failed save would leave it pointing at
+  // a missing file.
+  if (newImageId && certification.imageId) {
+    try {
+      await FileMediaService.hardDelete({
+        query: { _id: certification.imageId.toString() },
+      });
+    } catch (error) {
+      console.error(
+        `Failed to delete old image ${certification.imageId} for Certification ${certification._id}`,
+        error
+      );
+    }
+  }
 
   await enqueueProfileCompletion(updatedCertification?.userId);
   return updatedCertification;

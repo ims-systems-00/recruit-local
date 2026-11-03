@@ -56,6 +56,12 @@ type FileUploaderProps = {
    * Files refused for their type or size; they are never uploaded.
    */
   onReject?: (rejections: FileRejection[]) => void;
+
+  /**
+   * True while accepted files are uploading, false once they are done — so a
+   * form can hold its Save until the file it is about to send has arrived.
+   */
+  onUploadingChange?: (uploading: boolean) => void;
 };
 
 export default function FileUploader({
@@ -66,6 +72,7 @@ export default function FileUploader({
   storageType = VISIBILITY_ENUM.PRIVATE,
   maxSize,
   onReject,
+  onUploadingChange,
   accept = {
     'image/*': ['.jpg', '.jpeg', '.png', '.svg', '.webp'],
   },
@@ -106,6 +113,7 @@ export default function FileUploader({
       if (!acceptedFiles.length) return;
 
       setLoading(true);
+      onUploadingChange?.(true);
 
       try {
         const uploaded = await Promise.all(acceptedFiles.map(uploadAttachment));
@@ -113,9 +121,10 @@ export default function FileUploader({
         onUpload(uploaded.filter(Boolean) as UploadedFile[]);
       } finally {
         setLoading(false);
+        onUploadingChange?.(false);
       }
     },
-    [onUpload],
+    [onUpload, onUploadingChange],
   );
 
   const { getRootProps, getInputProps, open, isDragActive } = useDropzone({

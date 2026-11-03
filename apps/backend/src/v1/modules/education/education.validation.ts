@@ -17,7 +17,8 @@ export const updateBodySchema = Joi.object({
   degree: Joi.string().optional().label("Degree"),
   fieldOfStudy: Joi.string().optional().label("Field of Study"),
   startDate: Joi.date().optional().label("Start Date"),
-  endDate: Joi.date().optional().label("End Date"),
+  // null clears a saved end date: "I currently study here" ticked on an edit.
+  endDate: Joi.date().allow(null).optional().label("End Date"),
   grade: Joi.string().optional().label("Grade"),
   description: Joi.string().optional().label("Description"),
 });
