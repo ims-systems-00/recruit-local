@@ -187,25 +187,48 @@ export const update = async ({ query, payload }: IPostUpdateParams) => {
   const post = await getOne({ query: sanitizedQuery });
 
   const mediaSet: { banner?: Types.ObjectId | null; images?: Types.ObjectId[] } = {};
+  // Media this write drops. Deleted only once the post is saved: deleting a
+  // FileMedia also deletes its file from storage.
+  const removedMedia: Types.ObjectId[] = [];
+
+  // The edit forms send back every file they still show, so a file whose key is
+  // already on the post is kept as it is — re-creating it would delete the file
+  // along with the old FileMedia.
+  const keyOf = (media: unknown) => (media as { storageInformation?: { Key?: string } })?.storageInformation?.Key;
 
   // Replace the banner only when the field is part of this write (null clears it).
   if (payload.bannerStorage !== undefined) {
-    let newBanner: Types.ObjectId | null = null;
-    if (payload.bannerStorage) {
-      const media = await createPostMedia(post._id, payload.bannerStorage);
-      newBanner = media._id as Types.ObjectId;
-    }
     const oldBanner = toMediaId(post.banner);
-    if (oldBanner) await safeDeleteMedia(oldBanner);
-    mediaSet.banner = newBanner;
+    const keepsBanner = !!payload.bannerStorage && keyOf(post.banner) === payload.bannerStorage.Key;
+
+    if (!keepsBanner) {
+      let newBanner: Types.ObjectId | null = null;
+      if (payload.bannerStorage) {
+        const media = await createPostMedia(post._id, payload.bannerStorage);
+        newBanner = media._id as Types.ObjectId;
+      }
+      if (oldBanner) removedMedia.push(oldBanner);
+      mediaSet.banner = newBanner;
+    }
   }
 
-  // Replace the whole images set when new uploads are provided.
+  // The images sent are the post's full new set, in order: keep the ones it
+  // already has, add the new ones, drop the rest.
   if (payload.imagesStorage) {
-    const oldImages = (post.images ?? []).map(toMediaId).filter(Boolean) as Types.ObjectId[];
-    if (oldImages.length) await Promise.all(oldImages.map((id) => safeDeleteMedia(id)));
-    const created = await Promise.all(payload.imagesStorage.map((storage) => createPostMedia(post._id, storage)));
-    mediaSet.images = created.map((file) => file._id as Types.ObjectId);
+    const oldImages: unknown[] = post.images ?? [];
+    const existingByKey = new Map(oldImages.map((image) => [keyOf(image), toMediaId(image)]));
+    const sentKeys = new Set(payload.imagesStorage.map((storage) => storage.Key));
+
+    mediaSet.images = await Promise.all(
+      payload.imagesStorage.map(
+        async (storage) =>
+          existingByKey.get(storage.Key) ?? ((await createPostMedia(post._id, storage))._id as Types.ObjectId)
+      )
+    );
+    oldImages.forEach((image) => {
+      const id = toMediaId(image);
+      if (id && !sentKeys.has(keyOf(image) as string)) removedMedia.push(id);
+    });
   }
 
   const { bannerStorage, imagesStorage, ...cleanPayload } = payload;
@@ -217,6 +240,8 @@ export const update = async ({ query, payload }: IPostUpdateParams) => {
   );
 
   if (!updatedPost) throw new NotFoundException("Post not found.");
+
+  await Promise.all(removedMedia.map((id) => safeDeleteMedia(id)));
 
   // Re-fan-out on update: a draft flipped to LIVE (or edited text) is picked up here.
   await enqueuePostKeywords(updatedPost._id);

@@ -287,30 +287,38 @@ export const update = async ({ query, payload, session }: IJobUpdateParams) => {
   }
 
   let updatedAttachmentIds = job.attachmentIds || [];
+  // Attachments this write drops. Deleted only once the job is saved: deleting a
+  // FileMedia also deletes its file from storage.
+  let removedAttachmentIds: Types.ObjectId[] = [];
 
-  // 2. Handle Attachments (Replace logic)
+  // 2. Handle Attachments. The form sends the job's full new set, so keep the
+  // files the job already has (same key), add the new ones and drop the rest —
+  // re-creating a kept file would delete it along with its old FileMedia.
   if (payload.attachmentsStorage) {
-    // Delete old
-    if (job.attachmentIds && job.attachmentIds.length > 0) {
-      await Promise.all(
-        job.attachmentIds.map((id: Types.ObjectId) => FileMediaService.hardDelete({ query: { _id: id.toString() } }))
-      );
-    }
+    const existing: { _id: Types.ObjectId; storageInformation?: { Key?: string } }[] = job.attachments ?? [];
+    const existingByKey = new Map(existing.map((file) => [file.storageInformation?.Key, file._id]));
+    const sentKeys = new Set(payload.attachmentsStorage.map((storage) => storage.Key));
 
-    // Create new
-    const attachmentPromises = payload.attachmentsStorage.map((storage) =>
-      FileMediaService.create({
-        payload: {
-          collectionName: modelNames.JOB,
-          collectionDocument: job._id,
-          storageInformation: storage,
-          visibility: VISIBILITY_ENUM.PUBLIC,
-        },
-        // session,
-      })
+    updatedAttachmentIds = await Promise.all(
+      payload.attachmentsStorage.map(
+        async (storage) =>
+          existingByKey.get(storage.Key) ??
+          (
+            await FileMediaService.create({
+              payload: {
+                collectionName: modelNames.JOB,
+                collectionDocument: job._id,
+                storageInformation: storage,
+                visibility: VISIBILITY_ENUM.PUBLIC,
+              },
+              // session,
+            })
+          )._id
+      )
     );
-    const newAttachments = await Promise.all(attachmentPromises);
-    updatedAttachmentIds = newAttachments.map((file) => file._id);
+    removedAttachmentIds = existing
+      .filter((file) => !sentKeys.has(file.storageInformation?.Key as string))
+      .map((file) => file._id);
   }
 
   const { attachmentsStorage, autoFill, ...cleanPayload } = payload;
@@ -327,6 +335,16 @@ export const update = async ({ query, payload, session }: IJobUpdateParams) => {
   );
 
   if (!updatedJob) throw new NotFoundException("Job not found.");
+
+  // The job no longer points at these, so a failed cleanup is logged rather than
+  // failing a save that has already happened.
+  await Promise.all(
+    removedAttachmentIds.map((id) =>
+      FileMediaService.hardDelete({ query: { _id: id.toString() } }).catch((error) =>
+        console.error(`Failed to delete FileMedia ${id} for job ${job._id}`, error)
+      )
+    )
+  );
 
   await enqueueJobKeywords((updatedJob as any)._id);
   // Only a sent location can have changed; the worker skips text it has already geocoded.

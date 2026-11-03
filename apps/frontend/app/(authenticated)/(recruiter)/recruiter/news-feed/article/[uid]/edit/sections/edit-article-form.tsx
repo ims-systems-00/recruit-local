@@ -68,18 +68,30 @@ export default function EditArticleForm({ article }: { article: PostData }) {
 
   const bannerStorage = watch('bannerStorage') || null;
 
+  // The banner the article was saved with. Removing it only takes it off the
+  // form: the server deletes it when the article is saved, so leaving without
+  // saving keeps it.
+  const savedBannerKey = article.banner?.storageInformation?.Key;
+
   const handleRemoveAttachment = async (item: UploadedFile) => {
+    const clearBanner = () =>
+      setValue('bannerStorage', null as unknown as UploadedFile, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+
+    if (item.Key === savedBannerKey) {
+      clearBanner();
+      return;
+    }
+
+    // Uploaded during this edit and used nowhere else, so it is deleted now.
     try {
       const res = await deleteFile({
         fileKey: item.Key,
       });
 
-      if (res?.success) {
-        setValue('bannerStorage', null as unknown as UploadedFile, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-      }
+      if (res?.success) clearBanner();
     } catch (err) {
       console.error(err);
     }

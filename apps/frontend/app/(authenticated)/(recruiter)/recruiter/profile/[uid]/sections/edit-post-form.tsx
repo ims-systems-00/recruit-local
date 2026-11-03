@@ -89,25 +89,40 @@ export default function EditPostForm({
 
   const imagesStorage = watch('imagesStorage') || null;
 
+  // Images the post was saved with. Removing one only takes it off the form:
+  // the server deletes it when the post is saved, so closing without saving
+  // keeps it.
+  const savedImageKeys = new Set(
+    post.images?.map((image) => image.storageInformation?.Key),
+  );
+
   const handleRemoveAttachment = async (item: UploadedFile) => {
+    const removeFromForm = () => {
+      const newImagesStorage = imagesStorage?.filter(
+        (image) => image.Key !== item.Key,
+      );
+      setValue('imagesStorage', newImagesStorage, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+
+      setPreviewImages((prev) =>
+        prev.filter((image) => image.Key !== item.Key),
+      );
+    };
+
+    if (savedImageKeys.has(item.Key)) {
+      removeFromForm();
+      return;
+    }
+
+    // Uploaded during this edit and used nowhere else, so it is deleted now.
     try {
       const res = await deleteFile({
         fileKey: item.Key,
       });
 
-      if (res?.success) {
-        const newImagesStorage = imagesStorage?.filter(
-          (image) => image.Key !== item.Key,
-        );
-        setValue('imagesStorage', newImagesStorage, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-
-        setPreviewImages((prev) =>
-          prev.filter((image) => image.Key !== item.Key),
-        );
-      }
+      if (res?.success) removeFromForm();
     } catch (err) {
       console.error(err);
     }
