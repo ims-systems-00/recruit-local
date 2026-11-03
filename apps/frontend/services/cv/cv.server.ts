@@ -21,6 +21,7 @@ import type {
   CvListRequestFilters,
   ExtractAndCreateCvInput,
   CvExtractionData,
+  CvResumeUrls,
 } from './cv.type';
 
 const API_ENDPOINT = '/cvs';
@@ -78,6 +79,29 @@ export async function getCvById(id: string): Promise<CvApiResponse<Cv>> {
     };
   } catch (error) {
     return handleServerError(error, 'Failed to fetch CV details');
+  }
+}
+
+/**
+ * GET RESUME LINKS
+ * Resume files sit in private storage; the backend signs links only for
+ * someone allowed to read the CV.
+ */
+export async function getCvResumeUrls(
+  id: string,
+): Promise<CvApiResponse<CvResumeUrls>> {
+  try {
+    await idParamsSchema.validate({ id });
+
+    const res = await axiosServer.get(`${API_ENDPOINT}/${id}/resume-url`);
+
+    return {
+      success: true,
+      data: res.data.resume,
+      message: res.data.message || 'Resume links retrieved successfully',
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to open the CV');
   }
 }
 

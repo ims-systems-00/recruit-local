@@ -199,9 +199,13 @@ export default function Profile({
     {
       value: 'trainings',
       label: 'Trainings',
-      component: <Trainings />,
+      component: (
+        <Trainings
+          jobProfileId={jobProfileDetails._id}
+          isViewMode={!isAnotherUser ? false : true}
+        />
+      ),
       editable: false,
-      hideForAnotherUser: true,
     },
     {
       value: 'documents',

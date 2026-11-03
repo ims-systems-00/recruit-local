@@ -93,9 +93,11 @@ const authorize = (input: AddExperienceInput, ctx: AgentToolContext) => {
   const payload = buildPayload(input, ctx.session);
 
   // Field-level check, not just action-level: the Create rule lists the fields a
-  // candidate may set, and `userId` is not among them. Passing the payload
-  // through the same helper the REST controller uses keeps the two honest.
-  validateUpdatePayload(payload, ability, AbilityAction.Create, new ExperienceAuthZEntity(payload as any));
+  // candidate may set, and `userId` is not among them — it is stamped from the
+  // session, as the REST controller does after the same check. Checking the
+  // user's fields through the same helper keeps the two honest.
+  const { userId: _userId, ...userFields } = payload;
+  validateUpdatePayload(userFields, ability, AbilityAction.Create, new ExperienceAuthZEntity(payload as any));
 
   return { ability, payload };
 };

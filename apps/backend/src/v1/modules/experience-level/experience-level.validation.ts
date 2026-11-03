@@ -51,10 +51,13 @@ export const listQuerySchema = Joi.object({
   // caller that still sends it.
   page: Joi.any().strip(),
   limit: Joi.number().integer().min(1).max(100).default(10),
-  // `MongoQuery` passed no sort at all, so this list came back in natural order —
-  // which cursor paging cannot walk safely. Ascending `createdAt` is the seeded
-  // order, so what the dropdowns show does not change.
-  sort: Joi.string().valid("createdAt", "-createdAt", "name", "-name", "updatedAt", "-updatedAt").default("createdAt"),
+  // Ascending `minYears` lists the levels by seniority (Fresher → Executive).
+  // `createdAt` is not a usable default: the seeder inserts in parallel, so
+  // creation order is effectively random. Levels sharing a `minYears` (Lead and
+  // Manager both start at 8) fall back to the `_id` tiebreaker.
+  sort: Joi.string()
+    .valid("minYears", "-minYears", "createdAt", "-createdAt", "name", "-name", "updatedAt", "-updatedAt")
+    .default("minYears"),
 
   clientSearch: Joi.string().trim().max(200).allow(""),
   search: Joi.string().trim().max(200).allow(""),

@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { ApiResponse, ControllerParams } from "../../../common/helper";
+import { ApiResponse, ControllerParams, ForbiddenException } from "../../../common/helper";
 import { S3Client } from "@aws-sdk/client-s3";
 import { FileManager } from "../../../common/helper/file-manager";
 
@@ -10,6 +10,11 @@ const s3Client = new S3Client({
   },
   region: "eu-west-2",
 });
+
+// Uploads are stored under the uploader's id (see getSignedUrlForUpload), so a
+// key that starts with the caller's id is one of their own files.
+const isOwnUpload = (req: ControllerParams["req"], key?: string): key is string =>
+  !!key && key.startsWith(`${req.session.user?._id}/`);
 
 export const getSignedUrlForUpload = async ({ req }: ControllerParams) => {
   const filename = req.header("x-file-name");
@@ -23,7 +28,8 @@ export const getSignedUrlForUpload = async ({ req }: ControllerParams) => {
   }
 
   const fileManager = new FileManager(s3Client);
-  const results = await fileManager.getSignedUrlForUpload(filename!, bucket!);
+  // Stored under the uploader's id, so the view link below can tell whose file a key is.
+  const results = await fileManager.getSignedUrlForUpload(filename!, bucket!, String(req.session.user?._id));
   const viewSrc = baseUrl ? baseUrl + results.metaInfo.Key : null;
 
   return new ApiResponse({
@@ -33,11 +39,21 @@ export const getSignedUrlForUpload = async ({ req }: ControllerParams) => {
     fieldName: "fileStorage",
   });
 };
+/**
+ * Signs a view link for one of the caller's own uploads only — any key they
+ * name would otherwise let them read anyone's private file. A file that belongs
+ * to a record is opened through that record's endpoint instead (a training's
+ * `certificate-url`), which checks who may read the record.
+ */
 export const getSignedUrlForView = async ({ req }: ControllerParams) => {
   const filekey = req.header("x-file-key");
+  if (!isOwnUpload(req, filekey)) {
+    throw new ForbiddenException("You can only view files you uploaded.");
+  }
+
   const fileManager = new FileManager(s3Client);
   const results = await fileManager.getSignedUrlForView({
-    Key: filekey!,
+    Key: filekey,
     Bucket: process.env.AWS_PRIVATE_MEDIA_BUCKET!,
   });
   return new ApiResponse({
@@ -48,12 +64,22 @@ export const getSignedUrlForView = async ({ req }: ControllerParams) => {
   });
 };
 
+/**
+ * Deletes one of the caller's own uploads only — any key they name would
+ * otherwise let them delete anyone's private file. This is for discarding a file
+ * uploaded in a form but never saved; a file a record uses is deleted by that
+ * record's own update, when the file is removed and the record saved.
+ */
 export const deleteFile = async ({ req }: ControllerParams) => {
   const fileKey = req.header("x-file-key");
+  if (!isOwnUpload(req, fileKey)) {
+    throw new ForbiddenException("You can only delete files you uploaded.");
+  }
+
   const fileManager = new FileManager(s3Client);
 
   await fileManager.deleteFile({
-    Key: fileKey!,
+    Key: fileKey,
     Bucket: process.env.AWS_PRIVATE_MEDIA_BUCKET!,
   });
 

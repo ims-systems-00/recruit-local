@@ -53,9 +53,13 @@ const authorize = (input: AddSkillsInput, ctx: AgentToolContext) => {
   }
 
   const payloads = input.skills.map((skill) => buildPayload(skill, ctx.session));
-  payloads.forEach((payload) =>
-    validateUpdatePayload(payload, ability, AbilityAction.Create, new SkillAuthZEntity(payload as any))
-  );
+  // `userId` is stamped from the session, not set by the user, and is not a
+  // field the Create rule lets a candidate set — the REST controller adds it
+  // after this check too. Check the rest.
+  payloads.forEach((payload) => {
+    const { userId: _userId, ...userFields } = payload;
+    validateUpdatePayload(userFields, ability, AbilityAction.Create, new SkillAuthZEntity(payload as any));
+  });
 
   return { ability, payloads };
 };

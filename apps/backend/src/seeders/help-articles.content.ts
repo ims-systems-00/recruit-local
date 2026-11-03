@@ -132,7 +132,7 @@ Setup remembers where you stopped, so you can complete it across several sitting
 - **Education** — 10
 - **Skills** — 10
 - **CV / résumé** — 10
-- **Certifications** — 5
+- **Certifications & trainings** — 5 (either one counts)
 - **Values** — 5
 - **Languages** — 5
 

@@ -192,20 +192,36 @@ export default function JobDescriptionForm({
     prev(data as JobData);
   };
 
+  // Attachments the job was saved with — `attachments` from the server, not
+  // `attachmentsStorage`, which can also hold uploads not saved yet. Removing
+  // one only takes it off the form: the server deletes it when this step is
+  // saved, so leaving without saving keeps it.
+  const savedAttachmentKeys = new Set(
+    defaultValues?.attachments?.map((item) => item.storageInformation?.Key),
+  );
+
   const handleRemoveAttachment = async (item: UploadedFile) => {
+    const removeFromForm = () => {
+      const updated = attachments.filter((file) => file.Key !== item.Key);
+
+      setValue('attachmentsStorage', updated, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    };
+
+    if (savedAttachmentKeys.has(item.Key)) {
+      removeFromForm();
+      return;
+    }
+
+    // Uploaded during this edit and used nowhere else, so it is deleted now.
     try {
       const res = await deleteFile({
         fileKey: item.Key,
       });
 
-      if (res?.success) {
-        const updated = attachments.filter((file) => file.Key !== item.Key);
-
-        setValue('attachmentsStorage', updated, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-      }
+      if (res?.success) removeFromForm();
     } catch (err) {
       console.error(err);
     }

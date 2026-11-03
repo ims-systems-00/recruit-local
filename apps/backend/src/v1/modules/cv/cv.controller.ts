@@ -75,6 +75,33 @@ export const get = async ({ req }: ControllerParams) => {
   });
 };
 
+/**
+ * Signed links to the CV's resume file and its preview. Gated exactly like
+ * `get`: whoever may read the CV may open its file, and nobody else — unlike
+ * the generic file-storage view link, which only serves the caller's own uploads.
+ */
+export const resumeUrl = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new CvAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  const cv = await cvService.getOne({ query: { _id: req.params.id } });
+
+  if (!cv || !ability.can(AbilityAction.Read, new CvAuthZEntity(cv))) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to read this CV.`);
+  }
+
+  if (String(cv.jobProfileId) !== req.session.jobProfileId) {
+    await assertCanReadJobProfile(req.session, String(cv.jobProfileId));
+  }
+
+  return new ApiResponse({
+    message: "Resume links signed.",
+    statusCode: StatusCodes.OK,
+    data: await cvService.signResume(cv),
+    fieldName: "resume",
+  });
+};
+
 export const update = async ({ req }: ControllerParams) => {
   const abilityBuilder = new CvAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
@@ -103,8 +130,10 @@ export const create = async ({ req }: ControllerParams) => {
   const abilityBuilder = new CvAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();
 
-  if (!ability.can(AbilityAction.Create, CvAuthZEntity)) {
-    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create a CV.`);
+  // Row-level: against the profile named in the body. Unlike the other profile
+  // modules there is no field-level check here to catch someone else's profile.
+  if (!ability.can(AbilityAction.Create, new CvAuthZEntity(req.body))) {
+    throw new UnauthorizedException(`User ${req.session.user?._id} is not authorized to create a CV on this profile.`);
   }
 
   const userId = req.session.user?._id;

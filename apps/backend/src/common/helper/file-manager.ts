@@ -46,13 +46,17 @@ class FileManager {
     this.s3Client = s3Client;
   }
 
-  private _isValidFile(filename: string): boolean {
+  private _isValidFile(_filename: string): boolean {
     return true;
     // const validExtensions = [".jpg", ".png", ".jpeg"];
-    // return validExtensions.some((ext) => filename.endsWith(ext));
+    // return validExtensions.some((ext) => _filename.endsWith(ext));
   }
 
-  async getSignedUrlForUpload(filename: string, bucket: string): Promise<UploadUrlResponse> {
+  /**
+   * `keyPrefix` becomes the key's first segment (`<prefix>/<uuid>.<ext>`), so who
+   * a file belongs to can be read back off its key.
+   */
+  async getSignedUrlForUpload(filename: string, bucket: string, keyPrefix?: string): Promise<UploadUrlResponse> {
     if (!this._isValidFile(filename)) {
       throw new Error("A valid file name is required.");
     }
@@ -60,7 +64,8 @@ class FileManager {
     const filenameSplited = filename.split("/");
     const originalFilename = filenameSplited[filenameSplited.length - 1];
     const originalFilenameSplited = originalFilename.split(".");
-    const fileName = `${uuidv4()}.${originalFilenameSplited[originalFilenameSplited.length - 1]}`;
+    const extension = originalFilenameSplited[originalFilenameSplited.length - 1];
+    const fileName = `${keyPrefix ? `${keyPrefix}/` : ""}${uuidv4()}.${extension}`;
 
     const params = {
       Bucket: bucket,

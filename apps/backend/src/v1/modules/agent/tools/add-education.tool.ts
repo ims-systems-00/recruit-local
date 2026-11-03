@@ -67,7 +67,11 @@ const authorize = (input: AddEducationInput, ctx: AgentToolContext) => {
   }
 
   const payload = buildPayload(input, ctx.session);
-  validateUpdatePayload(payload, ability, AbilityAction.Create, new EducationAuthZEntity(payload as any));
+  // `userId` is stamped from the session, not set by the user, and is not a
+  // field the Create rule lets a candidate set — the REST controller adds it
+  // after this check too. Check the rest.
+  const { userId: _userId, ...userFields } = payload;
+  validateUpdatePayload(userFields, ability, AbilityAction.Create, new EducationAuthZEntity(payload as any));
 
   return { ability, payload };
 };

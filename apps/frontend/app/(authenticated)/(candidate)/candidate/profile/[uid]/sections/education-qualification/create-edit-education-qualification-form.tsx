@@ -70,8 +70,10 @@ export default function CreateEditEducationQualificationForm({
 
   const [openStartDate, setOpenStartDate] = useState(false);
   const [openEndDate, setOpenEndDate] = useState(false);
-  const [isCurrentWorkplace, setIsCurrentWorkplace] =
-    useState<CheckedState>(false);
+  // Saved as a start date with no end date, which the list shows as "Present".
+  const [isCurrentWorkplace, setIsCurrentWorkplace] = useState<CheckedState>(
+    isEdit && !!defaultValues?.startDate && !defaultValues?.endDate,
+  );
   const {
     register,
     control,
@@ -93,7 +95,11 @@ export default function CreateEditEducationQualificationForm({
     if (defaultValues?._id) {
       await updateEducation({
         id: defaultValues?._id || '',
-        payload: cleanPayload,
+        // Empty values are dropped above, so a saved end date has to be cleared
+        // explicitly when "I currently study here" is ticked.
+        payload: isCurrentWorkplace
+          ? { ...cleanPayload, endDate: null }
+          : cleanPayload,
         onSuccessCallback: (newData) => {
           setOpen(false);
           onClearSelectedEducation();
