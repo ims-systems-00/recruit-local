@@ -194,6 +194,15 @@ export interface JobMatchPartDto {
   percentage: number;
 }
 
+/** One of a job's latest applicants, for the avatar stack on the employer's job cards. */
+export interface JobApplicantPreviewDto {
+  /** The applicant's job profile id. */
+  _id: string;
+  name?: string;
+  /** Absent when the applicant has no photo; `src` is null when the photo is not public. */
+  profileImage?: { src: string | null };
+}
+
 /**
  * Public HTTP shape of a Job.
  *
@@ -236,6 +245,11 @@ export interface JobResponseDto {
   values?: JobValueResponseDto[];
   keywords?: string[];
   totalApplications?: number;
+  /**
+   * The job's latest applicants, newest first, at most 4. On the job list for a
+   * viewer allowed to see who applied (the employer) — never sent to a candidate.
+   */
+  applicantPreview?: JobApplicantPreviewDto[];
   boardBackground?: string;
   boardSortBy?: string;
   boardSortOrder?: 'asc' | 'desc';

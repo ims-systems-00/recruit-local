@@ -31,6 +31,17 @@ const formatDate = (date: Date) => {
   });
 };
 
+// A start with no end is "Present": that is what "I currently study here"
+// saves. An end alone is shown alone, since many CVs give only the year
+// finished. No dates at all shows nothing, rather than a made-up "Present".
+const formatDateRange = (startDate?: string, endDate?: string) => {
+  if (startDate) {
+    const end = endDate ? formatDate(new Date(endDate)) : 'Present';
+    return `${formatDate(new Date(startDate))} - ${end}`;
+  }
+  return endDate ? formatDate(new Date(endDate)) : undefined;
+};
+
 export default function WorkExperienceItem({
   education,
   onEdit,
@@ -42,6 +53,7 @@ export default function WorkExperienceItem({
 }) {
   const [openDeleteAlertDialog, setOpenDeleteAlertDialog] = useState(false);
   const { softDeleteEducation, isLoading } = useSoftDeleteEducation();
+  const dateRange = formatDateRange(education?.startDate, education?.endDate);
 
   return (
     <>
@@ -62,24 +74,23 @@ export default function WorkExperienceItem({
             </div>
             <div className=" space-y-spacing-3xs">
               <p className=" text-label-md font-label-md-strong! text-text-gray-primary">
-                {education?.degree || 'N/A'} of{' '}
-                {education?.fieldOfStudy || 'N/A'}
+                {education?.degree || 'N/A'}
+                {/* Optional: an HSC or a certificate often has no field. */}
+                {education?.fieldOfStudy && ` of ${education.fieldOfStudy}`}
               </p>
               <div className="flex items-center gap-spacing-sm">
                 <span className="text-label-sm text-text-gray-tertiary">
                   {education?.institution || 'N/A'}
                 </span>
-                <div className=" w-1.5 h-1.5 bg-fg-gray-tertiary rounded-full"></div>
+                {dateRange && (
+                  <>
+                    <div className=" w-1.5 h-1.5 bg-fg-gray-tertiary rounded-full"></div>
 
-                <span className="text-label-sm text-text-gray-tertiary">
-                  {education?.startDate
-                    ? formatDate(new Date(education?.startDate))
-                    : 'N/A'}{' '}
-                  -{' '}
-                  {education?.endDate
-                    ? formatDate(new Date(education?.endDate))
-                    : 'Present'}
-                </span>
+                    <span className="text-label-sm text-text-gray-tertiary">
+                      {dateRange}
+                    </span>
+                  </>
+                )}
               </div>
               <p className="text-label-sm text-text-gray-tertiary">
                 GPA: {education?.grade || 'N/A'}

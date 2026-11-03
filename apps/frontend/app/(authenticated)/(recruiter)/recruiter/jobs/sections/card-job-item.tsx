@@ -1,6 +1,5 @@
 'use client';
 import React, { useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { EllipsisVertical, MapPin } from 'lucide-react';
 import { JobData } from '@/services/jobs/job.type';
@@ -17,6 +16,7 @@ import Link from 'next/link';
 import { JOBS_STATUS_ENUMS } from '@rl/types';
 import { useUpdateJob } from '@/services/jobs/jobs.client';
 import JobAction from './job-action';
+import ApplicantAvatarStack from './applicant-avatar-stack';
 
 export default function CardJobItem({ job }: { job: JobData }) {
   const [jobIsOpen, setJobIsOpen] = useState(
@@ -88,23 +88,10 @@ export default function CardJobItem({ job }: { job: JobData }) {
               {job?.totalApplications || 0}
             </p>
           </div>
-          <div className="flex items-center">
-            {[1, 2, 3, 4].map((item) => (
-              <Avatar
-                key={item}
-                className=" size-6 -ml-1.5 first:ml-0 border border-white"
-              >
-                <AvatarImage
-                  src="https://github.com/shadcn.png"
-                  alt="@shadcn"
-                />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
-            ))}
-            <Avatar className="-ml-1.5 size-6 bg-gray-200 border border-white text-body-xs">
-              <AvatarFallback>+7</AvatarFallback>
-            </Avatar>
-          </div>
+          <ApplicantAvatarStack
+            applicants={job?.applicantPreview}
+            total={job?.totalApplications}
+          />
         </div>
       </div>
       <div className=" border-t border-border-gray-secondary flex justify-between items-center gap-2.5 px-spacing-4xl py-spacing-2xl">

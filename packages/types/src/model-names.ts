@@ -19,6 +19,7 @@ export const modelNames = {
   EDUCATION: 'educations',
   SKILL: 'skills',
   CERTIFICATION: 'certifications',
+  TRAINING: 'trainings',
   INTEREST: 'interests',
   JOB: 'jobs',
   CV: 'cvs',

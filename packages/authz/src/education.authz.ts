@@ -109,10 +109,15 @@ export class EducationAbilityBuilder implements IAbilityBuilder {
 
     // --- Candidate (owns their education records via jobProfileId) ---
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+      // Scoped like the rules below: a candidate adds education to their own
+      // profile only, never to one named in someone else's request body.
       builder.can(
         AbilityAction.Create,
         EducationAuthZEntity,
         CANDIDATE_CREATE_FIELDS,
+        {
+          jobProfileId: this.session.jobProfileId,
+        },
       );
 
       builder.can(AbilityAction.Read, EducationAuthZEntity, READ_FIELDS, {

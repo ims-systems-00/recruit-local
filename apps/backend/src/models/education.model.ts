@@ -22,8 +22,8 @@ const educationSchema = new Schema<IEducationDoc>(
   {
     institution: { type: String, required: true },
     degree: { type: String, required: true },
-    fieldOfStudy: { type: String, required: true },
-    startDate: { type: Date, required: true },
+    fieldOfStudy: { type: String },
+    startDate: { type: Date },
     endDate: { type: Date },
     description: { type: String },
     grade: { type: String },

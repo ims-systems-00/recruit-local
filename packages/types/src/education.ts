@@ -1,8 +1,9 @@
 export interface IEducation {
   institution: string;
   degree: string;
-  fieldOfStudy: string;
-  startDate: Date;
+  // Optional because many CVs give neither: "HSC, Dhaka College, 2014".
+  fieldOfStudy?: string;
+  startDate?: Date;
   endDate?: Date;
   description?: string;
   grade?: string;

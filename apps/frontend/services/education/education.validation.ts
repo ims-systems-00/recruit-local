@@ -18,7 +18,8 @@ export const educationUpdateSchema = yup.object({
     degree: yup.string().optional(),
     fieldOfStudy: yup.string().optional(),
     startDate: yup.string().optional(),
-    endDate: yup.string().optional(),
+    // null clears a saved end date: "I currently study here" ticked on an edit.
+    endDate: yup.string().nullable().optional(),
     grade: yup.string().optional(),
     description: yup.string().optional(),
 });

@@ -1,6 +1,17 @@
 import express from "express";
 
-import { list, get, create, update, softRemove, hardRemove, restore, extractAndCreate, extract } from "./cv.controller";
+import {
+  list,
+  get,
+  resumeUrl,
+  create,
+  update,
+  softRemove,
+  hardRemove,
+  restore,
+  extractAndCreate,
+  extract,
+} from "./cv.controller";
 import { handleController } from "../../../common/helper";
 import { validate, validateQuery } from "../../../common/middlewares";
 import {
@@ -21,6 +32,7 @@ router.post("/extract-and-create", validateBody(extractAndCreateBodySchema), han
 router.get("/extract/:id", validateParams(idParamsSchema), handleController(extract));
 router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
+router.get("/:id/resume-url", validateParams(idParamsSchema), handleController(resumeUrl));
 router.post("/", validateBody(createBodySchema), handleController(create));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));
 router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemove));

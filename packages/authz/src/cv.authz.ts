@@ -52,7 +52,11 @@ export class CvAbilityBuilder implements IAbilityBuilder {
     }
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
-      builder.can(AbilityAction.Create, CvAuthZEntity);
+      // Scoped like the rules below: a candidate creates CVs on their own
+      // profile only, never on one named in someone else's request body.
+      builder.can(AbilityAction.Create, CvAuthZEntity, {
+        jobProfileId: this.session.jobProfileId,
+      });
 
       // can read his own cvs.
       builder.can(AbilityAction.Read, CvAuthZEntity, {

@@ -1,0 +1,232 @@
+# Trainings — the same owner-scoped shape as profile-owned.http, plus the
+# create/update rules this module adds (1–15 skills, end date vs enrolled,
+# certificate upload).
+
+@host = http://localhost:9027/api/v1
+
+# Log in first — REST Client variables do not cross files, so each file does this.
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv ADMIN_USER_EMAIL}}",
+  "password": "{{$dotenv ADMIN_USER_PASSWORD}}"
+}
+
+###
+
+@token = {{login.response.body.user.accessToken}}
+# Replace with a real job profile id before running the write requests.
+@jobProfileId = 000000000000000000000000
+
+### Two skill catalogue entries for the write requests below — skills are
+### catalogue ids, not text.
+# @name catalog
+GET {{host}}/skill-catalog?limit=2
+x-auth-access-token: {{token}}
+
+###
+
+@skillA = {{catalog.response.body.skills[0]._id}}
+@skillB = {{catalog.response.body.skills[1]._id}}
+
+###############################################################################
+# List contract
+###############################################################################
+
+### unknown param -> 400
+GET {{host}}/trainings?nonsense=x
+x-auth-access-token: {{token}}
+
+### undeclared sort -> 400
+GET {{host}}/trainings?sort=-secretField
+x-auth-access-token: {{token}}
+
+### regex metacharacters are escaped, not executed -> 200
+GET {{host}}/trainings?clientSearch=(a%2B)%2B%24
+x-auth-access-token: {{token}}
+
+### search matches course and organization names (not skills — those are ids)
+GET {{host}}/trainings?jobProfileId={{jobProfileId}}&clientSearch=adobe
+x-auth-access-token: {{token}}
+
+### cursor page -> nextCursor present
+# @name firstPage
+GET {{host}}/trainings?jobProfileId={{jobProfileId}}&limit=2
+x-auth-access-token: {{token}}
+
+### follow the cursor — no row may repeat from the previous response
+GET {{host}}/trainings?jobProfileId={{jobProfileId}}&limit=2&cursor={{firstPage.response.body.pagination.nextCursor}}
+x-auth-access-token: {{token}}
+
+### unauthenticated -> 401, never a list
+GET {{host}}/trainings
+
+###############################################################################
+# Create / update rules
+###############################################################################
+
+### finished training -> 201, `skills` as [{ _id, name }] in the order sent,
+### `certificate` absent (none uploaded)
+# @name created
+POST {{host}}/trainings
+x-auth-access-token: {{token}}
+Content-Type: application/json
+
+{
+  "jobProfileId": "{{jobProfileId}}",
+  "organizationName": "Adobe",
+  "courseName": "Fundamentals of UX Design",
+  "skills": ["{{skillA}}", "{{skillB}}"],
+  "startDate": "2025-11-14",
+  "endDate": "2026-01-24"
+}
+
+###
+
+@trainingId = {{created.response.body.training._id}}
+
+### not enrolled and no end date -> 400 "End Date" is required
+POST {{host}}/trainings
+x-auth-access-token: {{token}}
+Content-Type: application/json
+
+{
+  "jobProfileId": "{{jobProfileId}}",
+  "organizationName": "Adobe",
+  "courseName": "No end date",
+  "skills": ["{{skillA}}"],
+  "startDate": "2025-11-14"
+}
+
+### end date before start date -> 400
+POST {{host}}/trainings
+x-auth-access-token: {{token}}
+Content-Type: application/json
+
+{
+  "jobProfileId": "{{jobProfileId}}",
+  "organizationName": "Adobe",
+  "courseName": "Backwards",
+  "skills": ["{{skillA}}"],
+  "startDate": "2025-11-14",
+  "endDate": "2025-01-01"
+}
+
+### 16 skills -> 400 (max 15)
+POST {{host}}/trainings
+x-auth-access-token: {{token}}
+Content-Type: application/json
+
+{
+  "jobProfileId": "{{jobProfileId}}",
+  "organizationName": "Adobe",
+  "courseName": "Too many skills",
+  "skills": ["000000000000000000000001","000000000000000000000002","000000000000000000000003","000000000000000000000004","000000000000000000000005","000000000000000000000006","000000000000000000000007","000000000000000000000008","000000000000000000000009","00000000000000000000000a","00000000000000000000000b","00000000000000000000000c","00000000000000000000000d","00000000000000000000000e","00000000000000000000000f","000000000000000000000010"],
+  "startDate": "2025-11-14",
+  "endDate": "2026-01-24"
+}
+
+### the same skill twice -> 400
+POST {{host}}/trainings
+x-auth-access-token: {{token}}
+Content-Type: application/json
+
+{
+  "jobProfileId": "{{jobProfileId}}",
+  "organizationName": "Adobe",
+  "courseName": "Dupes",
+  "skills": ["{{skillA}}", "{{skillA}}"],
+  "startDate": "2025-11-14",
+  "endDate": "2026-01-24"
+}
+
+### free-text skill -> 400, must be a catalogue id
+POST {{host}}/trainings
+x-auth-access-token: {{token}}
+Content-Type: application/json
+
+{
+  "jobProfileId": "{{jobProfileId}}",
+  "organizationName": "Adobe",
+  "courseName": "Free text",
+  "skills": ["Figma"],
+  "startDate": "2025-11-14",
+  "endDate": "2026-01-24"
+}
+
+### a client-set certificateId -> 400, only the server sets it
+POST {{host}}/trainings
+x-auth-access-token: {{token}}
+Content-Type: application/json
+
+{
+  "jobProfileId": "{{jobProfileId}}",
+  "organizationName": "Adobe",
+  "courseName": "Forged cert",
+  "skills": ["{{skillA}}"],
+  "startDate": "2025-11-14",
+  "endDate": "2026-01-24",
+  "certificateId": "000000000000000000000000"
+}
+
+### switch to currently enrolled -> 200, endDate cleared in the response
+PUT {{host}}/trainings/{{trainingId}}
+x-auth-access-token: {{token}}
+Content-Type: application/json
+
+{
+  "isCurrentlyEnrolled": true
+}
+
+### attach a certificate — upload via /file-storage first and paste its Name/Bucket/Key
+### expect: `certificate` in the GET below; open it via certificate-url
+PUT {{host}}/trainings/{{trainingId}}
+x-auth-access-token: {{token}}
+Content-Type: application/json
+
+{
+  "certificateStorage": { "Name": "certificate.pdf", "Bucket": "REPLACE", "Key": "REPLACE" }
+}
+
+### read one
+GET {{host}}/trainings/{{trainingId}}
+x-auth-access-token: {{token}}
+
+### signed links to the certificate and its preview
+GET {{host}}/trainings/{{trainingId}}/certificate-url
+x-auth-access-token: {{token}}
+
+### remove the certificate -> 200, `certificateId: null`; certificate-url then 404
+PUT {{host}}/trainings/{{trainingId}}
+x-auth-access-token: {{token}}
+Content-Type: application/json
+
+{
+  "certificateStorage": null
+}
+
+###############################################################################
+# Delete / restore
+###############################################################################
+
+### hard delete before soft delete -> 404 "not found in trash"
+DELETE {{host}}/trainings/{{trainingId}}/hard
+x-auth-access-token: {{token}}
+
+### soft delete -> 200, then GET -> 404
+DELETE {{host}}/trainings/{{trainingId}}/soft
+x-auth-access-token: {{token}}
+
+### restore -> 200
+PUT {{host}}/trainings/{{trainingId}}/restore
+x-auth-access-token: {{token}}
+
+### clean up: soft then hard delete (also removes the certificate file)
+DELETE {{host}}/trainings/{{trainingId}}/soft
+x-auth-access-token: {{token}}
+
+###
+DELETE {{host}}/trainings/{{trainingId}}/hard
+x-auth-access-token: {{token}}

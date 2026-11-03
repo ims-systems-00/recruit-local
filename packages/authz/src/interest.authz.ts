@@ -87,10 +87,15 @@ export class InterestAbilityBuilder implements IAbilityBuilder {
 
     // --- Candidate (owns their interests via jobProfileId) ---
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {
+      // Scoped like the rules below: a candidate adds interests to their own
+      // profile only, never to one named in someone else's request body.
       builder.can(
         AbilityAction.Create,
         InterestAuthZEntity,
         CANDIDATE_CREATE_FIELDS,
+        {
+          jobProfileId: this.session.jobProfileId,
+        },
       );
 
       builder.can(AbilityAction.Read, InterestAuthZEntity, READ_FIELDS, {

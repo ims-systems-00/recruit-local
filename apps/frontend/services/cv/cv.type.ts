@@ -42,6 +42,15 @@ export type CvListResponse = CursorPaginatedResponse<CvData>;
 export type CvListCursorResponse = CursorPaginatedResponse<CvData>;
 export type CvApiResponse<T> = ApiResponse<T>;
 
+/**
+ * Short-lived signed links to a CV's resume file and its preview image.
+ * `thumbnailUrl` is null until the preview has been generated.
+ */
+export type CvResumeUrls = {
+  url: string;
+  thumbnailUrl: string | null;
+};
+
 export interface Skill {
   name: string;
   proficiencyLevel: string;

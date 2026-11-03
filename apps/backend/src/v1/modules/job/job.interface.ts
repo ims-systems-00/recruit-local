@@ -34,6 +34,9 @@ export interface IJobListParams extends IServiceListParams<IJobDoc> {
   // Set only in the cursor modes that cannot key on a stored field — relevance,
   // matchScore and feedRank ordering. Plain mode narrows with a keyset $match instead.
   offset?: number;
+  // When set, jobs get an `applicantPreview` of their latest applicants. Only for
+  // a viewer allowed to see who applied — never a candidate.
+  withApplicantPreview?: boolean;
 }
 export interface IJobGetParams extends IServiceGetParams<IJobDoc> {
   tenantId?: string;

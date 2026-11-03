@@ -16,6 +16,10 @@ import * as FileMediaService from "../file-media/file-media.service";
 import { modelNames } from "../../../models/constants";
 import { VISIBILITY_ENUM } from "@rl/types";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
+import { s3Client } from "../../../.config/s3.config";
+import { FileInformation, FileManager } from "../../../common/helper/file-manager";
+
+const fileManager = new FileManager(s3Client);
 
 // --- Standardized Parameter Interfaces ---
 type IListCVParams = IListParams<CVInput> & { offset?: number };
@@ -52,6 +56,25 @@ export const list = async ({ query = {}, options, offset = 0 }: IListCVParams) =
   ]);
 
   return toCursorPage(docs, limit);
+};
+
+type ResumeFiles = { storageInformation?: FileInformation; thumbnail?: FileInformation } | null;
+
+const signFile = async (file?: FileInformation) =>
+  file?.Bucket && file.Key ? (await fileManager.getSignedUrlForView(file)).signedUrl : null;
+
+/**
+ * Short-lived links to a CV's resume file and its preview image. Both sit in
+ * private storage, so this is the way to open them; the caller checks that the
+ * CV may be read first. `thumbnailUrl` is null until the preview has been
+ * generated.
+ */
+export const signResume = async (cv: { resume?: ResumeFiles }) => {
+  const resume = cv.resume;
+  if (!resume?.storageInformation?.Key) throw new NotFoundException("This CV has no resume file.");
+
+  const [url, thumbnailUrl] = await Promise.all([signFile(resume.storageInformation), signFile(resume.thumbnail)]);
+  return { url, thumbnailUrl };
 };
 
 export const getOne = async ({ query = {} }: ICVGetParams) => {
@@ -120,7 +143,8 @@ export const create = async ({ payload }: ICVCreateParams) => {
         collectionName: modelNames.CV,
         collectionDocument: cvId,
         storageInformation: payload.resumeStorage,
-        visibility: VISIBILITY_ENUM.PUBLIC,
+        // The file is in the private bucket; it is opened through `signResume`.
+        visibility: VISIBILITY_ENUM.PRIVATE,
       },
     });
     resumeId = fileMedia._id;
@@ -179,7 +203,8 @@ export const update = async ({ query, payload }: ICVUpdateParams) => {
         collectionName: modelNames.CV,
         collectionDocument: cv._id,
         storageInformation: payload.resumeStorage,
-        visibility: VISIBILITY_ENUM.PUBLIC,
+        // The file is in the private bucket; it is opened through `signResume`.
+        visibility: VISIBILITY_ENUM.PRIVATE,
       },
     });
 

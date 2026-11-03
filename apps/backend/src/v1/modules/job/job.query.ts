@@ -10,6 +10,8 @@ import {
   oneOf,
   range,
   catalogueRowsLookupQuery,
+  excludeDeletedQuery,
+  populateFileMediaQuery,
 } from "../../../common/query";
 import { omit } from "lodash";
 import { IJobDoc, Job } from "../../../models";
@@ -91,6 +93,54 @@ export const jobSkillsLookupQuery = (): PipelineStage[] =>
 /** `values[].value` -> `{ _id, label, type }`, keeping each row's `priority`. `weight` is added by the DTO. */
 export const jobValuesLookupQuery = (): PipelineStage[] =>
   catalogueRowsLookupQuery({ field: "values", key: "value", from: modelNames.VALUE, project: { label: 1, type: 1 } });
+
+/** How many applicants an employer's job card shows before collapsing the rest into "+N". */
+export const APPLICANT_PREVIEW_LIMIT = 4;
+
+/**
+ * `applicantPreview` — the job's latest applicants, newest first, each as its job
+ * profile's `{ _id, name, profileImage?: { src } }`. Feeds the avatar stack on the
+ * employer's job cards; the card's "+N" is `totalApplications` minus these.
+ *
+ * Who applied is the employer's to see, never another candidate's: the service
+ * only adds this when asked, and CASL strips the field for candidates on top of
+ * that. Withdrawn (soft-deleted) applications and deleted profiles are left out.
+ * `src` is null for a photo that is not public — the card shows an initial.
+ *
+ * Belongs after the page's `$limit`, so it joins only the jobs being returned.
+ */
+export const applicantPreviewLookupQuery = (limit = APPLICANT_PREVIEW_LIMIT): PipelineStage[] => [
+  {
+    $lookup: {
+      from: modelNames.APPLICATION,
+      localField: "_id",
+      foreignField: "jobId",
+      pipeline: [
+        ...excludeDeletedQuery(),
+        { $sort: { appliedAt: -1, _id: -1 } },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: modelNames.JOB_PROFILE,
+            localField: "jobProfileId",
+            foreignField: "_id",
+            pipeline: [
+              ...excludeDeletedQuery(),
+              { $project: { name: 1, profileImageId: 1 } },
+              ...populateFileMediaQuery("profileImageId", "profileImage"),
+              { $project: { name: 1, "profileImage.src": 1 } },
+            ] as PipelineStage.Lookup["$lookup"]["pipeline"],
+            as: "jobProfile",
+          },
+        },
+        // An application whose profile is gone has no one to show.
+        { $unwind: "$jobProfile" },
+        { $replaceWith: "$jobProfile" },
+      ] as PipelineStage.Lookup["$lookup"]["pipeline"],
+      as: "applicantPreview",
+    },
+  },
+];
 
 export const alreadyAlliped = (jobProfileId?: string): PipelineStage[] => {
   if (!jobProfileId || !Types.ObjectId.isValid(jobProfileId)) {
