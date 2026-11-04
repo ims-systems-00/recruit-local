@@ -36,6 +36,19 @@ export type ApplicationListFilters = {
 export type ApplicationListResponse = CursorPaginatedResponse<Application>;
 export type ApplicationApiResponse<T> = ApiResponse<T>;
 
+/** A short-lived link that downloads one of the application's files by its name. */
+export type ApplicationFileLink = {
+  _id: string;
+  name: string;
+  url: string;
+};
+
+/** Download links for an application's CV and case studies. */
+export type ApplicationFiles = {
+  resume: ApplicationFileLink | null;
+  caseStudies: ApplicationFileLink[];
+};
+
 // --- JOB OVERVIEW ---
 export type {
   JobOverviewRange,

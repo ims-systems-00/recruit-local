@@ -20,6 +20,7 @@ import type {
   MoveApplicationToColumnInput,
   JobOverview,
   JobOverviewFilters,
+  ApplicationFiles,
 } from './application.type';
 
 const API_ENDPOINT = '/applications';
@@ -81,6 +82,29 @@ export async function getApplicationById(
     };
   } catch (error) {
     return handleServerError(error, 'Failed to fetch application details');
+  }
+}
+
+/**
+ * GET APPLICATION FILE LINKS
+ * The CV and case studies sit in private storage; the backend signs download
+ * links only for someone allowed to read the application.
+ */
+export async function getApplicationFiles(
+  id: string,
+): Promise<ApplicationApiResponse<ApplicationFiles>> {
+  try {
+    await idParamsSchema.validate({ id });
+
+    const res = await axiosServer.get(`${API_ENDPOINT}/${id}/files`);
+
+    return {
+      success: true,
+      data: res.data.files,
+      message: res.data.message || 'Application files retrieved successfully',
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to download the file');
   }
 }
 
