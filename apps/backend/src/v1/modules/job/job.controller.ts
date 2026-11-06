@@ -1,5 +1,11 @@
 import { StatusCodes } from "http-status-codes";
-import { ApiResponse, ControllerParams, NotFoundException, UnauthorizedException } from "../../../common/helper";
+import {
+  ApiResponse,
+  ControllerParams,
+  ForbiddenException,
+  NotFoundException,
+  UnauthorizedException,
+} from "../../../common/helper";
 import * as jobService from "./job.service";
 import { getProfileKeywords } from "./keyword.service";
 import { JobAbilityBuilder, JobAuthZEntity, ALL_JOB_FIELDS } from "@rl/authz";
@@ -18,6 +24,8 @@ import { readFeedIds } from "./feed.service";
 import { assertJobSkills, assertJobValues } from "./job.assertions";
 import { computeJobMatch, computeJobMatchBreakdown } from "./match/job-match";
 import { loadMatchProfile } from "./match/profile.service";
+import { buildJobCopy } from "./job.duplicate";
+import type { IJobInput } from "../../../models/job.model";
 import pick from "lodash/pick";
 
 const PUBLIC_JOB_FIELDS = [
@@ -274,6 +282,52 @@ export const create = async ({ req }: ControllerParams) => {
 
   return new ApiResponse({
     message: "Job created successfully.",
+    statusCode: StatusCodes.CREATED,
+    data: toJobResponse(getSanitizedJobResponse(job, ability)),
+    fieldName: "job",
+  });
+};
+
+/**
+ * Copies a job into the caller's organisation as a new draft: one of their own
+ * jobs, or another organisation's open job. What is copied is decided by
+ * `buildJobCopy`, never by the request, which has no body.
+ */
+export const duplicate = async ({ req }: ControllerParams) => {
+  const ability = new JobAbilityBuilder(req.session).getAbility();
+
+  // A platform admin's `manage` covers Duplicate, but a copy needs an
+  // organisation to belong to.
+  const tenantId = req.session.tenantId;
+  if (!tenantId) {
+    throw new ForbiddenException("You need an organisation to copy a job into.");
+  }
+
+  const source = await jobService.getOne({ query: { _id: req.params.id } });
+
+  // The same "not found" getOne gives, so another organisation's draft or closed
+  // job cannot be told apart from one that does not exist.
+  if (!ability.can(AbilityAction.Duplicate, new JobAuthZEntity(source))) {
+    throw new NotFoundException("Job not found.");
+  }
+
+  const copy = await buildJobCopy({ source, ability, tenantId });
+
+  // buildJobCopy keeps only active skills and values, which is all the skill
+  // check tests on a draft. The value check also caps values per type.
+  await assertJobValues({ values: copy.values, publishing: false });
+
+  // A draft with no end date, so there is no expiry to schedule. Nor is it sent
+  // to the salary queue, which would count the original's salary a second time.
+  //
+  // TenantInput types `tenantId` as a schema type rather than an id. Mongoose
+  // casts the string on save, as it does for `create`'s untyped request body.
+  const job = await jobService.create({
+    payload: { ...copy, tenantId: tenantId as unknown as IJobInput["tenantId"] },
+  });
+
+  return new ApiResponse({
+    message: "Job copied to your organisation as a draft.",
     statusCode: StatusCodes.CREATED,
     data: toJobResponse(getSanitizedJobResponse(job, ability)),
     fieldName: "job",

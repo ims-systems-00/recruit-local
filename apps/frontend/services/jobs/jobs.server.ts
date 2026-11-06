@@ -41,6 +41,28 @@ export async function createJob(data: { title: string }): Promise<ApiResponse> {
   }
 }
 
+/**
+ * Copies a job into the caller's organisation as a new draft. There is no
+ * body: the server decides what is copied.
+ */
+export async function duplicateJob(id: string): Promise<ApiResponse<JobData>> {
+  try {
+    await jobIdParamsSchema.validate({ id });
+
+    const res = await axiosServer.post<JobItemBackendResponse>(
+      `${API_ENDPOINT}/${id}/duplicate`,
+    );
+
+    return {
+      success: true,
+      data: res.data.job,
+      message: res.data.message || 'Job copied',
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to copy job');
+  }
+}
+
 export async function getJobs(
   params?: JobListFilters,
 ): Promise<ApiResponse<JobListResponse>> {

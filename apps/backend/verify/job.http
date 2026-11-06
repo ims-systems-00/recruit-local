@@ -169,3 +169,93 @@ GET {{host}}/public/jobs?limit=5
 
 ### public list still accepts legacy paging too
 GET {{host}}/public/jobs?page=1&limit=5
+
+###############################################################################
+# Duplicate — POST /jobs/:id/duplicate
+#
+# Copies a job into the caller's organisation as a new draft: one of its own
+# jobs, or another organisation's OPEN job. Needs an EMPLOYER with an
+# organisation, so this section logs in as one (the admin above has none).
+#
+# The two 201 requests WRITE draft jobs (and their kanban columns) into the
+# shared dev database. The clean-up requests at the end remove them.
+#
+# Fill these in before running:
+@employerEmail = replace-with-an-employer@example.com
+@employerPassword = replace-me
+# another organisation's open job, another organisation's draft, one of the employer's own jobs
+@otherOpenJobId = 000000000000000000000000
+@otherDraftJobId = 000000000000000000000000
+@ownJobId = 000000000000000000000000
+###############################################################################
+
+# @name employerLogin
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{employerEmail}}",
+  "password": "{{employerPassword}}"
+}
+
+###
+
+@employerToken = {{employerLogin.response.body.user.accessToken}}
+
+### admin, who has no organisation -> 403 "You need an organisation to copy a job into."
+POST {{host}}/jobs/{{otherOpenJobId}}/duplicate
+x-auth-access-token: {{token}}
+
+### malformed id -> 400 from idParamsSchema
+POST {{host}}/jobs/nope/duplicate
+x-auth-access-token: {{employerToken}}
+
+### no such job -> 404 "Job not found."
+POST {{host}}/jobs/65a0000000000000000000ab/duplicate
+x-auth-access-token: {{employerToken}}
+
+### another organisation's draft -> the SAME 404, so it gives away nothing
+POST {{host}}/jobs/{{otherDraftJobId}}/duplicate
+x-auth-access-token: {{employerToken}}
+
+### another organisation's open job -> 201
+# @name copiedOther
+POST {{host}}/jobs/{{otherOpenJobId}}/duplicate
+x-auth-access-token: {{employerToken}}
+### expect on .job:
+###   status "draft", tenantId = the employer's organisation (not the source's)
+###   no endDate, no attachments
+###   email / number / aboutUs = the employer's organisation's, or absent
+###   additionalQueries without expectedAnswer, every values[].priority "important"
+###   skills and values: the source's, minus any no longer active in the catalogue
+
+### the copy opens like any of the employer's jobs
+GET {{host}}/jobs/{{copiedOther.response.body.job._id}}
+x-auth-access-token: {{employerToken}}
+
+### one of the employer's own jobs -> 201, and this time the expected answers,
+### value priorities and contact details are kept
+# @name copiedOwn
+POST {{host}}/jobs/{{ownJobId}}/duplicate
+x-auth-access-token: {{employerToken}}
+
+### My Jobs still lists only the employer's own organisation
+GET {{host}}/jobs?limit=50
+x-auth-access-token: {{employerToken}}
+### expect: every .jobs[].tenantId is the employer's organisation
+
+### clean up: a job is hard-deleted from the trash, so soft-delete first
+DELETE {{host}}/jobs/{{copiedOther.response.body.job._id}}/soft
+x-auth-access-token: {{employerToken}}
+
+###
+DELETE {{host}}/jobs/{{copiedOther.response.body.job._id}}/hard
+x-auth-access-token: {{employerToken}}
+
+###
+DELETE {{host}}/jobs/{{copiedOwn.response.body.job._id}}/soft
+x-auth-access-token: {{employerToken}}
+
+###
+DELETE {{host}}/jobs/{{copiedOwn.response.body.job._id}}/hard
+x-auth-access-token: {{employerToken}}

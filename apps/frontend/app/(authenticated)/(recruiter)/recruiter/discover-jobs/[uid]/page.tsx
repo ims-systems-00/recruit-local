@@ -6,13 +6,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { getJobById } from '@/services/jobs/jobs.server';
+import { getPublicJobById } from '@/services/jobs/jobs.server';
 import { formatDate } from '@/lib/utils';
 import JobDescription from './job-description/job-description';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Bookmark, Pointer, Share2 } from 'lucide-react';
 import BookmarkButton from './job-description/bookmark-button';
+import CopyJobButton from './job-description/copy-job-button';
 
 type PageProps = {
   params: Promise<{ uid: string }>;
@@ -21,7 +22,9 @@ type PageProps = {
 export default async function JobDetailsPage({ params }: PageProps) {
   const { uid } = await params;
 
-  const response = await getJobById(uid);
+  // The public read, so another organisation's open job opens here too. An
+  // employer's `/jobs/:id` refuses any job outside their own organisation.
+  const response = await getPublicJobById(uid);
 
   if (!response.success) {
     return <div>Failed to load job</div>;
@@ -69,6 +72,7 @@ export default async function JobDetailsPage({ params }: PageProps) {
                 <span>Apply to this job</span>
               </Button>
             </Link> */}
+            <CopyJobButton jobId={uid} />
             <BookmarkButton jobData={jobData} />
             <Button className="cursor-pointer w-9! p-spacing-0! bg-bg-gray-soft-primary hover:bg-bg-gray-soft-primary hover:border border-border-gray-primary h-9 text-text-gray-secondary! rounded-lg text-label-sm font-label-sm-strong!">
               <Share2 />
