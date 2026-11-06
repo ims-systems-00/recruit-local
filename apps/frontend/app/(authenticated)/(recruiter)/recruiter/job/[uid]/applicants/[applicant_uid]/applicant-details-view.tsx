@@ -512,7 +512,7 @@ export default function ApplicantDetailsView({
               {applicantValues.length > 0 ? (
                 <>
                   {/* Matching Values Legend */}
-                  <p className="flex items-center gap-spacing-sm text-label-sm text-text-gray-tertiary">
+                  <p className=" py-spacing-2xs px-spacing-lg border border-border-gray-primary rounded-lg  flex items-center gap-spacing-sm text-label-sm text-text-gray-tertiary">
                     <span className="size-2 rounded-full bg-bg-brand-solid-primary shrink-0" />
                     Pink dots mark the values this job is looking for.
                     Percentages are the applicant&apos;s assessment scores.
@@ -538,11 +538,12 @@ export default function ApplicantDetailsView({
                               {category.name}
                             </h5>
                             {/* Only where the job lists values of this type. */}
-                            {category.percentage != null && (
-                              <span className="px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong! text-text-brand-primary bg-bg-brand-soft-primary">
-                                {formatMatchPercent(category.percentage)} match
-                              </span>
-                            )}
+                            {/* {category.percentage != null && ( */}
+                            <span className="px-spacing-md py-spacing-3xs rounded-md text-label-xs font-label-xs-strong! text-text-brand-primary bg-bg-brand-soft-primary">
+                              {formatMatchPercent(category.percentage || 0)}{' '}
+                              match
+                            </span>
+                            {/* )} */}
                           </div>
 
                           {category.values.length > 0 ? (
@@ -556,11 +557,12 @@ export default function ApplicantDetailsView({
                                     <span className="size-1.5 rounded-full bg-bg-brand-solid-primary shrink-0" />
                                   )}
                                   {v.label}
-                                  {v.score !== undefined && (
-                                    <span className="text-text-brand-primary">
-                                      {v.score}%
-                                    </span>
-                                  )}
+                                  {/* {v.score !== undefined && ( */}
+
+                                  <span className="text-others-gray-dark">
+                                    : {v.score || 0}%
+                                  </span>
+                                  {/* )} */}
                                 </span>
                               ))}
                             </div>
@@ -598,13 +600,12 @@ export default function ApplicantDetailsView({
                 )}
               </div>
 
-              {hasMatchedSkills && (
-                <p className="flex items-center gap-spacing-sm text-label-sm text-text-gray-tertiary">
-                  <span className="size-2 rounded-full bg-bg-brand-solid-primary shrink-0" />
-                  Pink dots mark skills that meet this job&apos;s required
-                  level.
-                </p>
-              )}
+              {/* {hasMatchedSkills && ( */}
+              <p className="py-spacing-2xs px-spacing-lg border border-border-gray-primary rounded-lg flex items-center gap-spacing-sm text-label-sm text-text-gray-tertiary">
+                <span className="size-2 rounded-full bg-bg-brand-solid-primary shrink-0" />
+                Pink dots mark skills that meet this job&apos;s required level.
+              </p>
+              {/* )} */}
 
               {applicantSkills.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-xl">

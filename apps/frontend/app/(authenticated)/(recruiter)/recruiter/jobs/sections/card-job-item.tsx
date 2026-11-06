@@ -59,9 +59,11 @@ export default function CardJobItem({ job }: { job: JobData }) {
           </Badge>
 
           <div className=" space-y-spacing-2xs">
-            <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
-              {job?.title || 'N/A'}
-            </h4>
+            <Link href={`/recruiter/job/${job?._id}`}>
+              <h4 className=" text-label-lg font-label-lg-strong! text-text-gray-primary">
+                {job?.title || 'N/A'}
+              </h4>
+            </Link>
             <div className=" flex flex-col sm:flex-row items-start sm:items-center gap-spacing-xs">
               <div className="flex items-center gap-spacing-2xs text-text-gray-tertiary">
                 <MapPin className=" text-fg-gray-tertiary size-4" />
