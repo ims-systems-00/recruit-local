@@ -314,6 +314,37 @@ export default function ApplicantDetailsView({
           </div>
 
           <div className="shrink-0 w-full sm:w-auto">
+            <Link
+              target="_blank"
+              href={`/candidate/profile/${applicationData?.jobProfileId}`}
+              className=" border border-border-gray-primary bg-bg-gray-soft-primary flex items-center justify-center gap-spacing-2xs w-full sm:w-auto cursor-pointer  h-10 px-spacing-2xl rounded-lg text-label-sm font-label-sm-strong! text-text-gray-secondary transition-colors"
+            >
+              View Profile
+              <span>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12.5 6.25H18.125V11.875"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    stroke="#364153"
+                  />
+                  <path
+                    d="M1.875 7.5L9.375 15L18.125 6.25"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    stroke="#364153"
+                  />
+                </svg>
+              </span>
+            </Link>
             {/* <Button
               type="button"
               onClick={() => toast.success('Interview invitation sent!')}
