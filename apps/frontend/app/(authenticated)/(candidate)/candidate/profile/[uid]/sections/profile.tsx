@@ -41,6 +41,7 @@ import { Switch } from '@/components/ui/switch';
 import Saves from './saved/saves';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import ImportCvModal from './import-cv/import-cv-modal';
 import {
   usePageAction,
   usePageContext,
@@ -70,6 +71,7 @@ export default function Profile({
 
   const [showProgreesInfo, setShowProgreesInfo] = useState(true);
   const [showOpenToWorkAlert, setShowOpenToWorkAlert] = useState(false);
+  const [isImportCvOpen, setIsImportCvOpen] = useState(false);
 
   /**
    * Stable identities, because `EditProfile` resets its chip state whenever one
@@ -519,6 +521,15 @@ export default function Profile({
                     </Button>
                     <Button
                       type="button"
+                      variant="outline"
+                      onClick={() => setIsImportCvOpen(true)}
+                      disabled={isPending}
+                      className="cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
+                    >
+                      Import from CV
+                    </Button>
+                    <Button
+                      type="button"
                       onClick={handleSubmit(onSubmit)}
                       disabled={isPending}
                       className="cursor-pointer h-10 rounded-lg bg-bg-brand-solid-primary text-white! text-label-sm font-label-sm-strong!"
@@ -726,6 +737,11 @@ export default function Profile({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ImportCvModal
+        open={isImportCvOpen}
+        onOpenChange={setIsImportCvOpen}
+      />
     </div>
   );
 }
