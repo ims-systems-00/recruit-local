@@ -515,7 +515,7 @@ export default function Profile({
                       variant="outline"
                       onClick={handleCancelEdit}
                       disabled={isPending}
-                      className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
+                      className=" cursor-pointer border-none h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
                     >
                       Cancel
                     </Button>
@@ -738,10 +738,7 @@ export default function Profile({
         </AlertDialogContent>
       </AlertDialog>
 
-      <ImportCvModal
-        open={isImportCvOpen}
-        onOpenChange={setIsImportCvOpen}
-      />
+      <ImportCvModal open={isImportCvOpen} onOpenChange={setIsImportCvOpen} />
     </div>
   );
 }
