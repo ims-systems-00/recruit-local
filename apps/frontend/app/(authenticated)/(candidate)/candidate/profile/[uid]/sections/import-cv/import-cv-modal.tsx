@@ -4,24 +4,60 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Folder, Loader2, Sparkles, Trash2, Upload } from 'lucide-react';
+import { CheckCircle2, Folder, Loader2, Sparkles, Upload } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import ImportCvSelectSection from './import-cv-select-section';
+import ImportCvUploadSection from './import-cv-upload-section';
+import { UploadedFile } from '@/components/file-uploader';
+import { useCreateCv, useImportCvToProfile } from '@/services/cv';
+import { CvProfileImport } from '@/services/cv/cv.type';
 
 type Step = 'choose-method' | 'choose-cv' | 'extracting' | 'congratulation';
+
+// What the import can put into the edit form, labelled as the form labels it.
+const FORM_FIELDS: [keyof CvProfileImport['profile'], string][] = [
+  ['name', 'Applicant name'],
+  ['jobTitle', 'Job titles'],
+  ['summary', 'Description'],
+  ['address', 'Address'],
+  ['contactNumber', 'Contact number'],
+  ['industry', 'Industries'],
+  ['workMode', 'Work modes'],
+  ['experienceLevel', 'Experience level'],
+  ['skills', 'Skills'],
+  ['interests', 'Interests'],
+];
+
+const hasValue = (value: unknown) =>
+  Array.isArray(value) ? value.length > 0 : Boolean(value);
+
+const chipClassName =
+  'text-label-xs bg-bg-gray-soft-primary border border-border-gray-primary px-2.5 py-1 rounded-md text-text-gray-primary font-medium';
 
 interface ImportCvModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Called with a successful import, to fill the edit form behind the modal. */
+  onImported: (result: CvProfileImport) => void;
 }
 
 export default function ImportCvModal({
   open,
   onOpenChange,
+  onImported,
 }: ImportCvModalProps) {
   const [step, setStep] = useState<Step>('choose-method');
   const [selectedOption, setSelectedOption] = useState<'profile' | 'computer' | null>(null);
   const [selectedCv, setSelectedCv] = useState<{ id: string; name: string } | null>(null);
-  const [uploadedFile, setUploadedFile] = useState<{ name: string; size: string } | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
+  // The CV saved from the uploaded file, kept so a retry does not save a second one.
+  const [createdCvId, setCreatedCvId] = useState<string | null>(null);
+  const [result, setResult] = useState<CvProfileImport | null>(null);
+
+  // The profile page's own id, as the Documents tab uses for a new CV.
+  const { uid } = useParams<{ uid: string }>();
+  const { createCv } = useCreateCv();
+  const { importCvToProfile } = useImportCvToProfile();
 
   const handleSelectOption = (option: 'profile' | 'computer') => {
     setSelectedOption(option);
@@ -32,6 +68,7 @@ export default function ImportCvModal({
     setStep('choose-cv');
     setSelectedCv(null);
     setUploadedFile(null);
+    setCreatedCvId(null);
   };
 
   const handlePreviousToMethod = () => {
@@ -45,23 +82,68 @@ export default function ImportCvModal({
       setSelectedOption(null);
       setSelectedCv(null);
       setUploadedFile(null);
+      setCreatedCvId(null);
+      setResult(null);
     }, 250);
   };
 
-  const handleStartExtraction = () => {
+  // An uploaded file becomes one of the candidate's CVs, as in Documents, so it
+  // can be imported like any other. Null when saving failed (the hook has said so).
+  const saveUploadedCv = async () => {
+    if (createdCvId) return createdCvId;
+    if (!uploadedFile) return null;
+
+    const created: { id?: string } = {};
+    await createCv({
+      payload: {
+        jobProfileId: uid,
+        title: 'Untitled CV',
+        resumeStorage: uploadedFile,
+      },
+      onSuccessCallback: (cv) => {
+        created.id = cv._id;
+      },
+    });
+    setCreatedCvId(created.id ?? null);
+    return created.id ?? null;
+  };
+
+  const handleStartExtraction = async () => {
     setStep('extracting');
-    // Simulated UI extraction timer
-    setTimeout(() => {
-      setStep('congratulation');
-    }, 1500);
+    const cvId =
+      selectedOption === 'profile' ? selectedCv?.id : await saveUploadedCv();
+    const imported = cvId ? await importCvToProfile(cvId) : null;
+    if (imported) onImported(imported);
+    // On failure the hook has shown the error; back a step to retry.
+    setResult(imported);
+    setStep(imported ? 'congratulation' : 'choose-cv');
   };
 
   const isContinueDisabled =
     selectedOption === 'profile' ? !selectedCv : !uploadedFile;
 
+  const filledFields = result
+    ? FORM_FIELDS.filter(([key]) => hasValue(result.profile[key]))
+    : [];
+  const added = result?.added;
+  const addedAny = Boolean(added?.experience || added?.education);
+  const foundNothing = filledFields.length === 0 && !addedAny;
+
+  // The import keeps running on the server once started, so the modal cannot be
+  // closed until it has finished.
+  const isExtracting = step === 'extracting';
+
   return (
-    <Dialog open={open} onOpenChange={handleReset}>
-      <DialogContent className="sm:max-w-[692px] bg-bg-gray-soft-primary shadow-xs gap-y-spacing-4xl max-h-[90vh] overflow-y-auto">
+    <Dialog
+      open={open}
+      onOpenChange={() => {
+        if (!isExtracting) handleReset();
+      }}
+    >
+      <DialogContent
+        showCloseButton={!isExtracting}
+        className="sm:max-w-[692px] bg-bg-gray-soft-primary shadow-xs gap-y-spacing-4xl max-h-[90vh] overflow-y-auto"
+      >
         <DialogTitle asChild>
           <div className="flex flex-col gap-1">
             <h4 className="text-label-lg font-label-lg-strong! text-text-gray-primary">
@@ -158,74 +240,11 @@ export default function ImportCvModal({
                 onSelectCv={(cv) => setSelectedCv(cv)}
               />
             ) : (
-              <div className="space-y-spacing-sm">
-                {!uploadedFile ? (
-                  <label className="border border-dashed border-border-gray-secondary rounded-2xl p-spacing-5xl flex flex-col items-center justify-center gap-spacing-md cursor-pointer hover:border-border-brand-primary transition-colors bg-bg-gray-soft-primary">
-                    <div className="w-10 h-10 flex justify-center items-center rounded-lg bg-others-brand-brand-zero border border-others-brand-light">
-                      <Upload className="size-5 text-fg-brand-primary" />
-                    </div>
-                    <div className="text-center space-y-1">
-                      <p className="text-label-sm font-label-sm-strong! text-text-gray-primary">
-                        <span className="text-text-brand-primary underline">Click to upload</span> or drag and drop
-                      </p>
-                      <p className="text-label-xs text-text-gray-tertiary">
-                        PDF, DOCX up to 10MB
-                      </p>
-                    </div>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setUploadedFile({
-                            name: file.name,
-                            size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
-                          });
-                        }
-                      }}
-                    />
-                  </label>
-                ) : (
-                  <div className="w-full p-spacing-2xl rounded-2xl bg-bg-gray-soft-primary border border-border-gray-secondary flex justify-between items-center gap-spacing-2xl">
-                    <div className="flex gap-spacing-lg items-center">
-                      <div className="min-w-10 w-10 h-10 flex items-center justify-center relative">
-                        <svg
-                          width="30"
-                          height="40"
-                          viewBox="0 0 30 40"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M29.9998 7.95719V36C29.9998 38.2091 28.209 40 25.9998 40H4C1.79086 40 0 38.2091 0 36V4C0 1.79086 1.79086 0 4 0H21.3367L29.9998 7.95719Z"
-                            fill="#F6339A"
-                          />
-                        </svg>
-                        <p className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-white text-[9px] font-bold">
-                          PDF
-                        </p>
-                      </div>
-                      <div className="space-y-spacing-3xs">
-                        <p className="text-label-sm font-label-sm-strong! text-text-gray-primary">
-                          {uploadedFile.name}
-                        </p>
-                        <p className="text-label-xs text-text-gray-tertiary">
-                          {uploadedFile.size}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setUploadedFile(null)}
-                      className="text-fg-gray-quaternary hover:text-text-error-primary transition-colors cursor-pointer p-1"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
+              <ImportCvUploadSection
+                file={uploadedFile}
+                onChange={setUploadedFile}
+                locked={Boolean(createdCvId)}
+              />
             )}
 
             <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-spacing-2xl">
@@ -260,7 +279,7 @@ export default function ImportCvModal({
                 Extracting Data from CV...
               </h4>
               <p className="text-label-sm text-text-gray-tertiary">
-                Alice AI is reading and extracting your experience, skills, and background details to update your profile. Please wait a moment.
+                Alice AI is reading and extracting your experience, skills, and background details to update your profile. This can take up to a minute.
               </p>
             </div>
             <div className="flex items-center justify-center gap-2 text-label-sm text-text-brand-secondary font-medium pt-spacing-sm">
@@ -278,39 +297,63 @@ export default function ImportCvModal({
             </div>
             <div className="space-y-spacing-2xs max-w-md">
               <h4 className="text-label-xl font-label-xl-strong! text-text-gray-primary">
-                Congratulations!
+                {foundNothing ? 'Nothing to import' : 'Congratulations!'}
               </h4>
               <p className="text-label-sm text-text-gray-tertiary">
-                Data has been successfully extracted from your CV. Please review the details in your profile and make any changes before saving.
+                {foundNothing
+                  ? "Alice couldn't find any details in this CV to add to your profile."
+                  : 'Data has been extracted from your CV. Review the details in your profile, then press Save to keep them.'}
               </p>
             </div>
 
-            <div className="w-full bg-bg-gray-soft-secondary/70 rounded-xl p-spacing-xl border border-border-gray-secondary/60 text-left space-y-spacing-xs">
-              <p className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                Ready for Review:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <span className="text-label-xs bg-bg-gray-soft-primary border border-border-gray-primary px-2.5 py-1 rounded-md text-text-gray-primary font-medium">
-                  ✓ Personal Information
-                </span>
-                <span className="text-label-xs bg-bg-gray-soft-primary border border-border-gray-primary px-2.5 py-1 rounded-md text-text-gray-primary font-medium">
-                  ✓ Skills & Expertise
-                </span>
-                <span className="text-label-xs bg-bg-gray-soft-primary border border-border-gray-primary px-2.5 py-1 rounded-md text-text-gray-primary font-medium">
-                  ✓ Work Experience
-                </span>
-                <span className="text-label-xs bg-bg-gray-soft-primary border border-border-gray-primary px-2.5 py-1 rounded-md text-text-gray-primary font-medium">
-                  ✓ Education
-                </span>
+            {filledFields.length > 0 && (
+              <div className="w-full bg-bg-gray-soft-secondary/70 rounded-xl p-spacing-xl border border-border-gray-secondary/60 text-left space-y-spacing-xs">
+                <p className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  Ready for Review:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {filledFields.map(([key, label]) => (
+                    <span key={key} className={chipClassName}>
+                      ✓ {label}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {!foundNothing && (
+              <div className="w-full bg-bg-gray-soft-secondary/70 rounded-xl p-spacing-xl border border-border-gray-secondary/60 text-left space-y-spacing-xs">
+                <p className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
+                  Already added to your profile:
+                </p>
+                {addedAny ? (
+                  <div className="flex flex-wrap gap-2">
+                    {!!added?.experience && (
+                      <span className={chipClassName}>
+                        ✓ Work experience ({added.experience})
+                      </span>
+                    )}
+                    {!!added?.education && (
+                      <span className={chipClassName}>
+                        ✓ Education ({added.education})
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-label-xs text-text-gray-tertiary">
+                    Nothing. Work experience and education are added only while
+                    your profile has none.
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="w-full flex justify-end gap-spacing-xl pt-spacing-md">
               <Button
                 onClick={handleReset}
                 className="w-full sm:w-auto bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg px-spacing-4xl"
               >
-                Review Profile
+                {foundNothing ? 'Close' : 'Review Profile'}
               </Button>
             </div>
           </div>

@@ -68,7 +68,8 @@ const SKILL_LEVEL_ORDER = Object.values(JOB_SKILL_LEVEL_ENUMS);
 // The most Alice may write into the field, which is the only limit it has.
 const INTERESTS_MAX_CHARS = 1000;
 
-const asText = (value: unknown): string | undefined => {
+/** Trimmed text, or undefined for anything that is not a non-blank string. */
+export const asText = (value: unknown): string | undefined => {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
   return trimmed || undefined;
@@ -202,49 +203,42 @@ const BLANK_TEXT = { $not: /\S/ };
 // skills string matches neither, so it is left alone.
 const NO_SKILLS = { $or: [{ skills: null }, { skills: { $size: 0 } }] };
 
+type ProfileOwner = { userId: Types.ObjectId; jobProfileId: Types.ObjectId };
+
+/** A CV skill matched to its catalogue entry, in the shape a profile's skills are returned in. */
+export interface MatchedCvSkill {
+  skill: { _id: Types.ObjectId; name: string };
+  level: JOB_SKILL_LEVEL_ENUMS;
+}
+
 /**
  * Only CV skills already in the catalogue: candidates cannot add entries. Kept
  * in the CV's order and cut to the profile's limit after matching, so a skill
  * the catalogue lacks never takes the place of one it has.
  */
-const toProfileSkills = async (skills: CvSkill[]): Promise<IProfileSkill[]> => {
+export const matchCvSkills = async (skills: CvSkill[]): Promise<MatchedCvSkill[]> => {
   if (!skills.length) return [];
   const entries = await skillCatalogService.findActiveByNames(skills.map(({ name }) => name));
-  const idByName = new Map(entries.map(({ _id, normalizedName }) => [normalizedName, _id]));
+  const entryByName = new Map(entries.map((entry) => [entry.normalizedName, entry]));
   return skills
     .flatMap(({ name, level }) => {
-      const skill = idByName.get(normalizeSkillName(name));
-      return skill ? [{ skill, level }] : [];
+      const entry = entryByName.get(normalizeSkillName(name));
+      return entry ? [{ skill: { _id: entry._id, name: entry.name }, level }] : [];
     })
     .slice(0, PROFILE_SKILLS_MAX);
 };
 
 /**
- * Fills the profile's empty sections from a CV, never overwriting what the
- * candidate already has. Each section is filled only while it is empty, so a
- * second upload adds nothing and a retry after a partial failure fills only
- * what is still missing.
+ * Adds the CV's work experience and education, each only while the candidate
+ * has none, so a second import adds nothing. Returns how many rows were added.
  */
-export const importCvIntoProfile = async ({
+export const importCvExperienceAndEducation = async ({
   userId,
   jobProfileId,
   data,
-}: {
-  userId: Types.ObjectId;
-  jobProfileId: Types.ObjectId;
-  data: CvProfileData;
-}) => {
+}: ProfileOwner & { data: Pick<CvProfileData, "experience" | "education"> }) => {
   const owner = { userId, jobProfileId };
-  // The emptiness check sits in the filter, so it and the write are one step.
-  const fillProfile = (empty: object, set: object) =>
-    JobProfile.updateOne({ _id: jobProfileId, userId, ...empty }, { $set: set });
-
-  const skills = await toProfileSkills(data.skills);
-
-  const [summaryResult, skillsResult, interestsResult, hasExperience, hasEducation] = await Promise.all([
-    data.summary ? fillProfile({ summary: BLANK_TEXT }, { summary: data.summary }) : null,
-    skills.length ? fillProfile(NO_SKILLS, { skills }) : null,
-    data.interests ? fillProfile({ interests: BLANK_TEXT }, { interests: data.interests }) : null,
+  const [hasExperience, hasEducation] = await Promise.all([
     Experience.exists({ ...owner, ...NOT_DELETED }),
     Education.exists({ ...owner, ...NOT_DELETED }),
   ]);
@@ -258,10 +252,36 @@ export const importCvIntoProfile = async ({
       : [],
   ]);
 
+  return { experience: experience.length, education: education.length };
+};
+
+/**
+ * Fills the profile's empty sections from a CV, never overwriting what the
+ * candidate already has. Each section is filled only while it is empty, so a
+ * second upload adds nothing and a retry after a partial failure fills only
+ * what is still missing.
+ */
+export const importCvIntoProfile = async ({ userId, jobProfileId, data }: ProfileOwner & { data: CvProfileData }) => {
+  // The emptiness check sits in the filter, so it and the write are one step.
+  const fillProfile = (empty: object, set: object) =>
+    JobProfile.updateOne({ _id: jobProfileId, userId, ...empty }, { $set: set });
+
+  const skills: IProfileSkill[] = (await matchCvSkills(data.skills)).map(({ skill, level }) => ({
+    skill: skill._id,
+    level,
+  }));
+
+  const [summaryResult, skillsResult, interestsResult, rows] = await Promise.all([
+    data.summary ? fillProfile({ summary: BLANK_TEXT }, { summary: data.summary }) : null,
+    skills.length ? fillProfile(NO_SKILLS, { skills }) : null,
+    data.interests ? fillProfile({ interests: BLANK_TEXT }, { interests: data.interests }) : null,
+    importCvExperienceAndEducation({ userId, jobProfileId, data }),
+  ]);
+
   const imported = {
     summary: !!summaryResult?.modifiedCount,
-    experience: experience.length,
-    education: education.length,
+    experience: rows.experience,
+    education: rows.education,
     skills: skillsResult?.modifiedCount ? skills.length : 0,
     interests: !!interestsResult?.modifiedCount,
   };

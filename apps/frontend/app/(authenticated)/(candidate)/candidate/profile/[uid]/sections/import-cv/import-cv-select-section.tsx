@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   InputGroup,
@@ -15,34 +15,18 @@ import {
   FieldLabel,
   FieldTitle,
 } from '@/components/ui/field';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useInfiniteCvs } from '@/services/cv';
+import { CvData } from '@/services/cv/cv.type';
+import { formatDate } from '@/lib/utils';
 
-interface MockCv {
-  id: string;
-  name: string;
-  date: string;
-  size: string;
-}
+// No jobProfileId: the list endpoint then keeps a candidate to their own CVs.
+const CV_FILTERS = { limit: 20 };
 
-const MOCK_CVS: MockCv[] = [
-  {
-    id: 'cv-1',
-    name: 'Senior_FullStack_Developer_Resume.pdf',
-    date: 'Added Nov 2, 2026',
-    size: '1.4 MB',
-  },
-  {
-    id: 'cv-2',
-    name: 'Candidate_Profile_CV_Updated.pdf',
-    date: 'Added Oct 18, 2026',
-    size: '850 KB',
-  },
-  {
-    id: 'cv-3',
-    name: 'Software_Engineer_Resume.pdf',
-    date: 'Added Sep 05, 2026',
-    size: '2.1 MB',
-  },
-];
+// How close to the bottom of the list, in pixels, the next page is loaded.
+const SCROLL_THRESHOLD = 80;
+
+const fileName = (cv: CvData) => cv.resume?.storageInformation?.Name ?? '';
 
 export default function ImportCvSelectSection({
   selectedId,
@@ -53,12 +37,31 @@ export default function ImportCvSelectSection({
 }) {
   const [search, setSearch] = useState('');
 
-  const filteredCvs = useMemo(() => {
-    if (!search.trim()) return MOCK_CVS;
-    return MOCK_CVS.filter((cv) =>
-      cv.name.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [search]);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+  } = useInfiniteCvs(CV_FILTERS);
+
+  // Only a CV with an uploaded file can be read. Searched here, on the file name
+  // the candidate sees: the server's search covers titles, which uploads lack.
+  const query = search.trim().toLowerCase();
+  const cvs = (data?.pages.flatMap((page) => page.docs) ?? []).filter(
+    (cv) =>
+      cv.resume?.storageInformation?.Key &&
+      fileName(cv).toLowerCase().includes(query),
+  );
+
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.currentTarget;
+    const nearBottom =
+      target.scrollHeight - target.scrollTop - target.clientHeight <
+      SCROLL_THRESHOLD;
+    if (nearBottom && hasNextPage && !isFetchingNextPage) fetchNextPage();
+  };
 
   return (
     <div className="flex flex-col gap-y-spacing-4xl">
@@ -80,22 +83,27 @@ export default function ImportCvSelectSection({
       </div>
 
       <div className="space-y-spacing-lg">
-        <div className="max-h-[30vh] overflow-y-auto space-y-spacing-lg pr-1">
-          {filteredCvs.length > 0 ? (
+        <div
+          onScroll={handleScroll}
+          className="max-h-[30vh] overflow-y-auto space-y-spacing-lg pr-1"
+        >
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton key={index} className="h-18 rounded-2xl" />
+            ))
+          ) : cvs.length > 0 ? (
             <RadioGroup
               value={selectedId || ''}
-              onValueChange={(val) => {
-                const found = MOCK_CVS.find((c) => c.id === val);
-                if (found) {
-                  onSelectCv(found);
-                }
+              onValueChange={(id) => {
+                const cv = cvs.find((item) => item._id === id);
+                if (cv) onSelectCv({ id: cv._id, name: fileName(cv) });
               }}
               className="space-y-spacing-lg"
             >
-              {filteredCvs.map((item) => (
+              {cvs.map((item) => (
                 <FieldLabel
-                  key={item.id}
-                  htmlFor={item.id}
+                  key={item._id}
+                  htmlFor={item._id}
                   className="overflow-hidden cursor-pointer block"
                 >
                   <Field
@@ -168,27 +176,32 @@ export default function ImportCvSelectSection({
                         </svg>
                       </div>
                       <div className="space-y-spacing-3xs">
-                        <FieldTitle className="text-label-sm! font-label-sm-strong! text-text-gray-primary line-clamp-1">
-                          {item.name}
+                        <FieldTitle className="text-label-sm! font-label-sm-strong! text-text-gray-primary line-clamp-1 break-all">
+                          {fileName(item)}
                         </FieldTitle>
                         <FieldDescription className="text-label-sm! text-text-gray-tertiary">
-                          {item.date} • {item.size}
+                          Added {formatDate(item.createdAt)}
                         </FieldDescription>
                       </div>
                     </FieldContent>
 
-                    <RadioGroupItem value={item.id} id={item.id} />
+                    <RadioGroupItem value={item._id} id={item._id} />
                   </Field>
                 </FieldLabel>
               ))}
             </RadioGroup>
           ) : (
             <div className="flex items-center justify-center p-spacing-5xl border border-border-gray-secondary rounded-lg">
-              <p className="text-label-md font-label-md-strong! text-text-gray-quaternary">
-                No CVs found matching &quot;{search}&quot;
+              <p className="text-label-md font-label-md-strong! text-text-gray-quaternary text-center">
+                {isError
+                  ? 'Failed to load your CVs. Close this and try again.'
+                  : query
+                    ? `No CVs found matching "${search.trim()}"`
+                    : 'You have no CVs yet. Go back and upload one from your computer.'}
               </p>
             </div>
           )}
+          {isFetchingNextPage && <Skeleton className="h-18 rounded-2xl" />}
         </div>
       </div>
     </div>

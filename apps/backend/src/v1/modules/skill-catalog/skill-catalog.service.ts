@@ -103,8 +103,8 @@ export const findActiveByNames = (names: string[]) =>
     isActive: true,
     "deleteMarker.status": { $ne: true },
   })
-    .select("_id normalizedName")
-    .lean<{ _id: Types.ObjectId; normalizedName: string }[]>();
+    .select("_id name normalizedName")
+    .lean<{ _id: Types.ObjectId; name: string; normalizedName: string }[]>();
 
 export const create = (payload: SkillCatalogInput) =>
   withDuplicateNameAsConflict(() => new SkillCatalog(payload).save());

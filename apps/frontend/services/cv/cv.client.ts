@@ -19,6 +19,7 @@ import {
   hardDeleteCv,
   restoreCv,
   extractAndCreateCv,
+  importCvToProfile,
 } from './cv.server';
 import type {
   CvCreateInput,
@@ -30,9 +31,13 @@ import type {
   CvListCursorFilters,
   ExtractAndCreateCvInput,
   CvExtractionData,
+  CvProfileImport,
   CvResumeUrls,
 } from './cv.type';
 import { experienceLevelKeys } from '../experience-level/experience-level.client';
+import { experienceKeys } from '../experience/experience.client';
+import { educationKeys } from '../education/education.client';
+import { jobProfileKeys } from '../job-profile/job-profile.client';
 
 // --- QUERY KEYS ---
 export const cvKeys = {
@@ -254,6 +259,49 @@ export function useExtractAndCreateCv() {
     extractAndCreateCv: extractAndCreateCvAsync,
     isPending: mutation.isPending,
     error: mutation.error,
+  };
+}
+
+/**
+ * "Import from CV" on the profile page. Resolves to what the import returned,
+ * or to null after showing the error, so the caller only has to step back.
+ * No success toast: the modal shows its own done screen.
+ */
+export function useImportCvToProfile() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({ mutationFn: importCvToProfile });
+
+  const importCvToProfileAsync = async (
+    id: string,
+  ): Promise<CvProfileImport | null> => {
+    try {
+      const response = await mutation.mutateAsync(id);
+
+      if (!response.success) {
+        toast.error(response.message);
+        return null;
+      }
+
+      const { added } = response.data;
+      if (added.experience || added.education) {
+        // As after Alice adds a row: the rows themselves, and the profile whose
+        // completion they count towards.
+        queryClient.invalidateQueries({ queryKey: experienceKeys.all });
+        queryClient.invalidateQueries({ queryKey: educationKeys.all });
+        queryClient.invalidateQueries({ queryKey: jobProfileKeys.all });
+      }
+
+      return response.data;
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to import CV');
+      return null;
+    }
+  };
+
+  return {
+    importCvToProfile: importCvToProfileAsync,
+    isPending: mutation.isPending,
   };
 }
 

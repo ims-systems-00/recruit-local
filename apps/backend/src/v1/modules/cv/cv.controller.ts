@@ -3,6 +3,7 @@ import {
   ApiResponse,
   BadRequestException,
   ControllerParams,
+  ForbiddenException,
   UnauthorizedException,
   logger,
 } from "../../../common/helper";
@@ -12,7 +13,14 @@ import { Types } from "mongoose";
 import * as cvService from "./cv.service";
 import * as cvExtractService from "./cv-extract.service";
 import { matchCvEntities } from "./cv-match.service";
-import { importCvIntoProfile, normalizeCvForProfile } from "./cv-profile-import";
+import {
+  asText,
+  importCvExperienceAndEducation,
+  importCvIntoProfile,
+  matchCvSkills,
+  normalizeCvForProfile,
+} from "./cv-profile-import";
+import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 import { cvListQuerySpec, cvRoleScopedSecurityQuery } from "./cv.query";
 import { runCursorList } from "../../../common/query";
 import { assertCanReadJobProfile, assertProfileScopedListAccess } from "../job-profile/job-profile.access";
@@ -245,6 +253,68 @@ export const extract = async ({ req }: ControllerParams) => {
       experienceLevels: matched.experienceLevels,
     },
     fieldName: "cv",
+  });
+};
+
+/**
+ * "Import from CV" on the profile page: reads one of the candidate's own CVs.
+ *
+ * Work experience and education are records of their own, so they are added
+ * straight away, and only while the candidate has none (onboarding's rule).
+ * Everything else is returned for the open edit form, under the profile's own
+ * field names, and is saved only when the candidate presses Save. Email is left
+ * out: it is the login, not a thing to change from a CV.
+ */
+export const importToProfile = async ({ req }: ControllerParams) => {
+  const userId = req.session.user?._id;
+  const jobProfileId = req.session.jobProfileId;
+  if (!jobProfileId) throw new BadRequestException("No job profile found in session.");
+
+  const cv = await cvService.getOne({ query: { _id: req.params.id } });
+  // Ownership, not the Read rule: a candidate may read anyone's published CV,
+  // and must not pull someone else's into their own profile.
+  if (String(cv.jobProfileId) !== String(jobProfileId)) {
+    throw new ForbiddenException("You can only import one of your own CVs.");
+  }
+
+  const resumeStorage = cv.resume?.storageInformation as { Bucket?: string; Key?: string } | undefined;
+  if (!resumeStorage?.Bucket || !resumeStorage?.Key) {
+    throw new BadRequestException("This CV has no uploaded resume to import from.");
+  }
+
+  const extracted = (await cvExtractService.extractFromResume({
+    resumeStorage: { Bucket: resumeStorage.Bucket, Key: resumeStorage.Key },
+  })) as Record<string, unknown>;
+  const data = normalizeCvForProfile(extracted);
+  const owner = { userId: new Types.ObjectId(userId), jobProfileId: new Types.ObjectId(jobProfileId) };
+
+  const [matched, skills, added] = await Promise.all([
+    matchCvEntities(extracted as Record<string, string[]>),
+    matchCvSkills(data.skills),
+    importCvExperienceAndEducation({ ...owner, data }),
+  ]);
+
+  if (added.experience || added.education) await enqueueProfileCompletion(owner.userId);
+
+  return new ApiResponse({
+    message: "CV imported.",
+    statusCode: StatusCodes.OK,
+    data: {
+      profile: {
+        name: asText(extracted.name),
+        contactNumber: asText(extracted.phone),
+        address: asText(extracted.address),
+        summary: data.summary,
+        interests: data.interests,
+        jobTitle: matched.jobTitles,
+        industry: matched.industries,
+        workMode: matched.workModes,
+        experienceLevel: matched.experienceLevels[0] ?? null,
+        skills,
+      },
+      added,
+    },
+    fieldName: "cvImport",
   });
 };
 
