@@ -8,43 +8,31 @@ import { CheckCircle2, Folder, Loader2, Sparkles, Upload } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import ImportCvSelectSection from './import-cv-select-section';
 import ImportCvUploadSection from './import-cv-upload-section';
+import ImportCvPickSection, {
+  PickKey,
+  describeAdded,
+  pickItems,
+  pickableKeys,
+  pickedImport,
+} from './import-cv-pick-section';
 import { UploadedFile } from '@/components/file-uploader';
-import { useCreateCv, useImportCvToProfile } from '@/services/cv';
+import {
+  useCreateCv,
+  useImportCvRecords,
+  useImportCvToProfile,
+} from '@/services/cv';
 import { CvProfileImport } from '@/services/cv/cv.type';
+import { toast } from 'sonner';
 
-type Step = 'choose-method' | 'choose-cv' | 'extracting' | 'congratulation';
-
-// What the import can put into the edit form, labelled as the form labels it.
-const FORM_FIELDS: [keyof CvProfileImport['profile'], string][] = [
-  ['name', 'Applicant name'],
-  ['jobTitle', 'Job titles'],
-  ['summary', 'Description'],
-  ['address', 'Address'],
-  ['contactNumber', 'Contact number'],
-  ['industry', 'Industries'],
-  ['workMode', 'Work modes'],
-  ['experienceLevel', 'Experience level'],
-  ['skills', 'Skills'],
-  ['interests', 'Interests'],
-];
-
-// The profile sections the import writes rows into straight away.
-const ADDED_SECTIONS: [keyof CvProfileImport['added'], string][] = [
-  ['experience', 'Work experience'],
-  ['education', 'Education'],
-  ['training', 'Training'],
-];
-
-const hasValue = (value: unknown) =>
-  Array.isArray(value) ? value.length > 0 : Boolean(value);
-
-const chipClassName =
-  'text-label-xs bg-bg-gray-soft-primary border border-border-gray-primary px-2.5 py-1 rounded-md text-text-gray-primary font-medium';
+type Step = 'choose-method' | 'choose-cv' | 'extracting' | 'choose-fields';
 
 interface ImportCvModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Called with a successful import, to fill the edit form behind the modal. */
+  /**
+   * Called on "Update profile" with only the profile fields the candidate
+   * ticked, to fill the edit form behind the modal.
+   */
   onImported: (result: CvProfileImport) => void;
 }
 
@@ -60,11 +48,13 @@ export default function ImportCvModal({
   // The CV saved from the uploaded file, kept so a retry does not save a second one.
   const [createdCvId, setCreatedCvId] = useState<string | null>(null);
   const [result, setResult] = useState<CvProfileImport | null>(null);
+  const [picked, setPicked] = useState<PickKey[]>([]);
 
   // The profile page's own id, as the Documents tab uses for a new CV.
   const { uid } = useParams<{ uid: string }>();
   const { createCv } = useCreateCv();
   const { importCvToProfile } = useImportCvToProfile();
+  const { importCvRecords, isPending: isSaving } = useImportCvRecords();
 
   const handleSelectOption = (option: 'profile' | 'computer') => {
     setSelectedOption(option);
@@ -91,6 +81,7 @@ export default function ImportCvModal({
       setUploadedFile(null);
       setCreatedCvId(null);
       setResult(null);
+      setPicked([]);
     }, 250);
   };
 
@@ -120,37 +111,58 @@ export default function ImportCvModal({
     const cvId =
       selectedOption === 'profile' ? selectedCv?.id : await saveUploadedCv();
     const imported = cvId ? await importCvToProfile(cvId) : null;
-    if (imported) onImported(imported);
-    // On failure the hook has shown the error; back a step to retry.
+    if (!imported) {
+      // The hook has shown the error; back a step to retry.
+      setStep('choose-cv');
+      return;
+    }
     setResult(imported);
-    setStep(imported ? 'congratulation' : 'choose-cv');
+    // Everything that can be ticked starts ticked.
+    setPicked(pickableKeys(pickItems(imported)));
+    setStep('choose-fields');
+  };
+
+  // Ticked sections are saved first: if that fails, the modal stays open with
+  // the error, nothing has reached the form, and the candidate can retry.
+  const handleUpdateProfile = async () => {
+    if (!result) return;
+    const { profile, records } = pickedImport(result, picked);
+
+    if (Object.values(records).some((rows) => rows.length > 0)) {
+      const added = await importCvRecords(records);
+      if (!added) return;
+      const summary = describeAdded(added);
+      toast.success(
+        summary
+          ? `Added to your profile: ${summary}.`
+          : 'Those are already on your profile.',
+      );
+    }
+
+    onImported({ ...result, profile });
+    handleReset();
   };
 
   const isContinueDisabled =
     selectedOption === 'profile' ? !selectedCv : !uploadedFile;
 
-  const filledFields = result
-    ? FORM_FIELDS.filter(([key]) => hasValue(result.profile[key]))
-    : [];
-  const addedSections = ADDED_SECTIONS.flatMap(([key, label]) => {
-    const count = result?.added[key] ?? 0;
-    return count ? [{ key, label, count }] : [];
-  });
-  const foundNothing = filledFields.length === 0 && addedSections.length === 0;
+  const items = result ? pickItems(result) : [];
+  const canPick = items.length > 0;
 
-  // The import keeps running on the server once started, so the modal cannot be
-  // closed until it has finished.
+  // The import keeps running on the server once started, and so does a save,
+  // so the modal cannot be closed until either has finished.
   const isExtracting = step === 'extracting';
+  const isBusy = isExtracting || isSaving;
 
   return (
     <Dialog
       open={open}
       onOpenChange={() => {
-        if (!isExtracting) handleReset();
+        if (!isBusy) handleReset();
       }}
     >
       <DialogContent
-        showCloseButton={!isExtracting}
+        showCloseButton={!isBusy}
         className="sm:max-w-[692px] bg-bg-gray-soft-primary shadow-xs gap-y-spacing-4xl max-h-[90vh] overflow-y-auto"
       >
         <DialogTitle asChild>
@@ -162,11 +174,17 @@ export default function ImportCvModal({
                   ? 'Choose CV from Profile'
                   : 'Upload CV from Computer')}
               {step === 'extracting' && 'Extracting CV Data'}
-              {step === 'congratulation' && 'Extraction Complete'}
+              {step === 'choose-fields' &&
+                (canPick ? 'Choose What to Update' : 'Extraction Complete')}
             </h4>
             {step === 'choose-method' && (
               <p className="text-label-sm text-text-gray-tertiary">
                 Choose how you would like to import your CV to update your profile.
+              </p>
+            )}
+            {step === 'choose-fields' && canPick && (
+              <p className="text-label-sm text-text-gray-tertiary">
+                Untick anything you want to keep as it is.
               </p>
             )}
           </div>
@@ -298,67 +316,61 @@ export default function ImportCvModal({
           </div>
         )}
 
-        {/* STEP 4: CONGRATULATION / REVIEW STATE */}
-        {step === 'congratulation' && (
-          <div className="py-spacing-4xl flex flex-col items-center justify-center text-center gap-spacing-3xl">
-            <div className="w-16 h-16 rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-center text-[#10B981]">
-              <CheckCircle2 className="size-8 text-[#10B981]" />
-            </div>
-            <div className="space-y-spacing-2xs max-w-md">
-              <h4 className="text-label-xl font-label-xl-strong! text-text-gray-primary">
-                {foundNothing ? 'Nothing to import' : 'Congratulations!'}
-              </h4>
-              <p className="text-label-sm text-text-gray-tertiary">
-                {foundNothing
-                  ? "Alice couldn't find any details in this CV to add to your profile."
-                  : 'Data has been extracted from your CV. Review the details in your profile, then press Save to keep them.'}
-              </p>
-            </div>
-
-            {filledFields.length > 0 && (
-              <div className="w-full bg-bg-gray-soft-secondary/70 rounded-xl p-spacing-xl border border-border-gray-secondary/60 text-left space-y-spacing-xs">
-                <p className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Ready for Review:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {filledFields.map(([key, label]) => (
-                    <span key={key} className={chipClassName}>
-                      ✓ {label}
-                    </span>
-                  ))}
+        {/* STEP 4: CHOOSE WHAT TO UPDATE */}
+        {step === 'choose-fields' && (
+          <div className="flex flex-col items-center text-center gap-spacing-3xl">
+            {canPick ? (
+              <ImportCvPickSection
+                items={items}
+                picked={picked}
+                onChange={setPicked}
+                disabled={isSaving}
+              />
+            ) : (
+              <div className="pt-spacing-4xl flex flex-col items-center gap-spacing-3xl">
+                <div className="w-16 h-16 rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-center text-[#10B981]">
+                  <CheckCircle2 className="size-8 text-[#10B981]" />
+                </div>
+                <div className="space-y-spacing-2xs max-w-md">
+                  <h4 className="text-label-xl font-label-xl-strong! text-text-gray-primary">
+                    Nothing to import
+                  </h4>
+                  <p className="text-label-sm text-text-gray-tertiary">
+                    Alice couldn&apos;t find any details in this CV to add to
+                    your profile.
+                  </p>
                 </div>
               </div>
             )}
 
-            {!foundNothing && (
-              <div className="w-full bg-bg-gray-soft-secondary/70 rounded-xl p-spacing-xl border border-border-gray-secondary/60 text-left space-y-spacing-xs">
-                <p className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  Already added to your profile:
-                </p>
-                {addedSections.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {addedSections.map(({ key, label, count }) => (
-                      <span key={key} className={chipClassName}>
-                        ✓ {label} ({count})
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-label-xs text-text-gray-tertiary">
-                    Nothing. Work experience, education and training are added
-                    only while your profile has none of that kind.
-                  </p>
-                )}
-              </div>
-            )}
-
-            <div className="w-full flex justify-end gap-spacing-xl pt-spacing-md">
-              <Button
-                onClick={handleReset}
-                className="w-full sm:w-auto bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg px-spacing-4xl"
-              >
-                {foundNothing ? 'Close' : 'Review Profile'}
-              </Button>
+            <div className="w-full flex flex-col sm:flex-row justify-end gap-spacing-2xl">
+              {canPick ? (
+                <>
+                  <Button
+                    onClick={handleReset}
+                    disabled={isSaving}
+                    variant="outline"
+                    className="text-label-md font-label-md-strong! cursor-pointer border-border-gray-primary h-10 rounded-lg text-text-gray-secondary"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    disabled={picked.length === 0 || isSaving}
+                    onClick={handleUpdateProfile}
+                    className="bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg"
+                  >
+                    {isSaving && <Loader2 className="size-4 animate-spin" />}
+                    {isSaving ? 'Saving…' : 'Update profile'}
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={handleReset}
+                  className="w-full sm:w-auto bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg px-spacing-4xl"
+                >
+                  Close
+                </Button>
+              )}
             </div>
           </div>
         )}

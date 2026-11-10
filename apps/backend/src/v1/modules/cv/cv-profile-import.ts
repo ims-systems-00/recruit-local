@@ -265,7 +265,7 @@ export const matchCvSkills = async (skills: CvSkill[]): Promise<MatchedCvSkill[]
  * candidate has none of that kind, so a second import adds nothing. Returns how
  * many rows of each were added.
  */
-export const importCvRecords = async ({
+const importCvRecords = async ({
   userId,
   jobProfileId,
   data,
@@ -290,6 +290,77 @@ export const importCvRecords = async ({
   ]);
 
   return { experience: experience.length, education: education.length, training: training.length };
+};
+
+/** A CV's work experience, education and training rows, by profile section. */
+export interface CvRecords {
+  experience: IExperience[];
+  education: IEducation[];
+  training: ITraining[];
+}
+
+// Ignoring case and spacing, so "ACME  Ltd" and "Acme Ltd" are one company.
+const entryKey = (...parts: (string | undefined)[]) =>
+  parts.map((part) => (part ?? "").trim().replace(/\s+/g, " ").toLowerCase()).join("|");
+
+// What makes two rows the same entry. Dates are left out: a CV's "Mar 2021"
+// and a hand-entered 14 March 2021 are the same job.
+const experienceKey = (row: Partial<IExperience>) => entryKey(row.company, row.jobTitle);
+const educationKey = (row: Partial<IEducation>) => entryKey(row.institution, row.degree);
+const trainingKey = (row: Partial<ITraining>) => entryKey(row.courseName, row.organizationName);
+
+/**
+ * Splits a CV's rows into the ones the profile lacks and a count of the ones
+ * it already has — same company and job title, institution and degree, or
+ * course and organisation.
+ */
+export const findNewCvRecords = async (owner: ProfileOwner, records: CvRecords) => {
+  const [experience, education, training] = await Promise.all([
+    Experience.find({ ...owner, ...NOT_DELETED }, { company: 1, jobTitle: 1 }).lean(),
+    Education.find({ ...owner, ...NOT_DELETED }, { institution: 1, degree: 1 }).lean(),
+    Training.find({ ...owner, ...NOT_DELETED }, { courseName: 1, organizationName: 1 }).lean(),
+  ]);
+  const onProfile = {
+    experience: new Set(experience.map(experienceKey)),
+    education: new Set(education.map(educationKey)),
+    training: new Set(training.map(trainingKey)),
+  };
+
+  const fresh: CvRecords = {
+    experience: records.experience.filter((row) => !onProfile.experience.has(experienceKey(row))),
+    education: records.education.filter((row) => !onProfile.education.has(educationKey(row))),
+    training: records.training.filter((row) => !onProfile.training.has(trainingKey(row))),
+  };
+
+  return {
+    records: fresh,
+    alreadyOnProfile: {
+      experience: records.experience.length - fresh.experience.length,
+      education: records.education.length - fresh.education.length,
+      training: records.training.length - fresh.training.length,
+    },
+  };
+};
+
+/**
+ * Saves the CV rows the candidate ticked, leaving out any the profile already
+ * has, so a retry or a second import never adds an entry twice. Existing rows
+ * are never changed. Returns how many of each were saved.
+ */
+export const addCvRecords = async (owner: ProfileOwner, records: CvRecords) => {
+  const { records: fresh } = await findNewCvRecords(owner, records);
+  const withOwner = <T>(rows: T[]) => rows.map((row) => ({ ...row, ...owner }));
+
+  const [experience, education, training] = await Promise.all([
+    fresh.experience.length ? Experience.insertMany(withOwner(fresh.experience)) : [],
+    fresh.education.length ? Education.insertMany(withOwner(fresh.education)) : [],
+    fresh.training.length ? Training.insertMany(withOwner(fresh.training)) : [],
+  ]);
+  const added = { experience: experience.length, education: education.length, training: training.length };
+
+  // Once for the whole save, rather than once per row as the row services do.
+  if (Object.values(added).some(Boolean)) await enqueueProfileCompletion(owner.userId);
+  return added;
 };
 
 /**

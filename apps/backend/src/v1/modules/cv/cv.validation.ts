@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { objectIdValidation } from "../../../common/helper/validate";
-import { CV_STATUS_ENUM } from "@rl/types";
+import { CV_STATUS_ENUM, EMPLOYMENT_TYPE } from "@rl/types";
 import { RESUME_EXTENSION_PATTERN, RESUME_FORMAT_MESSAGE } from "./cv.constants";
 
 const subDocId = Joi.string().custom(objectIdValidation).optional().label("Sub-doc ID");
@@ -123,6 +123,52 @@ export const extractAndCreateBodySchema = Joi.object({
 
 export const idParamsSchema = Joi.object({
   id: Joi.string().custom(objectIdValidation).required().label("CV ID"),
+});
+
+// "Import from CV" sends back the rows the candidate ticked, in the shape the
+// import returned them (see normalizeCvForProfile). The caps sit well above any
+// real CV and only stop a hand-made request storing a novel. There is no
+// userId or jobProfileId: the owner always comes from the session.
+const IMPORT_ROWS_MAX = 30;
+const importText = (label: string) => Joi.string().trim().max(500).label(label);
+
+const importExperienceSchema = Joi.object({
+  company: importText("Company").required(),
+  jobTitle: importText("Job Title").required(),
+  startDate: Joi.date().required().label("Start Date"),
+  endDate: Joi.date().label("End Date"),
+  isActive: Joi.boolean().label("Is Active"),
+  location: importText("Location"),
+  employmentType: Joi.string()
+    .valid(...Object.values(EMPLOYMENT_TYPE))
+    .label("Employment Type"),
+  description: Joi.string().trim().max(10000).label("Description"),
+});
+
+const importEducationSchema = Joi.object({
+  institution: importText("Institution").required(),
+  degree: importText("Degree").required(),
+  fieldOfStudy: importText("Field of Study"),
+  startDate: Joi.date().label("Start Date"),
+  endDate: Joi.date().label("End Date"),
+  grade: importText("Grade"),
+});
+
+const importTrainingSchema = Joi.object({
+  courseName: importText("Course Name").required(),
+  organizationName: importText("Organization Name").required(),
+  startDate: Joi.date().required().label("Start Date"),
+  endDate: Joi.date().label("End Date"),
+  isCurrentlyEnrolled: Joi.boolean().label("Currently Enrolled"),
+});
+
+const importRows = (row: Joi.ObjectSchema, label: string) =>
+  Joi.array().items(row).max(IMPORT_ROWS_MAX).default([]).label(label);
+
+export const importRecordsBodySchema = Joi.object({
+  experience: importRows(importExperienceSchema, "Work Experience"),
+  education: importRows(importEducationSchema, "Education"),
+  training: importRows(importTrainingSchema, "Training"),
 });
 
 /**

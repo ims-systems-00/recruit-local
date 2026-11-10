@@ -7,7 +7,12 @@ import {
   extractAndCreateCvSchema,
 } from './cv.validation';
 import { JobTitle, WorkMode, Industry } from '../job-profile/job-profile.type';
-import type { ProfileSkillResponseDto } from '@rl/types';
+import type {
+  IEducation,
+  IExperience,
+  ITraining,
+  ProfileSkillResponseDto,
+} from '@rl/types';
 
 // --- INFERRED TYPES FROM SCHEMAS ---
 export type CvCreateInput = yup.InferType<typeof createCvSchema>;
@@ -108,11 +113,31 @@ export interface ExtractedData {
 /** A catalogue entry as the import returns it. */
 type CatalogueEntry = { _id: string; name: string };
 
+/** A shared row type as JSON carries it: its dates are ISO strings. */
+type WithIsoDates<T> = {
+  [K in keyof T]: T[K] extends Date | undefined
+    ? Exclude<T[K], Date> | string
+    : T[K];
+};
+
 /**
- * What "Import from CV" returns. `profile` uses the profile form's own field
- * names and is not saved: the candidate reviews it and presses Save. `added`
- * counts the work experience, education and training rows already written,
- * which happens only for a section that was empty.
+ * A CV's work experience, education and training rows, by profile section,
+ * as the import returns them and `POST /cvs/import-records` takes them back.
+ */
+export type CvRecords = {
+  experience: WithIsoDates<IExperience>[];
+  education: WithIsoDates<IEducation>[];
+  training: WithIsoDates<ITraining>[];
+};
+
+/** A number per CV section: rows saved, or rows already on the profile. */
+export type CvRecordCounts = Record<keyof CvRecords, number>;
+
+/**
+ * What "Import from CV" returns; the import itself saves nothing. `profile`
+ * uses the profile form's own field names, for the edit form. `records` holds
+ * only the rows the profile lacks, and `alreadyOnProfile` counts the ones it
+ * already has.
  */
 export type CvProfileImport = {
   profile: {
@@ -127,7 +152,8 @@ export type CvProfileImport = {
     experienceLevel: CatalogueEntry | null;
     skills: ProfileSkillResponseDto[];
   };
-  added: { experience: number; education: number; training: number };
+  records: CvRecords;
+  alreadyOnProfile: CvRecordCounts;
 };
 
 export type CvExtractionData = {

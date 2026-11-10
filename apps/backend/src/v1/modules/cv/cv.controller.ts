@@ -7,20 +7,30 @@ import {
   UnauthorizedException,
   logger,
 } from "../../../common/helper";
-import { CvAbilityBuilder, CvAuthZEntity } from "@rl/authz";
+import {
+  CvAbilityBuilder,
+  CvAuthZEntity,
+  EducationAbilityBuilder,
+  EducationAuthZEntity,
+  ExperienceAbilityBuilder,
+  ExperienceAuthZEntity,
+  TrainingAbilityBuilder,
+  TrainingAuthZEntity,
+} from "@rl/authz";
 import { AbilityAction } from "@rl/types";
 import { Types } from "mongoose";
 import * as cvService from "./cv.service";
 import * as cvExtractService from "./cv-extract.service";
 import { matchCvEntities } from "./cv-match.service";
 import {
+  CvRecords,
+  addCvRecords,
   asText,
-  importCvRecords,
+  findNewCvRecords,
   importCvIntoProfile,
   matchCvSkills,
   normalizeCvForProfile,
 } from "./cv-profile-import";
-import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 import { cvListQuerySpec, cvRoleScopedSecurityQuery } from "./cv.query";
 import { runCursorList } from "../../../common/query";
 import { assertCanReadJobProfile, assertProfileScopedListAccess } from "../job-profile/job-profile.access";
@@ -257,14 +267,15 @@ export const extract = async ({ req }: ControllerParams) => {
 };
 
 /**
- * "Import from CV" on the profile page: reads one of the candidate's own CVs.
+ * "Import from CV" on the profile page: reads one of the candidate's own CVs
+ * and saves nothing.
  *
- * Work experience, education and trainings are records of their own, so they
- * are added straight away, and only while the candidate has none of that kind
- * (onboarding's rule).
- * Everything else is returned for the open edit form, under the profile's own
- * field names, and is saved only when the candidate presses Save. Email is left
- * out: it is the login, not a thing to change from a CV.
+ * Profile fields come back under the form's own field names, for the edit form,
+ * saved only when the candidate presses Save. Email is left out: it is the
+ * login, not a thing to change from a CV.
+ * Work experience, education and training rows come back only where the profile
+ * lacks them, with a count of those it already has; the candidate ticks which
+ * sections to keep and the modal saves them through `importRecords`.
  */
 export const importToProfile = async ({ req }: ControllerParams) => {
   const userId = req.session.user?._id;
@@ -289,13 +300,11 @@ export const importToProfile = async ({ req }: ControllerParams) => {
   const data = normalizeCvForProfile(extracted);
   const owner = { userId: new Types.ObjectId(userId), jobProfileId: new Types.ObjectId(jobProfileId) };
 
-  const [matched, skills, added] = await Promise.all([
+  const [matched, skills, { records, alreadyOnProfile }] = await Promise.all([
     matchCvEntities(extracted as Record<string, string[]>),
     matchCvSkills(data.skills),
-    importCvRecords({ ...owner, data }),
+    findNewCvRecords(owner, { experience: data.experience, education: data.education, training: data.trainings }),
   ]);
-
-  if (Object.values(added).some(Boolean)) await enqueueProfileCompletion(owner.userId);
 
   return new ApiResponse({
     message: "CV imported.",
@@ -313,9 +322,42 @@ export const importToProfile = async ({ req }: ControllerParams) => {
         experienceLevel: matched.experienceLevels[0] ?? null,
         skills,
       },
-      added,
+      records,
+      alreadyOnProfile,
     },
     fieldName: "cvImport",
+  });
+};
+
+/**
+ * Saves the work experience, education and training rows the candidate ticked
+ * after "Import from CV", to their own profile. Rows the profile already has
+ * are left out, and existing rows are never changed.
+ */
+export const importRecords = async ({ req }: ControllerParams) => {
+  const userId = req.session.user?._id;
+  const jobProfileId = req.session.jobProfileId;
+  if (!jobProfileId) throw new BadRequestException("No job profile found in session.");
+
+  // The rule each section's own "add" endpoint applies: own profile only.
+  const target = { jobProfileId: String(jobProfileId) };
+  const canAdd = [
+    new ExperienceAbilityBuilder(req.session).getAbility().can(AbilityAction.Create, new ExperienceAuthZEntity(target)),
+    new EducationAbilityBuilder(req.session).getAbility().can(AbilityAction.Create, new EducationAuthZEntity(target)),
+    new TrainingAbilityBuilder(req.session).getAbility().can(AbilityAction.Create, new TrainingAuthZEntity(target)),
+  ].every(Boolean);
+  if (!canAdd) throw new UnauthorizedException("You are not authorized to add these to your profile.");
+
+  const added = await addCvRecords(
+    { userId: new Types.ObjectId(userId), jobProfileId: new Types.ObjectId(jobProfileId) },
+    req.body as CvRecords
+  );
+
+  return new ApiResponse({
+    message: "Added to your profile.",
+    statusCode: StatusCodes.OK,
+    data: added,
+    fieldName: "added",
   });
 };
 
