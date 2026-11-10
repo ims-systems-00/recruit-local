@@ -39,6 +39,21 @@ export interface UploadResponse {
   Location?: string;
 }
 
+/**
+ * A Content-Disposition that saves the file as `name`. The plain `filename` is
+ * ASCII with quotes and backslashes replaced, since either would end the quoted
+ * value early; `filename*` carries the exact name, non-ASCII included, for every
+ * current browser.
+ */
+const attachmentDisposition = (name: string): string => {
+  const asciiName = name.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
+  const encodedName = encodeURIComponent(name).replace(
+    /['()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+  return `attachment; filename="${asciiName}"; filename*=UTF-8''${encodedName}`;
+};
+
 class FileManager {
   private s3Client: S3Client;
 
@@ -83,10 +98,15 @@ class FileManager {
     };
   }
 
-  async getSignedUrlForView(fileInformation: FileInformation): Promise<ViewUrlResponse> {
+  /**
+   * `downloadAs` makes the link save the file under that name, rather than open
+   * it in the browser.
+   */
+  async getSignedUrlForView(fileInformation: FileInformation, downloadAs?: string): Promise<ViewUrlResponse> {
     const params = {
       Bucket: fileInformation.Bucket,
       Key: fileInformation.Key,
+      ...(downloadAs && { ResponseContentDisposition: attachmentDisposition(downloadAs) }),
     };
 
     const signedLink = await getSignedUrl(this.s3Client, new GetObjectCommand(params), { expiresIn: 12 * 3600 });

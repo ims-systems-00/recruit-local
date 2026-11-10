@@ -11,7 +11,13 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { createJob, getJobs, getPublicJobs, updateJob } from './jobs.server';
+import {
+  createJob,
+  duplicateJob,
+  getJobs,
+  getPublicJobs,
+  updateJob,
+} from './jobs.server';
 import { JobData, JobListFilters, JobListResponse } from './job.type';
 import { MultiStepJobFormValues } from '@/app/(authenticated)/(recruiter)/recruiter/job/[uid]/edit/job.schema';
 
@@ -213,6 +219,35 @@ export function useCreateJob() {
   return {
     onSubmit,
     isLoading: mutation.isPending,
+  };
+}
+
+/** Copies a job into the recruiter's organisation, then opens the new draft in the editor. */
+export function useDuplicateJob() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: duplicateJob,
+    onSuccess: (res) => {
+      if (!res.success) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success(res.message);
+      // The draft is a new row in My Jobs.
+      queryClient.invalidateQueries({ queryKey: jobKeys.all });
+      router.push(`/recruiter/job/${res.data._id}/edit`);
+    },
+    onError: () => {
+      toast.error('Something went wrong');
+    },
+  });
+
+  return {
+    duplicateJob: mutation.mutate,
+    isPending: mutation.isPending,
   };
 }
 

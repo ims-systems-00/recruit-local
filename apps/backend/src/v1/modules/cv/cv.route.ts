@@ -11,6 +11,7 @@ import {
   restore,
   extractAndCreate,
   extract,
+  importToProfile,
 } from "./cv.controller";
 import { handleController } from "../../../common/helper";
 import { validate, validateQuery } from "../../../common/middlewares";
@@ -33,6 +34,8 @@ router.get("/extract/:id", validateParams(idParamsSchema), handleController(extr
 router.get("/", validateQuery(listQuerySchema), handleController(list));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
 router.get("/:id/resume-url", validateParams(idParamsSchema), handleController(resumeUrl));
+// No body: the CV is read on the server; see importToProfile.
+router.post("/:id/import-to-profile", validateParams(idParamsSchema), handleController(importToProfile));
 router.post("/", validateBody(createBodySchema), handleController(create));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));
 router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemove));

@@ -1,0 +1,78 @@
+# cv — Import from CV: POST /cvs/:id/import-to-profile
+#
+# Reads one of the candidate's own CVs with Alice (gpt-4o, can take up to a
+# minute). Work experience, education and trainings are ADDED to the shared dev
+# database, but only to a section that is empty. Everything else comes back under
+# `cvImport.profile` for the edit form and is not saved.
+#
+# Needs a CANDIDATE with a job profile and at least one uploaded CV, plus
+# OPENAI_API_KEY and Redis (the import queues a profile-completion update).
+
+@host = http://localhost:9027/api/v1
+
+# Fill these in before running:
+@candidateEmail = replace-with-a-candidate@example.com
+@candidatePassword = replace-me
+# one of that candidate's CVs; another candidate's PUBLISHED CV
+@ownCvId = 000000000000000000000000
+@otherPublishedCvId = 000000000000000000000000
+###############################################################################
+
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv ADMIN_USER_EMAIL}}",
+  "password": "{{$dotenv ADMIN_USER_PASSWORD}}"
+}
+
+###
+
+@token = {{login.response.body.user.accessToken}}
+
+# @name candidateLogin
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{candidateEmail}}",
+  "password": "{{candidatePassword}}"
+}
+
+###
+
+@candidateToken = {{candidateLogin.response.body.user.accessToken}}
+
+### admin, who has no job profile -> 400 "No job profile found in session."
+POST {{host}}/cvs/{{ownCvId}}/import-to-profile
+x-auth-access-token: {{token}}
+
+### malformed id -> 400 from idParamsSchema
+POST {{host}}/cvs/nope/import-to-profile
+x-auth-access-token: {{candidateToken}}
+
+### no such CV -> 404 "CV not found."
+POST {{host}}/cvs/65a0000000000000000000ab/import-to-profile
+x-auth-access-token: {{candidateToken}}
+
+### the hole this closes: another candidate's PUBLISHED CV can be read, but not
+### imported -> 403 "You can only import one of your own CVs."
+### (GET /cvs/:id for the same id still returns 200.)
+POST {{host}}/cvs/{{otherPublishedCvId}}/import-to-profile
+x-auth-access-token: {{candidateToken}}
+
+### own CV -> 200. `cvImport.profile` holds name, contactNumber, address, summary,
+### interests, jobTitle/industry/workMode ({_id, name}, at most 3 each),
+### experienceLevel ({_id, name} or null) and skills ({ skill: {_id, name}, level },
+### at most 20). `cvImport.added` counts the experience/education/training rows
+### written — 0 for a section the profile already had rows in. No `email` key.
+### Needs the published cv.extract.system prompt for trainings to be reliable; a
+### course with one date is saved starting on that date, one with none is skipped.
+POST {{host}}/cvs/{{ownCvId}}/import-to-profile
+x-auth-access-token: {{candidateToken}}
+
+### again -> 200 with `added` { experience: 0, education: 0, training: 0 }: the
+### sections are no longer empty, so nothing is added twice.
+POST {{host}}/cvs/{{ownCvId}}/import-to-profile
+x-auth-access-token: {{candidateToken}}

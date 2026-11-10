@@ -21,6 +21,7 @@ import type {
   CvListRequestFilters,
   ExtractAndCreateCvInput,
   CvExtractionData,
+  CvProfileImport,
   CvResumeUrls,
 } from './cv.type';
 
@@ -227,6 +228,32 @@ export async function hardDeleteCv(id: string): Promise<CvApiResponse<null>> {
     };
   } catch (error) {
     return handleServerError(error, 'Failed to permanently delete CV');
+  }
+}
+
+/**
+ * IMPORT A CV INTO THE PROFILE
+ * Reads one of the candidate's own CVs: work experience and education are added
+ * on the server, the rest comes back unsaved for the edit form. Slow — the CV is
+ * read by Alice, which can take up to a minute.
+ */
+export async function importCvToProfile(
+  id: string,
+): Promise<CvApiResponse<CvProfileImport>> {
+  try {
+    await idParamsSchema.validate({ id });
+
+    const res = await axiosServer.post(
+      `${API_ENDPOINT}/${id}/import-to-profile`,
+    );
+
+    return {
+      success: true,
+      data: res.data.cvImport,
+      message: res.data.message || 'CV imported',
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to import CV');
   }
 }
 

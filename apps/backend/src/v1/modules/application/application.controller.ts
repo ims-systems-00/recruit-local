@@ -105,6 +105,35 @@ export const get = async ({ req }: ControllerParams) => {
   });
 };
 
+/**
+ * Download links for the application's CV and case studies. Gated like `get`
+ * — the employer that owns the job, or the candidate who applied — and per
+ * field, so a file is only signed for someone who may read that field.
+ */
+export const files = async ({ req }: ControllerParams) => {
+  const abilityBuilder = new ApplicationAbilityBuilder(req.session);
+  const ability = abilityBuilder.getAbility();
+
+  const application = await applicationService.getOne({
+    query: { _id: req.params.id },
+  });
+  const authZEntity = application && new ApplicationAuthZEntity(application);
+
+  if (!authZEntity || !ability.can(AbilityAction.Read, authZEntity)) {
+    throw new UnauthorizedException("You do not have permission to view this application.");
+  }
+
+  return new ApiResponse({
+    message: "Application files signed.",
+    statusCode: StatusCodes.OK,
+    data: await applicationService.signApplicationFiles(application, {
+      resume: ability.can(AbilityAction.Read, authZEntity, "resume"),
+      caseStudies: ability.can(AbilityAction.Read, authZEntity, "caseStudies"),
+    }),
+    fieldName: "files",
+  });
+};
+
 export const update = async ({ req }: ControllerParams) => {
   const abilityBuilder = new ApplicationAbilityBuilder(req.session);
   const ability = abilityBuilder.getAbility();

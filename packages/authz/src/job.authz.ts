@@ -163,6 +163,47 @@ const CANDIDATE_READ_FIELDS = omitFields([
 
 const EMPLOYER_UPDATE_FIELDS = [...EMPLOYER_CREATE_FIELDS, 'status'];
 
+/**
+ * What an employer may copy out of another organisation's open job: only what
+ * a candidate can already see. Never its status, dates, contact details,
+ * attachments, the expected answers to its screening questions, or how it ranks
+ * its values. Ids of array rows are left out so the copy gets new ones.
+ */
+const OPEN_JOB_COPY_FIELDS = [
+  'title',
+  'description',
+  'responsibility',
+  'category',
+  'vacancy',
+  'location',
+  'locationAdditionalInfo',
+  'workplace',
+  'workingDays',
+  'weekends',
+  'workingHours',
+  'employmentType',
+  'salary',
+  'period',
+  'yearOfExperience',
+  'requiredDocuments',
+  'skills',
+  'additionalQueries.question',
+  'additionalQueries.type',
+  'additionalQueries.options',
+  'additionalQueries.isRequired',
+  'values.value',
+];
+
+/** Copying one of the employer's own jobs also keeps what is private to them. */
+const OWN_JOB_COPY_FIELDS = [
+  ...OPEN_JOB_COPY_FIELDS,
+  'email',
+  'number',
+  'aboutUs',
+  'additionalQueries.expectedAnswer',
+  'values.priority',
+];
+
 export class JobAuthZEntity {
   public readonly tenantId: string | null;
   public readonly status: JOBS_STATUS_ENUMS;
@@ -225,6 +266,26 @@ export class JobAbilityBuilder implements IAbilityBuilder {
       builder.can(AbilityAction.HardDelete, JobAuthZEntity, {
         tenantId: this.session.tenantId,
       });
+
+      // A copy is a new draft in the employer's own organisation, so without one
+      // there is nothing to copy into. The guard is needed: dropUnscopedRules
+      // would remove only the first rule, as the second reads no session value.
+      // Duplicate is its own action, so these never widen the Read rule above,
+      // which also scopes the employer's own job list.
+      if (this.session.tenantId) {
+        builder.can(
+          AbilityAction.Duplicate,
+          JobAuthZEntity,
+          OWN_JOB_COPY_FIELDS,
+          { tenantId: this.session.tenantId },
+        );
+        builder.can(
+          AbilityAction.Duplicate,
+          JobAuthZEntity,
+          OPEN_JOB_COPY_FIELDS,
+          { status: JOBS_STATUS_ENUMS.OPEN },
+        );
+      }
     }
 
     if (this.session.user.type === ACCOUNT_TYPE_ENUMS.CANDIDATE) {

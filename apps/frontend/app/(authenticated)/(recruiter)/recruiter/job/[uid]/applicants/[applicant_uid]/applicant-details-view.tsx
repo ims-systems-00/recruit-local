@@ -20,6 +20,7 @@ import { Copy, Download, Check, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDate, cn } from '@/lib/utils';
 import { Application } from '@/services/application/application.type';
+import { useApplicationFiles } from '@/services/application/application.client';
 import {
   formatMatchPercent,
   overallMatchPercent,
@@ -156,6 +157,7 @@ export default function ApplicantDetailsView({
 
   // Optional on an application; the section says so when there are none.
   const caseStudiesList = (applicationData?.caseStudies ?? []).map((item) => ({
+    _id: item._id,
     name: item.storageInformation.Name,
     size: '100KB',
   }));
@@ -251,12 +253,33 @@ export default function ApplicantDetailsView({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = (filename: string) => {
-    if (!filename || filename === 'N/A') {
-      toast.error('No file available to download');
-      return;
+  const { getApplicationFiles, isLoading: isPreparingDownload } =
+    useApplicationFiles();
+
+  // `fileId` picks a case study; without it, the CV. Links are fetched on
+  // click — they are short-lived — and ask the browser to save the file under
+  // its name, so following one downloads it without leaving the page.
+  const handleDownload = async (fileId?: string) => {
+    if (!applicationData?._id) return;
+
+    try {
+      const files = await getApplicationFiles(applicationData._id);
+      const link = fileId
+        ? files.caseStudies.find((file) => file._id === fileId)
+        : files.resume;
+
+      if (!link) {
+        toast.error('No file available to download');
+        return;
+      }
+      window.location.assign(link.url);
+    } catch (error) {
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Could not download the file',
+      );
     }
-    toast.info(`Downloading ${filename}...`);
   };
 
   return (
@@ -446,8 +469,9 @@ export default function ApplicantDetailsView({
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleDownload(cvFileName)}
-                        className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0"
+                        onClick={() => handleDownload()}
+                        disabled={isPreparingDownload}
+                        className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-wait"
                         title="Download CV"
                       >
                         <Download size={16} />
@@ -491,8 +515,9 @@ export default function ApplicantDetailsView({
                           </div>
                           <button
                             type="button"
-                            onClick={() => handleDownload(file.name)}
-                            className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0"
+                            onClick={() => handleDownload(file._id)}
+                            disabled={isPreparingDownload}
+                            className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-wait"
                             title="Download Case Study"
                           >
                             <Download size={16} />

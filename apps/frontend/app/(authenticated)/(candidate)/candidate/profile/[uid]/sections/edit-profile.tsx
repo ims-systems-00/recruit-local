@@ -1,8 +1,17 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  Ref,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from 'react';
 import 'react-phone-number-input/style.css';
 import PhoneInput from 'react-phone-number-input';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import { toast } from 'sonner';
+import { CvProfileImport } from '@/services/cv/cv.type';
 
 import { Label } from '@/components/ui/label';
 import { MailIcon } from 'lucide-react';
@@ -63,7 +72,10 @@ import {
   usePageAction,
   usePageContext,
 } from '@/components/ai-chat/page-context';
-import { useCatalogPageAction } from '@/components/ai-chat/use-catalog-page-action';
+import {
+  CatalogOption,
+  useCatalogPageAction,
+} from '@/components/ai-chat/use-catalog-page-action';
 import { excerpt } from '@/components/ai-chat/page-state';
 import { AGENT_STAGGER_MS, prefersReducedMotion, wait } from '@/lib/motion';
 import { SelectItem, SelectValue } from '@/components/ui/select';
@@ -169,6 +181,19 @@ const toSkillRows = (skills: ProfileSkillResponseDto[]): CatalogueSkillRow[] =>
 const toSkillInputs = (rows: CatalogueSkillRow[]) =>
   rows.map(({ id, level }) => ({ skill: id, level }));
 
+// The phone field takes an international number ("+44 20 …") only. A CV's local
+// one ("020 …") has no country to read it by, so it is left out, not guessed.
+const toInternationalPhone = (value: string) => {
+  const phone = parsePhoneNumberFromString(value);
+  return phone?.isValid() ? phone.number : undefined;
+};
+
+/** Puts an "Import from CV" result into the open form. */
+export type ApplyCvImport = (profile: CvProfileImport['profile']) => void;
+
+// A filled-in value counts as the user's change, so Save sends it.
+const MARK_CHANGED = { shouldDirty: true, shouldTouch: true };
+
 type EditProfileProps = {
   register: UseFormRegister<JobProfileUpdateInput>;
   control: Control<JobProfileUpdateInput>;
@@ -179,6 +204,8 @@ type EditProfileProps = {
   existingSkills?: ProfileSkillResponseDto[];
   setValue: UseFormSetValue<JobProfileUpdateInput>;
   watch: UseFormWatch<JobProfileUpdateInput>;
+  /** Receives `applyCvImport`, for the page's "Import from CV" to call. */
+  cvImportRef?: Ref<ApplyCvImport>;
 };
 
 export default function EditProfile({
@@ -191,6 +218,7 @@ export default function EditProfile({
   existingSkills = NO_SKILLS,
   setValue,
   watch,
+  cvImportRef,
 }: EditProfileProps) {
   const jobTitleAnchor = useComboboxAnchor();
   const industryAnchor = useComboboxAnchor();
@@ -241,6 +269,82 @@ export default function EditProfile({
       shouldTouch: true,
     });
   };
+
+  // A catalog selection goes into the form as ids and into the chips with its
+  // names. Shared by Alice and "Import from CV"; neither saves.
+  const applyJobTitles = (options: CatalogOption[]) => {
+    setValue(
+      'jobTitle',
+      options.map(({ _id }) => _id),
+      MARK_CHANGED,
+    );
+    setSavedJobTitles(options);
+  };
+
+  const applyIndustries = (options: CatalogOption[]) => {
+    setValue(
+      'industry',
+      options.map(({ _id }) => _id),
+      MARK_CHANGED,
+    );
+    setSavedIndustries(options);
+  };
+
+  const applyWorkModes = (options: CatalogOption[]) => {
+    setValue(
+      'workMode',
+      options.map(({ _id }) => _id),
+      MARK_CHANGED,
+    );
+    setSavedWorkModes(options);
+  };
+
+  /**
+   * "Import from CV": the CV's values replace the form's wherever the CV has
+   * one. Text fields keep to the limits Alice's fills do, and anything left out
+   * is named in a toast. Nothing is saved: the candidate reviews the form and
+   * presses Save, or Cancel to drop all of it.
+   */
+  const applyCvImport: ApplyCvImport = (profile) => {
+    const text: Partial<Record<FillableKey, string>> = profile;
+    const leftOut: string[] = [];
+
+    for (const field of FILLABLE_FIELDS) {
+      const raw = text[field.key]?.trim();
+      if (!raw) continue;
+
+      const value =
+        field.key === 'contactNumber' ? toInternationalPhone(raw) : raw;
+      if (!value) {
+        leftOut.push(`${field.label} (not in international format)`);
+      } else if (value.length > field.max) {
+        leftOut.push(`${field.label} (too long)`);
+      } else {
+        setValue(field.key, value, MARK_CHANGED);
+      }
+    }
+
+    if (profile.jobTitle.length) {
+      applyJobTitles(profile.jobTitle.slice(0, MAX_JOB_TITLES_STEP_SELECTION));
+    }
+    if (profile.industry.length) {
+      applyIndustries(profile.industry.slice(0, MAX_INDUSTRIES_STEP_SELECTION));
+    }
+    if (profile.workMode.length) {
+      applyWorkModes(profile.workMode.slice(0, MAX_WORK_MODES_STEP_SELECTION));
+    }
+    if (profile.experienceLevel) {
+      setValue('experienceLevel', profile.experienceLevel._id, MARK_CHANGED);
+    }
+    // Already cut to PROFILE_SKILLS_MAX by the server.
+    if (profile.skills.length) handleSkillsChange(toSkillRows(profile.skills));
+
+    if (leftOut.length) {
+      toast.warning(`Not filled in from your CV: ${leftOut.join(', ')}.`);
+    }
+  };
+
+  useImperativeHandle(cvImportRef, () => applyCvImport);
 
   const { jobTitles, isLoading, isFetching } = useJobTitles({
     limit: 20,
@@ -328,16 +432,7 @@ export default function EditProfile({
     label: 'job titles',
     max: MAX_JOB_TITLES_STEP_SELECTION,
     selected: savedJobTitles,
-    apply: (options) => {
-      setValue(
-        'jobTitle',
-        options.map((option) => option._id),
-        { shouldDirty: true, shouldTouch: true },
-      );
-      setSavedJobTitles(
-        options.map((option) => ({ _id: option._id, name: option.name })),
-      );
-    },
+    apply: applyJobTitles,
   });
 
   useCatalogPageAction({
@@ -347,16 +442,7 @@ export default function EditProfile({
     label: 'industries',
     max: MAX_INDUSTRIES_STEP_SELECTION,
     selected: savedIndustries,
-    apply: (options) => {
-      setValue(
-        'industry',
-        options.map((option) => option._id),
-        { shouldDirty: true, shouldTouch: true },
-      );
-      setSavedIndustries(
-        options.map((option) => ({ _id: option._id, name: option.name })),
-      );
-    },
+    apply: applyIndustries,
   });
 
   useCatalogPageAction({
@@ -366,16 +452,7 @@ export default function EditProfile({
     label: 'work modes',
     max: MAX_WORK_MODES_STEP_SELECTION,
     selected: savedWorkModes,
-    apply: (options) => {
-      setValue(
-        'workMode',
-        options.map((option) => option._id),
-        { shouldDirty: true, shouldTouch: true },
-      );
-      setSavedWorkModes(
-        options.map((option) => ({ _id: option._id, name: option.name })),
-      );
-    },
+    apply: applyWorkModes,
   });
 
   useCatalogPageAction({

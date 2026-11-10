@@ -1,12 +1,18 @@
 'use client';
 import Image from 'next/image';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import RecruitProfileDefault from '@/public/images/recruit_profile_default.svg';
 import RecruitDefaultLogo from '@/public/images/recruit_default_logo.png';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import About from './about';
-import EditProfile from './edit-profile';
+import EditProfile, { ApplyCvImport } from './edit-profile';
 import { Resolver, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
@@ -72,6 +78,8 @@ export default function Profile({
   const [showProgreesInfo, setShowProgreesInfo] = useState(true);
   const [showOpenToWorkAlert, setShowOpenToWorkAlert] = useState(false);
   const [isImportCvOpen, setIsImportCvOpen] = useState(false);
+  // Set by the open edit form; "Import from CV" is offered only while it is open.
+  const applyCvImportRef = useRef<ApplyCvImport>(null);
 
   /**
    * Stable identities, because `EditProfile` resets its chip state whenever one
@@ -316,10 +324,36 @@ export default function Profile({
     },
   });
 
-  const handleCancelEdit = useCallback(() => {
+  // The form as the saved profile has it.
+  const savedFormValues = () => ({
+    name: jobProfileDetails?.name || '',
+    email: jobProfileDetails?.email,
+    contactNumber: jobProfileDetails?.contactNumber,
+    address: jobProfileDetails?.address,
+    summary: jobProfileDetails?.summary,
+    skills: toSkillInputs(jobProfileDetails?.skills),
+    interests: jobProfileDetails?.interests,
+    portfolioUrl: jobProfileDetails?.portfolioUrl,
+    keywords: jobProfileDetails?.keywords,
+    languages: jobProfileDetails?.languages,
+    profileImageStorage: jobProfileDetails?.profileImage?.storageInformation,
+    coverPhotoStorage: jobProfileDetails?.coverPhoto?.storageInformation,
+    visibility: jobProfileDetails?.visibility as VISIBILITY,
+    experienceLevel: jobProfileDetails?.experienceLevel?._id || '',
+    industry: jobProfileDetails?.industry?.map((industry) => industry._id),
+    workMode: jobProfileDetails?.workMode?.map((workMode) => workMode._id),
+    jobTitle: jobProfileDetails?.jobTitle?.map((jobTitle) => jobTitle._id),
+  });
+
+  // The form outlives the editor, so Cancel puts it back to the saved profile.
+  // Otherwise a cancelled edit (typed, filled by Alice, or imported from a CV)
+  // is back the next time the form opens, and its job titles, industries and
+  // work modes would save while their chips show the saved ones.
+  const handleCancelEdit = () => {
+    reset(savedFormValues());
     setIsEditMode(false);
     setActiveTab('about');
-  }, []);
+  };
 
   const completionProgress = jobProfileDetails?.completion?.percentage || 0; // 0-100
 
@@ -330,25 +364,7 @@ export default function Profile({
   const dashOffset = circumference * (1 - completionProgress / 100);
 
   useEffect(() => {
-    reset({
-      name: jobProfileDetails?.name || '',
-      email: jobProfileDetails?.email,
-      contactNumber: jobProfileDetails?.contactNumber,
-      address: jobProfileDetails?.address,
-      summary: jobProfileDetails?.summary,
-      skills: toSkillInputs(jobProfileDetails?.skills),
-      interests: jobProfileDetails?.interests,
-      portfolioUrl: jobProfileDetails?.portfolioUrl,
-      keywords: jobProfileDetails?.keywords,
-      languages: jobProfileDetails?.languages,
-      profileImageStorage: jobProfileDetails?.profileImage?.storageInformation,
-      coverPhotoStorage: jobProfileDetails?.coverPhoto?.storageInformation,
-      visibility: jobProfileDetails?.visibility as VISIBILITY,
-      experienceLevel: jobProfileDetails?.experienceLevel?._id || '',
-      industry: jobProfileDetails?.industry?.map((industry) => industry._id),
-      workMode: jobProfileDetails?.workMode?.map((workMode) => workMode._id),
-      jobTitle: jobProfileDetails?.jobTitle?.map((jobTitle) => jobTitle._id),
-    });
+    reset(savedFormValues());
   }, [
     jobProfileDetails?.profileImage?.storageInformation,
     jobProfileDetails?.coverPhoto?.storageInformation,
@@ -658,6 +674,7 @@ export default function Profile({
             existingSkills={existingSkills}
             setValue={setValue}
             watch={watch}
+            cvImportRef={applyCvImportRef}
           />
         ) : (
           <Tabs
@@ -738,7 +755,11 @@ export default function Profile({
         </AlertDialogContent>
       </AlertDialog>
 
-      <ImportCvModal open={isImportCvOpen} onOpenChange={setIsImportCvOpen} />
+      <ImportCvModal
+        open={isImportCvOpen}
+        onOpenChange={setIsImportCvOpen}
+        onImported={(result) => applyCvImportRef.current?.(result.profile)}
+      />
     </div>
   );
 }

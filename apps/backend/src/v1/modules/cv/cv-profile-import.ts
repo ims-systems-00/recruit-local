@@ -1,7 +1,14 @@
 import moment from "moment";
 import { Types } from "mongoose";
-import { EMPLOYMENT_TYPE, IEducation, IExperience, JOB_SKILL_LEVEL_ENUMS, PROFILE_SKILLS_MAX } from "@rl/types";
-import { Education, Experience, IProfileSkill, JobProfile, normalizeSkillName } from "../../../models";
+import {
+  EMPLOYMENT_TYPE,
+  IEducation,
+  IExperience,
+  ITraining,
+  JOB_SKILL_LEVEL_ENUMS,
+  PROFILE_SKILLS_MAX,
+} from "@rl/types";
+import { Education, Experience, IProfileSkill, JobProfile, Training, normalizeSkillName } from "../../../models";
 import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 import { enqueueProfileKeywords } from "../../../queue/keywordUpdateQueue";
 import * as skillCatalogService from "../skill-catalog/skill-catalog.service";
@@ -21,6 +28,7 @@ export interface CvProfileData {
   summary?: string;
   experience: IExperience[];
   education: IEducation[];
+  trainings: ITraining[];
   skills: CvSkill[];
   interests?: string;
 }
@@ -68,7 +76,8 @@ const SKILL_LEVEL_ORDER = Object.values(JOB_SKILL_LEVEL_ENUMS);
 // The most Alice may write into the field, which is the only limit it has.
 const INTERESTS_MAX_CHARS = 1000;
 
-const asText = (value: unknown): string | undefined => {
+/** Trimmed text, or undefined for anything that is not a non-blank string. */
+export const asText = (value: unknown): string | undefined => {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
   return trimmed || undefined;
@@ -144,6 +153,27 @@ const toEducation = (row: Record<string, unknown>): IEducation | undefined => {
   };
 };
 
+const toTraining = (row: Record<string, unknown>): ITraining | undefined => {
+  const courseName = asText(row.courseName);
+  const organizationName = asText(row.organizationName);
+  const isCurrentlyEnrolled = PRESENT_PATTERN.test(asText(row.endDate) ?? "");
+  const start = parseDate(row.startDate);
+  const end = isCurrentlyEnrolled ? undefined : parseDate(row.endDate);
+  // A course with one date is dated by it. The prompt puts that date in
+  // startDate; this also takes it from endDate, should the model put it there.
+  const startDate = start ?? end;
+  // Required by the Training model; a row without them would fail the save.
+  if (!courseName || !organizationName || !startDate) return undefined;
+
+  return {
+    courseName,
+    organizationName,
+    startDate,
+    endDate: start ? endAfter(start, end) : undefined,
+    isCurrentlyEnrolled,
+  };
+};
+
 const parseSkillLevel = (value: unknown): JOB_SKILL_LEVEL_ENUMS =>
   SKILL_LEVEL_ALIASES[asText(value)?.toLowerCase() ?? ""] ?? JOB_SKILL_LEVEL_ENUMS.INTERMEDIATE;
 
@@ -189,6 +219,9 @@ export const normalizeCvForProfile = (extracted: Record<string, unknown>): CvPro
   education: asRows(extracted.education)
     .map(toEducation)
     .filter((row): row is IEducation => !!row),
+  trainings: asRows(extracted.trainings)
+    .map(toTraining)
+    .filter((row): row is ITraining => !!row),
   skills: toSkills(extracted.skills),
   interests: toInterests(extracted.interests),
 });
@@ -202,21 +235,61 @@ const BLANK_TEXT = { $not: /\S/ };
 // skills string matches neither, so it is left alone.
 const NO_SKILLS = { $or: [{ skills: null }, { skills: { $size: 0 } }] };
 
+type ProfileOwner = { userId: Types.ObjectId; jobProfileId: Types.ObjectId };
+
+/** A CV skill matched to its catalogue entry, in the shape a profile's skills are returned in. */
+export interface MatchedCvSkill {
+  skill: { _id: Types.ObjectId; name: string };
+  level: JOB_SKILL_LEVEL_ENUMS;
+}
+
 /**
  * Only CV skills already in the catalogue: candidates cannot add entries. Kept
  * in the CV's order and cut to the profile's limit after matching, so a skill
  * the catalogue lacks never takes the place of one it has.
  */
-const toProfileSkills = async (skills: CvSkill[]): Promise<IProfileSkill[]> => {
+export const matchCvSkills = async (skills: CvSkill[]): Promise<MatchedCvSkill[]> => {
   if (!skills.length) return [];
   const entries = await skillCatalogService.findActiveByNames(skills.map(({ name }) => name));
-  const idByName = new Map(entries.map(({ _id, normalizedName }) => [normalizedName, _id]));
+  const entryByName = new Map(entries.map((entry) => [entry.normalizedName, entry]));
   return skills
     .flatMap(({ name, level }) => {
-      const skill = idByName.get(normalizeSkillName(name));
-      return skill ? [{ skill, level }] : [];
+      const entry = entryByName.get(normalizeSkillName(name));
+      return entry ? [{ skill: { _id: entry._id, name: entry.name }, level }] : [];
     })
     .slice(0, PROFILE_SKILLS_MAX);
+};
+
+/**
+ * Adds the CV's work experience, education and trainings, each only while the
+ * candidate has none of that kind, so a second import adds nothing. Returns how
+ * many rows of each were added.
+ */
+export const importCvRecords = async ({
+  userId,
+  jobProfileId,
+  data,
+}: ProfileOwner & { data: Pick<CvProfileData, "experience" | "education" | "trainings"> }) => {
+  const owner = { userId, jobProfileId };
+  const [hasExperience, hasEducation, hasTraining] = await Promise.all([
+    Experience.exists({ ...owner, ...NOT_DELETED }),
+    Education.exists({ ...owner, ...NOT_DELETED }),
+    Training.exists({ ...owner, ...NOT_DELETED }),
+  ]);
+
+  const [experience, education, training] = await Promise.all([
+    data.experience.length && !hasExperience
+      ? Experience.insertMany(data.experience.map((row) => ({ ...row, ...owner })))
+      : [],
+    data.education.length && !hasEducation
+      ? Education.insertMany(data.education.map((row) => ({ ...row, ...owner })))
+      : [],
+    data.trainings.length && !hasTraining
+      ? Training.insertMany(data.trainings.map((row) => ({ ...row, ...owner })))
+      : [],
+  ]);
+
+  return { experience: experience.length, education: education.length, training: training.length };
 };
 
 /**
@@ -225,43 +298,28 @@ const toProfileSkills = async (skills: CvSkill[]): Promise<IProfileSkill[]> => {
  * second upload adds nothing and a retry after a partial failure fills only
  * what is still missing.
  */
-export const importCvIntoProfile = async ({
-  userId,
-  jobProfileId,
-  data,
-}: {
-  userId: Types.ObjectId;
-  jobProfileId: Types.ObjectId;
-  data: CvProfileData;
-}) => {
-  const owner = { userId, jobProfileId };
+export const importCvIntoProfile = async ({ userId, jobProfileId, data }: ProfileOwner & { data: CvProfileData }) => {
   // The emptiness check sits in the filter, so it and the write are one step.
   const fillProfile = (empty: object, set: object) =>
     JobProfile.updateOne({ _id: jobProfileId, userId, ...empty }, { $set: set });
 
-  const skills = await toProfileSkills(data.skills);
+  const skills: IProfileSkill[] = (await matchCvSkills(data.skills)).map(({ skill, level }) => ({
+    skill: skill._id,
+    level,
+  }));
 
-  const [summaryResult, skillsResult, interestsResult, hasExperience, hasEducation] = await Promise.all([
+  const [summaryResult, skillsResult, interestsResult, rows] = await Promise.all([
     data.summary ? fillProfile({ summary: BLANK_TEXT }, { summary: data.summary }) : null,
     skills.length ? fillProfile(NO_SKILLS, { skills }) : null,
     data.interests ? fillProfile({ interests: BLANK_TEXT }, { interests: data.interests }) : null,
-    Experience.exists({ ...owner, ...NOT_DELETED }),
-    Education.exists({ ...owner, ...NOT_DELETED }),
-  ]);
-
-  const [experience, education] = await Promise.all([
-    data.experience.length && !hasExperience
-      ? Experience.insertMany(data.experience.map((row) => ({ ...row, ...owner })))
-      : [],
-    data.education.length && !hasEducation
-      ? Education.insertMany(data.education.map((row) => ({ ...row, ...owner })))
-      : [],
+    importCvRecords({ userId, jobProfileId, data }),
   ]);
 
   const imported = {
     summary: !!summaryResult?.modifiedCount,
-    experience: experience.length,
-    education: education.length,
+    experience: rows.experience,
+    education: rows.education,
+    training: rows.training,
     skills: skillsResult?.modifiedCount ? skills.length : 0,
     interests: !!interestsResult?.modifiedCount,
   };

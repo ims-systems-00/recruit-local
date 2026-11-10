@@ -3,6 +3,7 @@ import express from "express";
 import {
   list,
   get,
+  files,
   create,
   update,
   softRemove,
@@ -40,6 +41,7 @@ router.get("/", validateQuery(listQuerySchema), handleController(list));
 // Before "/:id", or "overview" is taken for an application id.
 router.get("/overview", validateQuery(overviewQuerySchema), handleController(overview));
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
+router.get("/:id/files", validateParams(idParamsSchema), handleController(files));
 router.post("/", validateBody(createBodySchema), handleController(create));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));
 router.put(

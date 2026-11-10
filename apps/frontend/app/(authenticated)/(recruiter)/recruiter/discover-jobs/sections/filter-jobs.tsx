@@ -5,7 +5,7 @@ import { CircleX, Filter, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 import { useDebounce } from '@/hooks/useDebounce';
-import { useInfiniteJobs } from '@/services/jobs/jobs.client';
+import { useInfinitePublicJobs } from '@/services/jobs/jobs.client';
 import JobItemSkelaton from './job-item-skelaton';
 import CardJobItem from './card-job-item';
 import EmptyBox from '@/components/empty-box';
@@ -65,13 +65,14 @@ export default function FilterJobs({ onClose }: { onClose: () => void }) {
     }),
     [debouncedSearch, workplace, employmentType, salaryMode, period],
   );
+  // Every organisation's open jobs, as on the unfiltered list.
   const {
     data,
     isLoading: isJobLoading,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useInfiniteJobs(filters);
+  } = useInfinitePublicJobs(filters);
 
   const jobs = data?.pages.flatMap((page) => page.docs) ?? [];
 

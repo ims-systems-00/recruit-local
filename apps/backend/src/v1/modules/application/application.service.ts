@@ -38,6 +38,38 @@ import {
   IMoveBoardItemParams,
   IApplicationOverviewParams,
 } from "./application.interface";
+import { s3Client } from "../../../.config/s3.config";
+import { FileInformation, FileManager } from "../../../common/helper/file-manager";
+
+const fileManager = new FileManager(s3Client);
+
+type ApplicationFile = { _id?: unknown; storageInformation?: FileInformation & { Name?: string } } | null | undefined;
+
+// A short-lived link that downloads the file under its uploaded name.
+const signDownload = async (file: ApplicationFile) => {
+  const storage = file?.storageInformation;
+  if (!storage?.Bucket || !storage.Key) return null;
+
+  const name = storage.Name || storage.Key.split("/").pop() || "file";
+  const { signedUrl } = await fileManager.getSignedUrlForView({ Bucket: storage.Bucket, Key: storage.Key }, name);
+  return { _id: String(file?._id), name, url: signedUrl };
+};
+
+/**
+ * Download links for an application's CV and case studies. The files sit in
+ * private storage, so this is the way to fetch them; the caller checks that the
+ * application — and each of these fields — may be read first.
+ */
+export const signApplicationFiles = async (
+  application: { resume?: ApplicationFile; caseStudies?: ApplicationFile[] },
+  include: { resume: boolean; caseStudies: boolean }
+) => {
+  const [resume, caseStudies] = await Promise.all([
+    include.resume ? signDownload(application.resume) : null,
+    include.caseStudies ? Promise.all((application.caseStudies ?? []).map(signDownload)) : [],
+  ]);
+  return { resume, caseStudies: caseStudies.filter(Boolean) };
+};
 
 export const list = async ({ query = {}, options, session, offset = 0 }: IListApplicationParams) => {
   const limit = options?.limit && options.limit > 0 ? options.limit : 10;

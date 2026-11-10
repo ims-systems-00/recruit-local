@@ -3,7 +3,7 @@ import React from 'react';
 
 import { Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useInfiniteJobs } from '@/services/jobs/jobs.client';
+import { useInfinitePublicJobs } from '@/services/jobs/jobs.client';
 import JobItemSkelaton from './job-item-skelaton';
 import CardJobItem from './card-job-item';
 import EmptyBox from '../../../../../../components/empty-box';
@@ -11,13 +11,15 @@ import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { JobListFilters } from '@/services/jobs/job.type';
 
 export default function JobLists({ filters }: { filters: JobListFilters }) {
+  // The public list: every organisation's open jobs. An employer's `/jobs`
+  // returns only their own organisation's.
   const {
     data,
     isLoading: isJobLoading,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useInfiniteJobs(filters);
+  } = useInfinitePublicJobs(filters);
 
   const jobs = data?.pages.flatMap((page) => page.docs) ?? [];
 

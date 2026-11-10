@@ -7,6 +7,7 @@ import {
   extractAndCreateCvSchema,
 } from './cv.validation';
 import { JobTitle, WorkMode, Industry } from '../job-profile/job-profile.type';
+import type { ProfileSkillResponseDto } from '@rl/types';
 
 // --- INFERRED TYPES FROM SCHEMAS ---
 export type CvCreateInput = yup.InferType<typeof createCvSchema>;
@@ -103,6 +104,31 @@ export interface ExtractedData {
   education: Education[];
   interests: Interest[];
 }
+
+/** A catalogue entry as the import returns it. */
+type CatalogueEntry = { _id: string; name: string };
+
+/**
+ * What "Import from CV" returns. `profile` uses the profile form's own field
+ * names and is not saved: the candidate reviews it and presses Save. `added`
+ * counts the work experience, education and training rows already written,
+ * which happens only for a section that was empty.
+ */
+export type CvProfileImport = {
+  profile: {
+    name?: string;
+    contactNumber?: string;
+    address?: string;
+    summary?: string;
+    interests?: string;
+    jobTitle: CatalogueEntry[];
+    industry: CatalogueEntry[];
+    workMode: CatalogueEntry[];
+    experienceLevel: CatalogueEntry | null;
+    skills: ProfileSkillResponseDto[];
+  };
+  added: { experience: number; education: number; training: number };
+};
 
 export type CvExtractionData = {
   cv: Cv;

@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import {
   getApplications,
   getApplicationById,
+  getApplicationFiles,
   createApplication,
   updateApplication,
   softDeleteApplication,
@@ -29,6 +30,7 @@ import type {
   MoveApplicationToColumnInput,
   JobOverview,
   JobOverviewRange,
+  ApplicationFiles,
 } from './application.type';
 import { useRouter } from 'next/navigation';
 
@@ -135,6 +137,23 @@ export function useApplication(id: string) {
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,
+  };
+}
+
+// Download links for an application's CV and case studies. Fetched on demand,
+// when a file is downloaded, so the short-lived links are always fresh.
+export function useApplicationFiles() {
+  const mutation = useMutation<ApplicationFiles, Error, string>({
+    mutationFn: async (id: string) => {
+      const response = await getApplicationFiles(id);
+      if (!response.success) throw new Error(response.message);
+      return response.data as ApplicationFiles;
+    },
+  });
+
+  return {
+    getApplicationFiles: mutation.mutateAsync,
+    isLoading: mutation.isPending,
   };
 }
 

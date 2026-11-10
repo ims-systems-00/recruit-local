@@ -2,7 +2,7 @@ import express from "express";
 import { handleController } from "../../../common/helper";
 import { validate, validateQuery } from "../../../common/middlewares";
 import { createBodySchema, updateBodySchema, idParamsSchema, listQuerySchema } from "./job.validation";
-import { list, get, create, update, softRemove, hardRemove, restore } from "./job.controller";
+import { list, get, create, duplicate, update, softRemove, hardRemove, restore } from "./job.controller";
 
 const router = express.Router();
 const validateBody = validate("body");
@@ -15,6 +15,8 @@ router.get("/", validateQuery(listQuerySchema), handleController(list));
 // route here only ever re-implemented that check less carefully.
 router.get("/:id", validateParams(idParamsSchema), handleController(get));
 router.post("/", validateBody(createBodySchema), handleController(create));
+// No body: what is copied is decided on the server (see buildJobCopy).
+router.post("/:id/duplicate", validateParams(idParamsSchema), handleController(duplicate));
 router.put("/:id", validateParams(idParamsSchema), validateBody(updateBodySchema), handleController(update));
 router.delete("/:id/soft", validateParams(idParamsSchema), handleController(softRemove));
 router.delete("/:id/hard", validateParams(idParamsSchema), handleController(hardRemove));
