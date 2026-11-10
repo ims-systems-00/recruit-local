@@ -111,8 +111,8 @@ type CatalogueEntry = { _id: string; name: string };
 /**
  * What "Import from CV" returns. `profile` uses the profile form's own field
  * names and is not saved: the candidate reviews it and presses Save. `added`
- * counts the work experience and education rows already written, which happens
- * only for a section that was empty.
+ * counts the work experience, education and training rows already written,
+ * which happens only for a section that was empty.
  */
 export type CvProfileImport = {
   profile: {
@@ -127,7 +127,7 @@ export type CvProfileImport = {
     experienceLevel: CatalogueEntry | null;
     skills: ProfileSkillResponseDto[];
   };
-  added: { experience: number; education: number };
+  added: { experience: number; education: number; training: number };
 };
 
 export type CvExtractionData = {

@@ -37,6 +37,7 @@ import type {
 import { experienceLevelKeys } from '../experience-level/experience-level.client';
 import { experienceKeys } from '../experience/experience.client';
 import { educationKeys } from '../education/education.client';
+import { trainingKeys } from '../training/training.client';
 import { jobProfileKeys } from '../job-profile/job-profile.client';
 
 // --- QUERY KEYS ---
@@ -283,12 +284,12 @@ export function useImportCvToProfile() {
         return null;
       }
 
-      const { added } = response.data;
-      if (added.experience || added.education) {
+      if (Object.values(response.data.added).some(Boolean)) {
         // As after Alice adds a row: the rows themselves, and the profile whose
         // completion they count towards.
         queryClient.invalidateQueries({ queryKey: experienceKeys.all });
         queryClient.invalidateQueries({ queryKey: educationKeys.all });
+        queryClient.invalidateQueries({ queryKey: trainingKeys.all });
         queryClient.invalidateQueries({ queryKey: jobProfileKeys.all });
       }
 

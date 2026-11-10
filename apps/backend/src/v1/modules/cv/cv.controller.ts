@@ -15,7 +15,7 @@ import * as cvExtractService from "./cv-extract.service";
 import { matchCvEntities } from "./cv-match.service";
 import {
   asText,
-  importCvExperienceAndEducation,
+  importCvRecords,
   importCvIntoProfile,
   matchCvSkills,
   normalizeCvForProfile,
@@ -259,8 +259,9 @@ export const extract = async ({ req }: ControllerParams) => {
 /**
  * "Import from CV" on the profile page: reads one of the candidate's own CVs.
  *
- * Work experience and education are records of their own, so they are added
- * straight away, and only while the candidate has none (onboarding's rule).
+ * Work experience, education and trainings are records of their own, so they
+ * are added straight away, and only while the candidate has none of that kind
+ * (onboarding's rule).
  * Everything else is returned for the open edit form, under the profile's own
  * field names, and is saved only when the candidate presses Save. Email is left
  * out: it is the login, not a thing to change from a CV.
@@ -291,10 +292,10 @@ export const importToProfile = async ({ req }: ControllerParams) => {
   const [matched, skills, added] = await Promise.all([
     matchCvEntities(extracted as Record<string, string[]>),
     matchCvSkills(data.skills),
-    importCvExperienceAndEducation({ ...owner, data }),
+    importCvRecords({ ...owner, data }),
   ]);
 
-  if (added.experience || added.education) await enqueueProfileCompletion(owner.userId);
+  if (Object.values(added).some(Boolean)) await enqueueProfileCompletion(owner.userId);
 
   return new ApiResponse({
     message: "CV imported.",
@@ -319,7 +320,7 @@ export const importToProfile = async ({ req }: ControllerParams) => {
 };
 
 /**
- * Fills the candidate's empty About, experience and education from the CV.
+ * Fills the candidate's empty About, experience, education and trainings from the CV.
  * Onboarding must not stall on it, so a failure is logged and swallowed.
  */
 const importIntoProfile = async (
@@ -337,6 +338,7 @@ const importIntoProfile = async (
         summary: !!data.summary,
         experience: data.experience.length,
         education: data.education.length,
+        trainings: data.trainings.length,
         skills: data.skills.length,
         interests: !!data.interests,
       },

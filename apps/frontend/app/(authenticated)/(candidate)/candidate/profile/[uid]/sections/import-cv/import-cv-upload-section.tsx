@@ -8,11 +8,11 @@ import AttachmentItem from '@/components/attachment-item';
 import { useDeleteFileStorage } from '@/services/file-storage';
 import { cn } from '@/lib/utils';
 
-// The same limit and types as a training certificate; the CV reader takes all three.
+// The same size limit as a training certificate. PDF and DOCX only: the CV
+// reader cannot open an old .doc (RESUME_EXTENSION_PATTERN on the backend).
 const CV_MAX_BYTES = 10 * 1024 * 1024;
 const CV_ACCEPT = {
   'application/pdf': ['.pdf'],
-  'application/msword': ['.doc'],
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [
     '.docx',
   ],
@@ -21,7 +21,7 @@ const CV_ACCEPT = {
 const rejectionMessage = (rejections: FileRejection[]) => {
   const code = rejections[0]?.errors[0]?.code;
   if (code === 'file-too-large') return 'The file must be 10MB or smaller.';
-  if (code === 'file-invalid-type') return 'Upload a PDF, DOC or DOCX file.';
+  if (code === 'file-invalid-type') return 'Upload a PDF or DOCX file.';
   return 'This file cannot be uploaded.';
 };
 
@@ -100,7 +100,7 @@ export default function ImportCvUploadSection({
                 )}
               </p>
               <p className="text-label-xs text-text-gray-tertiary">
-                PDF, DOC, DOCX up to 10MB
+                PDF or DOCX, up to 10MB
               </p>
             </div>
           </div>

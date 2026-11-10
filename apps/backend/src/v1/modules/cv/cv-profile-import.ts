@@ -1,7 +1,14 @@
 import moment from "moment";
 import { Types } from "mongoose";
-import { EMPLOYMENT_TYPE, IEducation, IExperience, JOB_SKILL_LEVEL_ENUMS, PROFILE_SKILLS_MAX } from "@rl/types";
-import { Education, Experience, IProfileSkill, JobProfile, normalizeSkillName } from "../../../models";
+import {
+  EMPLOYMENT_TYPE,
+  IEducation,
+  IExperience,
+  ITraining,
+  JOB_SKILL_LEVEL_ENUMS,
+  PROFILE_SKILLS_MAX,
+} from "@rl/types";
+import { Education, Experience, IProfileSkill, JobProfile, Training, normalizeSkillName } from "../../../models";
 import { enqueueProfileCompletion } from "../../../queue/profileCompletionUpdateQueue";
 import { enqueueProfileKeywords } from "../../../queue/keywordUpdateQueue";
 import * as skillCatalogService from "../skill-catalog/skill-catalog.service";
@@ -21,6 +28,7 @@ export interface CvProfileData {
   summary?: string;
   experience: IExperience[];
   education: IEducation[];
+  trainings: ITraining[];
   skills: CvSkill[];
   interests?: string;
 }
@@ -145,6 +153,27 @@ const toEducation = (row: Record<string, unknown>): IEducation | undefined => {
   };
 };
 
+const toTraining = (row: Record<string, unknown>): ITraining | undefined => {
+  const courseName = asText(row.courseName);
+  const organizationName = asText(row.organizationName);
+  const isCurrentlyEnrolled = PRESENT_PATTERN.test(asText(row.endDate) ?? "");
+  const start = parseDate(row.startDate);
+  const end = isCurrentlyEnrolled ? undefined : parseDate(row.endDate);
+  // A course with one date is dated by it. The prompt puts that date in
+  // startDate; this also takes it from endDate, should the model put it there.
+  const startDate = start ?? end;
+  // Required by the Training model; a row without them would fail the save.
+  if (!courseName || !organizationName || !startDate) return undefined;
+
+  return {
+    courseName,
+    organizationName,
+    startDate,
+    endDate: start ? endAfter(start, end) : undefined,
+    isCurrentlyEnrolled,
+  };
+};
+
 const parseSkillLevel = (value: unknown): JOB_SKILL_LEVEL_ENUMS =>
   SKILL_LEVEL_ALIASES[asText(value)?.toLowerCase() ?? ""] ?? JOB_SKILL_LEVEL_ENUMS.INTERMEDIATE;
 
@@ -190,6 +219,9 @@ export const normalizeCvForProfile = (extracted: Record<string, unknown>): CvPro
   education: asRows(extracted.education)
     .map(toEducation)
     .filter((row): row is IEducation => !!row),
+  trainings: asRows(extracted.trainings)
+    .map(toTraining)
+    .filter((row): row is ITraining => !!row),
   skills: toSkills(extracted.skills),
   interests: toInterests(extracted.interests),
 });
@@ -229,30 +261,35 @@ export const matchCvSkills = async (skills: CvSkill[]): Promise<MatchedCvSkill[]
 };
 
 /**
- * Adds the CV's work experience and education, each only while the candidate
- * has none, so a second import adds nothing. Returns how many rows were added.
+ * Adds the CV's work experience, education and trainings, each only while the
+ * candidate has none of that kind, so a second import adds nothing. Returns how
+ * many rows of each were added.
  */
-export const importCvExperienceAndEducation = async ({
+export const importCvRecords = async ({
   userId,
   jobProfileId,
   data,
-}: ProfileOwner & { data: Pick<CvProfileData, "experience" | "education"> }) => {
+}: ProfileOwner & { data: Pick<CvProfileData, "experience" | "education" | "trainings"> }) => {
   const owner = { userId, jobProfileId };
-  const [hasExperience, hasEducation] = await Promise.all([
+  const [hasExperience, hasEducation, hasTraining] = await Promise.all([
     Experience.exists({ ...owner, ...NOT_DELETED }),
     Education.exists({ ...owner, ...NOT_DELETED }),
+    Training.exists({ ...owner, ...NOT_DELETED }),
   ]);
 
-  const [experience, education] = await Promise.all([
+  const [experience, education, training] = await Promise.all([
     data.experience.length && !hasExperience
       ? Experience.insertMany(data.experience.map((row) => ({ ...row, ...owner })))
       : [],
     data.education.length && !hasEducation
       ? Education.insertMany(data.education.map((row) => ({ ...row, ...owner })))
       : [],
+    data.trainings.length && !hasTraining
+      ? Training.insertMany(data.trainings.map((row) => ({ ...row, ...owner })))
+      : [],
   ]);
 
-  return { experience: experience.length, education: education.length };
+  return { experience: experience.length, education: education.length, training: training.length };
 };
 
 /**
@@ -275,13 +312,14 @@ export const importCvIntoProfile = async ({ userId, jobProfileId, data }: Profil
     data.summary ? fillProfile({ summary: BLANK_TEXT }, { summary: data.summary }) : null,
     skills.length ? fillProfile(NO_SKILLS, { skills }) : null,
     data.interests ? fillProfile({ interests: BLANK_TEXT }, { interests: data.interests }) : null,
-    importCvExperienceAndEducation({ userId, jobProfileId, data }),
+    importCvRecords({ userId, jobProfileId, data }),
   ]);
 
   const imported = {
     summary: !!summaryResult?.modifiedCount,
     experience: rows.experience,
     education: rows.education,
+    training: rows.training,
     skills: skillsResult?.modifiedCount ? skills.length : 0,
     interests: !!interestsResult?.modifiedCount,
   };

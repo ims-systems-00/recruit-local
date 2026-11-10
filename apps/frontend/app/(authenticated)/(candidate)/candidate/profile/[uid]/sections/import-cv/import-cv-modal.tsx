@@ -28,6 +28,13 @@ const FORM_FIELDS: [keyof CvProfileImport['profile'], string][] = [
   ['interests', 'Interests'],
 ];
 
+// The profile sections the import writes rows into straight away.
+const ADDED_SECTIONS: [keyof CvProfileImport['added'], string][] = [
+  ['experience', 'Work experience'],
+  ['education', 'Education'],
+  ['training', 'Training'],
+];
+
 const hasValue = (value: unknown) =>
   Array.isArray(value) ? value.length > 0 : Boolean(value);
 
@@ -125,9 +132,11 @@ export default function ImportCvModal({
   const filledFields = result
     ? FORM_FIELDS.filter(([key]) => hasValue(result.profile[key]))
     : [];
-  const added = result?.added;
-  const addedAny = Boolean(added?.experience || added?.education);
-  const foundNothing = filledFields.length === 0 && !addedAny;
+  const addedSections = ADDED_SECTIONS.flatMap(([key, label]) => {
+    const count = result?.added[key] ?? 0;
+    return count ? [{ key, label, count }] : [];
+  });
+  const foundNothing = filledFields.length === 0 && addedSections.length === 0;
 
   // The import keeps running on the server once started, so the modal cannot be
   // closed until it has finished.
@@ -206,7 +215,7 @@ export default function ImportCvModal({
                     Upload From Computer
                   </p>
                   <span className="text-label-xs text-text-gray-quaternary">
-                    PDF, DOC, DOCX up to 10MB
+                    PDF or DOCX, up to 10MB
                   </span>
                 </div>
               </div>
@@ -326,23 +335,18 @@ export default function ImportCvModal({
                 <p className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
                   Already added to your profile:
                 </p>
-                {addedAny ? (
+                {addedSections.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {!!added?.experience && (
-                      <span className={chipClassName}>
-                        ✓ Work experience ({added.experience})
+                    {addedSections.map(({ key, label, count }) => (
+                      <span key={key} className={chipClassName}>
+                        ✓ {label} ({count})
                       </span>
-                    )}
-                    {!!added?.education && (
-                      <span className={chipClassName}>
-                        ✓ Education ({added.education})
-                      </span>
-                    )}
+                    ))}
                   </div>
                 ) : (
                   <p className="text-label-xs text-text-gray-tertiary">
-                    Nothing. Work experience and education are added only while
-                    your profile has none.
+                    Nothing. Work experience, education and training are added
+                    only while your profile has none of that kind.
                   </p>
                 )}
               </div>

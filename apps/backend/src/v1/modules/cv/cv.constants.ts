@@ -43,6 +43,14 @@ export const CV_EXTRACTION_SCHEMA = {
       grade: "",
     },
   ],
+  trainings: [
+    {
+      courseName: "",
+      organizationName: "",
+      startDate: "",
+      endDate: "",
+    },
+  ],
   interests: [{ name: "" }],
 };
 
@@ -66,5 +74,6 @@ Field-specific rules:
 - summary: If the resume has a summary, profile, objective or "about me" section, use that text, lightly cleaned up. Otherwise write 2–3 sentences in the candidate's voice (first person) from facts the resume states: their roles, years of experience and main skills. Never invent employers, numbers or achievements. Leave it empty only if the resume has no experience, education or skills at all.
 - skills.name: The skill's common name only, without levels or years (e.g. "React", not "React (5 years)").
 - skills.proficiencyLevel: Exactly one of "beginner", "intermediate" or "advanced". If the resume states a level, map it: "expert" or "proficient" → "advanced"; "basic" or "familiar" → "beginner". Otherwise estimate it from the experience section: used in a main role for 3+ years → "advanced"; used regularly for 1–3 years → "intermediate"; only mentioned or used briefly → "beginner". If there is nothing to go on, use "intermediate".
-- summary is the only field you may compose. Never add skills, interests, jobs or education the resume does not mention.
+- trainings: Courses, certifications, bootcamps and workshops the resume lists, online ones included. Not degrees or diplomas from a school, college or university: those go in education, and nothing goes in both. courseName is the course or certificate name; organizationName is who ran or issued it (e.g. "Coursera", "Amazon Web Services"). If only one date is given, put it in startDate and leave endDate empty. If it is still in progress, set endDate to "Present".
+- summary is the only field you may compose. Never add skills, interests, jobs, education or trainings the resume does not mention.
 - Leave a field as an empty string or empty array if the data cannot be determined.`;
