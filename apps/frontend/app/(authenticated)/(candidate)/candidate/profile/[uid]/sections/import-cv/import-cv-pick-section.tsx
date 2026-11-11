@@ -1,51 +1,73 @@
 'use client';
 
+import { useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import EmptyBox from '@/components/empty-box';
+import { cn } from '@/lib/utils';
 import {
   CvProfileImport,
   CvRecordCounts,
   CvRecords,
 } from '@/services/cv/cv.type';
+import ImportCvRecordCard, {
+  educationCard,
+  experienceCard,
+  trainingCard,
+} from './import-cv-record-card';
+import type { SummaryGroup } from './import-cv-done-section';
 
 type CvProfile = CvProfileImport['profile'];
 type CvProfileKey = keyof CvProfile;
 type CvSectionKey = keyof CvRecords;
-export type PickKey = CvProfileKey | CvSectionKey;
 
-// What the import can put into the edit form, labelled as the form labels it.
+/**
+ * What is ticked: profile fields by key, and each section's CV rows by their
+ * place in `records`.
+ */
+export type Picked = { fields: CvProfileKey[] } & Record<
+  CvSectionKey,
+  number[]
+>;
+
+// What the import can put into the edit form, in the design's order and words.
+// Address and work mode are not in the design but the import fills them, so
+// they stay.
 const FORM_FIELDS: [CvProfileKey, string][] = [
-  ['name', 'Applicant name'],
-  ['jobTitle', 'Job titles'],
+  ['name', 'Applicant Name'],
+  ['jobTitle', 'Job Title'],
   ['summary', 'Description'],
+  ['contactNumber', 'Contact Number'],
   ['address', 'Address'],
-  ['contactNumber', 'Contact number'],
-  ['industry', 'Industries'],
-  ['workMode', 'Work modes'],
-  ['experienceLevel', 'Experience level'],
+  ['industry', 'Industry'],
   ['skills', 'Skills'],
-  ['interests', 'Interests'],
+  ['interests', 'Interest'],
+  ['workMode', 'Work Mode'],
+  ['experienceLevel', 'Experience level'],
 ];
 
-// The profile sections a CV's rows are added to.
-const SECTIONS: [CvSectionKey, string][] = [
-  ['experience', 'Work experience'],
-  ['education', 'Education'],
-  ['training', 'Training'],
+// The profile sections a CV's rows are added to, one tab each.
+const SECTIONS: {
+  key: CvSectionKey;
+  tab: string;
+  noun: string;
+  icon?: 'experience' | 'education';
+}[] = [
+  {
+    key: 'experience',
+    tab: 'Work Experience',
+    noun: 'work experience',
+    icon: 'experience',
+  },
+  {
+    key: 'education',
+    tab: 'Education Qualification',
+    noun: 'education',
+    icon: 'education',
+  },
+  { key: 'training', tab: 'Trainings', noun: 'training' },
 ];
-
-const GROUPS = [
-  {
-    group: 'fields',
-    title: 'Profile details',
-    note: 'Go into your profile form. Press Save there to keep them.',
-  },
-  {
-    group: 'sections',
-    title: 'Experience, education and training',
-    note: 'Added to your profile when you press Update profile. Nothing you already have is changed.',
-  },
-] as const;
 
 // Every field left out is blank, which the edit form's applyCvImport skips.
 const BLANK_PROFILE: CvProfile = {
@@ -56,210 +78,323 @@ const BLANK_PROFILE: CvProfile = {
   skills: [],
 };
 
+// How many names of a list are written out before "and 5 others".
+const LIST_SHOWN = 4;
+
 const hasValue = (value: unknown) =>
   Array.isArray(value) ? value.length > 0 : Boolean(value);
+
+const describeList = (names: string[]) => {
+  const rest = names.length - LIST_SHOWN;
+  if (rest <= 0) return names.join(', ');
+  return `${names.slice(0, LIST_SHOWN).join(', ')} and ${rest} ${rest === 1 ? 'other' : 'others'}`;
+};
 
 /** A profile value as a line of text: names for lists. */
 const describe = (value: CvProfile[CvProfileKey]): string => {
   if (Array.isArray(value)) {
-    return value
-      .map((entry) => ('skill' in entry ? entry.skill.name : entry.name))
-      .join(', ');
+    return describeList(
+      value.map((entry) => ('skill' in entry ? entry.skill.name : entry.name)),
+    );
   }
   if (value && typeof value === 'object') return value.name;
   return value ?? '';
 };
 
-/** Each CV row as a few words: "Senior Engineer at Acme". */
-const describeRows = ({
+/** The form fields the CV gave a value for. */
+const profileFields = (result: CvProfileImport) =>
+  FORM_FIELDS.filter(([key]) => hasValue(result.profile[key]));
+
+const indexes = (rows: unknown[]) => rows.map((_, index) => index);
+
+const pickRows = <T,>(rows: T[], picked: number[]) =>
+  rows.filter((_, index) => picked.includes(index));
+
+/** Everything the CV gave, ticked: how the list starts. */
+export const pickAll = (result: CvProfileImport): Picked => ({
+  fields: profileFields(result).map(([key]) => key),
+  experience: indexes(result.records.experience),
+  education: indexes(result.records.education),
+  training: indexes(result.records.training),
+});
+
+export const countPicked = ({
+  fields,
   experience,
   education,
   training,
-}: CvRecords): Record<CvSectionKey, string[]> => ({
-  experience: experience.map((row) => `${row.jobTitle} at ${row.company}`),
-  education: education.map((row) => `${row.degree}, ${row.institution}`),
-  training: training.map(
-    (row) => `${row.courseName} (${row.organizationName})`,
-  ),
-});
-
-export interface PickItem {
-  key: PickKey;
-  group: (typeof GROUPS)[number]['group'];
-  label: string;
-  detail: string;
-  /** Rows of this section the profile already has; they are left out. */
-  alreadyOnProfile?: number;
-  /** A section whose every row is already on the profile: nothing to add. */
-  disabled?: boolean;
-}
-
-/**
- * Everything the CV gave, in list order: the fields it filled, then each
- * section it has rows for. A section with only rows the profile already has is
- * listed, disabled, so its absence from the choices is explained.
- */
-export const pickItems = (result: CvProfileImport): PickItem[] => {
-  const rows = describeRows(result.records);
-  return [
-    ...FORM_FIELDS.filter(([key]) => hasValue(result.profile[key])).map(
-      ([key, label]): PickItem => ({
-        key,
-        group: 'fields',
-        label,
-        detail: describe(result.profile[key]),
-      }),
-    ),
-    ...SECTIONS.filter(
-      ([key]) => rows[key].length > 0 || result.alreadyOnProfile[key] > 0,
-    ).map(
-      ([key, label]): PickItem => ({
-        key,
-        group: 'sections',
-        label,
-        detail: rows[key].join(' · '),
-        alreadyOnProfile: result.alreadyOnProfile[key],
-        disabled: rows[key].length === 0,
-      }),
-    ),
-  ];
-};
-
-/** The items that can be ticked: all but sections with nothing new. */
-export const pickableKeys = (items: PickItem[]) =>
-  items.filter((item) => !item.disabled).map(({ key }) => key);
+}: Picked) =>
+  fields.length + experience.length + education.length + training.length;
 
 /** The ticked items, split into what fills the form and what is saved now. */
 export const pickedImport = (
   result: CvProfileImport,
-  picked: PickKey[],
+  picked: Picked,
 ): { profile: CvProfile; records: CvRecords } => ({
   profile: {
     ...BLANK_PROFILE,
     ...Object.fromEntries(
-      FORM_FIELDS.filter(([key]) => picked.includes(key)).map(([key]) => [
-        key,
-        result.profile[key],
-      ]),
+      FORM_FIELDS.filter(([key]) => picked.fields.includes(key)).map(
+        ([key]) => [key, result.profile[key]],
+      ),
     ),
   },
   records: {
-    experience: picked.includes('experience') ? result.records.experience : [],
-    education: picked.includes('education') ? result.records.education : [],
-    training: picked.includes('training') ? result.records.training : [],
+    experience: pickRows(result.records.experience, picked.experience),
+    education: pickRows(result.records.education, picked.education),
+    training: pickRows(result.records.training, picked.training),
   },
 });
 
-/** "2 work experience, 1 training", from what a save reports it added. */
-export const describeAdded = (added: CvRecordCounts) =>
-  SECTIONS.flatMap(([key, label]) =>
-    added[key] ? [`${added[key]} ${label.toLowerCase()}`] : [],
-  ).join(', ');
+/**
+ * What "Update Profile" did, by tab, for the closing summary. `added` is what
+ * the save reports, or null when no rows were sent. The save skips a row that
+ * reached the profile after the import (another tab, say), so fewer may be
+ * added than were ticked; that is noted, as which ones is not known.
+ */
+export const pickedSummary = (
+  result: CvProfileImport,
+  picked: Picked,
+  added: CvRecordCounts | null,
+): SummaryGroup[] => {
+  const { records } = pickedImport(result, picked);
+  const rows: Record<CvSectionKey, string[]> = {
+    experience: records.experience.map(
+      (row) => `${row.jobTitle} at ${row.company}`,
+    ),
+    education: records.education.map(
+      (row) => `${row.degree}, ${row.institution}`,
+    ),
+    training: records.training.map((row) => row.courseName),
+  };
+
+  return [
+    {
+      title: 'About',
+      items: FORM_FIELDS.filter(([key]) => picked.fields.includes(key)).map(
+        ([, label]) => label,
+      ),
+      // Unlike the rows, these are not saved yet.
+      note: picked.fields.length
+        ? 'Filled into your profile form. Press Save there to keep them.'
+        : undefined,
+    },
+    ...SECTIONS.map(({ key, tab }) => {
+      const skipped = rows[key].length - (added?.[key] ?? 0);
+      return {
+        title: tab,
+        items: rows[key],
+        note:
+          skipped > 0
+            ? `${skipped} of these ${skipped === 1 ? 'was' : 'were'} already on your profile.`
+            : undefined,
+      };
+    }),
+  ];
+};
+
+const toggleIn = <V,>(list: V[], value: V, checked: boolean) =>
+  checked ? [...list, value] : list.filter((other) => other !== value);
 
 interface ImportCvPickSectionProps {
-  items: PickItem[];
-  picked: PickKey[];
-  onChange: (picked: PickKey[]) => void;
+  result: CvProfileImport;
+  picked: Picked;
+  onChange: (picked: Picked) => void;
   /** While saving: nothing can be changed. */
   disabled?: boolean;
 }
 
-/** One tick box per item the CV gave, grouped by when it is saved. */
+/**
+ * "Update Profile from CV": a tab per profile section, with a tick for each
+ * field or row the CV gave.
+ */
 export default function ImportCvPickSection({
-  items,
+  result,
   picked,
   onChange,
   disabled = false,
 }: ImportCvPickSectionProps) {
-  const pickable = pickableKeys(items);
-  const allPicked = pickable.every((key) => picked.includes(key));
-
-  const toggle = (key: PickKey, checked: boolean) =>
-    onChange(
-      checked ? [...picked, key] : picked.filter((other) => other !== key),
-    );
+  const [tab, setTab] = useState<'about' | CvSectionKey>('about');
+  const all = pickAll(result);
+  const fields = profileFields(result);
+  const cards = {
+    experience: result.records.experience.map(experienceCard),
+    education: result.records.education.map(educationCard),
+    training: result.records.training.map(trainingCard),
+  };
 
   return (
-    <div className="w-full rounded-xl border border-border-gray-secondary/60 bg-bg-gray-soft-secondary/70 text-left">
-      <div className="flex items-center justify-between gap-spacing-xl px-spacing-xl py-spacing-lg border-b border-border-gray-secondary/60">
-        <p className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
-          Found in your CV
-        </p>
-        {pickable.length > 0 && (
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onChange(allPicked ? [] : pickable)}
-            className="text-label-sm font-label-sm-strong! text-text-brand-secondary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {allPicked ? 'Clear all' : 'Select all'}
-          </button>
-        )}
-      </div>
-
-      <div className="divide-y divide-border-gray-secondary/60">
-        {GROUPS.map(({ group, title, note }) => {
-          const groupItems = items.filter((item) => item.group === group);
-          if (!groupItems.length) return null;
-
-          return (
-            <div
-              key={group}
-              className="px-spacing-xl py-spacing-lg space-y-spacing-lg"
+    <Tabs
+      value={tab}
+      onValueChange={(value) => setTab(value as typeof tab)}
+      className="w-full gap-spacing-3xl text-left"
+    >
+      <TabsList className="w-full h-11 justify-start bg-bg-gray-soft-secondary border border-border-gray-secondary rounded-xl overflow-x-auto">
+        {[{ key: 'about', tab: 'About' }, ...SECTIONS].map(
+          ({ key, tab: label }) => (
+            <TabsTrigger
+              key={key}
+              value={key}
+              className="flex-0 px-spacing-lg text-label-md font-label-md-strong! text-text-gray-quaternary data-[state=active]:bg-bg-gray-soft-primary data-[state=active]:text-text-gray-secondary data-[state=active]:shadow-sm"
             >
-              <div>
-                <p className="text-label-sm font-label-sm-strong! text-text-gray-secondary">
-                  {title}
-                </p>
-                <p className="text-label-xs text-text-gray-tertiary">{note}</p>
-              </div>
+              {label}
+            </TabsTrigger>
+          ),
+        )}
+      </TabsList>
 
-              {/* Two columns from tablet width up, so the list fits without scrolling. */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-spacing-3xl gap-y-spacing-xl">
-                {groupItems.map((item) => {
-                  const id = `cv-import-${item.key}`;
-                  return (
-                    <div
-                      key={item.key}
-                      className="flex items-start gap-spacing-lg"
+      <TabsContent value="about" className="space-y-spacing-3xl">
+        {fields.length ? (
+          <>
+            <TabHeader
+              anyPicked={picked.fields.length > 0}
+              disabled={disabled}
+              onToggle={() =>
+                onChange({
+                  ...picked,
+                  fields: picked.fields.length ? [] : all.fields,
+                })
+              }
+            />
+            {/* Two columns from tablet width up, as designed. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-spacing-3xl gap-y-spacing-3xl">
+              {fields.map(([key, label]) => {
+                const id = `cv-import-${key}`;
+                const value = result.profile[key];
+                const detail = describe(value);
+                return (
+                  <div key={key} className="flex items-start gap-spacing-lg">
+                    <Checkbox
+                      id={id}
+                      checked={picked.fields.includes(key)}
+                      disabled={disabled}
+                      onCheckedChange={(checked) =>
+                        onChange({
+                          ...picked,
+                          fields: toggleIn(
+                            picked.fields,
+                            key,
+                            checked === true,
+                          ),
+                        })
+                      }
+                      className="mt-0.5"
+                    />
+                    <Label
+                      htmlFor={id}
+                      className="min-w-0 flex-1 flex-col items-start gap-0.5 leading-normal cursor-pointer"
                     >
-                      <Checkbox
-                        id={id}
-                        checked={picked.includes(item.key)}
-                        disabled={disabled || item.disabled}
-                        onCheckedChange={(checked) =>
-                          toggle(item.key, checked === true)
-                        }
-                        className="mt-0.5"
-                      />
-                      <Label
-                        htmlFor={id}
-                        className="min-w-0 flex-1 flex-col items-start gap-0.5 leading-normal cursor-pointer"
-                      >
-                        <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
-                          {item.label}
-                        </span>
-                        {item.detail && (
-                          <span className="text-label-xs font-normal text-text-gray-tertiary line-clamp-2 break-words">
-                            {item.detail}
-                          </span>
+                      <span className="text-label-md font-label-md-strong! text-text-gray-secondary">
+                        {label}
+                      </span>
+                      {/* Lists wrap to two lines; written text keeps to one. */}
+                      <span
+                        title={detail}
+                        className={cn(
+                          'text-label-md font-normal text-text-gray-tertiary break-words',
+                          Array.isArray(value)
+                            ? 'line-clamp-2'
+                            : 'line-clamp-1',
                         )}
-                        {item.alreadyOnProfile ? (
-                          <span className="text-label-xs font-normal text-text-gray-quaternary">
-                            {item.disabled
-                              ? `All ${item.alreadyOnProfile} already on your profile`
-                              : `${item.alreadyOnProfile} more already on your profile, left out`}
-                          </span>
-                        ) : null}
-                      </Label>
-                    </div>
-                  );
-                })}
-              </div>
+                      >
+                        {detail}
+                      </span>
+                    </Label>
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
+          </>
+        ) : (
+          <EmptyBox
+            title="No profile details yet!"
+            description="Your CV has nothing to add to the About section."
+          />
+        )}
+      </TabsContent>
+
+      {SECTIONS.map(({ key, noun, icon }) => {
+        const already = result.alreadyOnProfile[key];
+        return (
+          <TabsContent key={key} value={key} className="space-y-spacing-3xl">
+            {cards[key].length ? (
+              <>
+                <TabHeader
+                  anyPicked={picked[key].length > 0}
+                  disabled={disabled}
+                  onToggle={() =>
+                    onChange({
+                      ...picked,
+                      [key]: picked[key].length ? [] : all[key],
+                    })
+                  }
+                />
+                <div className="space-y-spacing-2xl">
+                  {cards[key].map((text, index) => (
+                    <ImportCvRecordCard
+                      key={index}
+                      id={`cv-import-${key}-${index}`}
+                      text={text}
+                      icon={icon}
+                      checked={picked[key].includes(index)}
+                      disabled={disabled}
+                      onCheckedChange={(checked) =>
+                        onChange({
+                          ...picked,
+                          [key]: toggleIn(picked[key], index, checked),
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+                {already > 0 && (
+                  <p className="text-label-sm text-text-gray-quaternary">
+                    {already} more from your CV {already === 1 ? 'is' : 'are'}{' '}
+                    already on your profile, so{' '}
+                    {already === 1 ? 'it is' : 'they are'} left out.
+                  </p>
+                )}
+              </>
+            ) : (
+              <EmptyBox
+                title={`No ${noun} yet!`}
+                description={
+                  already
+                    ? `All ${already} from your CV ${already === 1 ? 'is' : 'are'} already on your profile.`
+                    : `Your CV has no ${noun} to add.`
+                }
+              />
+            )}
+          </TabsContent>
+        );
+      })}
+    </Tabs>
+  );
+}
+
+/** A tab's heading, with its own "Clear All" (or "Select All" once cleared). */
+function TabHeader({
+  anyPicked,
+  disabled,
+  onToggle,
+}: {
+  anyPicked: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-spacing-xl">
+      <p className="text-label-md font-label-md-strong! text-text-gray-secondary">
+        Check in the information you want to update
+      </p>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onToggle}
+        className="shrink-0 text-label-sm font-label-sm-strong! text-text-brand-secondary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {anyPicked ? 'Clear All' : 'Select All'}
+      </button>
     </div>
   );
 }
