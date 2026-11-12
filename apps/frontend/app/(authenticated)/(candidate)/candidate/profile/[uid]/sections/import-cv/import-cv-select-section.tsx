@@ -46,13 +46,25 @@ export default function ImportCvSelectSection({
     isError,
   } = useInfiniteCvs(CV_FILTERS);
 
-  // Only a CV with an uploaded file can be read. Searched here, on the file name
-  // the candidate sees: the server's search covers titles, which uploads lack.
+  // Only a CV with an uploaded file can be read.
+  const readable = (data?.pages.flatMap((page) => page.docs) ?? []).filter(
+    (cv) => cv.resume?.storageInformation?.Key,
+  );
+
+  // The newest CV is the one suggested: a CV has no "main" flag to go by.
+  // Picked before the search, so the badge stays on the same CV.
+  const recommendedId =
+    readable.length > 1
+      ? readable.reduce((newest, cv) =>
+          cv.createdAt > newest.createdAt ? cv : newest,
+        )._id
+      : undefined;
+
+  // Searched here, on the file name the candidate sees: the server's search
+  // covers titles, which uploads lack.
   const query = search.trim().toLowerCase();
-  const cvs = (data?.pages.flatMap((page) => page.docs) ?? []).filter(
-    (cv) =>
-      cv.resume?.storageInformation?.Key &&
-      fileName(cv).toLowerCase().includes(query),
+  const cvs = readable.filter((cv) =>
+    fileName(cv).toLowerCase().includes(query),
   );
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
@@ -72,7 +84,7 @@ export default function ImportCvSelectSection({
         <InputGroup className="h-10 rounded-lg shadow-xs border-border-gray-primary">
           <InputGroupInput
             type="text"
-            placeholder="Search CV by name..."
+            placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -85,7 +97,7 @@ export default function ImportCvSelectSection({
       <div className="space-y-spacing-lg">
         <div
           onScroll={handleScroll}
-          className="max-h-[30vh] overflow-y-auto space-y-spacing-lg pr-1"
+          className="max-h-[40vh] overflow-y-auto space-y-spacing-lg pr-1"
         >
           {isLoading ? (
             Array.from({ length: 3 }).map((_, index) => (
@@ -175,10 +187,17 @@ export default function ImportCvSelectSection({
                           </defs>
                         </svg>
                       </div>
-                      <div className="space-y-spacing-3xs">
-                        <FieldTitle className="text-label-sm! font-label-sm-strong! text-text-gray-primary line-clamp-1 break-all">
-                          {fileName(item)}
-                        </FieldTitle>
+                      <div className="min-w-0 space-y-spacing-3xs">
+                        <div className="flex flex-wrap items-center gap-x-spacing-md gap-y-spacing-3xs">
+                          <FieldTitle className="text-label-sm! font-label-sm-strong! text-text-gray-primary line-clamp-1 break-all">
+                            {fileName(item)}
+                          </FieldTitle>
+                          {item._id === recommendedId && (
+                            <span className="shrink-0 rounded-md border border-others-success-light bg-others-success-success-zero px-spacing-md py-spacing-3xs text-label-xs font-label-xs-strong! text-others-success-dark">
+                              Recommended
+                            </span>
+                          )}
+                        </div>
                         <FieldDescription className="text-label-sm! text-text-gray-tertiary">
                           Added {formatDate(item.createdAt)}
                         </FieldDescription>

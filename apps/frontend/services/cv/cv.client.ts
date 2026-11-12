@@ -20,6 +20,7 @@ import {
   restoreCv,
   extractAndCreateCv,
   importCvToProfile,
+  importCvRecords,
 } from './cv.server';
 import type {
   CvCreateInput,
@@ -32,6 +33,8 @@ import type {
   ExtractAndCreateCvInput,
   CvExtractionData,
   CvProfileImport,
+  CvRecordCounts,
+  CvRecords,
   CvResumeUrls,
 } from './cv.type';
 import { experienceLevelKeys } from '../experience-level/experience-level.client';
@@ -266,11 +269,10 @@ export function useExtractAndCreateCv() {
 /**
  * "Import from CV" on the profile page. Resolves to what the import returned,
  * or to null after showing the error, so the caller only has to step back.
- * No success toast: the modal shows its own done screen.
+ * No success toast: the modal shows what was found. The import saves nothing,
+ * so there is nothing to refresh.
  */
 export function useImportCvToProfile() {
-  const queryClient = useQueryClient();
-
   const mutation = useMutation({ mutationFn: importCvToProfile });
 
   const importCvToProfileAsync = async (
@@ -284,7 +286,42 @@ export function useImportCvToProfile() {
         return null;
       }
 
-      if (Object.values(response.data.added).some(Boolean)) {
+      return response.data;
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to import CV');
+      return null;
+    }
+  };
+
+  return {
+    importCvToProfile: importCvToProfileAsync,
+    isPending: mutation.isPending,
+  };
+}
+
+/**
+ * Saves the work experience, education and training rows ticked after "Import
+ * from CV". Resolves to how many of each were saved, or to null after showing
+ * the error, so the modal can stay open for a retry. No success toast: the
+ * caller knows what it asked for and says so.
+ */
+export function useImportCvRecords() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({ mutationFn: importCvRecords });
+
+  const importCvRecordsAsync = async (
+    records: CvRecords,
+  ): Promise<CvRecordCounts | null> => {
+    try {
+      const response = await mutation.mutateAsync(records);
+
+      if (!response.success) {
+        toast.error(response.message);
+        return null;
+      }
+
+      if (Object.values(response.data).some(Boolean)) {
         // As after Alice adds a row: the rows themselves, and the profile whose
         // completion they count towards.
         queryClient.invalidateQueries({ queryKey: experienceKeys.all });
@@ -295,13 +332,13 @@ export function useImportCvToProfile() {
 
       return response.data;
     } catch (error: any) {
-      toast.error(error.message || 'Failed to import CV');
+      toast.error(error.message || 'Failed to add to your profile');
       return null;
     }
   };
 
   return {
-    importCvToProfile: importCvToProfileAsync,
+    importCvRecords: importCvRecordsAsync,
     isPending: mutation.isPending,
   };
 }

@@ -22,6 +22,8 @@ import type {
   ExtractAndCreateCvInput,
   CvExtractionData,
   CvProfileImport,
+  CvRecordCounts,
+  CvRecords,
   CvResumeUrls,
 } from './cv.type';
 
@@ -254,6 +256,30 @@ export async function importCvToProfile(
     };
   } catch (error) {
     return handleServerError(error, 'Failed to import CV');
+  }
+}
+
+/**
+ * Saves the CV rows the candidate ticked after "Import from CV", as the import
+ * returned them. The server leaves out any the profile already has and answers
+ * with how many of each it saved.
+ */
+export async function importCvRecords(
+  records: CvRecords,
+): Promise<CvApiResponse<CvRecordCounts>> {
+  try {
+    const res = await axiosServer.post(
+      `${API_ENDPOINT}/import-records`,
+      records,
+    );
+
+    return {
+      success: true,
+      data: res.data.added,
+      message: res.data.message || 'Added to your profile',
+    };
+  } catch (error) {
+    return handleServerError(error, 'Failed to add to your profile');
   }
 }
 

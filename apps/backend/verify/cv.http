@@ -1,9 +1,10 @@
 # cv — Import from CV: POST /cvs/:id/import-to-profile
 #
 # Reads one of the candidate's own CVs with Alice (gpt-4o, can take up to a
-# minute). Work experience, education and trainings are ADDED to the shared dev
-# database, but only to a section that is empty. Everything else comes back under
-# `cvImport.profile` for the edit form and is not saved.
+# minute) and SAVES NOTHING. Profile fields come back under `cvImport.profile`
+# for the edit form; work experience, education and training rows the profile
+# lacks come back under `cvImport.records`, and are saved only through
+# POST /cvs/import-records (bottom of this file).
 #
 # Needs a CANDIDATE with a job profile and at least one uploaded CV, plus
 # OPENAI_API_KEY and Redis (the import queues a profile-completion update).
@@ -65,14 +66,66 @@ x-auth-access-token: {{candidateToken}}
 ### own CV -> 200. `cvImport.profile` holds name, contactNumber, address, summary,
 ### interests, jobTitle/industry/workMode ({_id, name}, at most 3 each),
 ### experienceLevel ({_id, name} or null) and skills ({ skill: {_id, name}, level },
-### at most 20). `cvImport.added` counts the experience/education/training rows
-### written — 0 for a section the profile already had rows in. No `email` key.
+### at most 20). No `email` key. `cvImport.records` has { experience, education,
+### training } rows the profile does NOT already have; `cvImport.alreadyOnProfile`
+### counts the ones it does. Nothing is written: the profile's sections are unchanged.
 ### Needs the published cv.extract.system prompt for trainings to be reliable; a
-### course with one date is saved starting on that date, one with none is skipped.
+### course with one date starts on that date, one with none is left out.
 POST {{host}}/cvs/{{ownCvId}}/import-to-profile
 x-auth-access-token: {{candidateToken}}
 
-### again -> 200 with `added` { experience: 0, education: 0, training: 0 }: the
-### sections are no longer empty, so nothing is added twice.
+### again -> 200 with the same `records`: the import saved nothing, so nothing
+### moved to `alreadyOnProfile`.
 POST {{host}}/cvs/{{ownCvId}}/import-to-profile
 x-auth-access-token: {{candidateToken}}
+
+###############################################################################
+# POST /cvs/import-records — saves the experience/education/training rows the
+# candidate ticked after an import. WRITES to the shared dev database. Rows the
+# profile already has (same company + job title, institution + degree, course +
+# organisation, ignoring case) are left out; existing rows are never changed.
+###############################################################################
+
+### admin, who has no job profile -> 400 "No job profile found in session."
+POST {{host}}/cvs/import-records
+x-auth-access-token: {{token}}
+Content-Type: application/json
+
+{}
+
+### an owner field in a row -> 400 "experience[0].userId" is not allowed
+POST {{host}}/cvs/import-records
+x-auth-access-token: {{candidateToken}}
+Content-Type: application/json
+
+{ "experience": [{ "company": "Acme", "jobTitle": "Engineer", "startDate": "2021-03-01", "userId": "000000000000000000000000" }] }
+
+### a training without a start date -> 400 "Start Date" is required
+POST {{host}}/cvs/import-records
+x-auth-access-token: {{candidateToken}}
+Content-Type: application/json
+
+{ "training": [{ "courseName": "AWS Cloud Practitioner", "organizationName": "Coursera" }] }
+
+### valid rows -> 200 `added` counts what was saved (0 for a row already on the profile)
+POST {{host}}/cvs/import-records
+x-auth-access-token: {{candidateToken}}
+Content-Type: application/json
+
+{
+  "experience": [{ "company": "Verify Co", "jobTitle": "Test Engineer", "startDate": "2021-03-01", "isActive": true }],
+  "education": [{ "institution": "Verify College", "degree": "HSC" }],
+  "training": [{ "courseName": "Verify Course", "organizationName": "Coursera", "startDate": "2023-01-01" }]
+}
+
+### same rows again -> 200 with `added` { experience: 0, education: 0, training: 0 }
+### (delete the three "Verify …" rows from the profile afterwards)
+POST {{host}}/cvs/import-records
+x-auth-access-token: {{candidateToken}}
+Content-Type: application/json
+
+{
+  "experience": [{ "company": "VERIFY CO", "jobTitle": "test engineer", "startDate": "2021-03-01" }],
+  "education": [{ "institution": "Verify College", "degree": "HSC" }],
+  "training": [{ "courseName": "Verify Course", "organizationName": "Coursera", "startDate": "2023-01-01" }]
+}
