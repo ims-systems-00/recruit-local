@@ -178,6 +178,14 @@ export default function ImportCvModal({
   // The icon above the title, on the steps the design gives one.
   const StepIcon = isExtracting ? Hand : step === 'done' ? HandCoins : null;
 
+  // Every step's buttons share one row, phones included: Cancel or Back on the
+  // left, the main button pushed to the right. From tablet width up both sit
+  // at the right, as designed. On a 320px phone a long main button wraps to
+  // its own line: Back stays left, the main button right.
+  const footerClasses =
+    'flex flex-wrap items-center justify-between sm:justify-end gap-spacing-2xl';
+  const mainButtonPlace = 'ml-auto sm:ml-0';
+
   return (
     <Dialog
       open={open}
@@ -188,7 +196,10 @@ export default function ImportCvModal({
       <DialogContent
         showCloseButton={!isBusy}
         className={cn(
-          'rounded-3xl bg-bg-gray-soft-primary shadow-xl gap-y-spacing-4xl max-h-[90vh] overflow-y-auto',
+          // One column that never grows past the window, so the tab bar and
+          // the one-line chips scroll or shorten with "…" instead of widening
+          // the dialog. The width keeps a 16px margin each side up to the cap.
+          'grid-cols-1 w-[calc(100%-2rem)] rounded-3xl bg-bg-gray-soft-primary shadow-xl gap-y-spacing-4xl max-h-[90vh] overflow-y-auto',
           // The progress step is a narrow card in the design.
           isExtracting ? 'sm:max-w-[550px]' : 'sm:max-w-[816px]',
         )}
@@ -286,7 +297,7 @@ export default function ImportCvModal({
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-spacing-2xl">
+            <div className={footerClasses}>
               <Button
                 onClick={handleReset}
                 variant="outline"
@@ -297,7 +308,10 @@ export default function ImportCvModal({
               <Button
                 disabled={!selectedOption}
                 onClick={handleNextFromMethod}
-                className="bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg"
+                className={cn(
+                  mainButtonPlace,
+                  'bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg',
+                )}
               >
                 Next
               </Button>
@@ -321,7 +335,7 @@ export default function ImportCvModal({
               />
             )}
 
-            <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-spacing-2xl">
+            <div className={footerClasses}>
               <Button
                 onClick={handlePreviousToMethod}
                 variant="outline"
@@ -332,7 +346,10 @@ export default function ImportCvModal({
               <Button
                 disabled={isContinueDisabled}
                 onClick={handleStartExtraction}
-                className="bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg"
+                className={cn(
+                  mainButtonPlace,
+                  'bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg',
+                )}
               >
                 Import from This CV
               </Button>
@@ -378,7 +395,7 @@ export default function ImportCvModal({
               </div>
             )}
 
-            <div className="w-full flex flex-col sm:flex-row justify-end gap-spacing-2xl">
+            <div className={footerClasses}>
               {canPick ? (
                 <>
                   <Button
@@ -392,7 +409,10 @@ export default function ImportCvModal({
                   <Button
                     disabled={!picked || countPicked(picked) === 0 || isSaving}
                     onClick={handleUpdateProfile}
-                    className="bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg"
+                    className={cn(
+                      mainButtonPlace,
+                      'bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg',
+                    )}
                   >
                     {isSaving && <Loader2 className="size-4 animate-spin" />}
                     {isSaving ? 'Saving…' : 'Update Profile'}
@@ -401,7 +421,10 @@ export default function ImportCvModal({
               ) : (
                 <Button
                   onClick={handleReset}
-                  className="w-full sm:w-auto bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg px-spacing-4xl"
+                  className={cn(
+                    mainButtonPlace,
+                    'bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg px-spacing-4xl',
+                  )}
                 >
                   Close
                 </Button>
@@ -418,7 +441,7 @@ export default function ImportCvModal({
             {/* Import from CV is offered only while the edit form is open, so
                 closing shows the form, already filled in, to review and Save.
                 Cancel leaves it filled too: the rows are saved already. */}
-            <div className="w-full flex flex-col sm:flex-row justify-end gap-spacing-2xl">
+            <div className={footerClasses}>
               <Button
                 onClick={handleReset}
                 variant="outline"
@@ -428,7 +451,10 @@ export default function ImportCvModal({
               </Button>
               <Button
                 onClick={handleReset}
-                className="bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg"
+                className={cn(
+                  mainButtonPlace,
+                  'bg-bg-brand-solid-primary text-white! text-label-md font-label-md-strong! cursor-pointer h-10 rounded-lg',
+                )}
               >
                 Review Profile
               </Button>
