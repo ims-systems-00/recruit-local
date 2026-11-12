@@ -164,14 +164,15 @@ export default function ImportCvRecordCard({
 /** A fact, with the dot that separates it from the one before. */
 function Dotted({ first, children }: { first: boolean; children: ReactNode }) {
   return (
-    <>
+    // One unit, so a wrapped line never ends or starts with a lone dot.
+    <span className="inline-flex min-w-0 items-center gap-x-spacing-sm">
       {!first && (
         <span
           aria-hidden
-          className="size-1.5 rounded-full bg-fg-gray-tertiary"
+          className="size-1.5 shrink-0 rounded-full bg-fg-gray-tertiary"
         />
       )}
-      <span className="break-words">{children}</span>
-    </>
+      <span className="min-w-0 break-words">{children}</span>
+    </span>
   );
 }
