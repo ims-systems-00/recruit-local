@@ -291,7 +291,7 @@ export default function ImportCvModal({
                     Upload From Computer
                   </p>
                   <span className="text-label-xs text-text-gray-quaternary">
-                    PDF or DOCX, up to 10MB
+                    PDF, DOC or DOCX, up to 10MB
                   </span>
                 </div>
               </div>

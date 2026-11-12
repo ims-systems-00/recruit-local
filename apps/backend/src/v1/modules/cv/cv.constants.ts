@@ -1,10 +1,10 @@
 /**
- * Formats the extractor can pull text out of. DOCX is a zip of XML, so it needs
- * no system binary; .doc/.rtf would need LibreOffice, which is not in the
- * production image.
+ * Formats the extractor can pull text out of, none needing a system binary:
+ * PDF, DOCX (a zip of XML) and Word 97–2003 .doc (read by word-extractor).
+ * .rtf would need LibreOffice, which is not in the production image.
  */
-export const RESUME_EXTENSION_PATTERN = /\.(pdf|docx)$/i;
-export const RESUME_FORMAT_MESSAGE = "CV must be a PDF or Word (.docx) file.";
+export const RESUME_EXTENSION_PATTERN = /\.(pdf|docx?)$/i;
+export const RESUME_FORMAT_MESSAGE = "CV must be a PDF or Word (.doc or .docx) file.";
 
 /**
  * The shape the extractor asks the model to fill. Sent as a user message

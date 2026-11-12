@@ -7,6 +7,7 @@ import { resolvePrompt } from "../prompt/prompt.resolver";
 import { CV_EXTRACTION_SCHEMA, DEFAULT_CV_EXTRACT_SYSTEM_PROMPT, RESUME_FORMAT_MESSAGE } from "./cv.constants";
 import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
+import WordExtractor from "word-extractor";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -15,6 +16,9 @@ const openai = new OpenAI({
 
 const PDF_MAGIC = "%PDF-";
 const ZIP_MAGIC = "504b0304"; // PK\x03\x04 — a .docx is a zip
+// An OLE2 compound file: a Word 97–2003 .doc, though old .xls and .ppt files
+// start the same way.
+const DOC_MAGIC = "d0cf11e0a1b11ae1";
 
 function decodePossiblyBase64Pdf(buffer: Buffer): Buffer {
   if (!buffer.subarray(0, 32).toString("utf-8").startsWith("JVBER")) return buffer;
@@ -26,6 +30,34 @@ function decodePossiblyBase64Docx(buffer: Buffer): Buffer {
   if (!buffer.subarray(0, 32).toString("utf-8").startsWith("UEsDB")) return buffer;
   const decoded = Buffer.from(buffer.toString("utf-8").replace(/\s+/g, ""), "base64");
   return decoded.subarray(0, 4).toString("hex") === ZIP_MAGIC ? decoded : buffer;
+}
+
+function decodePossiblyBase64Doc(buffer: Buffer): Buffer {
+  if (!buffer.subarray(0, 32).toString("utf-8").startsWith("0M8R4KGxGu")) return buffer;
+  const decoded = Buffer.from(buffer.toString("utf-8").replace(/\s+/g, ""), "base64");
+  return decoded.subarray(0, 8).toString("hex") === DOC_MAGIC ? decoded : buffer;
+}
+
+/**
+ * A Word 97–2003 .doc. CV templates often keep the name and contact details in
+ * the page header or a sidebar text box, so those are read with the body. An
+ * old Excel or PowerPoint file has the same signature and is refused by the
+ * reader: that is an unsupported format, not a server error.
+ */
+async function extractTextFromDoc(doc: Buffer): Promise<string> {
+  try {
+    const document = await new WordExtractor().extract(doc);
+    return [
+      document.getHeaders({ includeFooters: false }),
+      document.getBody(),
+      document.getTextboxes({ includeHeadersAndFooters: false }),
+    ]
+      .filter((part) => part.trim())
+      .join("\n");
+  } catch (error) {
+    logger.warn("[extractFromResume] Unreadable .doc", { error: (error as Error).message });
+    throw new BadRequestException(RESUME_FORMAT_MESSAGE);
+  }
 }
 
 /**
@@ -41,6 +73,11 @@ async function extractTextFromBuffer(buffer: Buffer): Promise<string> {
   const docx = decodePossiblyBase64Docx(buffer);
   if (docx.subarray(0, 4).toString("hex") === ZIP_MAGIC) {
     return (await mammoth.extractRawText({ buffer: docx })).value;
+  }
+
+  const doc = decodePossiblyBase64Doc(buffer);
+  if (doc.subarray(0, 8).toString("hex") === DOC_MAGIC) {
+    return extractTextFromDoc(doc);
   }
 
   logger.warn("[extractFromResume] Unrecognised resume format", {
