@@ -287,7 +287,7 @@ export default function AdditionalQueries({
           disabled={isPending}
           className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
         >
-          Previous
+          Back
         </Button>
         <Button
           onClick={onSubmitForm}
