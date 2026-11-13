@@ -41,6 +41,20 @@ export interface QueryCard {
   focused: boolean;
 }
 
+const toAdditionalQueries = (cards: QueryCard[]): AdditionalQuery[] =>
+  cards.map((item) => ({
+    ...(item._id ? { _id: item._id } : {}),
+    question: item.question,
+    type: item.type,
+    options:
+      item.type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ||
+      item.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE
+        ? (item.options?.map((q) => q.text) ?? [])
+        : undefined,
+    isRequired: item.isRequired ?? false,
+    expectedAnswer: item.expectedAnswer ?? '',
+  }));
+
 export default function AdditionalQueries({
   prev,
   next,
@@ -135,6 +149,8 @@ export default function AdditionalQueries({
     if (!card) return;
     const copy: QueryCard = {
       ...card,
+      // A copy is a new question; sharing the original's id would merge their answers.
+      _id: undefined,
       id: crypto.randomUUID(),
       options: card.options.map((o) => ({ ...o, id: crypto.randomUUID() })),
       focused: true,
@@ -159,38 +175,16 @@ export default function AdditionalQueries({
   const hasFocused = focusedIndex !== -1;
 
   const handlePrev = () => {
-    const data: AdditionalQuery[] = cards.map((item) => ({
-      question: item.question,
-      type: item.type,
-      options:
-        item.type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ||
-        item.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE
-          ? (item.options?.map((q) => q.text) ?? [])
-          : undefined,
-      isRequired: item.isRequired ?? false,
-      expectedAnswer: item.expectedAnswer ?? '',
-    }));
     prev({
-      additionalQueries: data,
+      additionalQueries: toAdditionalQueries(cards),
     } as JobData);
   };
 
   const onSubmitForm = async () => {
-    const payload: AdditionalQuery[] = cards.map((item) => ({
-      question: item.question,
-      type: item.type,
-      options:
-        item.type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ||
-        item.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE
-          ? (item.options?.map((q) => q.text) ?? [])
-          : undefined,
-      isRequired: item.isRequired ?? false,
-      expectedAnswer: item.expectedAnswer ?? '',
-    }));
     await updateJob({
       id: defaultValues._id,
       data: {
-        additionalQueries: payload,
+        additionalQueries: toAdditionalQueries(cards),
       },
       onSuccessNext: (newData) => next(newData),
     });

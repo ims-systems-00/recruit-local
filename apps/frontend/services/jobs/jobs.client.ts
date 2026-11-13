@@ -183,6 +183,7 @@ export function useUpdateJob() {
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to update job');
+      onError?.();
     }
   };
 

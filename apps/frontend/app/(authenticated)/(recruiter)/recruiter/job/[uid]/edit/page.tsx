@@ -9,6 +9,8 @@ import {
 import { getJobById } from '@/services/jobs/jobs.server';
 import EditForm from './edit-form';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { getJobStatusActions } from '@/app/(authenticated)/(recruiter)/recruiter/jobs/sections/job-status';
 
 type PageProps = {
   params: Promise<{ uid: string }>;
@@ -24,6 +26,10 @@ export default async function EditJob({ params }: PageProps) {
   }
 
   const jobData = response.data;
+
+  if (!getJobStatusActions(jobData).canEdit) {
+    redirect(`/recruiter/job/${uid}`);
+  }
 
   return (
     <div>

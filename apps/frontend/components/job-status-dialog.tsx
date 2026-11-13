@@ -11,39 +11,57 @@ import { Button } from '@/components/ui/button';
 import { useUpdateJob } from '@/services/jobs/jobs.client';
 import { JOBS_STATUS_ENUMS } from '@rl/types';
 import { CircleQuestionMark, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
-type CloseJobDialogProps = {
-  jobId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+export type JobStatusChange = 'close' | 'publish';
+
+const COPY: Record<
+  JobStatusChange,
+  { title: string; pending: string; status: JOBS_STATUS_ENUMS }
+> = {
+  close: {
+    title: 'Are you sure you want to close this job post?',
+    pending: 'Closing...',
+    status: JOBS_STATUS_ENUMS.CLOSED,
+  },
+  publish: {
+    title: 'Are you sure you want to publish this job post?',
+    pending: 'Publishing...',
+    status: JOBS_STATUS_ENUMS.OPEN,
+  },
 };
 
-/**
- * Asks before closing one of the recruiter's own open jobs. A closed job leaves
- * Discover, so on success this opens the recruiter's own page for the job.
- */
-export default function CloseJobDialog({
+type JobStatusDialogProps = {
+  jobId: string;
+  change: JobStatusChange;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
+};
+
+export default function JobStatusDialog({
   jobId,
+  change,
   open,
   onOpenChange,
-}: CloseJobDialogProps) {
-  const router = useRouter();
+  onSuccess,
+}: JobStatusDialogProps) {
   const { updateJob, isPending } = useUpdateJob();
+  const copy = COPY[change];
 
-  // A plain button, not AlertDialogAction (which closes at once), so the dialog
-  // stays open until the redirect, or after a failure to retry or discard.
+  // plain button so the dialog stays open while saving
   const onConfirm = () =>
     updateJob({
       id: jobId,
-      data: { status: JOBS_STATUS_ENUMS.CLOSED },
-      onSuccessNext: () => router.push(`/recruiter/job/${jobId}`),
+      data: { status: copy.status },
+      onSuccessNext: () => {
+        onOpenChange(false);
+        onSuccess?.();
+      },
     });
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent
-        // The design has a title only; this tells Radix no description is intended.
         aria-describedby={undefined}
         className="bg-white min-w-[400px] max-w-[400px]! rounded-3xl border border-others-brand-light gap-spacing-5xl"
       >
@@ -61,7 +79,7 @@ export default function CloseJobDialog({
             <CircleQuestionMark className="text-others-brand-dark" />
           </div>
           <AlertDialogTitle className="text-label-lg font-label-lg-strong! text-text-gray-primary">
-            Are you sure you want to close this job post?
+            {copy.title}
           </AlertDialogTitle>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex gap-spacing-2xl">
@@ -76,7 +94,7 @@ export default function CloseJobDialog({
             onClick={onConfirm}
             className="cursor-pointer flex-1 h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-white bg-bg-brand-solid-primary"
           >
-            {isPending ? 'Closing...' : 'Yes, Confirm'}
+            {isPending ? copy.pending : 'Yes, Confirm'}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

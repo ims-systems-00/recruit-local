@@ -14,9 +14,10 @@ import { JobData } from '@/services/jobs/job.type';
 import { useDuplicateJob } from '@/services/jobs/jobs.client';
 import { EllipsisVertical, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import CloseJobDialog from './close-job-dialog';
+import JobStatusDialog from '@/components/job-status-dialog';
 
 const itemClassName =
   'cursor-pointer px-spacing-lg py-spacing-md text-label-sm font-label-sm-strong! text-text-gray-secondary';
@@ -29,6 +30,7 @@ export default function JobActionsMenu({ job }: { job: JobData }) {
   // The favourite's id while the job is saved, null while it is not.
   const [savedId, setSavedId] = useState(job.alreadySavedId ?? null);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const router = useRouter();
 
   // Discover lists every open job, the recruiter's own included. Only those can
   // be closed; the server refuses any other. The tenantId check stops a match
@@ -107,10 +109,12 @@ export default function JobActionsMenu({ job }: { job: JobData }) {
       </DropdownMenu>
       {/* Outside the menu, so it stays mounted after the menu closes. */}
       {isOwnJob && (
-        <CloseJobDialog
+        <JobStatusDialog
           jobId={job._id}
+          change="close"
           open={closeDialogOpen}
           onOpenChange={setCloseDialogOpen}
+          onSuccess={() => router.push(`/recruiter/job/${job._id}`)}
         />
       )}
     </>
