@@ -40,6 +40,8 @@ import {
 } from '@rl/types';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { isJobExpired } from '@/app/(authenticated)/(recruiter)/recruiter/jobs/sections/job-status';
 
 import RelatedAttachmentDefault from '@/public/images/related_attachment_default.png';
 
@@ -193,6 +195,10 @@ export default function Preview({
   const skillsToRender = defaultValues?.skills ?? [];
 
   const onUpdateJob = async () => {
+    if (isJobExpired(defaultValues)) {
+      toast.error("This job's end date has passed. Pick a new end date before publishing.");
+      return;
+    }
     await updateJob({
       id: defaultValues._id,
       data: {

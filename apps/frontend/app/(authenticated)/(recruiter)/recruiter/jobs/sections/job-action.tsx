@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
 
 import {
   DropdownMenu,
@@ -10,61 +10,59 @@ import {
 import { EllipsisVertical } from 'lucide-react';
 import Link from 'next/link';
 import { JobData } from '@/services/jobs/job.type';
-import { JOBS_STATUS_ENUMS } from '@rl/types';
-import { useUpdateJob } from '@/services/jobs/jobs.client';
-export default function JobAction({ job }: { job: JobData }) {
-  const [jobIsOpen, setJobIsOpen] = useState(
-    job.status === JOBS_STATUS_ENUMS.OPEN ? true : false,
-  );
-  const { updateJob, isPending } = useUpdateJob();
+import { getJobStatusActions } from './job-status';
+import { useJobStatusChange } from './use-job-status-change';
 
-  const onUpdateJob = async () => {
-    setJobIsOpen(true);
-    await updateJob({
-      id: job._id,
-      data: {
-        status: JOBS_STATUS_ENUMS.OPEN,
-      },
-      onSuccessNext: (newData) => {
-        setJobIsOpen(true);
-      },
-      onError: () => {
-        setJobIsOpen(false);
-      },
-    });
-  };
+const itemClassName =
+  'text-label-sm font-label-sm-strong! text-text-gray-secondary';
+
+export default function JobAction({ job }: { job: JobData }) {
+  const { canEdit, canClose, canPublish } = getJobStatusActions(job);
+  const { requestChange, dialog } = useJobStatusChange(job);
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="text-fg-gray-secondary flex items-center justify-center cursor-pointer">
-          <EllipsisVertical size={16} />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-32 bg-white">
-        <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-          <Link href={`/recruiter/job/${job?._id}`} className=" w-full">
-            View Details
-          </Link>
-        </DropdownMenuItem>
-        {!jobIsOpen && (
-          <>
-            <DropdownMenuItem className=" text-label-sm font-label-sm-strong! text-text-gray-secondary">
-              <Link
-                href={`/recruiter/job/${job?._id}/edit`}
-                className=" w-full"
-              >
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            aria-label="Job actions"
+            className="text-fg-gray-secondary flex items-center justify-center cursor-pointer"
+          >
+            <EllipsisVertical size={16} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-32 bg-white">
+          <DropdownMenuItem className={itemClassName}>
+            <Link href={`/recruiter/job/${job._id}`} className="w-full">
+              View Details
+            </Link>
+          </DropdownMenuItem>
+          {canEdit && (
+            <DropdownMenuItem className={itemClassName}>
+              <Link href={`/recruiter/job/${job._id}/edit`} className="w-full">
                 Edit
               </Link>
             </DropdownMenuItem>
+          )}
+          {canClose && (
             <DropdownMenuItem
-              onClick={onUpdateJob}
-              className=" text-label-sm font-label-sm-strong! text-text-gray-secondary"
+              className={itemClassName}
+              onSelect={() => requestChange('close')}
             >
-              Closed
+              Close
             </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          )}
+          {canPublish && (
+            <DropdownMenuItem
+              className={itemClassName}
+              onSelect={() => requestChange('publish')}
+            >
+              Publish
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {dialog}
+    </>
   );
 }

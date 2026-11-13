@@ -1,43 +1,23 @@
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { EllipsisVertical, MapPin } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { JobData } from '@/services/jobs/job.type';
 import { cn, formatDate } from '@/lib/utils';
 import { formatJobStatus, getJobStatusBadgeClass } from './jobs';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import Link from 'next/link';
 import { JOBS_STATUS_ENUMS } from '@rl/types';
-import { useUpdateJob } from '@/services/jobs/jobs.client';
 import JobAction from './job-action';
 import ApplicantAvatarStack from './applicant-avatar-stack';
+import { getJobStatusActions } from './job-status';
+import { useJobStatusChange } from './use-job-status-change';
 
 export default function CardJobItem({ job }: { job: JobData }) {
-  const [jobIsOpen, setJobIsOpen] = useState(
-    job.status === JOBS_STATUS_ENUMS.OPEN ? true : false,
-  );
-  const { updateJob, isPending } = useUpdateJob();
-  const onUpdateJob = async () => {
-    setJobIsOpen(true);
-    await updateJob({
-      id: job._id,
-      data: {
-        status: JOBS_STATUS_ENUMS.OPEN,
-      },
-      onSuccessNext: (newData) => {
-        setJobIsOpen(true);
-      },
-      onError: () => {
-        setJobIsOpen(false);
-      },
-    });
-  };
+  const { canClose, canPublish } = getJobStatusActions(job);
+  const { requestChange, dialog } = useJobStatusChange(job);
+  const isOpen = job.status === JOBS_STATUS_ENUMS.OPEN;
+
   return (
     <div className="border border-border-gray-secondary rounded-2xl bg-bg-gray-soft-primary shadow-xs">
       <div className=" p-spacing-4xl space-y-spacing-4xl">
@@ -100,17 +80,21 @@ export default function CardJobItem({ job }: { job: JobData }) {
         <p className=" text-body-sm text-text-gray-tertiary">
           {formatDate(job?.updatedAt) || 'N/A'}
         </p>
-        <div className=" flex items-center gap-spacing-sm ">
-          <Switch
-            checked={jobIsOpen}
-            onCheckedChange={onUpdateJob}
-            disabled={jobIsOpen}
-            onClick={(e) => e.stopPropagation()}
-            className=" bg-bg-gray-soft-quaternary data-[state=checked]:bg-bg-brand-solid-primary"
-          />
-          <p className=" text-body-sm text-text-gray-tertiary">Active</p>
-        </div>
+        {(canClose || canPublish) && (
+          <div className=" flex items-center gap-spacing-sm ">
+            <Switch
+              checked={isOpen}
+              onCheckedChange={(checked) =>
+                requestChange(checked ? 'publish' : 'close')
+              }
+              onClick={(e) => e.stopPropagation()}
+              className=" bg-bg-gray-soft-quaternary data-[state=checked]:bg-bg-brand-solid-primary"
+            />
+            <p className=" text-body-sm text-text-gray-tertiary">Active</p>
+          </div>
+        )}
       </div>
+      {dialog}
     </div>
   );
 }

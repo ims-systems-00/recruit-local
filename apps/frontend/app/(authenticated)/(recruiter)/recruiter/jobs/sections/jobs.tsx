@@ -51,6 +51,9 @@ export function getJobStatusBadgeClass(status: string) {
     case JOBS_STATUS_ENUMS.ARCHIVED:
       return cn('text-others-fuchsia-dark bg-others-fuchsia-light');
 
+    case JOBS_STATUS_ENUMS.CLOSED:
+      return cn('text-others-error-dark bg-others-error-light');
+
     default:
       return cn('text-others-gray-dark bg-others-gray-light');
   }
@@ -66,6 +69,8 @@ export function formatJobStatus(status: string) {
       return 'Evaluation';
     case JOBS_STATUS_ENUMS.ARCHIVED:
       return 'Archived';
+    case JOBS_STATUS_ENUMS.CLOSED:
+      return 'Closed';
     default:
       return 'N/A';
   }
