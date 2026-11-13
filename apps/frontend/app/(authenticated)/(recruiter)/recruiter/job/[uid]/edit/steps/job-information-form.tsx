@@ -750,13 +750,6 @@ export default function JobInformationForm({
         </div>
         <div className="flex py-spacing-2xl justify-end mt-spacing-4xl gap-spacing-sm">
           <Button
-            variant="outline"
-            disabled
-            className=" border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
-          >
-            Previous
-          </Button>
-          <Button
             type="submit"
             disabled={isPending}
             className=" cursor-pointer bg-bg-brand-solid-primary h-10 text-white! rounded-lg text-label-sm font-label-sm-strong!"

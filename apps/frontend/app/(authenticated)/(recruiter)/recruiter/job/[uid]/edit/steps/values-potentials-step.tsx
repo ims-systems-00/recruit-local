@@ -561,7 +561,7 @@ export default function ValuesPotentialsStep({
       </div>
 
       {error && (
-        <p className="text-label-sm text-text-error-primary text-right">
+        <p className="text-label-sm text-text-error-primary text-left">
           {error}
         </p>
       )}

@@ -237,6 +237,9 @@ export default function CatalogueSkillPicker<T extends CatalogueSkillRow>({
             </div>
           </div>
         )}
+        {error && (
+          <p className="text-label-sm text-text-error-primary">{error}</p>
+        )}
       </div>
 
       {/* Choose Skills Table */}
@@ -395,10 +398,6 @@ export default function CatalogueSkillPicker<T extends CatalogueSkillRow>({
             </TableBody>
           </Table>
         </div>
-
-        {error && (
-          <p className="text-label-sm text-text-error-primary">{error}</p>
-        )}
       </div>
     </>
   );
