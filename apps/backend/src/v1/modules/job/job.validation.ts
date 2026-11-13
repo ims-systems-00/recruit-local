@@ -53,6 +53,10 @@ const additionalQuerySchema = Joi.object({
   expectedAnswer: Joi.string().optional().allow("").label("Expected Answer"),
 }).label("Additional Query");
 
+const updateAdditionalQuerySchema = additionalQuerySchema.keys({
+  _id: Joi.string().custom(objectIdValidation).optional().label("Query ID"),
+});
+
 const jobSkillSchema = Joi.object({
   skill: Joi.string().custom(objectIdValidation).required().label("Skill"),
   level: Joi.string()
@@ -199,7 +203,7 @@ export const updateBodySchema = Joi.object({
 
   // --- NEW FIELDS ---
   formId: Joi.string().custom(objectIdValidation).optional().label("Form ID"),
-  additionalQueries: Joi.array().items(additionalQuerySchema).optional().label("Additional Queries"),
+  additionalQueries: Joi.array().items(updateAdditionalQuerySchema).optional().label("Additional Queries"),
   skills: jobSkillsSchema.optional(),
   values: jobValuesSchema.optional(),
 });
