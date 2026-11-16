@@ -79,10 +79,8 @@ function PlacesAutocomplete({
   });
 
   useEffect(() => {
-    if (defaultValue) {
-      setSelected(defaultValue);
-      setValue(defaultValue, false);
-    }
+    setSelected(defaultValue ?? '');
+    setValue(defaultValue ?? '', false);
   }, [defaultValue]);
 
   const handleSelect = async (address: string) => {
