@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import 'react-phone-number-input/style.css';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 
@@ -62,6 +62,8 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useUpdateJob } from '@/services/jobs/jobs.client';
+import { useTenant } from '@/services/tenants/tenants.client';
+import { useSession } from 'next-auth/react';
 import {
   EMPLOYMENT_TYPE_OPTIONS,
   JobData,
@@ -80,6 +82,19 @@ import { excerpt } from '@/components/ai-chat/page-state';
 import { AGENT_STAGGER_MS, prefersReducedMotion, wait } from '@/lib/motion';
 import { FILL_JOB_BASICS_ACTION, parseJobBasics } from './job-information-fill';
 
+const ORG_FIELDS = [
+  'aboutUs',
+  'email',
+  'number',
+  'location',
+  'locationAdditionalInfo',
+] as const;
+
+type OrgFieldValues = Pick<
+  JobInformationFormValues,
+  (typeof ORG_FIELDS)[number]
+>;
+
 export default function JobInformationForm({
   next,
   defaultValues,
@@ -88,6 +103,8 @@ export default function JobInformationForm({
   next: (data: Partial<JobData>) => void;
 }) {
   const { updateJob, isPending } = useUpdateJob();
+  const { data: session } = useSession();
+  const { tenant } = useTenant(session?.user?.tenantId, true);
   const weekendsAnchor = useComboboxAnchor();
   const methods = useForm<JobInformationFormValues>({
     resolver: yupResolver(
@@ -183,9 +200,13 @@ export default function JobInformationForm({
   });
 
   const onSubmit = async (data: JobInformationFormValues) => {
+    // org values are already in the fields
+    const { autoFill: _autoFill, ...formData } = data;
     const payload = {
-      ...data,
-      endDate: data.endDate ? new Date(data.endDate).toISOString() : undefined,
+      ...formData,
+      endDate: formData.endDate
+        ? new Date(formData.endDate).toISOString()
+        : undefined,
     };
 
     const cleanPayload = Object.fromEntries(
@@ -203,16 +224,32 @@ export default function JobInformationForm({
 
   const [open, setOpen] = useState(false);
 
-  const autoFill = methods.watch('autoFill');
+  const beforeAutoFill = useRef<Partial<OrgFieldValues> | null>(null);
 
-  useEffect(() => {
-    if (autoFill) {
-      methods.setValue('aboutUs', '');
-      methods.setValue('email', '');
-      methods.setValue('number', '');
-      methods.setValue('location', '');
+  const setOrgFields = (fields: Partial<OrgFieldValues>) => {
+    ORG_FIELDS.forEach((name) =>
+      methods.setValue(name, fields[name], { shouldDirty: true }),
+    );
+  };
+
+  const handleAutoFillChange = (checked: boolean) => {
+    if (checked && tenant) {
+      beforeAutoFill.current = Object.fromEntries(
+        ORG_FIELDS.map((name) => [name, methods.getValues(name)]),
+      );
+      setOrgFields({
+        aboutUs: tenant.description ?? '',
+        email: tenant.email ?? '',
+        number: tenant.phone ?? '',
+        location: tenant.officeAddress ?? '',
+        locationAdditionalInfo: '',
+      });
+    } else if (!checked && beforeAutoFill.current) {
+      setOrgFields(beforeAutoFill.current);
+      beforeAutoFill.current = null;
     }
-  }, [autoFill]);
+    methods.setValue('autoFill', checked);
+  };
 
   return (
     <FormProvider {...methods}>
@@ -604,11 +641,11 @@ export default function JobInformationForm({
             </div>
           </div>
           <div className="space-y-spacing-2xl">
-            <div className=" flex items-center justify-between">
+            <div className=" flex flex-wrap items-center justify-between gap-spacing-sm">
               <p className=" text-label-xl font-label-xl-strong! text-text-gray-primary">
                 Organisation Information
               </p>
-              {/* <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Controller
                   name="autoFill"
                   control={control}
@@ -616,14 +653,17 @@ export default function JobInformationForm({
                     <Checkbox
                       id="autofill"
                       checked={field.value}
-                      onCheckedChange={field.onChange}
+                      onCheckedChange={(checked) =>
+                        handleAutoFillChange(checked === true)
+                      }
+                      disabled={!tenant}
                       className=" data-[state=checked]:bg-bg-brand-solid-primary data-[state=checked]:text-text-white data-[state=checked]:border-bg-brand-solid-primary"
                     />
                   )}
                 />
 
                 <Label htmlFor="autofill">Auto Fill From organization</Label>
-              </div> */}
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-spacing-2xl">
               <div className="space-y-spacing-xs sm:col-span-2">
@@ -636,7 +676,6 @@ export default function JobInformationForm({
                       placeholder="Write here..."
                       {...register('aboutUs')}
                       className="min-h-[136px] text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
-                      disabled={autoFill}
                     />
                   </InputGroup>
                   {errors.aboutUs && (
@@ -656,7 +695,6 @@ export default function JobInformationForm({
                       type="text"
                       placeholder="Eg. elena@example.com"
                       {...register('email')}
-                      disabled={autoFill}
                       className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                     />
                     <InputGroupAddon>
@@ -685,7 +723,6 @@ export default function JobInformationForm({
                         defaultCountry="GB"
                         international
                         placeholder="Enter contact number"
-                        disabled={autoFill}
                         className=" border h-10 rounded-lg shadow-xs border-border-gray-primary w-full text-text-gray-primary"
                       />
                     )}
@@ -734,7 +771,6 @@ export default function JobInformationForm({
                       type="text"
                       placeholder="Write here..."
                       {...register('locationAdditionalInfo')}
-                      disabled={autoFill}
                       className="text-text-gray-primary text-label-md font-label-md-strong! placeholder:text-text-gray-quaternary"
                     />
                   </InputGroup>
