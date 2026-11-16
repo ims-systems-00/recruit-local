@@ -33,6 +33,16 @@ export interface IApplicationValueCategory {
   values?: IApplicationValueMatch[];
 }
 
+// must-haves the candidate missed, already applied to the match score
+export interface IApplicationMustHaves {
+  // required skills missing or 2+ levels short
+  missingSkills: Types.ObjectId[];
+  // knockout questions answered wrong or left blank
+  failedKnockouts: Types.ObjectId[];
+  // 0.5 per miss, 1 for none
+  factor: number;
+}
+
 /** One part of `matchScore`. */
 export interface IApplicationMatchPart {
   key: APPLICATION_MATCH_PART_ENUMS;
@@ -67,6 +77,8 @@ export interface ApplicationInput extends JobProfileInput, IBoardableInput, Tena
    * application is ranked, so an unranked 0 can be told apart from a real one.
    */
   matchBreakdown?: IApplicationMatchPart[];
+  // server-only for now, not in the client field list
+  mustHaves?: IApplicationMustHaves;
   /**
    * The `RANKING_PIPELINE_VERSION` that wrote `matchScore` and `matchBreakdown`. Anything older is
    * stale and can be found and re-ranked with one query. Never returned to
@@ -131,6 +143,15 @@ const matchPartSchema = new Schema<IApplicationMatchPart>(
   { _id: false }
 );
 
+const mustHavesSchema = new Schema<IApplicationMustHaves>(
+  {
+    missingSkills: { type: [Schema.Types.ObjectId], ref: modelNames.SKILL_CATALOG, default: [] },
+    failedKnockouts: { type: [Schema.Types.ObjectId], default: [] },
+    factor: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
 const applicationSchema = new Schema<IApplicationDoc>(
   {
     jobId: {
@@ -160,6 +181,7 @@ const applicationSchema = new Schema<IApplicationDoc>(
     matchScore: { type: Number, default: 0 },
     // Mongoose defaults arrays to []; undefined keeps "not ranked yet" absent.
     matchBreakdown: { type: [matchPartSchema], default: undefined },
+    mustHaves: { type: mustHavesSchema, default: undefined },
     rankingVersion: { type: Number },
   },
   {

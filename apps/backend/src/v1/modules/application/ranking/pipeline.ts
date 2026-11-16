@@ -1,10 +1,12 @@
+import assert from "assert";
 import { APPLICATION_MATCH_PART_ENUMS, MATCH_SCORE_SCALE, VALUE_TYPE_ENUM } from "@rl/types";
 import { JobProfileInput } from "../../../../models/job-profile.model";
 import { IJobDoc, IJobInput } from "../../../../models/job.model";
 import { ApplicationInput } from "../../../../models/application.model";
 import { QuestionMatchResult, matchQuestionAnswers } from "./matching/valuebasedQuestion";
 import { ExperienceMatchResult, MatchableExperienceLevel, matchExperience } from "./matching/experience";
-import { ValueMatchResult, matchValueScores } from "../../job/match/value";
+import { MustHaveResult, matchMustHaves } from "./matching/must-have";
+import { ValueMatchResult, matchValueScores, priorityWeight } from "../../job/match/value";
 import { SkillMatchResult, matchSkills } from "../../job/match/skill";
 import { RoleMatchResult, matchRole } from "../../job/match/role";
 import { LocationMatchResult, fromGeoJson, matchLocation } from "../../job/match/location";
@@ -164,16 +166,22 @@ const { VALUES, SKILLS, ROLE, LOCATION, QUESTION, EXPERIENCE } = APPLICATION_MAT
  * the scoring.
  *
  * The job's values rather than the organisation's, so a recruiter can tune what
- * one role asks for. The job's `priority` on each value is not read, as in the
- * candidate's own job match, so this part scores the same on both sides. Not
- * applicable when the job lists no values.
+ * one role asks for. Each value is weighted by the job's `priority` on it
+ * (`priorityWeight`), unlike the candidate's own job match, which stays
+ * unweighted so it cannot give the priorities away. Not applicable when the job
+ * lists no values.
  */
 export const valueMatcher: RankingMatcher = {
   key: VALUES,
   label: "Values",
   weight: 2,
   run: ({ job, matchProfile }) => {
-    const result: ValueMatchResult = matchValueScores(job.values, matchProfile.values, matchProfile.valueScores);
+    const result: ValueMatchResult = matchValueScores(
+      job.values,
+      matchProfile.values,
+      matchProfile.valueScores,
+      priorityWeight
+    );
     return { ratio: result.ratio, applicable: result.applicable, details: result };
   },
 };
@@ -289,7 +297,7 @@ export const RANKING_PIPELINE: RankingMatcher[] = [
  * definition and can be found and re-ranked with a single query; without it
  * there is no way to tell a fresh score from a legacy one.
  */
-export const RANKING_PIPELINE_VERSION = 8;
+export const RANKING_PIPELINE_VERSION = 9;
 
 /**
  * Runs every matcher against `context` and folds the applicable ones into a
@@ -341,8 +349,15 @@ export const runMatchers = <C>(context: C, matchers: RankingMatcher<C>[], scale:
   return { ratio, score: Math.round(ratio * scale), scale, applicable: true, signals };
 };
 
+// ratio and score already include the must-have penalty
+export interface ApplicationRankingResult extends RankingResult {
+  mustHaves: MustHaveResult;
+}
+
 /**
- * Ranks one application: the registered pipeline, out of `RANKING_SCALE`.
+ * Ranks one application: the registered pipeline, out of `RANKING_SCALE`,
+ * multiplied by the must-have factor so a candidate missing required skills or
+ * failing a knockout cannot average their way to the top.
  *
  * `scale` is injectable for testing; production callers should leave it alone
  * so `RANKING_SCALE` stays the single answer to "what is a score out of?".
@@ -351,4 +366,42 @@ export const runRankingPipeline = (
   context: RankingContext,
   matchers: RankingMatcher[] = RANKING_PIPELINE,
   scale: number = RANKING_SCALE
-): RankingResult => runMatchers(context, matchers, scale);
+): ApplicationRankingResult => {
+  const result = runMatchers(context, matchers, scale);
+  const { job, matchProfile, application } = context;
+  const mustHaves = matchMustHaves(job.skills, matchProfile.skills, job.additionalQueries, application.answers);
+
+  const ratio = result.ratio * mustHaves.factor;
+  return { ...result, ratio, score: Math.round(ratio * scale), mustHaves };
+};
+
+// Run with: pnpm --filter @rl/backend exec ts-node src/v1/modules/application/ranking/pipeline.ts
+const demo = () => {
+  const flat: RankingMatcher = { key: "flat", label: "Flat", weight: 1, run: () => ({ ratio: 0.8, applicable: true }) };
+  const contextWith = (profileSkills: unknown[], answer: string) =>
+    ({
+      jobProfile: {},
+      matchProfile: { skills: profileSkills },
+      job: {
+        skills: [{ skill: "react", level: "advanced", requirement: "required" }],
+        additionalQueries: [
+          { _id: "rtw", type: "single_choice", options: ["Yes", "No"], expectedAnswer: "Yes", isKnockout: true },
+        ],
+      },
+      application: { answers: [{ queryId: "rtw", answer }] },
+    }) as unknown as RankingContext;
+
+  const clean = runRankingPipeline(contextWith([{ skill: "react", level: "advanced" }], "Yes"), [flat]);
+  assert(clean.score === 800 && clean.mustHaves.factor === 1, "no misses, no penalty");
+
+  const oneMiss = runRankingPipeline(contextWith([], "Yes"), [flat]);
+  assert(oneMiss.score === 400, "a missing required skill halves the score");
+  assert(oneMiss.signals[0].score === 800, "part scores stay unpenalized");
+
+  const twoMisses = runRankingPipeline(contextWith([], "No"), [flat]);
+  assert(twoMisses.score === 200, "a failed knockout halves it again");
+
+  console.log("ranking pipeline self-check ok");
+};
+
+if (require.main === module) demo();

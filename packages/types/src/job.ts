@@ -63,6 +63,8 @@ export interface AdditionalQueryResponseDto {
   options?: string[];
   isRequired: boolean;
   expectedAnswer?: string;
+  /** Employers only. A wrong or missing answer halves the applicant's match score. */
+  isKnockout?: boolean;
 }
 
 /** How much of a skill a job asks for. Declared lowest to highest. */

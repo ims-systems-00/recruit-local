@@ -15,6 +15,7 @@ import { loadMatchProfile } from "../../job/match/profile.service";
 import { refId } from "../../job/match/ref-id";
 import { matchValueCategories } from "./matching/value-category";
 import {
+  ApplicationRankingResult,
   RANKING_PIPELINE_VERSION,
   RankingContext,
   RankingJob,
@@ -78,6 +79,9 @@ const toMatchBreakdown = (
     ...(signal.key === APPLICATION_MATCH_PART_ENUMS.VALUES ? { categories: valueCategories } : {}),
   }));
 
+const toObjectIds = (ids: string[]): Types.ObjectId[] =>
+  ids.filter((id) => Types.ObjectId.isValid(id)).map((id) => new Types.ObjectId(id));
+
 export interface RankApplicationOptions {
   /**
    * Also set `rank` to the score, so a new application lands on the board in
@@ -110,7 +114,7 @@ export interface RankApplicationOptions {
 export const rankApplication = async (
   applicationId: string,
   { seedRank }: RankApplicationOptions
-): Promise<RankingResult | { skipped: string }> => {
+): Promise<ApplicationRankingResult | { skipped: string }> => {
   if (!Types.ObjectId.isValid(applicationId)) return { skipped: "invalid application id" };
 
   const application = await Application.findById(applicationId).select("jobId jobProfileId answers").lean();
@@ -157,6 +161,11 @@ export const rankApplication = async (
         matchScore: result.score,
         ...(seedRank ? { rank: result.score } : {}),
         matchBreakdown: toMatchBreakdown(result, valueCategories),
+        mustHaves: {
+          missingSkills: toObjectIds(result.mustHaves.missingSkills),
+          failedKnockouts: toObjectIds(result.mustHaves.failedKnockouts),
+          factor: result.mustHaves.factor,
+        },
         rankingVersion: RANKING_PIPELINE_VERSION,
       },
     }

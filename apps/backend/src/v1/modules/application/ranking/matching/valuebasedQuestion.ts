@@ -46,6 +46,7 @@ export interface MatchableQuery {
   options?: string[];
   isRequired?: boolean;
   expectedAnswer?: string;
+  isKnockout?: boolean;
 }
 
 /** One candidate reply. `answer` is stored as `Mixed`, so it may be anything. */
@@ -117,7 +118,7 @@ const DEFAULTS: Required<QuestionMatchOptions> = { requiredWeight: 2, optionalWe
  * becomes a space rather than nothing so "react/node" splits into two terms
  * instead of fusing into one.
  */
-const normalize = (value: string): string =>
+export const normalize = (value: string): string =>
   value
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
@@ -133,7 +134,7 @@ const termsOf = (value: string, minTermLength: number): string[] =>
  * Flattens a `Mixed` answer into the strings it actually contains. An empty
  * result means unanswered — note that `false` and `0` are answers, not blanks.
  */
-const answerParts = (answer: MatchableAnswer["answer"]): string[] => {
+export const answerParts = (answer: MatchableAnswer["answer"]): string[] => {
   if (answer === null || answer === undefined) return [];
   const entries = Array.isArray(answer) ? answer : [answer];
   return entries.map((entry) => String(entry ?? "")).filter((entry) => entry.trim() !== "");
@@ -164,7 +165,7 @@ const f1 = (expected: Set<string>, given: Set<string>): number => {
  * other expected options cannot be recovered — that is a limitation of the
  * stored shape, not of this parse.
  */
-const expectedChoices = (expectedAnswer: string, options: string[] | undefined): Set<string> => {
+export const expectedChoices = (expectedAnswer: string, options: string[] | undefined): Set<string> => {
   const whole = normalize(expectedAnswer);
   if (!whole) return new Set();
 
@@ -196,6 +197,25 @@ const coverage = (expectedAnswer: string, answerText: string, minTermLength: num
   const givenTerms = new Set(termsOf(answerText, minTermLength));
   const covered = expectedTerms.filter((term) => givenTerms.has(term)).length;
   return covered / expectedTerms.length;
+};
+
+/** A question's id as a trimmed string, or "" when it has none. */
+export const queryIdOf = (query: MatchableQuery): string =>
+  query._id === null || query._id === undefined ? "" : String(query._id).trim();
+
+/**
+ * Answers keyed by the question's `_id`. Duplicates are malformed input; the
+ * first one wins rather than the last, so grading is not order-dependent.
+ */
+export const indexAnswers = (answers: MatchableAnswer[] | undefined | null): Map<string, MatchableAnswer> => {
+  const answerByQueryId = new Map<string, MatchableAnswer>();
+  for (const entry of answers ?? []) {
+    if (!entry || entry.queryId === null || entry.queryId === undefined) continue;
+    const id = String(entry.queryId).trim();
+    if (!id || answerByQueryId.has(id)) continue;
+    answerByQueryId.set(id, entry);
+  }
+  return answerByQueryId;
 };
 
 /** Scores one answered question, 0-1. */
@@ -230,15 +250,7 @@ export const matchQuestionAnswers = (
 ): QuestionMatchResult => {
   const { requiredWeight, optionalWeight, minTermLength } = { ...DEFAULTS, ...options };
 
-  // Answers are keyed by the question's `_id`. Duplicates are malformed input;
-  // the first one wins rather than the last, so grading is not order-dependent.
-  const answerByQueryId = new Map<string, MatchableAnswer>();
-  for (const entry of answers ?? []) {
-    if (!entry || entry.queryId === null || entry.queryId === undefined) continue;
-    const id = String(entry.queryId).trim();
-    if (!id || answerByQueryId.has(id)) continue;
-    answerByQueryId.set(id, entry);
-  }
+  const answerByQueryId = indexAnswers(answers);
 
   const breakdown: QuestionBreakdown[] = [];
   const unanswered: string[] = [];
@@ -249,7 +261,7 @@ export const matchQuestionAnswers = (
   for (const query of queries ?? []) {
     if (!query) continue;
 
-    const id = query._id === null || query._id === undefined ? "" : String(query._id).trim();
+    const id = queryIdOf(query);
     const expectedAnswer = typeof query.expectedAnswer === "string" ? query.expectedAnswer : "";
 
     // No id to join an answer to, or no answer key: nothing to grade against.

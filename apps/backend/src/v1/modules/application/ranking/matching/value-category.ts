@@ -1,6 +1,6 @@
 import assert from "assert";
 import { VALUE_TYPE_ENUM } from "@rl/types";
-import { MatchableJobValueRow, creditValues, matchValueScores } from "../../../job/match/value";
+import { MatchableJobValueRow, creditValues, matchValueScores, priorityWeight } from "../../../job/match/value";
 import { refId } from "../../../job/match/ref-id";
 
 /**
@@ -9,9 +9,9 @@ import { refId } from "../../../job/match/ref-id";
  * candidate's values line up and where they do not.
  *
  * Each type is scored exactly as the whole values part is — `matchValueScores`
- * over just the job's values of that type — so the types are a faithful
- * breakdown: weighted by how many of the job's values each holds, they average
- * back to the values part. A job value whose catalogue entry has no known type
+ * over just the job's values of that type, weighted by priority — so the types
+ * are a faithful breakdown: weighted by the total priority weight of the job's
+ * values each holds, they average back to the values part. A job value whose catalogue entry has no known type
  * (hard-deleted since) counts toward the values part but toward no type.
  *
  * Each type also lists the job's values of it, matched where the candidate
@@ -54,7 +54,7 @@ export const matchValueCategories = (
 
   return Object.values(VALUE_TYPE_ENUM).map((type) => {
     const typeRows = rows.filter((row) => rowType(row) === type);
-    const { ratio, applicable } = matchValueScores(typeRows, profileValues, profileValueScores);
+    const { ratio, applicable } = matchValueScores(typeRows, profileValues, profileValueScores, priorityWeight);
     const values = creditValues(typeRows, profileValues, profileValueScores).map(({ id, credit }) => ({
       id,
       matched: credit > 0,
@@ -116,6 +116,21 @@ const demo = () => {
   const whole = matchValueScores(typed, values, valueScores).ratio;
   const weighted = (of(MINDSET).ratio * 2 + of(WORKING_STYLE).ratio * 1) / 3;
   assert(close(weighted, whole), "types average back to the values part");
+
+  // growth essential x4, curious desirable x1, collab important x2.
+  const ranked = [
+    { value: "growth", priority: "essential" },
+    { value: "curious", priority: "desirable" },
+    { value: "collab", priority: "important" },
+  ];
+  const byPriority = matchValueCategories(ranked, values, valueScores, (id) => types[id]);
+  const ofRanked = (type: VALUE_TYPE_ENUM) => byPriority.find((category) => category.type === type)!;
+  assert(close(ofRanked(MINDSET).ratio, (4 * 0.8 + 0) / 5), "mindset is weighted by priority");
+  const wholeRanked = matchValueScores(ranked, values, valueScores, priorityWeight).ratio;
+  assert(
+    close((ofRanked(MINDSET).ratio * 5 + ofRanked(WORKING_STYLE).ratio * 2) / 7, wholeRanked),
+    "weighted by priority totals, types average back to the priority-weighted values part"
+  );
 
   assert(
     matchValueCategories(undefined, values, valueScores, () => MINDSET).every((category) => !category.applicable),

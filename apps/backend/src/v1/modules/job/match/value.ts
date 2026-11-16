@@ -1,5 +1,5 @@
 import assert from "assert";
-import { JOB_VALUE_PRIORITY_ENUMS } from "@rl/types";
+import { JOB_VALUE_PRIORITY_ENUMS, JOB_VALUE_PRIORITY_WEIGHT } from "@rl/types";
 import { refId } from "./ref-id";
 
 /**
@@ -24,16 +24,28 @@ import { refId } from "./ref-id";
  * score is that value's share of the weights. Leaving it out of the computation
  * is the only way the result is safe to show.
  *
+ * The recruiter's application ranking, which candidates never see, weights by priority instead.
+ *
  * Pure and synchronous — hand it the job's rows and the profile's two fields.
  */
 
 /** Credit for a value the candidate selected but has not evaluated. */
 const CLAIMED_VALUE_CREDIT = 0.25;
 
-/** The shape this matcher needs off one of a job's value rows. `priority` may be present; it is ignored. */
+/** The shape this matcher needs off one of a job's value rows. */
 export interface MatchableJobValueRow {
   value?: unknown;
+  priority?: unknown;
 }
+
+/** How much one of the job's values counts toward the ratio. */
+export type ValueWeightOf = (row: MatchableJobValueRow) => number;
+
+const equalWeight: ValueWeightOf = () => 1;
+
+// recruiter-side only, candidates must never get a score weighted by this
+export const priorityWeight: ValueWeightOf = (row) =>
+  JOB_VALUE_PRIORITY_WEIGHT[row?.priority as JOB_VALUE_PRIORITY_ENUMS] ?? 1;
 
 /** The shape this matcher needs off one of a profile's `valueScores`. */
 export interface MatchableValueScore {
@@ -53,6 +65,8 @@ export interface ValueCredit {
   id: string;
   /** 0-1: the evaluated score, `CLAIMED_VALUE_CREDIT`, or 0. */
   credit: number;
+  // 1 unless weighted by priority
+  weight: number;
 }
 
 /** Ids of the values the candidate selected. Anything that is not an array reads as none. */
@@ -86,7 +100,8 @@ const indexScores = (valueScores: unknown): Map<string, number> => {
 export const creditValues = (
   jobValues: unknown,
   profileValues: unknown,
-  profileValueScores: unknown
+  profileValueScores: unknown,
+  weightOf: ValueWeightOf = equalWeight
 ): ValueCredit[] => {
   const selected = indexSelected(profileValues);
   const scores = indexScores(profileValueScores);
@@ -100,7 +115,11 @@ export const creditValues = (
     if (id === null || seen.has(id)) continue;
     seen.add(id);
 
-    credits.push({ id, credit: scores.get(id) ?? (selected.has(id) ? CLAIMED_VALUE_CREDIT : 0) });
+    credits.push({
+      id,
+      credit: scores.get(id) ?? (selected.has(id) ? CLAIMED_VALUE_CREDIT : 0),
+      weight: Math.max(0, weightOf(row)),
+    });
   }
 
   return credits;
@@ -115,17 +134,20 @@ export const creditValues = (
  * @param jobValues The job's `values` rows (`MatchableJobValueRow[]`).
  * @param profileValues The candidate's `JobProfile.values` — the ids they selected.
  * @param profileValueScores The candidate's `JobProfile.valueScores` (`MatchableValueScore[]`).
+ * @param weightOf Each job value's weight, equal by default.
  */
 export const matchValueScores = (
   jobValues: unknown,
   profileValues: unknown,
-  profileValueScores: unknown
+  profileValueScores: unknown,
+  weightOf: ValueWeightOf = equalWeight
 ): ValueMatchResult => {
-  const credits = creditValues(jobValues, profileValues, profileValueScores);
-  if (credits.length === 0) return { ratio: 0, applicable: false };
+  const credits = creditValues(jobValues, profileValues, profileValueScores, weightOf);
+  const totalWeight = credits.reduce((sum, { weight }) => sum + weight, 0);
+  if (totalWeight === 0) return { ratio: 0, applicable: false };
 
-  const total = credits.reduce((sum, { credit }) => sum + credit, 0);
-  return { ratio: total / credits.length, applicable: true };
+  const total = credits.reduce((sum, { credit, weight }) => sum + credit * weight, 0);
+  return { ratio: total / totalWeight, applicable: true };
 };
 
 // Runnable check for the scoring rules. No database or Redis is touched.
@@ -176,6 +198,23 @@ const demo = () => {
   assert(
     close(matchValueScores([{ value: null }, job[1]], values, valueScores).ratio, 0.64),
     "a row with no value id is skipped"
+  );
+
+  // Essential x4, desirable x1: (4*0.82 + 0.64 + 4*0.25 + 0) / 10.
+  const weighted = matchValueScores(job, values, valueScores, priorityWeight);
+  assert(weighted.applicable && close(weighted.ratio, 4.92 / 10), "priority-weighted example scores 4.92 / 10");
+  assert(
+    close(matchValueScores(reranked, values, valueScores, priorityWeight).ratio, (0.82 + 4 * 0.64 + 0.25 + 0) / 10),
+    "with priorityWeight, swapping priorities changes the score"
+  );
+  const sameTier = job.map((row) => ({ ...row, priority: ESSENTIAL }));
+  assert(
+    close(matchValueScores(sameTier, values, valueScores, priorityWeight).ratio, example.ratio),
+    "one shared priority scores the same as unweighted"
+  );
+  assert(
+    close(matchValueScores([{ value: "growth", priority: "unknown" }], values, valueScores, priorityWeight).ratio, 0.82),
+    "an unknown priority weighs 1"
   );
 
   console.log("value match self-check ok");
