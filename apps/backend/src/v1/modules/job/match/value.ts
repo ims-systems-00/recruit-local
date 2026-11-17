@@ -11,7 +11,8 @@ import { refId } from "./ref-id";
  *
  * - **Evaluated** — the score, as a fraction. Counted whether or not the value
  *   is in the candidate's `values` yet: onboarding evaluates a value before the
- *   selection is saved, and deselecting a value deletes its score anyway.
+ *   selection is saved, and deselecting a value deletes its score anyway. A
+ *   selected value never earns less than `CLAIMED_VALUE_CREDIT`.
  * - **Selected, not evaluated** — `CLAIMED_VALUE_CREDIT`. A profile may select
  *   any number of values, so a bare claim has to stay cheap or selecting the
  *   whole catalogue would pay.
@@ -117,7 +118,7 @@ export const creditValues = (
 
     credits.push({
       id,
-      credit: scores.get(id) ?? (selected.has(id) ? CLAIMED_VALUE_CREDIT : 0),
+      credit: Math.max(scores.get(id) ?? 0, selected.has(id) ? CLAIMED_VALUE_CREDIT : 0),
       weight: Math.max(0, weightOf(row)),
     });
   }
@@ -186,6 +187,14 @@ const demo = () => {
   assert(
     close(matchValueScores(job, values, [{ value: "growth", score: "82" }]).ratio, 0.75 / 4),
     "a non-numeric score falls back to the selection"
+  );
+  assert(
+    matchValueScores([job[0]], values, [{ value: "growth", score: 10 }]).ratio === 0.25,
+    "a selected value evaluated below the claim credit keeps the claim credit"
+  );
+  assert(
+    close(matchValueScores([job[0]], [], [{ value: "growth", score: 10 }]).ratio, 0.1),
+    "an evaluated value not yet selected keeps its raw score"
   );
   assert(!matchValueScores([], values, valueScores).applicable, "a job with no values is not applicable");
   assert(!matchValueScores(undefined, values, valueScores).applicable, "a job missing values is not applicable");

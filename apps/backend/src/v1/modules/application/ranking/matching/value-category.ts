@@ -107,8 +107,8 @@ const demo = () => {
     )!.values[0].matched;
   assert(firstMindsetMatch([]), "a value selected but not evaluated is matched");
   assert(
-    !firstMindsetMatch([{ value: "growth", score: 0 }]),
-    "a value evaluated at 0 is not matched, even if selected"
+    firstMindsetMatch([{ value: "growth", score: 0 }]),
+    "a selected value evaluated at 0 keeps the claim credit, so it is matched"
   );
 
   // Weighted by count, the typed rows average back to the values part over the same rows.
