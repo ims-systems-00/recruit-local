@@ -16,9 +16,8 @@ connectDB().then((connectionInstance) => {
 
 const PORT = process.env.PORT || 9027;
 
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   logger.info(`API is listening in [${process.env.NODE_ENV}]. port ${PORT}, pid ${process.pid}`);
 });
 
-// Handle unhandled exceptions and rejections
-actionOnUnhandled(server);
+actionOnUnhandled();

@@ -9,6 +9,8 @@ export function handleServerError(
       success: false as const,
       message:
         error.response?.data?.message ?? error.message ?? fallbackMessage,
+      // undefined when the server never answered
+      status: error.response?.status,
     };
   }
 

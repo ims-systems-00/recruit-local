@@ -2,6 +2,12 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { loginUser } from '@/services/auth/auth.server';
 
+const loginErrorCode = (status?: number) => {
+  if (status === 400 || status === 401) return 'INVALID_CREDENTIALS';
+  if (status === undefined || status >= 500) return 'SERVICE_UNAVAILABLE';
+  return 'LOGIN_FAILED';
+};
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -15,39 +21,35 @@ export const authOptions: NextAuthOptions = {
           throw new Error('INVALID_INPUT');
         }
 
-        try {
-          const response = await loginUser({
-            email: credentials.email,
-            password: credentials.password,
-          });
+        const response = await loginUser({
+          email: credentials.email,
+          password: credentials.password,
+        });
 
-          if (!response.success) {
-            throw new Error('INVALID_CREDENTIALS');
-          }
-
-          const user = response?.data?.user;
-
-          if (!user?.accessToken) return null;
-
-          return {
-            id: user.id,
-            _id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            fullName: user.fullName,
-            email: user.email,
-            emailVerificationStatus: user.emailVerificationStatus,
-            type: user.type,
-            role: user.role,
-            tenantId: user.tenantId,
-            jobProfileId: user.jobProfileId,
-            accessToken: user?.accessToken,
-            refreshToken: user?.refreshToken,
-          };
-        } catch (err) {
-          console.error('Login failed', err);
-          return null;
+        if (!response.success) {
+          console.error('Login failed', response.status, response.message);
+          throw new Error(loginErrorCode(response.status));
         }
+
+        const user = response?.data?.user;
+
+        if (!user?.accessToken) return null;
+
+        return {
+          id: user.id,
+          _id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          fullName: user.fullName,
+          email: user.email,
+          emailVerificationStatus: user.emailVerificationStatus,
+          type: user.type,
+          role: user.role,
+          tenantId: user.tenantId,
+          jobProfileId: user.jobProfileId,
+          accessToken: user?.accessToken,
+          refreshToken: user?.refreshToken,
+        };
       },
     }),
   ],
