@@ -48,6 +48,7 @@ interface EditValueDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  categoryName: string;
   placeholder: string;
   profileId: string;
   existingValues: ValueData[];
@@ -61,6 +62,7 @@ export default function EditValueDialog({
   open,
   onOpenChange,
   title,
+  categoryName,
   placeholder,
   profileId,
   existingValues,
@@ -244,7 +246,7 @@ export default function EditValueDialog({
         <div className=" space-y-spacing-lg">
           <div className=" flex items-center justify-between gap-spacing-lg">
             <p className=" text-label-sm font-label-sm-strong! text-text-gray-quaternary">
-              Select your top mindsets (Maximum{' '}
+              Select your top {categoryName.toLowerCase()} values (Maximum{' '}
               {CANDIDATE_MAX_VALUES_STEP_SELECTION})
             </p>
             <span className=" text-label-sm text-text-gray-quaternary">
