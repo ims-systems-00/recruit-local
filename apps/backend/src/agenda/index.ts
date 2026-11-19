@@ -15,6 +15,9 @@ export const setupAgenda = (app: Express) => {
     defineDevAutoVerifyKycJob();
   }
 
+  // without a listener, agenda's error event throws and takes the process down
+  agenda.on("error", (err: Error) => logger.error(`Agenda error: ${err.stack ?? err.message}`));
+
   agenda
     .start()
     .then(async () => {

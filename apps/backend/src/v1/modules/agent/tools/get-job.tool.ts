@@ -50,7 +50,7 @@ const toQuestions = (job: Record<string, any>) =>
   Array.isArray(job.additionalQueries)
     ? {
         additionalQueries: job.additionalQueries.map((query: any) =>
-          present(query, ["_id", "question", "type", "options", "isRequired", "expectedAnswer"])
+          present(query, ["_id", "question", "type", "options", "isRequired", "expectedAnswer", "isKnockout"])
         ),
       }
     : {};

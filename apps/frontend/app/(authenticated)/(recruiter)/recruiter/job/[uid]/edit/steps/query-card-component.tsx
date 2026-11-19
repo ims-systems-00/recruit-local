@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { QueryCard } from './additional-queries';
+import type { QueryCard } from './additional-queries';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { QUERY_TYPE_ENUMS } from '@rl/types';
@@ -37,6 +37,14 @@ const TYPE_ICONS: Record<QUERY_TYPE_ENUMS, React.ReactNode> = {
   [QUERY_TYPE_ENUMS.MULTIPLE_CHOICE]: <CheckSquare className="w-4 h-4" />,
   [QUERY_TYPE_ENUMS.SHORT_ANSWER]: <AlignLeft className="w-4 h-4" />,
 };
+
+export const isChoiceQuery = (type: QUERY_TYPE_ENUMS) =>
+  type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ||
+  type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE;
+
+export const canBeKnockout = (
+  card: Pick<QueryCard, 'type' | 'expectedAnswer'>,
+) => isChoiceQuery(card.type) && Boolean(card.expectedAnswer?.trim());
 
 const TYPE_LABELS: Record<QUERY_TYPE_ENUMS, string> = {
   [QUERY_TYPE_ENUMS.PARAGRAPH]: 'Paragraph',
@@ -73,9 +81,8 @@ export function QueryCardComponent({
     onUpdate(card.id, { options: card.options.filter((o) => o.id !== optId) });
   };
 
-  const isChoice =
-    card.type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ||
-    card.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE;
+  const isChoice = isChoiceQuery(card.type);
+  const knockoutAllowed = canBeKnockout(card);
 
   const isShortAns = card.type === QUERY_TYPE_ENUMS.SHORT_ANSWER;
 
@@ -401,17 +408,42 @@ export function QueryCardComponent({
 
       {/* Footer row */}
       <div className=" px-spacing-4xl py-spacing-2xl border-t border-border-gray-secondary flex items-center justify-between">
-        <div className="flex items-center gap-spacing-sm">
-          <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
-            Required
-          </span>
+        <div className="flex flex-wrap items-center gap-spacing-2xl">
+          <div className="flex items-center gap-spacing-sm">
+            <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
+              Required
+            </span>
 
-          <Switch
-            checked={card.isRequired}
-            onCheckedChange={(v) => onUpdate(card.id, { isRequired: v })}
-            onClick={(e) => e.stopPropagation()}
-            className=" bg-bg-gray-soft-quaternary data-[state=checked]:bg-bg-brand-solid-primary"
-          />
+            <Switch
+              checked={card.isRequired}
+              onCheckedChange={(v) => onUpdate(card.id, { isRequired: v })}
+              onClick={(e) => e.stopPropagation()}
+              className=" bg-bg-gray-soft-quaternary data-[state=checked]:bg-bg-brand-solid-primary"
+            />
+          </div>
+
+          {isChoice && (
+            <div
+              className="flex items-center gap-spacing-sm"
+              title={
+                knockoutAllowed
+                  ? 'A wrong answer lowers this applicant’s match score'
+                  : 'Set an expected answer in Preview to use this'
+              }
+            >
+              <span className="text-label-sm font-label-sm-strong! text-text-gray-primary">
+                Knockout
+              </span>
+
+              <Switch
+                checked={knockoutAllowed && Boolean(card.isKnockout)}
+                disabled={!knockoutAllowed}
+                onCheckedChange={(v) => onUpdate(card.id, { isKnockout: v })}
+                onClick={(e) => e.stopPropagation()}
+                className=" bg-bg-gray-soft-quaternary data-[state=checked]:bg-bg-brand-solid-primary"
+              />
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-spacing-2xl">
           <button

@@ -38,6 +38,7 @@ export type AdditionalQuery = {
   options?: string[];
   isRequired: boolean;
   expectedAnswer?: string;
+  isKnockout?: boolean;
 };
 
 export interface JobData {

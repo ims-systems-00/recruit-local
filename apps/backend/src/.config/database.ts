@@ -26,4 +26,4 @@ const connectDB = async (): Promise<typeof mongoose> => {
   }
 };
 
-export { connectDB };
+export { connectDB, constructDatabaseUrl };

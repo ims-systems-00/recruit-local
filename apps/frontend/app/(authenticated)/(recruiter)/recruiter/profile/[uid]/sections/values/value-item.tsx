@@ -80,6 +80,7 @@ export default function ValueItem({
         open={open}
         onOpenChange={setOpen}
         title={title}
+        categoryName={name}
         placeholder={placeholder}
         tenantId={tenantId}
         tenantName={tenantName}

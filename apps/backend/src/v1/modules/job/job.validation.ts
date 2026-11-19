@@ -51,6 +51,17 @@ const additionalQuerySchema = Joi.object({
     .label("Options"),
   isRequired: Joi.boolean().default(false).label("Is Required"),
   expectedAnswer: Joi.string().optional().allow("").label("Expected Answer"),
+  isKnockout: Joi.boolean()
+    .default(false)
+    .when("type", {
+      not: Joi.valid(QUERY_TYPE_ENUMS.SINGLE_CHOICE, QUERY_TYPE_ENUMS.MULTIPLE_CHOICE),
+      then: Joi.valid(false).messages({ "any.only": "Only choice questions can be a knockout" }),
+    })
+    .when("expectedAnswer", {
+      is: Joi.string().trim().min(1).required(),
+      otherwise: Joi.valid(false).messages({ "any.only": "A knockout question needs an expected answer" }),
+    })
+    .label("Is Knockout"),
 }).label("Additional Query");
 
 const updateAdditionalQuerySchema = additionalQuerySchema.keys({

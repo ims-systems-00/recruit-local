@@ -25,6 +25,8 @@ const AUTH_ERROR_MAP: Record<string, string> = {
   CredentialsSignin: 'Invalid email or password',
   INVALID_CREDENTIALS: 'Invalid email or password',
   INVALID_INPUT: 'Please enter email and password',
+  SERVICE_UNAVAILABLE:
+    "We can't reach the server right now. Please try again in a moment.",
 };
 
 async function loginWithCredentials(email: string, password: string) {
