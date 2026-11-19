@@ -228,9 +228,9 @@ function AiChatModal({
         // The form animates the change in view, so this only needs to name what
         // Alice picked — which is also how a screen reader hears it, via the
         // toast's live region. The page's own save button says the rest.
-        toast.success('Alice filled in the form', {
-          description: report.applied.join(' '),
-        });
+        // toast.success('Alice filled in the form', {
+        //   description: report.applied.join(' '),
+        // });
       }
       report.failed.forEach((failure) => toast.error(failure.message));
     }
@@ -377,7 +377,7 @@ function AiChatModal({
     <>
       <section
         className={cn(
-          'w-[min(380px,calc(100vw-32px))] h-[min(540px,calc(100vh-32px))] min-h-[420px] fixed right-spacing-md bottom-spacing-md z-30 flex flex-col overflow-hidden bg-white border border-gray-200 rounded-[18px] shadow-[0_18px_50px_rgba(28,42,61,0.22)] animate-rise max-sm:inset-0 max-sm:w-full max-sm:h-full max-sm:min-h-0 max-sm:rounded-none max-sm:border-0',
+          'w-[min(380px,calc(100vw-32px))] h-[min(540px,calc(100vh-32px))] min-h-[420px] fixed right-spacing-md bottom-spacing-md z-50 flex flex-col overflow-hidden bg-white border border-gray-200 rounded-[18px] shadow-[0_18px_50px_rgba(28,42,61,0.22)] animate-rise max-sm:inset-0 max-sm:w-full max-sm:h-full max-sm:min-h-0 max-sm:rounded-none max-sm:border-0',
           // Hidden rather than unmounted, so the conversation survives.
           hidden && 'hidden',
         )}

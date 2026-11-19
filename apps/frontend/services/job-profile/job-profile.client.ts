@@ -140,16 +140,20 @@ export function useUpdateJobProfile() {
     id,
     payload,
     onSuccessCallback,
+    showToastMsg = true,
   }: {
     id: string;
     payload: JobProfileUpdateInput;
     onSuccessCallback?: (data: JobProfileData) => void;
+    showToastMsg?: boolean;
   }) => {
     try {
       const response = await mutation.mutateAsync({ id, payload });
 
       if (response.success) {
-        toast.success(response.message || 'Job profile updated successfully');
+        if (showToastMsg) {
+          toast.success(response.message || 'Job profile updated successfully');
+        }
         onSuccessCallback?.(response.data as JobProfileData);
       } else {
         toast.error(response.message);

@@ -385,7 +385,7 @@ export default function ApplicantDetailsView({
             {/* Cover Letter Section */}
             <div className="space-y-spacing-xs">
               <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
-                Cover letter <span className="text-text-error-primary">*</span>
+                Cover letter
               </label>
               {coverLetterText ? (
                 <textarea
@@ -450,7 +450,7 @@ export default function ApplicantDetailsView({
                 {/* CV */}
                 <div className="space-y-spacing-xs">
                   <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
-                    CV <span className="text-text-error-primary">*</span>
+                    CV
                   </label>
                   {cvFileName ? (
                     <div className="w-full p-spacing-xl rounded-2xl border border-border-gray-secondary bg-white flex items-center justify-between gap-spacing-2xl shadow-xs">
@@ -485,52 +485,54 @@ export default function ApplicantDetailsView({
                 </div>
 
                 {/* Case Studies */}
-                <div className="space-y-spacing-xs">
-                  <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
-                    Case Studies{' '}
-                    <span className="text-text-gray-quaternary font-normal">
-                      (Optional)
-                    </span>
-                  </label>
+                {caseStudiesList?.length > 0 && (
+                  <div className="space-y-spacing-xs">
+                    <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
+                      Case Studies{' '}
+                      <span className="text-text-gray-quaternary font-normal">
+                        (Optional)
+                      </span>
+                    </label>
 
-                  {caseStudiesList.length > 0 ? (
-                    <div className="space-y-spacing-md">
-                      {caseStudiesList.map((file, idx) => (
-                        <div
-                          key={idx}
-                          className="w-full p-spacing-xl rounded-2xl border border-border-gray-secondary bg-white flex items-center justify-between gap-spacing-2xl shadow-xs"
-                        >
-                          <div className="flex gap-spacing-lg items-center min-w-0">
-                            <div className="size-10 rounded-lg bg-[#FF3B30] flex flex-col items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-xs">
-                              PDF
-                            </div>
-                            <div className="space-y-spacing-3xs min-w-0">
-                              <p className="text-label-sm font-label-sm-strong! text-text-gray-primary truncate">
-                                {file.name}
-                              </p>
-                              <p className="text-label-xs text-text-gray-tertiary">
-                                {file.size}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleDownload(file._id)}
-                            disabled={isPreparingDownload}
-                            className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-wait"
-                            title="Download Case Study"
+                    {caseStudiesList.length > 0 ? (
+                      <div className="space-y-spacing-md">
+                        {caseStudiesList.map((file, idx) => (
+                          <div
+                            key={idx}
+                            className="w-full p-spacing-xl rounded-2xl border border-border-gray-secondary bg-white flex items-center justify-between gap-spacing-2xl shadow-xs"
                           >
-                            <Download size={16} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-label-sm text-text-gray-tertiary">
-                      {NOT_PROVIDED}
-                    </p>
-                  )}
-                </div>
+                            <div className="flex gap-spacing-lg items-center min-w-0">
+                              <div className="size-10 rounded-lg bg-[#FF3B30] flex flex-col items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-xs">
+                                PDF
+                              </div>
+                              <div className="space-y-spacing-3xs min-w-0">
+                                <p className="text-label-sm font-label-sm-strong! text-text-gray-primary truncate">
+                                  {file.name}
+                                </p>
+                                <p className="text-label-xs text-text-gray-tertiary">
+                                  {file.size}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDownload(file._id)}
+                              disabled={isPreparingDownload}
+                              className="size-9 rounded-lg border border-border-gray-primary flex items-center justify-center text-fg-gray-secondary hover:bg-bg-gray-soft-primary transition-colors cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-wait"
+                              title="Download Case Study"
+                            >
+                              <Download size={16} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-label-sm text-text-gray-tertiary">
+                        {NOT_PROVIDED}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -691,9 +693,9 @@ export default function ApplicantDetailsView({
                     >
                       <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
                         {answer.question || `Query ${idx + 1}`}
-                        {answer.isRequired && (
+                        {/* {answer.isRequired && (
                           <span className="text-text-error-primary">*</span>
-                        )}
+                        )} */}
                       </label>
                       {answer.type === QUERY_TYPE_ENUMS.PARAGRAPH ? (
                         <textarea
@@ -726,7 +728,7 @@ export default function ApplicantDetailsView({
                 {/* Salary */}
                 <div className="space-y-spacing-xs">
                   <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
-                    Salary <span className="text-text-error-primary">*</span>
+                    Salary
                   </label>
                   <ShowInputValue
                     value={
@@ -745,7 +747,6 @@ export default function ApplicantDetailsView({
                   <div className="space-y-spacing-xs">
                     <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
                       Working Days{' '}
-                      <span className="text-text-error-primary">*</span>
                     </label>
                     <ShowInputValue
                       value={workingDaysText}
@@ -756,7 +757,6 @@ export default function ApplicantDetailsView({
                   <div className="space-y-spacing-xs">
                     <label className="text-label-sm font-label-sm-strong! text-text-gray-secondary flex items-center gap-1">
                       Working Hours{' '}
-                      <span className="text-text-error-primary">*</span>
                     </label>
                     <ShowInputValue
                       value={workingHoursText}

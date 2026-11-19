@@ -139,7 +139,7 @@ export function QueryCardComponent({
         onClick={() => onFocus(card.id)}
       >
         <div className=" p-spacing-4xl flex gap-spacing-2xl items-start">
-          <GripHorizontal className="w-5 h-5 text-fg-gray-secondary cursor-grab min-w-fit" />
+          {/* <GripHorizontal className="w-5 h-5 text-fg-gray-secondary cursor-grab min-w-fit" /> */}
 
           <div className=" space-y-spacing-2xl flex-1">
             {/* Header row */}
@@ -305,7 +305,7 @@ export function QueryCardComponent({
       onClick={() => onFocus(card.id)}
     >
       <div className=" p-spacing-4xl flex gap-spacing-2xl items-start">
-        <GripHorizontal className="w-5 h-5 text-fg-gray-secondary cursor-grab min-w-fit" />
+        {/* <GripHorizontal className="w-5 h-5 text-fg-gray-secondary cursor-grab min-w-fit" /> */}
 
         <div className=" space-y-spacing-2xl flex-1">
           {/* Header row */}
