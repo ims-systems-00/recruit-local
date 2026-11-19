@@ -228,9 +228,9 @@ function AiChatModal({
         // The form animates the change in view, so this only needs to name what
         // Alice picked — which is also how a screen reader hears it, via the
         // toast's live region. The page's own save button says the rest.
-        toast.success('Alice filled in the form', {
-          description: report.applied.join(' '),
-        });
+        // toast.success('Alice filled in the form', {
+        //   description: report.applied.join(' '),
+        // });
       }
       report.failed.forEach((failure) => toast.error(failure.message));
     }
