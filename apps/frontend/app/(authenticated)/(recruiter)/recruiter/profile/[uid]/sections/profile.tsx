@@ -268,8 +268,6 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       visionStatement: tenantDetails?.visionStatement,
       coreProducts: tenantDetails?.coreProducts,
       coreServices: tenantDetails?.coreServices,
-      profileImageStorage: tenantDetails?.profileImage?.storageInformation,
-      coverPhotoStorage: tenantDetails?.coverPhoto?.storageInformation,
       isRecruitmentEnabled: tenantDetails?.isRecruitmentEnabled,
     },
     mode: 'onSubmit',
@@ -303,8 +301,6 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       visionStatement: tenantDetails?.visionStatement,
       coreProducts: tenantDetails?.coreProducts,
       coreServices: tenantDetails?.coreServices,
-      profileImageStorage: tenantDetails?.profileImage?.storageInformation,
-      coverPhotoStorage: tenantDetails?.coverPhoto?.storageInformation,
       isRecruitmentEnabled: tenantDetails?.isRecruitmentEnabled,
     });
   }, [

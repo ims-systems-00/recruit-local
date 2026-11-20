@@ -58,6 +58,7 @@ const PHOTO_STORAGE_FIELDS: { storageKey: keyof ITenantPhotoStorage; idKey: "pro
  * ref when `null`), writes the new id into the matching `*Id` field, hard-deletes
  * the FileMedia it replaces, and returns a clean payload with the transient
  * `*Storage` keys removed (safe to persist).
+ * A `*Storage` matching the file already stored is left as is.
  */
 const resolvePhotoStorage = async (
   tenantId: Types.ObjectId,
@@ -70,6 +71,10 @@ const resolvePhotoStorage = async (
   for (const { storageKey, idKey } of PHOTO_STORAGE_FIELDS) {
     const storage = storageByKey[storageKey];
     if (storage === undefined) continue; // field not part of this write
+
+    const previousId = existing?.[idKey];
+    // same file sent again, keep it
+    if (storage && previousId && (await FileMediaService.isSameStoredFile(previousId.toString(), storage))) continue;
 
     let newId: Types.ObjectId | null = null;
     if (storage) {
@@ -86,7 +91,6 @@ const resolvePhotoStorage = async (
     (clean as any)[idKey] = newId;
 
     // Remove the FileMedia this write replaces (non-fatal on error).
-    const previousId = existing?.[idKey];
     if (previousId) {
       try {
         await FileMediaService.hardDelete({ query: { _id: previousId.toString() } });

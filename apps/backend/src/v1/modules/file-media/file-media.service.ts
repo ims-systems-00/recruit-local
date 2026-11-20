@@ -9,6 +9,7 @@ import {
 import { NotFoundException, logger, sanitizeQueryIds } from "../../../common/helper";
 import { fileMediaProjectionQuery, fileMediaSrcQuery } from "./file-media.query";
 import { FileMedia, IFileMediaInput } from "../../../models";
+import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
 import { thumbnailCreateQueue } from "../../../queue/thumbnailCreateQueue";
 import { fileDeleteQueue } from "../../../queue/fileDeleteQueue";
 
@@ -78,6 +79,16 @@ export const getOne = async ({ query }: IFileMediaGetParams) => {
   ]);
   if (fileMedias.length === 0) throw new NotFoundException("File and media not found.");
   return fileMedias[0];
+};
+
+export const isSameStoredFile = async (fileMediaId: string, storage: AwsStorageTemplate): Promise<boolean> => {
+  try {
+    const { storageInformation } = await getOne({ query: { _id: fileMediaId } });
+    return storageInformation?.Bucket === storage.Bucket && storageInformation?.Key === storage.Key;
+  } catch (error) {
+    if (error instanceof NotFoundException) return false;
+    throw error;
+  }
 };
 
 export const getOneSoftDeleted = async ({ query }: IFileMediaGetParams) => {
