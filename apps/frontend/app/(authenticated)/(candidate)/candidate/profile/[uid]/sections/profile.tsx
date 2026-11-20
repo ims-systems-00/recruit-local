@@ -73,8 +73,6 @@ export default function Profile({
 
   const [jobProfileDetails, setJobProfileDetails] = useState(jobProfileData);
 
-  console.log('jobProfileDetails', jobProfileDetails);
-
   const [showProgreesInfo, setShowProgreesInfo] = useState(true);
   const [showOpenToWorkAlert, setShowOpenToWorkAlert] = useState(false);
   const [isImportCvOpen, setIsImportCvOpen] = useState(false);
@@ -126,10 +124,6 @@ export default function Profile({
       experienceLevel: jobProfileDetails?.experienceLevel?._id || '',
       industry: jobProfileDetails?.industry?.map((industry) => industry._id),
       workMode: jobProfileDetails?.workMode?.map((workMode) => workMode._id),
-      coverPhotoStorage:
-        jobProfileDetails?.coverPhoto?.storageInformation || undefined,
-      profileImageStorage:
-        jobProfileDetails?.profileImage?.storageInformation || undefined,
     },
     mode: 'onSubmit',
   });
@@ -336,8 +330,6 @@ export default function Profile({
     portfolioUrl: jobProfileDetails?.portfolioUrl,
     keywords: jobProfileDetails?.keywords,
     languages: jobProfileDetails?.languages,
-    profileImageStorage: jobProfileDetails?.profileImage?.storageInformation,
-    coverPhotoStorage: jobProfileDetails?.coverPhoto?.storageInformation,
     visibility: jobProfileDetails?.visibility as VISIBILITY,
     experienceLevel: jobProfileDetails?.experienceLevel?._id || '',
     industry: jobProfileDetails?.industry?.map((industry) => industry._id),
@@ -418,7 +410,6 @@ export default function Profile({
               {isEditMode && (
                 <FileUploader
                   onUpload={async (files) => {
-                    console.log(files);
                     await updateJobProfile({
                       id: jobProfileDetails._id,
                       payload: {

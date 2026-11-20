@@ -268,8 +268,6 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       visionStatement: tenantDetails?.visionStatement,
       coreProducts: tenantDetails?.coreProducts,
       coreServices: tenantDetails?.coreServices,
-      profileImageStorage: tenantDetails?.profileImage?.storageInformation,
-      coverPhotoStorage: tenantDetails?.coverPhoto?.storageInformation,
       isRecruitmentEnabled: tenantDetails?.isRecruitmentEnabled,
     },
     mode: 'onSubmit',
@@ -303,8 +301,6 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
       visionStatement: tenantDetails?.visionStatement,
       coreProducts: tenantDetails?.coreProducts,
       coreServices: tenantDetails?.coreServices,
-      profileImageStorage: tenantDetails?.profileImage?.storageInformation,
-      coverPhotoStorage: tenantDetails?.coverPhoto?.storageInformation,
       isRecruitmentEnabled: tenantDetails?.isRecruitmentEnabled,
     });
   }, [
@@ -603,12 +599,9 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
                   await updateTenant({
                     id: tenantDetails._id,
                     data: {
-                      name: tenantDetails?.name,
                       coverPhotoStorage: files[0],
                     },
                     onSuccessNext: (newData) => {
-                      console.log('newData', newData);
-
                       setTenantDetails((prev) => ({ ...prev, ...newData }));
                     },
                   });
@@ -636,11 +629,9 @@ export default function Profile({ tenantData }: { tenantData: TenantData }) {
               {isEditMode && (
                 <FileUploader
                   onUpload={async (files) => {
-                    console.log(files);
                     await updateTenant({
                       id: tenantDetails._id,
                       data: {
-                        name: tenantDetails?.name,
                         profileImageStorage: files[0],
                       },
                       onSuccessNext: (newData) => {

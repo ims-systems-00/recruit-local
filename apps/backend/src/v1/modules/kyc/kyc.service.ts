@@ -154,7 +154,7 @@ export const update = async ({ query, payload, session }: IKycUpdateParams) => {
     let updatedDocumentFrontId = kyc.documentFrontId ? new Types.ObjectId(kyc.documentFrontId.toString()) : undefined;
     let updatedDocumentBackId = kyc.documentBackId ? new Types.ObjectId(kyc.documentBackId.toString()) : undefined;
 
-    if (documentFrontStorage) {
+    if (documentFrontStorage && (await FileMediaService.isNewFile(documentFrontStorage, kyc.documentFrontId))) {
       const frontFileMedia = await FileMediaService.create({
         payload: {
           collectionName: modelNames.KYC,
@@ -175,7 +175,7 @@ export const update = async ({ query, payload, session }: IKycUpdateParams) => {
       updatedDocumentFrontId = frontFileMedia._id as Types.ObjectId;
     }
 
-    if (documentBackStorage) {
+    if (documentBackStorage && (await FileMediaService.isNewFile(documentBackStorage, kyc.documentBackId))) {
       const backFileMedia = await FileMediaService.create({
         payload: {
           collectionName: modelNames.KYC,

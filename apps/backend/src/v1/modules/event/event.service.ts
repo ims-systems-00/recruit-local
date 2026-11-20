@@ -129,7 +129,7 @@ export const update = async ({ query, payload }: IEventUpdateParams) => {
   const event = await getOne({ query: sanitizedQuery });
   let updatedBannerImageId = event.bannerImageId;
 
-  if (payload.bannerImageStorage) {
+  if (payload.bannerImageStorage && (await FileMediaService.isNewFile(payload.bannerImageStorage, event.bannerImageId))) {
     const newFileMedia = await FileMediaService.create({
       payload: {
         collectionName: modelNames.EVENT,
