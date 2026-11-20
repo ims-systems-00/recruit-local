@@ -46,7 +46,9 @@ export interface QueryCard {
   focused: boolean;
 }
 
-const toAdditionalQueries = (cards: QueryCard[]): AdditionalQuery[] =>
+const toAdditionalQueries = (
+  cards: QueryCard[]
+): (AdditionalQuery & { isKnockout: boolean })[] =>
   cards.map((item) => ({
     ...(item._id ? { _id: item._id } : {}),
     question: item.question,
