@@ -52,55 +52,22 @@ const PHOTO_STORAGE_FIELDS: { storageKey: keyof ITenantPhotoStorage; idKey: "pro
   { storageKey: "coverPhotoStorage", idKey: "coverPhotoId" },
 ];
 
-/**
- * Resolves any inline photo upload templates on a write payload into FileMedia
- * documents: for each provided `*Storage`, creates a FileMedia (or clears the
- * ref when `null`), writes the new id into the matching `*Id` field, hard-deletes
- * the FileMedia it replaces, and returns a clean payload with the transient
- * `*Storage` keys removed (safe to persist).
- * A `*Storage` matching the file already stored is left as is.
- */
+// swap upload templates for FileMedia ids before saving
 const resolvePhotoStorage = async (
   tenantId: Types.ObjectId,
   payload: ITenantUpdateParams["payload"],
   existing?: ITenantDoc
 ): Promise<Partial<ITenantDoc>> => {
   const { profileImageStorage, coverPhotoStorage, ...clean } = payload;
-  const storageByKey: ITenantPhotoStorage = { profileImageStorage, coverPhotoStorage };
-
-  for (const { storageKey, idKey } of PHOTO_STORAGE_FIELDS) {
-    const storage = storageByKey[storageKey];
-    if (storage === undefined) continue; // field not part of this write
-
-    const previousId = existing?.[idKey];
-    // same file sent again, keep it
-    if (storage && previousId && (await FileMediaService.isSameStoredFile(previousId.toString(), storage))) continue;
-
-    let newId: Types.ObjectId | null = null;
-    if (storage) {
-      const fileMedia = await FileMediaService.create({
-        payload: {
-          collectionName: modelNames.TENANT,
-          collectionDocument: tenantId,
-          storageInformation: storage,
-          visibility: VISIBILITY_ENUM.PUBLIC,
-        },
-      });
-      newId = fileMedia._id as Types.ObjectId;
-    }
-    (clean as any)[idKey] = newId;
-
-    // Remove the FileMedia this write replaces (non-fatal on error).
-    if (previousId) {
-      try {
-        await FileMediaService.hardDelete({ query: { _id: previousId.toString() } });
-      } catch (error) {
-        console.error(`Failed to delete old ${idKey} for Tenant ${tenantId}`, error);
-      }
-    }
-  }
-
-  return clean as Partial<ITenantDoc>;
+  const ids = await FileMediaService.resolveFileRefs({
+    collectionName: modelNames.TENANT,
+    collectionDocument: tenantId,
+    visibility: VISIBILITY_ENUM.PUBLIC,
+    fields: PHOTO_STORAGE_FIELDS,
+    payload: { profileImageStorage, coverPhotoStorage },
+    existing,
+  });
+  return { ...clean, ...ids } as Partial<ITenantDoc>;
 };
 
 export const list = async ({ query = {}, options, session, offset = 0 }: IListTenantParams) => {

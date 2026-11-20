@@ -43,55 +43,19 @@ const PHOTO_STORAGE_FIELDS: {
   { storageKey: "coverPhotoStorage", idKey: "coverPhotoId" },
 ];
 
-/**
- * Resolves any inline photo upload templates on a write payload into FileMedia
- * documents: for each provided `*Storage`, creates a public FileMedia (or clears
- * the ref when `null`), hard-deletes the FileMedia it replaces, and returns a map
- * of `{ profileImageId?, coverPhotoId? }` to merge into the persisted document.
- * Only fields actually present on the payload are touched.
- * A `*Storage` matching the file already stored is left as is.
- */
-const resolvePhotoStorage = async (
+const resolvePhotoStorage = (
   jobProfileId: Types.ObjectId,
   payload: IJobProfilePhotoStorage,
   existing?: { profileImageId?: Types.ObjectId; coverPhotoId?: Types.ObjectId }
-): Promise<Partial<Record<"profileImageId" | "coverPhotoId", Types.ObjectId | null>>> => {
-  const ids: Partial<Record<"profileImageId" | "coverPhotoId", Types.ObjectId | null>> = {};
-
-  for (const { storageKey, idKey } of PHOTO_STORAGE_FIELDS) {
-    const storage = payload[storageKey];
-    if (storage === undefined) continue; // field not part of this write
-
-    const previousId = existing?.[idKey];
-    // same file sent again, keep it
-    if (storage && previousId && (await FileMediaService.isSameStoredFile(previousId.toString(), storage))) continue;
-
-    let newId: Types.ObjectId | null = null;
-    if (storage) {
-      const fileMedia = await FileMediaService.create({
-        payload: {
-          collectionName: modelNames.JOB_PROFILE,
-          collectionDocument: jobProfileId,
-          storageInformation: storage,
-          visibility: VISIBILITY_ENUM.PUBLIC,
-        },
-      });
-      newId = fileMedia._id as Types.ObjectId;
-    }
-    ids[idKey] = newId;
-
-    // Remove the FileMedia this write replaces (non-fatal on error).
-    if (previousId) {
-      try {
-        await FileMediaService.hardDelete({ query: { _id: previousId.toString() } });
-      } catch (error) {
-        console.error(`Failed to delete old ${idKey} for JobProfile ${jobProfileId}`, error);
-      }
-    }
-  }
-
-  return ids;
-};
+) =>
+  FileMediaService.resolveFileRefs({
+    collectionName: modelNames.JOB_PROFILE,
+    collectionDocument: jobProfileId,
+    visibility: VISIBILITY_ENUM.PUBLIC,
+    fields: PHOTO_STORAGE_FIELDS,
+    payload,
+    existing,
+  });
 
 export const list = async ({ query = {}, options, allowedFields, offset = 0 }: IListJobProfileParams) => {
   const limit = options?.limit && options.limit > 0 ? options.limit : 10;
@@ -209,7 +173,7 @@ export const update = async ({ query, payload, allowedFields }: IJobProfileUpdat
   const jobProfile = await getOne({ query: sanitizedQuery });
   let updatedKycDocumentId = jobProfile.kycDocumentId;
 
-  if (payload.kycDocumentStorage) {
+  if (payload.kycDocumentStorage && (await FileMediaService.isNewFile(payload.kycDocumentStorage, jobProfile.kycDocumentId))) {
     const newFileMedia = await FileMediaService.create({
       payload: {
         collectionName: modelNames.JOB_PROFILE,

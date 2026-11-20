@@ -1,4 +1,5 @@
-import { IListParams } from "@rl/types";
+import { Types } from "mongoose";
+import { IListParams, VISIBILITY_ENUM } from "@rl/types";
 import {
   matchQuery,
   excludeDeletedQuery,
@@ -10,6 +11,7 @@ import { NotFoundException, logger, sanitizeQueryIds } from "../../../common/hel
 import { fileMediaProjectionQuery, fileMediaSrcQuery } from "./file-media.query";
 import { FileMedia, IFileMediaInput } from "../../../models";
 import { AwsStorageTemplate } from "../../../models/templates/aws-storage.template";
+import { ModelNames } from "../../../models/constants";
 import { thumbnailCreateQueue } from "../../../queue/thumbnailCreateQueue";
 import { fileDeleteQueue } from "../../../queue/fileDeleteQueue";
 
@@ -89,6 +91,57 @@ export const isSameStoredFile = async (fileMediaId: string, storage: AwsStorageT
     if (error instanceof NotFoundException) return false;
     throw error;
   }
+};
+
+export const isNewFile = async (storage: AwsStorageTemplate, currentId?: Types.ObjectId | string | null) =>
+  !currentId || !(await isSameStoredFile(currentId.toString(), storage));
+
+export interface IResolveFileRefsParams<S, K extends string> {
+  collectionName: ModelNames;
+  collectionDocument: Types.ObjectId;
+  visibility: VISIBILITY_ENUM;
+  fields: { storageKey: keyof S; idKey: K }[];
+  payload: S;
+  existing?: Partial<Record<K, Types.ObjectId | null>>;
+}
+
+// turns upload templates into FileMedia ids, replacing old files
+export const resolveFileRefs = async <S extends { [P in keyof S]?: AwsStorageTemplate | null }, K extends string>({
+  collectionName,
+  collectionDocument,
+  visibility,
+  fields,
+  payload,
+  existing,
+}: IResolveFileRefsParams<S, K>): Promise<Partial<Record<K, Types.ObjectId | null>>> => {
+  const ids: Partial<Record<K, Types.ObjectId | null>> = {};
+
+  for (const { storageKey, idKey } of fields) {
+    const storage = payload[storageKey];
+    if (storage === undefined) continue;
+
+    const previousId = existing?.[idKey];
+    if (storage && !(await isNewFile(storage, previousId))) continue;
+
+    let newId: Types.ObjectId | null = null;
+    if (storage) {
+      const fileMedia = await create({
+        payload: { collectionName, collectionDocument, storageInformation: storage, visibility },
+      });
+      newId = fileMedia._id as Types.ObjectId;
+    }
+    ids[idKey] = newId;
+
+    if (previousId) {
+      try {
+        await hardDelete({ query: { _id: previousId.toString() } });
+      } catch (error) {
+        logger.error(`Failed to delete old ${idKey} for ${collectionName} ${collectionDocument}`, error);
+      }
+    }
+  }
+
+  return ids;
 };
 
 export const getOneSoftDeleted = async ({ query }: IFileMediaGetParams) => {

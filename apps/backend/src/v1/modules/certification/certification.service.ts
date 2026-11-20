@@ -135,7 +135,7 @@ export const update = async ({ query, payload }: ICertificationUpdateParams) => 
   let updatedImageId = certification.imageId;
   let newImageId: Types.ObjectId | null = null;
 
-  if (payload.imageStorage) {
+  if (payload.imageStorage && (await FileMediaService.isNewFile(payload.imageStorage, certification.imageId))) {
     const newFileMedia = await FileMediaService.create({
       payload: {
         collectionName: modelNames.CERTIFICATION,

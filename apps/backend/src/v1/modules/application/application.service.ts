@@ -265,7 +265,7 @@ export const update = async ({ query, payload, session }: IApplicationUpdatePara
   let updatedCaseStudyId = application.caseStudyId || [];
 
   // --- 1. Handle Resume Update ---
-  if (payload.resumeStorage) {
+  if (payload.resumeStorage && (await FileMediaService.isNewFile(payload.resumeStorage, application.resumeId))) {
     const newFileMedia = await FileMediaService.create({
       payload: {
         collectionName: modelNames.APPLICATION,

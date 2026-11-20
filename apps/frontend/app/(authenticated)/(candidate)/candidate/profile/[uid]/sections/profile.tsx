@@ -73,8 +73,6 @@ export default function Profile({
 
   const [jobProfileDetails, setJobProfileDetails] = useState(jobProfileData);
 
-  console.log('jobProfileDetails', jobProfileDetails);
-
   const [showProgreesInfo, setShowProgreesInfo] = useState(true);
   const [showOpenToWorkAlert, setShowOpenToWorkAlert] = useState(false);
   const [isImportCvOpen, setIsImportCvOpen] = useState(false);
@@ -412,7 +410,6 @@ export default function Profile({
               {isEditMode && (
                 <FileUploader
                   onUpload={async (files) => {
-                    console.log(files);
                     await updateJobProfile({
                       id: jobProfileDetails._id,
                       payload: {

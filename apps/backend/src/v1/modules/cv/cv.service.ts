@@ -173,7 +173,7 @@ export const update = async ({ query, payload }: ICVUpdateParams) => {
   let updatedResumeId = cv.resumeId;
 
   // 1. Handle Image Update
-  if (payload.imageStorage) {
+  if (payload.imageStorage && (await FileMediaService.isNewFile(payload.imageStorage, cv.imageId))) {
     const newFileMedia = await FileMediaService.create({
       payload: {
         collectionName: modelNames.CV,
@@ -197,7 +197,7 @@ export const update = async ({ query, payload }: ICVUpdateParams) => {
   }
 
   // 2. Handle Resume Update
-  if (payload.resumeStorage) {
+  if (payload.resumeStorage && (await FileMediaService.isNewFile(payload.resumeStorage, cv.resumeId))) {
     const newFileMedia = await FileMediaService.create({
       payload: {
         collectionName: modelNames.CV,
