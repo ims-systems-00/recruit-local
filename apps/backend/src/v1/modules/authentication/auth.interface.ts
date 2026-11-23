@@ -19,7 +19,6 @@ export interface UserPayload extends UserInput {
 
 export interface RefreshAccessTokenInput {
   refreshToken: string;
-  accessToken: string;
 }
 
 export interface LoginInput {

@@ -220,7 +220,7 @@ export const verifyRecovery = async ({
   // account is compromised would otherwise leave the intruder signed in.
   //
   // Dropping the stored pairs is also what revokes the refresh tokens: a leaked
-  // one then misses in `findRefreshToken` during `refreshAccessToken`, so it
+  // one then finds no session in `refreshAccessToken`, so it
   // cannot be traded for a fresh access token. Without this, the password change
   // alone does not stop it — `passwordChangeAt` is only consulted by
   // `deserializeUser`, and a refreshed token carries a new `iat` that passes.
@@ -234,8 +234,7 @@ export const verifyRecovery = async ({
 
 export const refreshAccessToken = async ({
   refreshToken,
-  accessToken,
-}: RefreshAccessTokenInput): Promise<IUserDoc | null> => {
+}: RefreshAccessTokenInput): Promise<{ user: IUserDoc; accessToken: string; refreshToken: string } | null> => {
   // verify the refresh token
   let decoded: CustomJwtPayload;
   try {
@@ -250,18 +249,12 @@ export const refreshAccessToken = async ({
     query: { _id: decoded.id },
   });
 
-  // Check reuse of refresh token and remove all the tokens
-  const token = await tokenService.findRefreshToken({ token: refreshToken, userId: user._id.toString() });
-  if (decoded && !token) {
+  // no session holds this refresh token, so it was reused, revoke everything
+  const tokens = await tokenService.rotateTokenPair(user, refreshToken);
+  if (!tokens) {
     await tokenService.removeAllTokenPairs(user._id.toString());
     return null;
   }
 
-  // Remove the tokens from the database
-  await tokenService.removeTokensPair({
-    accessToken,
-    refreshToken,
-  });
-
-  return user;
+  return { user, ...tokens };
 };

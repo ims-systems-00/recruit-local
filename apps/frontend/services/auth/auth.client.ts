@@ -225,8 +225,6 @@ export function useRegistrationVerificationToken() {
         user: {
           emailVerificationStatus: res.data.user.emailVerificationStatus,
           type: res.data.user.type,
-          accessToken: res.data.user.accessToken,
-          refreshToken: res.data.user.refreshToken,
         },
       });
 

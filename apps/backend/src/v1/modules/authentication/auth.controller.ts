@@ -86,16 +86,10 @@ export const verifyRegistration = async ({ req }: ControllerParams): Promise<Api
   const user = await authService.verifyRegistration(registration_token as string);
   const { accessToken, refreshToken } = await tokenService.getTokenPairForUser(user);
 
-  const responseData = {
-    ...toAuthUserResponse(user),
-    accessToken,
-    refreshToken,
-  };
-
   return new ApiResponse({
     message: "Account verified successfully.",
     statusCode: StatusCodes.OK,
-    data: responseData,
+    data: toAuthUserResponse(user),
     fieldName: "user",
     cookies: [
       {
@@ -151,16 +145,10 @@ export const verifyRecovery = async ({ req }: ControllerParams): Promise<ApiResp
   });
   const { accessToken: accessTokenRes, refreshToken: refreshTokenRes } = await tokenService.getTokenPairForUser(user);
 
-  const responseData = {
-    ...toAuthUserResponse(user),
-    accessToken: accessTokenRes,
-    refreshToken: refreshTokenRes,
-  };
-
   return new ApiResponse({
     message: "Account recovered successfully.",
     statusCode: StatusCodes.OK,
-    data: responseData,
+    data: toAuthUserResponse(user),
     fieldName: "user",
     // The freshly minted pair, not the request's own tokens: those are the
     // pre-reset ones, and `verifyRecovery` has just revoked them along with
@@ -183,10 +171,9 @@ export const verifyRecovery = async ({ req }: ControllerParams): Promise<ApiResp
 export const refreshAccessToken = async ({ req }: ControllerParams): Promise<ApiResponse> => {
   // get the tokens from the cookies
   const refreshToken = req.cookies?.__imsrt__ || req.header("x-auth-refresh-token");
-  const accessToken = req.cookies?.__imsat__ || req.header("x-auth-access-token");
 
-  const user = await authService.refreshAccessToken({ refreshToken, accessToken });
-  if (!user) {
+  const refreshed = await authService.refreshAccessToken({ refreshToken });
+  if (!refreshed) {
     return new ApiResponse({
       message: "Reuse of refresh token.",
       statusCode: StatusCodes.FORBIDDEN,
@@ -194,7 +181,7 @@ export const refreshAccessToken = async ({ req }: ControllerParams): Promise<Api
     });
   }
 
-  const { accessToken: accessTokenRes, refreshToken: refreshTokenRes } = await tokenService.getTokenPairForUser(user);
+  const { user, accessToken: accessTokenRes, refreshToken: refreshTokenRes } = refreshed;
   const responseData = {
     user: toAuthUserResponse(user),
     tenantId: user.tenantId != null ? String(user.tenantId) : null,

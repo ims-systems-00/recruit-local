@@ -1,6 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { loginUser } from '@/services/auth/auth.server';
+import { loginUser, logoutUser } from '@/services/auth/auth.server';
 
 const loginErrorCode = (status?: number) => {
   if (status === 400 || status === 401) return 'INVALID_CREDENTIALS';
@@ -87,9 +87,17 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       session.user = token.user;
-      session.accessToken = token.accessToken as string;
-      session.refreshToken = token.refreshToken as string;
       return session;
+    },
+  },
+
+  events: {
+    // end the backend session too, signOut alone only clears our cookie
+    async signOut({ token }) {
+      if (!token?.accessToken || !token?.refreshToken) return;
+
+      const res = await logoutUser(token.accessToken, token.refreshToken);
+      if (!res.success) console.error('Backend logout failed', res.message);
     },
   },
 

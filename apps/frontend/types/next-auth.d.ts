@@ -15,9 +15,6 @@ declare module 'next-auth' {
       tenantId?: string;
       jobProfileId?: string;
     } & DefaultSession['user'];
-
-    accessToken: string;
-    refreshToken: string;
   }
 
   interface User {
