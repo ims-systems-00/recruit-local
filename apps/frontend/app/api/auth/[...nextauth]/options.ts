@@ -1,6 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { loginUser } from '@/services/auth/auth.server';
+import { loginUser, logoutUser } from '@/services/auth/auth.server';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -86,6 +86,16 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       session.user = token.user;
       return session;
+    },
+  },
+
+  events: {
+    // end the backend session too, signOut alone only clears our cookie
+    async signOut({ token }) {
+      if (!token?.accessToken || !token?.refreshToken) return;
+
+      const res = await logoutUser(token.accessToken, token.refreshToken);
+      if (!res.success) console.error('Backend logout failed', res.message);
     },
   },
 

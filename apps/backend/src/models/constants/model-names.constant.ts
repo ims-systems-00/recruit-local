@@ -10,7 +10,7 @@ export const modelNames = {
   SPECIALIZED_USER_PROFILE: "specializeduserprofiles",
   TASK: "tasks",
   TENANT: "tenants",
-  TOKEN_PAIR: "tokenpairs",
+  SESSION: "sessions",
   USER: "users",
   VERIFICATION_TOKEN: "verificationtokens",
   RESPONSE_TEMPLATE: "responsetemplates",

@@ -171,10 +171,9 @@ export const verifyRecovery = async ({ req }: ControllerParams): Promise<ApiResp
 export const refreshAccessToken = async ({ req }: ControllerParams): Promise<ApiResponse> => {
   // get the tokens from the cookies
   const refreshToken = req.cookies?.__imsrt__ || req.header("x-auth-refresh-token");
-  const accessToken = req.cookies?.__imsat__ || req.header("x-auth-access-token");
 
-  const user = await authService.refreshAccessToken({ refreshToken, accessToken });
-  if (!user) {
+  const refreshed = await authService.refreshAccessToken({ refreshToken });
+  if (!refreshed) {
     return new ApiResponse({
       message: "Reuse of refresh token.",
       statusCode: StatusCodes.FORBIDDEN,
@@ -182,7 +181,7 @@ export const refreshAccessToken = async ({ req }: ControllerParams): Promise<Api
     });
   }
 
-  const { accessToken: accessTokenRes, refreshToken: refreshTokenRes } = await tokenService.getTokenPairForUser(user);
+  const { user, accessToken: accessTokenRes, refreshToken: refreshTokenRes } = refreshed;
   const responseData = {
     user: toAuthUserResponse(user),
     tenantId: user.tenantId != null ? String(user.tenantId) : null,

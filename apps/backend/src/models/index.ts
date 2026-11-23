@@ -3,7 +3,7 @@ export * from "./document-folder.model";
 export * from "./file-media.model";
 export * from "./notification.model";
 export * from "./tenant.model";
-export * from "./token-pair.model";
+export * from "./session.model";
 export * from "./user.model";
 export * from "./verification-token.model";
 export * from "./specialized-user-profile.model";

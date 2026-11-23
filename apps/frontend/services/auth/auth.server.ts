@@ -115,3 +115,24 @@ export async function changePassword(
     return handleServerError(error, 'Failed to change password');
   }
 }
+
+export async function logoutUser(
+  accessToken: string,
+  refreshToken: string,
+): Promise<ApiResponse> {
+  try {
+    const res = await axiosServer.delete('/auth/logout', {
+      headers: {
+        'x-auth-access-token': accessToken,
+        'x-auth-refresh-token': refreshToken,
+      },
+    });
+
+    return {
+      success: true,
+      data: res.data,
+    };
+  } catch (error) {
+    return handleServerError(error, 'Logout failed');
+  }
+}
