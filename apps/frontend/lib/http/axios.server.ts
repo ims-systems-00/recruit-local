@@ -1,8 +1,9 @@
 'use server';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import axios from 'axios';
-import { getServerSession } from 'next-auth/next';
+import { getToken } from 'next-auth/jwt';
+import { cookies, headers } from 'next/headers';
+import type { NextRequest } from 'next/server';
 // ponytail: server-side calls prefer INTERNAL_API_URL (runtime, in-container hostname).
 // NEXT_PUBLIC_BASE_API_URL is baked at build for the browser and can't resolve inside the network.
 const baseURL = `${process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_BASE_API_URL}/${process.env.NEXT_PUBLIC_API_VERSION}`;
@@ -18,13 +19,16 @@ export const axiosServer = axios.create({
 
 // Add interceptor to attach server token
 axiosServer.interceptors.request.use(async (config) => {
-  const currentSession = await getServerSession(authOptions);
+  // read tokens from the encrypted jwt cookie, the session no longer has them
+  const token = await getToken({
+    req: { cookies: await cookies(), headers: await headers() } as unknown as NextRequest,
+  });
 
-  if (currentSession?.accessToken) {
-    config.headers['x-auth-access-token'] = currentSession.accessToken;
+  if (token?.accessToken) {
+    config.headers['x-auth-access-token'] = token.accessToken;
   }
-  if (currentSession?.refreshToken) {
-    config.headers['x-auth-refresh-token'] = currentSession.refreshToken;
+  if (token?.refreshToken) {
+    config.headers['x-auth-refresh-token'] = token.refreshToken;
   }
 
   return config;

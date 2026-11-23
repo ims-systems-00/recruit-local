@@ -86,16 +86,10 @@ export const verifyRegistration = async ({ req }: ControllerParams): Promise<Api
   const user = await authService.verifyRegistration(registration_token as string);
   const { accessToken, refreshToken } = await tokenService.getTokenPairForUser(user);
 
-  const responseData = {
-    ...toAuthUserResponse(user),
-    accessToken,
-    refreshToken,
-  };
-
   return new ApiResponse({
     message: "Account verified successfully.",
     statusCode: StatusCodes.OK,
-    data: responseData,
+    data: toAuthUserResponse(user),
     fieldName: "user",
     cookies: [
       {
@@ -151,16 +145,10 @@ export const verifyRecovery = async ({ req }: ControllerParams): Promise<ApiResp
   });
   const { accessToken: accessTokenRes, refreshToken: refreshTokenRes } = await tokenService.getTokenPairForUser(user);
 
-  const responseData = {
-    ...toAuthUserResponse(user),
-    accessToken: accessTokenRes,
-    refreshToken: refreshTokenRes,
-  };
-
   return new ApiResponse({
     message: "Account recovered successfully.",
     statusCode: StatusCodes.OK,
-    data: responseData,
+    data: toAuthUserResponse(user),
     fieldName: "user",
     // The freshly minted pair, not the request's own tokens: those are the
     // pre-reset ones, and `verifyRecovery` has just revoked them along with
