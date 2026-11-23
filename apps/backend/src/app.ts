@@ -20,6 +20,9 @@ import { initBullBoard } from "./.config/bull-board";
 
 export const app = express();
 
+// number of proxies in front of us, so req.ip is the real client
+app.set("trust proxy", parseInt(process.env.TRUST_PROXY_HOPS || "0"));
+
 const corsOptions = {
   origin: CORS_ORIGIN[process.env.NODE_ENV] || CORS_ORIGIN.development,
   credentials: true,
