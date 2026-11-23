@@ -2,11 +2,13 @@
 
 import { useEffect } from 'react';
 import { signOut } from 'next-auth/react';
+import { markSignOut } from '@/lib/auth/sign-out-intent';
 import Image from 'next/image';
 import LoaderSvg from '@/public/images/loader.svg';
 
 export default function LogoutPage() {
   useEffect(() => {
+    markSignOut();
     signOut({
       callbackUrl: '/login',
     });

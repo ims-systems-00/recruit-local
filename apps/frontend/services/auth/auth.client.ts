@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signIn, useSession, signOut } from 'next-auth/react';
+import { markSignOut } from '@/lib/auth/sign-out-intent';
 import { loginSchema, LoginSchema } from '@/app/(auth)/login/login.schema';
 import { toast } from 'sonner';
 import {
@@ -106,6 +107,7 @@ export function useLogout() {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      markSignOut();
       const res = await signOut({
         redirect: false,
         callbackUrl: '/login',
