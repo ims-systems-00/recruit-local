@@ -18,10 +18,7 @@ export interface IVerificationTokenDoc extends VerificationTokenInput, ITenantDo
 }
 
 interface IVerificationTokenModel<T extends ITenantDoc = IVerificationTokenDoc>
-  extends Model<T>,
-    PaginateModel<T>,
-    ITenantModel<T>,
-    AggregatePaginateModel<T> {}
+  extends Model<T>, PaginateModel<T>, ITenantModel<T>, AggregatePaginateModel<T> {}
 
 const schema = new Schema<IVerificationTokenDoc>(
   {
