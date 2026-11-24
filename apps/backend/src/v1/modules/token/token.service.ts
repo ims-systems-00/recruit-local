@@ -114,6 +114,7 @@ export const verifyRefreshToken = (refreshToken: string): Promise<CustomJwtPaylo
 export const generateToken = ({ payload, options }: { payload: CustomJwtPayload; options: GenerateTokenOptions }) => {
   return jwt.sign(payload, process.env.JWT_KEY as string, {
     expiresIn: parseInt(options.expiresIn as string),
+    jwtid: crypto.randomUUID(),
   });
 };
 
