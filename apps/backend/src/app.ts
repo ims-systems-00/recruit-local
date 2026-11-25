@@ -39,6 +39,10 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
+if (process.env.LOG_CLIENT_IP === "true") {
+  app.use(morgan(':date[iso] :method :url :status ip=:remote-addr xff=":req[x-forwarded-for]"'));
+}
+
 // Limit request with same API
 app.use("/api", globalRateLimiter);
 
