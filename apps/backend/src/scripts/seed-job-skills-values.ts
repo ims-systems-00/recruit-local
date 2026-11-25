@@ -7,6 +7,7 @@ import {
   JOB_SKILL_LEVEL_ENUMS,
   JOB_SKILL_REQUIREMENT_ENUMS,
   JOB_VALUES_MAX_PER_TYPE,
+  JOB_VALUES_MAX_TOTAL,
   JOB_VALUE_PRIORITY_ENUMS,
 } from "@rl/types";
 import { connectDB } from "../.config/database";
@@ -733,13 +734,15 @@ const seedJobSkillsValues = async () => {
         if (seniority === "senior") labels.push(...SENIOR_VALUES.filter((label) => !labels.includes(label)));
 
         const perType = new Map<string, number>();
-        const rows = labels.flatMap((label) => {
-          const entry = value(label);
-          const count = perType.get(entry.type) ?? 0;
-          if (count >= JOB_VALUES_MAX_PER_TYPE) return [];
-          perType.set(entry.type, count + 1);
-          return [{ label, value: entry._id }];
-        });
+        const rows = labels
+          .flatMap((label) => {
+            const entry = value(label);
+            const count = perType.get(entry.type) ?? 0;
+            if (count >= JOB_VALUES_MAX_PER_TYPE) return [];
+            perType.set(entry.type, count + 1);
+            return [{ label, value: entry._id }];
+          })
+          .slice(0, JOB_VALUES_MAX_TOTAL);
 
         set.values = rows.map(({ value: id }, index) => ({ value: id, priority: PRIORITY_ORDER[index] ?? DESIRABLE }));
         notes.push(`values: ${rows.map(({ label }) => label).join(", ")}`);

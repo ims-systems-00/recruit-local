@@ -162,7 +162,7 @@ export default function ValuesPotentialsStep({
       'each with a priority. The user presses Continue to save this step and move on.',
     state: {
       jobId: defaultValues._id,
-      // Names trimmed so 25 values stay inside the server's size cap.
+      // Names trimmed to stay inside the server's size cap.
       selected: Object.fromEntries(
         CATEGORIES.map((category) => [
           category,
@@ -200,6 +200,7 @@ export default function ValuesPotentialsStep({
 
   const removeValue = (id: string) => {
     setSelectedValues((prev) => prev.filter((v) => v.id !== id));
+    setError(null);
   };
 
   const updateRank = (id: string, priority: JOB_VALUE_PRIORITY_ENUMS) => {
@@ -224,6 +225,13 @@ export default function ValuesPotentialsStep({
     // Publishing needs at least one value; say so here rather than at publish.
     if (selectedValues.length === 0) {
       setError('Add at least one value to continue.');
+      return;
+    }
+    // older jobs can still hold more than the limit
+    if (selectedValues.length > JOB_VALUES_MAX_TOTAL) {
+      setError(
+        `Choose at most ${JOB_VALUES_MAX_TOTAL} values. Remove ${selectedValues.length - JOB_VALUES_MAX_TOTAL} to continue.`,
+      );
       return;
     }
 
@@ -260,18 +268,31 @@ export default function ValuesPotentialsStep({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Value Catalogue */}
         <div className="lg:col-span-6 space-y-4">
-          <div className="flex items-center gap-1.5">
-            <h3 className="text-label-md font-label-md-strong! text-text-gray-primary">
-              Value Catalogue
-            </h3>
-            <button
-              type="button"
-              onClick={() => setCatalogueDialogOpen(true)}
-              className="text-text-gray-quaternary hover:text-text-brand-primary cursor-pointer p-0.5 rounded transition-colors"
-              title="Learn more about Value Catalogue"
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-label-md font-label-md-strong! text-text-gray-primary">
+                Value Catalogue
+              </h3>
+              <button
+                type="button"
+                onClick={() => setCatalogueDialogOpen(true)}
+                className="text-text-gray-quaternary hover:text-text-brand-primary cursor-pointer p-0.5 rounded transition-colors"
+                title="Learn more about Value Catalogue"
+              >
+                <Info className="w-4 h-4" />
+              </button>
+            </div>
+
+            <span
+              className={cn(
+                'px-3 py-1 rounded-full text-label-xs font-label-xs-strong! border',
+                selectedValues.length > JOB_VALUES_MAX_TOTAL
+                  ? 'bg-error-soft-secondary text-text-error-primary border-border-error-primary'
+                  : 'bg-bg-gray-soft-primary text-text-gray-secondary border-border-gray-secondary',
+              )}
             >
-              <Info className="w-4 h-4" />
-            </button>
+              {selectedValues.length}/{JOB_VALUES_MAX_TOTAL} in total
+            </span>
           </div>
 
           <div className="space-y-3">

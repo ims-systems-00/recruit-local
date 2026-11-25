@@ -91,6 +91,7 @@ export default function ValueItem({
         open={open}
         onOpenChange={setOpen}
         title={title}
+        categoryName={name}
         placeholder={placeholder}
         profileId={profileId}
         existingValues={existingValues}

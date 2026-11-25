@@ -20,7 +20,6 @@ const productionLogger = createLogger({
     }),
   ],
   exceptionHandlers: [new transports.File({ filename: "logs/exceptions.log" })],
-  rejectionHandlers: [new transports.File({ filename: "logs/rejections.log" })],
 });
 
 export default productionLogger;

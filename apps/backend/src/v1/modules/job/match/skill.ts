@@ -39,9 +39,11 @@ const REQUIREMENT_WEIGHT: Record<JOB_SKILL_REQUIREMENT_ENUMS, number> = {
 };
 
 /** `JOB_SKILL_LEVEL_ENUMS` is declared lowest to highest, so its order is the rank. */
-const LEVEL_RANK = new Map<string, number>(Object.values(JOB_SKILL_LEVEL_ENUMS).map((level, rank) => [level, rank]));
+export const LEVEL_RANK = new Map<string, number>(
+  Object.values(JOB_SKILL_LEVEL_ENUMS).map((level, rank) => [level, rank])
+);
 
-const WILLING_TO_LEARN_RANK = LEVEL_RANK.get(JOB_SKILL_LEVEL_ENUMS.WILLING_TO_LEARN) as number;
+export const WILLING_TO_LEARN_RANK = LEVEL_RANK.get(JOB_SKILL_LEVEL_ENUMS.WILLING_TO_LEARN) as number;
 
 /**
  * The shape this matcher needs off a skill row. Loose on purpose: `skill` may be
@@ -79,7 +81,7 @@ export const skillCredit = (askedRank: number, haveRank: number | null): number 
  * an unknown level is skipped. Not an array — a profile not yet migrated off
  * the old free-text `skills` — reads as no skills.
  */
-const indexProfileSkills = (rows: unknown): Map<string, number> => {
+export const indexProfileSkills = (rows: unknown): Map<string, number> => {
   const byId = new Map<string, number>();
   if (!Array.isArray(rows)) return byId;
 

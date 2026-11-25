@@ -165,6 +165,8 @@ export const additionalQuerySchema = yup.object({
     .optional()
     .nullable()
     .transform((value) => value || ''),
+
+  isKnockout: yup.boolean().default(false),
 });
 
 export const jobAdditionalQuerySchema = yup.object({

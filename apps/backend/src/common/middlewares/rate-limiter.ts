@@ -4,8 +4,8 @@ import { TooManyRequestsException } from "../helper";
 
 // Global rate limit middleware
 const globalRateLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS),
-  max: parseInt(process.env.RATE_LIMIT_MAX),
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "300000"),
+  max: parseInt(process.env.RATE_LIMIT_MAX || "1000"),
   message: "Too many GET requests from this IP, please try again later.",
   handler: (req: Request, res: Response, next: NextFunction) => {
     return next(new TooManyRequestsException());

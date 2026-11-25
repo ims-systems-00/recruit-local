@@ -1,4 +1,4 @@
-import { JOB_VALUES_MAX_PER_TYPE, VALUE_TYPE_ENUM, VALUE_TYPE_LABELS } from "@rl/types";
+import { JOB_VALUES_MAX_PER_TYPE, JOB_VALUES_MAX_TOTAL, VALUE_TYPE_ENUM, VALUE_TYPE_LABELS } from "@rl/types";
 import { BadRequestException } from "../../../common/helper";
 import * as skillCatalogService from "../skill-catalog/skill-catalog.service";
 import * as valueService from "../value/value.service";
@@ -62,6 +62,11 @@ export const assertJobValues = async ({
   }
 
   if (!values?.length) return;
+
+  // publishing re-checks stored values, which skip the Joi max
+  if (values.length > JOB_VALUES_MAX_TOTAL) {
+    throw new BadRequestException(`Choose at most ${JOB_VALUES_MAX_TOTAL} values. This job has ${values.length}.`);
+  }
 
   const ids = values.map(({ value }) => toRefId(value));
   const available = await valueService.findActiveByIds(ids);

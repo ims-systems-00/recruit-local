@@ -84,6 +84,7 @@ export const ALL_JOB_FIELDS = [
   'additionalQueries.options',
   'additionalQueries.isRequired',
   'additionalQueries.expectedAnswer',
+  'additionalQueries.isKnockout',
   'additionalQueries._id',
 
   // --- Skills (each row's `skill` is populated from the skill catalogue on read) ---
@@ -154,6 +155,7 @@ const CANDIDATE_READ_FIELDS = omitFields([
   'boardSortBy',
   'boardSortOrder',
   'additionalQueries.expectedAnswer',
+  'additionalQueries.isKnockout',
   // The employer's ranking of its values. Candidates scoring their own values
   // could otherwise tune their answers to whatever a job marks Essential.
   'values.priority',
@@ -201,6 +203,7 @@ const OWN_JOB_COPY_FIELDS = [
   'number',
   'aboutUs',
   'additionalQueries.expectedAnswer',
+  'additionalQueries.isKnockout',
   'values.priority',
 ];
 

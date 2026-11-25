@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 /**
  * The score pill and evaluate button shown on a selected value row.
  *
- * `score` undefined means never evaluated: shown as 0% with "Let's Evaluate".
+ * `score` undefined means never evaluated: shown as "Not evaluated" with "Let's Evaluate".
  * Once a score exists the button becomes "Start Again".
  */
 export default function ValueScoreActions({
@@ -18,7 +18,7 @@ export default function ValueScoreActions({
   return (
     <div className=" ml-auto flex items-center gap-spacing-md">
       <span className=" whitespace-nowrap inline-flex items-center justify-center min-h-6 py-spacing-3xs px-spacing-md rounded-lg border border-border-gray-primary text-label-sm font-label-sm-strong! text-others-gray-dark">
-        Score : {score ?? 0}%
+        {score === undefined ? 'Not evaluated' : `Score : ${score}%`}
       </span>
       {score === undefined ? (
         <Button

@@ -34,6 +34,8 @@ export interface IAdditionalQuery {
   options?: string[];
   isRequired: boolean;
   expectedAnswer?: string;
+  /** A wrong or missing answer is a must-have miss in the application ranking. Choice questions only. */
+  isKnockout?: boolean;
 }
 
 /** One of a job's skills: a skill catalogue entry and how much of it the job asks for. */
@@ -115,6 +117,7 @@ const additionalQuerySchema = new Schema<IAdditionalQuery>(
     options: [{ type: String }],
     isRequired: { type: Boolean, default: false },
     expectedAnswer: { type: String },
+    isKnockout: { type: Boolean, default: false },
   },
   { _id: true }
 );

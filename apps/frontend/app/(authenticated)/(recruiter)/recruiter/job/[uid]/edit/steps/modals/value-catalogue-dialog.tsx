@@ -8,7 +8,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Info } from 'lucide-react';
-import { VALUE_TYPE_ENUM, VALUE_TYPE_LABELS } from '@rl/types';
+import {
+  JOB_VALUES_MAX_PER_TYPE,
+  JOB_VALUES_MAX_TOTAL,
+  VALUE_TYPE_ENUM,
+  VALUE_TYPE_LABELS,
+} from '@rl/types';
 
 interface ValueCatalogueDialogProps {
   open: boolean;
@@ -60,8 +65,9 @@ export function ValueCatalogueDialog({
               Value Catalogue
             </DialogTitle>
             <p className="text-body-sm text-text-gray-tertiary mt-1 leading-relaxed">
-              By selecting 1 to 5 values per category helps match candidates to
-              your organisation&apos;s unique culture.
+              Choose up to {JOB_VALUES_MAX_TOTAL} values in total, at most{' '}
+              {JOB_VALUES_MAX_PER_TYPE} per category, to help match candidates
+              to your organisation&apos;s unique culture.
             </p>
           </div>
         </DialogHeader>

@@ -3,7 +3,11 @@
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Eye, EyeClosed, Plus, SquareCheck } from 'lucide-react';
 import React, { useState } from 'react';
-import { QueryCardComponent } from './query-card-component';
+import {
+  QueryCardComponent,
+  canBeKnockout,
+  isChoiceQuery,
+} from './query-card-component';
 import { QuickAddBar } from './quick-add-bar';
 import { InitialQuickAddBar } from './initial-quick-add-bar';
 import PreviewQueryCard from './preview-query-card';
@@ -38,21 +42,24 @@ export interface QueryCard {
   question: string;
   isRequired: boolean;
   expectedAnswer?: string;
+  isKnockout?: boolean;
   focused: boolean;
 }
 
-const toAdditionalQueries = (cards: QueryCard[]): AdditionalQuery[] =>
+const toAdditionalQueries = (
+  cards: QueryCard[]
+): (AdditionalQuery & { isKnockout: boolean })[] =>
   cards.map((item) => ({
     ...(item._id ? { _id: item._id } : {}),
     question: item.question,
     type: item.type,
-    options:
-      item.type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ||
-      item.type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE
-        ? (item.options?.map((q) => q.text) ?? [])
-        : undefined,
+    options: isChoiceQuery(item.type)
+      ? (item.options?.map((q) => q.text) ?? [])
+      : undefined,
     isRequired: item.isRequired ?? false,
     expectedAnswer: item.expectedAnswer ?? '',
+    // drop the flag if the type or answer changed and it no longer qualifies
+    isKnockout: canBeKnockout(item) && Boolean(item.isKnockout),
   }));
 
 export default function AdditionalQueries({
@@ -123,11 +130,9 @@ export default function AdditionalQueries({
       id: crypto.randomUUID(),
       question: 'Type your Queries',
       type,
-      options:
-        type === QUERY_TYPE_ENUMS.SINGLE_CHOICE ||
-        type === QUERY_TYPE_ENUMS.MULTIPLE_CHOICE
-          ? [{ id: crypto.randomUUID(), text: 'Option 1' }]
-          : [],
+      options: isChoiceQuery(type)
+        ? [{ id: crypto.randomUUID(), text: 'Option 1' }]
+        : [],
       isRequired: false,
       focused: true,
       expectedAnswer: '',

@@ -11,6 +11,7 @@ type SuccessResponse<T = any> = {
 type ErrorResponse = {
   success: false;
   message: string;
+  status?: number;
 };
 
 export type ApiResponse<T = any> = SuccessResponse<T> | ErrorResponse;

@@ -5,6 +5,7 @@ mongodb-replica.yml
 .github
 .test-scripts/
 CLAUDE.md
+AGENTS.md
 .claude/skills/
 todo/
 TESTABLE-FEATURES.md
