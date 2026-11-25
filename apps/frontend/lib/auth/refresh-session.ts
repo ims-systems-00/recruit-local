@@ -1,4 +1,5 @@
 import { serverApiBaseURL } from '@/lib/http/server-api-base-url';
+import { forwardedHeaders, type HeaderSource } from '@/lib/http/forwarded-headers';
 
 export type RefreshResult =
   | { accessToken: string; refreshToken: string }
@@ -23,10 +24,14 @@ export const accessTokenExpiresSoon = (accessToken: string) => {
   return exp === null || exp - Date.now() / 1000 < REFRESH_BEFORE_SECONDS;
 };
 
-const callRefresh = async (refreshToken: string): Promise<RefreshResult> => {
+const callRefresh = async (
+  refreshToken: string,
+  incoming: HeaderSource,
+): Promise<RefreshResult> => {
   try {
     const res = await fetch(`${serverApiBaseURL}/auth/refresh-access-token`, {
       headers: {
+        ...forwardedHeaders(incoming),
         Accept: 'application/json',
         'x-auth-refresh-token': refreshToken,
       },
@@ -54,7 +59,10 @@ const callRefresh = async (refreshToken: string): Promise<RefreshResult> => {
 // parallel requests with the same refresh token share one call, a second call would count as reuse
 const recent = new Map<string, { result: Promise<RefreshResult>; at: number }>();
 
-export const refreshTokens = (refreshToken: string): Promise<RefreshResult> => {
+export const refreshTokens = (
+  refreshToken: string,
+  incoming: HeaderSource,
+): Promise<RefreshResult> => {
   const now = Date.now();
   for (const [key, entry] of recent) {
     if (now - entry.at > KEEP_RESULT_MS) recent.delete(key);
@@ -63,7 +71,7 @@ export const refreshTokens = (refreshToken: string): Promise<RefreshResult> => {
   const hit = recent.get(refreshToken);
   if (hit) return hit.result;
 
-  const result = callRefresh(refreshToken);
+  const result = callRefresh(refreshToken, incoming);
   recent.set(refreshToken, { result, at: now });
   result.then((r) => {
     if (r === 'unavailable') recent.delete(refreshToken);

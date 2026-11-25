@@ -5,6 +5,7 @@ import { getToken } from 'next-auth/jwt';
 import { cookies, headers } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { serverApiBaseURL } from './server-api-base-url';
+import { forwardedHeaders } from './forwarded-headers';
 import {
   isSessionCookie,
   secureCookie,
@@ -22,12 +23,16 @@ export const axiosServer = axios.create({
 
 // Add interceptor to attach server token
 axiosServer.interceptors.request.use(async (config) => {
+  const incomingHeaders = await headers();
+
   // tokens live only in the encrypted jwt cookie
   const token = await getToken({
-    req: { cookies: await cookies(), headers: await headers() } as unknown as NextRequest,
+    req: { cookies: await cookies(), headers: incomingHeaders } as unknown as NextRequest,
     cookieName: SESSION_COOKIE,
     secureCookie,
   });
+
+  config.headers.set(forwardedHeaders(incomingHeaders));
 
   if (token?.accessToken) {
     config.headers['x-auth-access-token'] = token.accessToken;

@@ -6,7 +6,7 @@ import { tenantDataPlugin, TenantInput, ITenantDoc, ITenantModel } from "./plugi
 import { VERIFICATION_TOKEN_TYPE_ENUMS, modelNames } from "./constants";
 
 export interface VerificationTokenInput extends TenantInput {
-  token: string;
+  tokenHash: string;
   type: VERIFICATION_TOKEN_TYPE_ENUMS;
   email?: string;
   createdBy?: Schema.Types.ObjectId;
@@ -18,16 +18,14 @@ export interface IVerificationTokenDoc extends VerificationTokenInput, ITenantDo
 }
 
 interface IVerificationTokenModel<T extends ITenantDoc = IVerificationTokenDoc>
-  extends Model<T>,
-    PaginateModel<T>,
-    ITenantModel<T>,
-    AggregatePaginateModel<T> {}
+  extends Model<T>, PaginateModel<T>, ITenantModel<T>, AggregatePaginateModel<T> {}
 
 const schema = new Schema<IVerificationTokenDoc>(
   {
-    token: {
+    tokenHash: {
       type: String,
       required: true,
+      unique: true,
     },
     // todo: token payload can be extended in future
     type: {

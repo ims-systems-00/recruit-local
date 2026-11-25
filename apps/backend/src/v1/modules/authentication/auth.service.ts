@@ -63,7 +63,7 @@ export const _generateSendAndStoreRegistrationToken = async ({
 
 const handleInvitationRegistration = async (payload: UserPayload): Promise<IUserDoc> => {
   // Check if the invitation token exists
-  const isTokenExists = await verificationTokenService.findOne({ token: payload.invitationToken });
+  const isTokenExists = await verificationTokenService.findByToken(payload.invitationToken!);
   if (!isTokenExists) throw new BadRequestException("Invalid invitation token.");
 
   // Replace the email and type from the invitation token
@@ -133,10 +133,7 @@ export const logout = async ({ accessToken, refreshToken }: LogoutInput): Promis
 };
 
 export const verifyRegistration = async (token: string): Promise<IUserDoc> => {
-  const isExists = await verificationTokenService.findOne({
-    token,
-    type: VERIFICATION_TOKEN_TYPE_ENUMS.USER_EMAIL,
-  });
+  const isExists = await verificationTokenService.findByToken(token, VERIFICATION_TOKEN_TYPE_ENUMS.USER_EMAIL);
   if (!isExists) throw new BadRequestException("Invalid or expired token.");
 
   const decoded = (await tokenService.verifyToken(token)) as CustomJwtPayload;
@@ -201,10 +198,7 @@ export const verifyRecovery = async ({
   // revocation happens after the password is saved — see below.
   await tokenService.removeTokensPair({ accessToken, refreshToken });
 
-  const isExists = await verificationTokenService.findOne({
-    token,
-    type: VERIFICATION_TOKEN_TYPE_ENUMS.FORGOT_PASS,
-  });
+  const isExists = await verificationTokenService.findByToken(token, VERIFICATION_TOKEN_TYPE_ENUMS.FORGOT_PASS);
   if (!isExists) throw new BadRequestException("Invalid or expired token.");
 
   const decoded = (await tokenService.verifyToken(token)) as CustomJwtPayload;
