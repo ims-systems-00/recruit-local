@@ -14,20 +14,21 @@ import { motion } from 'framer-motion';
 import CardJobItem from './card-job-item';
 import { usePublicJobs } from '@/services/jobs/jobs.client';
 import CardJobItemSkelaton from './card-job-item-skelaton';
+import EmptyBox from '@/components/empty-box';
+import { Button } from '@/components/ui/button';
 import {
   fadeLeft,
   fadeRight,
   fadeUp,
   scaleIn,
   staggerContainer,
-  staggerFast,
   viewportOnce,
 } from '../section-motion';
 
 export default function FindJobs() {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const { jobs, isLoading, isFetching } = usePublicJobs({
+  const { jobs, isLoading, isError, refetch, isFetching } = usePublicJobs({
     limit: 3,
   });
   return (
@@ -94,30 +95,49 @@ export default function FindJobs() {
               >
                 Featured Jobs
               </motion.p>
-              <motion.div
-                className=" space-y-spacing-4xl"
-                variants={staggerFast}
-                initial="hidden"
-                whileInView="visible"
-                viewport={viewportOnce}
-              >
-                {isLoading || isFetching ? (
+              <div className=" space-y-spacing-4xl">
+                {isLoading ? (
                   <div className=" space-y-spacing-4xl">
                     {[1, 2, 3].map((item) => (
-                      <motion.div key={item} variants={fadeUp}>
-                        <CardJobItemSkelaton />
-                      </motion.div>
+                      <CardJobItemSkelaton key={item} />
                     ))}
                   </div>
+                ) : isError && !jobs.length ? (
+                  <EmptyBox
+                    title="Jobs could not be loaded"
+                    description="Something went wrong while loading featured jobs. Please try again."
+                  >
+                    <Button
+                      variant="outline"
+                      onClick={() => refetch()}
+                      disabled={isFetching}
+                      className=" cursor-pointer border-border-gray-primary h-10 rounded-lg text-label-sm font-label-sm-strong! text-text-gray-primary"
+                    >
+                      {isFetching ? 'Retrying...' : 'Try again'}
+                    </Button>
+                  </EmptyBox>
+                ) : !jobs.length ? (
+                  <EmptyBox
+                    title="No Jobs Posted Yet!"
+                    description="Currently, there are no job postings available."
+                  />
                 ) : (
-                  jobs?.map((item) => (
-                    <motion.div key={item._id} variants={fadeUp}>
+                  jobs.map((item) => (
+                    <motion.div
+                      key={item._id}
+                      variants={fadeUp}
+                      initial="hidden"
+                      animate="visible"
+                    >
                       <CardJobItem job={item} />
                     </motion.div>
                   ))
                 )}
                 <motion.div
                   variants={fadeUp}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={viewportOnce}
                   className=" flex justify-center items-center"
                 >
                   <Link
@@ -127,7 +147,7 @@ export default function FindJobs() {
                     View All
                   </Link>
                 </motion.div>
-              </motion.div>
+              </div>
             </div>
           </div>
         </motion.div>
