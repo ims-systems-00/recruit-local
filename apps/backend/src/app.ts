@@ -20,6 +20,9 @@ import { initBullBoard } from "./.config/bull-board";
 
 export const app = express();
 
+// trust our docker proxies only
+app.set("trust proxy", "loopback, uniquelocal");
+
 const corsOptions = {
   origin: CORS_ORIGIN[process.env.NODE_ENV] || CORS_ORIGIN.development,
   credentials: true,

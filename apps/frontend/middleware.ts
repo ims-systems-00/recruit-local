@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
     token.refreshToken &&
     accessTokenExpiresSoon(token.accessToken)
   ) {
-    const result = await refreshTokens(token.refreshToken);
+    const result = await refreshTokens(token.refreshToken, request.headers);
 
     if (result === 'rejected') {
       sessionExpired = true;
